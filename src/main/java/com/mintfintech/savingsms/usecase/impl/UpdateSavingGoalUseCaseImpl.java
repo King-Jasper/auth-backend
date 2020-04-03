@@ -1,0 +1,80 @@
+package com.mintfintech.savingsms.usecase.impl;
+
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.request.SavingsFrequencyUpdateRequest;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
+import lombok.AllArgsConstructor;
+
+import javax.inject.Named;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+/**
+ * Created by jnwanya on
+ * Thu, 02 Apr, 2020
+ */
+@Named
+@AllArgsConstructor
+public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
+
+    private AppUserEntityDao appUserEntityDao;
+    private MintAccountEntityDao mintAccountEntityDao;
+    private SavingsGoalEntityDao savingsGoalEntityDao;
+    private SavingsPlanEntityDao savingsPlanEntityDao;
+    private GetSavingsGoalUseCase getSavingsGoalUseCase;
+
+    @Override
+    public SavingsGoalModel updateSavingFrequency(AuthenticatedUser currentUser, SavingsFrequencyUpdateRequest autoSaveRequest) {
+
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+        AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, autoSaveRequest.getGoalId())
+                .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
+        SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
+
+        BigDecimal savingsAmount = BigDecimal.valueOf(autoSaveRequest.getAmount());
+        if(planEntity.getMaximumBalance().compareTo(BigDecimal.ZERO) > 0 && savingsAmount.compareTo(planEntity.getMaximumBalance()) > 0) {
+            throw new BusinessLogicConflictException("The maximum amount for your savings plan is N"+ MoneyFormatterUtil.priceWithDecimal(planEntity.getMaximumBalance()));
+        }
+        SavingsFrequencyTypeConstant frequencyTypeConstant = SavingsFrequencyTypeConstant.valueOf(autoSaveRequest.getFrequency());
+        LocalDateTime nextSavingsDate;
+        LocalDateTime nearestHour = LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0);
+        if(frequencyTypeConstant == SavingsFrequencyTypeConstant.DAILY) {
+            nextSavingsDate = nearestHour.plusDays(1);
+        }else if(frequencyTypeConstant == SavingsFrequencyTypeConstant.WEEKLY) {
+            nextSavingsDate = nearestHour.plusWeeks(1);
+        }else {
+            nextSavingsDate = nearestHour.plusMonths(1);
+        }
+        savingsGoal.setAutoSave(true);
+        savingsGoal.setNextAutoSaveDate(nextSavingsDate);
+        savingsGoal.setSavingsAmount(savingsAmount);
+        savingsGoal.setSavingsFrequency(frequencyTypeConstant);
+        savingsGoal = savingsGoalEntityDao.saveRecord(savingsGoal);
+        return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoal);
+    }
+
+    @Override
+    public void cancelSavingFrequency(AuthenticatedUser currentUser, String goalId) {
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+        SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, goalId)
+                .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
+        savingsGoal.setAutoSave(false);
+        savingsGoal.setSavingsFrequency(SavingsFrequencyTypeConstant.NONE);
+        savingsGoalEntityDao.saveRecord(savingsGoal);
+    }
+}

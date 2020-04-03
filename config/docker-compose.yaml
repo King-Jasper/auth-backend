@@ -1,0 +1,39 @@
+version: "3"
+
+services:
+  accounts-app:
+    image: minfintech/savings-service
+    container_name: savings-service
+    extra_hosts:
+      - database:${DATABASE_SERVER_IP}
+    expose:
+      - 8091
+    ports:
+      - ${ACCESS_PORT}:8091
+    restart: on-failure
+    volumes:
+      - ${CONFIG_FILE_DIR}:/config # ~ implies home like /Users/jnwanya
+      - ${app_logging_file_dir}:${app_logging_file_dir}
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - SPRING_PROFILES_ACTIVE=${APP_PROFILE}
+      - SPRING_CLOUD_CONSUL_HOST=${CONSUL_IP}
+      - SPRING_KAFKA.BOOTSTRAP-SERVERS=${KAFKA_HOST}
+      - DATABASE_URL=jdbc:postgresql://database:5432/${DATABASE_NAME}
+      - DATABASE_USERNAME=${DATABASE_USER}
+      - DATABASE_PASSWORD=${DATABASE_PASSWORD}
+      - CONFIG_LOCATION=file:/config/application.properties
+      - LOGGING_FILE=${app_logging_file_dir}/${app_logging_file_name}
+      - LOG_FILE_DIR=${app_logging_file_dir}
+      - VIRTUAL_HOST=${HOST_NAME}
+networks:
+  default:
+    external:
+      name: nginx-proxy
+
+
+
+
+
+
+

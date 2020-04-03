@@ -1,0 +1,34 @@
+[
+  {
+    "code": "01",
+    "name": "Car"
+  },
+  {
+    "code": "02",
+    "name": "Vacation"
+  },
+  {
+    "code": "03",
+    "name": "Business"
+  },
+  {
+    "code": "04",
+    "name": "Rent"
+  },
+  {
+    "code": "05",
+    "name": "Education"
+  },
+  {
+    "code": "06",
+    "name": "Family"
+  },
+  {
+    "code": "07",
+    "name": "Life Style"
+  },
+  {
+    "code": "08",
+    "name": "Others"
+  }
+]

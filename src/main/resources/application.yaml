@@ -1,0 +1,38 @@
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: update
+      naming:
+        implicit-strategy: org.hibernate.boot.model.naming.ImplicitNamingStrategyLegacyHbmImpl
+        physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        temp:
+          use_jdbc_metadata_default: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: mintfintech.service.savings
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+logging:
+  level:
+    org.springframework: INFO
+    com.mintfintech.fundtransactionms: DEBUG
+microservices:
+  core-banking:
+    service-name: core-banking-service
+
+mint:
+  bank-code: 50304
+  support-phonenumber: 08067507490
+
+transaction:
+  status-update:
+    start-after-minutes: 15
+    stop-after-minutes: 90

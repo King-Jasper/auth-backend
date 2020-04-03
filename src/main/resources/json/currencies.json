@@ -1,0 +1,23 @@
+[
+  {
+    "symbol": "$",
+    "name": "US Dollar",
+    "decimal_digits": 2,
+    "rounding": 0,
+    "code": "USD"
+  },
+  {
+    "symbol": "€",
+    "name": "Euro",
+    "decimal_digits": 2,
+    "rounding": 0,
+    "code": "EUR"
+  },
+  {
+    "symbol": "₦",
+    "name": "Nigerian Naira",
+    "decimal_digits": 2,
+    "rounding": 0,
+    "code": "NGN"
+  }
+]

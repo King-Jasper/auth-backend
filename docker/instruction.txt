@@ -1,0 +1,4 @@
+To Build Image
+1. On the project root directory run: cp target/savings-service.jar docker
+2. Run: cd docker
+3. Run: docker image build -t mintfintech/savings-service .

@@ -1,0 +1,17 @@
+[
+  {
+    "tier": "TIER_ONE",
+    "bullet_transaction": 50000.00,
+    "maximum_balance": 300000.00
+  },
+  {
+    "tier": "TIER_TWO",
+    "bullet_transaction": 200000.00,
+    "maximum_balance": 500000.00
+  },
+  {
+    "tier": "TIER_THREE",
+    "bullet_transaction": 0.00,
+    "maximum_balance": 0.00
+  }
+]

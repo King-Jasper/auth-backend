@@ -1,0 +1,15 @@
+spring:
+  application:
+    name: savings-service
+  profiles:
+    active: dev
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        instance-id: ${spring.application.name}
+        enabled: true
+        prefer-ip-address: true
+server:
+  port: 8096
