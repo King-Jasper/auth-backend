@@ -1,5 +1,7 @@
 package com.mintfintech.savingsms.utils;
 
+import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
@@ -41,9 +43,9 @@ public class MoneyFormatterUtil {
     }
 
     public static void main(String[] args) {
-        double interestRatePerDay = 6.5 / (100.0 * 365.0);
+        /*double interestRatePerDay = 6.5 / (100.0 * 365.0);
         BigDecimal bigDecimal = BigDecimal.valueOf(interestRatePerDay);
         BigDecimal interest = BigDecimal.valueOf(100000.00).multiply(bigDecimal).setScale(2, BigDecimal.ROUND_CEILING);
-        System.out.println(interest);
+        System.out.println(interest);*/
     }
 }

@@ -58,7 +58,7 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns a list of savings goals for an account.")
+    @ApiOperation(value = "Returns the details of a savings goal using the goalId.")
     @GetMapping(value = "/{goalId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> getSavingsGoalDetail(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                          @PathVariable String goalId) {

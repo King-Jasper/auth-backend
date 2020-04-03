@@ -23,7 +23,7 @@ spring:
 logging:
   level:
     org.springframework: INFO
-    com.mintfintech.fundtransactionms: DEBUG
+    com.mintfintech.savingsms: DEBUG
 microservices:
   core-banking:
     service-name: core-banking-service

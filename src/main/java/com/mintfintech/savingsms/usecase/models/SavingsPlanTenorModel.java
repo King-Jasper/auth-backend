@@ -10,6 +10,6 @@ import lombok.Data;
 @Data
 @Builder
 public class SavingsPlanTenorModel {
-    private long tenorId;
+    private long durationId;
     private String description;
 }

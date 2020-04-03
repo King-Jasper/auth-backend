@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
+import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ChangeSavingsPlanUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -66,6 +67,7 @@ public class ChangeSavingsPlanUseCaseImpl implements ChangeSavingsPlanUseCase {
         savingsPlanChangeEntityDao.saveRecord(planChangeEntity);
         savingsGoalEntity.setSavingsPlan(planEntity);
         savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
     }
 }

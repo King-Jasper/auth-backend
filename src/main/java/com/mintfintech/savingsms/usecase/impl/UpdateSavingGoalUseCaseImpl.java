@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
+import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
@@ -18,6 +19,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -31,17 +33,16 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
 
-    private AppUserEntityDao appUserEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
+    private AuditTrailService auditTrailService;
 
     @Override
     public SavingsGoalModel updateSavingFrequency(AuthenticatedUser currentUser, SavingsFrequencyUpdateRequest autoSaveRequest) {
 
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
-        AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, autoSaveRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
         SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
@@ -50,6 +51,9 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         if(planEntity.getMaximumBalance().compareTo(BigDecimal.ZERO) > 0 && savingsAmount.compareTo(planEntity.getMaximumBalance()) > 0) {
             throw new BusinessLogicConflictException("The maximum amount for your savings plan is N"+ MoneyFormatterUtil.priceWithDecimal(planEntity.getMaximumBalance()));
         }
+        SavingsGoalEntity oldState = new SavingsGoalEntity();
+        BeanUtils.copyProperties(savingsGoal, oldState);
+
         SavingsFrequencyTypeConstant frequencyTypeConstant = SavingsFrequencyTypeConstant.valueOf(autoSaveRequest.getFrequency());
         LocalDateTime nextSavingsDate;
         LocalDateTime nearestHour = LocalDateTime.now().plusHours(1).withMinute(0).withSecond(0);
@@ -65,16 +69,26 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         savingsGoal.setSavingsAmount(savingsAmount);
         savingsGoal.setSavingsFrequency(frequencyTypeConstant);
         savingsGoal = savingsGoalEntityDao.saveRecord(savingsGoal);
+
+        String description = String.format("Savings frequency: %s set on goal: %s", savingsGoal.getSavingsFrequency().name(), savingsGoal.getName());
+        auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoal, oldState);
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoal);
     }
 
     @Override
     public void cancelSavingFrequency(AuthenticatedUser currentUser, String goalId) {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
-        SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, goalId)
+        SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, goalId)
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
-        savingsGoal.setAutoSave(false);
-        savingsGoal.setSavingsFrequency(SavingsFrequencyTypeConstant.NONE);
-        savingsGoalEntityDao.saveRecord(savingsGoal);
+
+        SavingsGoalEntity oldState = new SavingsGoalEntity();
+        BeanUtils.copyProperties(savingsGoalEntity, oldState);
+
+        savingsGoalEntity.setAutoSave(false);
+        savingsGoalEntity.setSavingsFrequency(SavingsFrequencyTypeConstant.NONE);
+        savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+
+        String description = String.format("Cancelled saving frequency: %s on goal %s", oldState.getSavingsFrequency().name(), savingsGoalEntity.getName());
+        auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
     }
 }

@@ -48,7 +48,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
     private SavingsPlanModel fromEntityToModel(SavingsPlanEntity savingsPlanEntity) {
         List<SavingsPlanTenorModel> tenorModelList = savingsPlanTenorEntityDao.getTenorListByPlan(savingsPlanEntity).stream()
                 .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
-                        .tenorId(savingsPlanTenorEntity.getId())
+                        .durationId(savingsPlanTenorEntity.getId())
                         .description(String.format("%d Days", savingsPlanTenorEntity.getDuration()))
                         .build()
                 ).collect(Collectors.toList());

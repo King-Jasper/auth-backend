@@ -38,6 +38,11 @@ public class SavingsGoalCreationRequestJSON {
     @Min(100)
     private double targetAmount;
 
+    @ApiModelProperty(notes = "The savings category code", required = true)
+    @NotNull
+    @NotEmpty
+    private String categoryCode;
+
     @ApiModelProperty(notes = "The savings plan duration Id.", required = true)
     private long durationId;
 
@@ -48,6 +53,7 @@ public class SavingsGoalCreationRequestJSON {
                 .fundingAmount(fundingAmount)
                 .name(name)
                 .planId(planId)
+                .categoryCode(categoryCode)
                 .targetAmount(targetAmount).build();
     }
 }

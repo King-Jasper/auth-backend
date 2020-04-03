@@ -13,7 +13,8 @@ public interface ApplicationEventService {
     enum EventType {
         SAVING_GOAL_CREATION("com.mintfintech.saving-service.events.saving-goal-creation"),
         SAVING_GOAL_BALANCE_UPDATE("com.mintfintech.saving-service.events.saving-goal-balance-update"),
-        MINT_TRANSACTION_LOG("com.mintfintech.fund-transaction-service.events.transaction-log");
+        MINT_TRANSACTION_LOG("com.mintfintech.fund-transaction-service.events.transaction-log"),
+        APPLICATION_AUDIT_TRAIL("com.mintfintech.report-service.events.audit-trail");
         private final String topic;
 
         EventType(String topic) {

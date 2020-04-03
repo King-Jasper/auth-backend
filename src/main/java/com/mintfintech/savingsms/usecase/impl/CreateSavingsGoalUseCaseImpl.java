@@ -1,10 +1,12 @@
 package com.mintfintech.savingsms.usecase.impl;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
@@ -18,8 +20,10 @@ import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
@@ -43,6 +47,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private ApplicationEventService applicationEventService;
+    private AuditTrailService auditTrailService;
 
     @Override
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
@@ -70,6 +75,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
 
+    @Transactional
     @Override
     public SavingsGoalModel createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest) {
 
@@ -127,10 +133,17 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
+       /* try {
+            SavingsGoalEntity oldState = new SavingsGoalEntity();
+            BeanUtils.copyProperties(savingsGoalEntity, oldState);
+            auditTrailService.createAuditLog(AuditTrailService.AuditType.CREATE, "test", oldState);
+        }catch (Exception ex){ex.printStackTrace();} */
+
         SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
         if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
             throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
         }
+
 
         SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
@@ -140,6 +153,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .withdrawalAccountNumber(debitAccount.getAccountNumber())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
+
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
     }
 
