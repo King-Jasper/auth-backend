@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.dao;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,4 +19,5 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     long countAccountSavingsGoalOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity);
     long countEligibleInterestSavingsGoal();
     PagedResponse<SavingsGoalEntity> getPagedEligibleInterestSavingsGoal(int pageIndex, int recordSize);
+    List<SavingsGoalEntity> getSavingGoalWithAutoSaveTime(LocalDateTime autoSaveTime);
 }

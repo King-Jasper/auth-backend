@@ -5,17 +5,22 @@ import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
-import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
+import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Predicate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -62,6 +67,25 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
     public Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId) {
         return repository.findFirstByMintAccountAndGoalId(accountEntity, goalId);
     }
+
+    @Override
+    public List<SavingsGoalEntity> getSavingGoalWithAutoSaveTime(LocalDateTime autoSaveTime) {
+        String currentHourTime = autoSaveTime.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH"));
+       // int currentHour = String.format("%d-%02d-%02d %02d", autoSaveTime.getYear(), autoSaveTime.getMonthValue(), autoSaveTime) autoSaveTime.getHour();
+        return repository.getSavingsGoalWithMatchingSavingHour(SavingsGoalStatusConstant.ACTIVE, currentHourTime);
+    }
+
+    private static Specification<SavingsGoalEntity> withStatus() {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
+                .and(criteriaBuilder.equal(root.get("goalStatus"), SavingsGoalStatusConstant.ACTIVE),
+                        criteriaBuilder.equal(root.get("creationSource"), SavingsGoalCreationSourceConstant.CUSTOMER),
+                        criteriaBuilder.equal(root.get("autoSave"), true),
+                        criteriaBuilder.isNotNull(root.get("nextAutoSaveDate"))
+                        ));
+    }
+
+
+
 
     @Override
     public long countAccountSavingsGoalOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {

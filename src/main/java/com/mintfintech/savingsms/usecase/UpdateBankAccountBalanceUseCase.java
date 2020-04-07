@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase;
 
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.usecase.data.events.incoming.AccountBalanceUpdateEvent;
 
@@ -10,4 +11,5 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.AccountBalanceUpda
 public interface UpdateBankAccountBalanceUseCase {
     void processBalanceUpdate(AccountBalanceUpdateEvent balanceUpdateEvent);
     MintBankAccountEntity processBalanceUpdate(MintBankAccountEntity bankAccountEntity);
+    void processBalanceUpdate(MintAccountEntity mintAccountEntity);
 }

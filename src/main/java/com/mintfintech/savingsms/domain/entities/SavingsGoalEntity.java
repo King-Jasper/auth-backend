@@ -61,7 +61,7 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     private BigDecimal accruedInterest = BigDecimal.ZERO;
 
     @Builder.Default
-    private BigDecimal savingsAmount = BigDecimal.ZERO;
+    private BigDecimal savingsAmount = BigDecimal.ZERO; // the frequency amount to be saved.
 
     @Builder.Default
     private BigDecimal targetAmount = BigDecimal.ZERO;

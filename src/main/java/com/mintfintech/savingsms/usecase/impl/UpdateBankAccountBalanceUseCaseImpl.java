@@ -1,7 +1,9 @@
 package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.models.corebankingservice.BalanceEnquiryResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
@@ -13,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -58,5 +61,19 @@ public class UpdateBankAccountBalanceUseCaseImpl implements UpdateBankAccountBal
         bankAccountEntity.setBalanceUpdateTime(LocalDateTime.now());
         bankAccountEntity = mintBankAccountEntityDao.saveRecord(bankAccountEntity);
         return bankAccountEntity;
+    }
+
+    @Override
+    public void processBalanceUpdate(MintAccountEntity mintAccountEntity) {
+        List<MintBankAccountEntity> bankAccountEntityList = mintBankAccountEntityDao.getAccountsByMintAccount(mintAccountEntity);
+        for(MintBankAccountEntity bankAccountEntity: bankAccountEntityList) {
+            if(bankAccountEntity.getAccountType() == BankAccountTypeConstant.SAVING) {
+                new Thread(() -> {
+                    processBalanceUpdate(bankAccountEntity);
+                }).start();
+            }else {
+                processBalanceUpdate(bankAccountEntity);
+            }
+        }
     }
 }

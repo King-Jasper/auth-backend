@@ -7,5 +7,6 @@ package com.mintfintech.savingsms.domain.entities.enums;
 public enum SequenceType {
     SAVINGS_GOAL_SEQ,
     SAVING_GOAL_REFERENCE_SEQ,
+    SAVING_INTEREST_REFERENCE_SEQ,
     SAVINGS_PLAN_SEQ
 }

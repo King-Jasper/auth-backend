@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.infrastructure.servicesimpl;
+package com.mintfintech.savingsms.domain.services;
 
 import com.mintfintech.savingsms.domain.services.EnvironmentService;
 

@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
@@ -22,15 +19,19 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@Slf4j
 @Named
 @AllArgsConstructor
 public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
@@ -74,6 +75,44 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     }
 
     @Override
+    public void processSavingsGoalScheduledSaving() {
+        LocalDateTime now = LocalDateTime.now();
+        log.info("savings goal funding job: {}", now.toString());
+        List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getSavingGoalWithAutoSaveTime(now);
+        for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
+            if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE || !savingsGoalEntity.isAutoSave()) {
+                log.info("Savings goal auto funding skipped: {}", savingsGoalEntity.getGoalId());
+                continue;
+            }
+            LocalDateTime adjustedTime = now.withNano(0).withSecond(0).withMinute(0);
+            LocalDateTime nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().withNano(0).withSecond(0).withMinute(0);
+            if(!adjustedTime.equals(nextSavingsDate)) {
+                log.info("Next saving date does not match:{} - {} - {}", savingsGoalEntity.getGoalId(), adjustedTime.toString(), nextSavingsDate.toString());
+                continue;
+            }
+            LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
+            SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();
+            if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY){
+                newNextSavingsDate = nextSavingsDate.plusWeeks(1);
+            }else if(frequencyType == SavingsFrequencyTypeConstant.MONTHLY) {
+                newNextSavingsDate = nextSavingsDate.plusMonths(1);
+            }
+            MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
+            debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+            BigDecimal savingsAmount = savingsGoalEntity.getSavingsAmount();
+            if(debitAccount.getAvailableBalance().compareTo(savingsAmount) < 0) {
+                log.info("Insufficient balance for savings auto debit: {}" , savingsGoalEntity.getGoalId());
+                savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+                continue;
+            }
+            savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
+            savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+           fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
+        }
+    }
+
+    @Override
     public SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(debitAccount.getMintAccount(), BankAccountTypeConstant.SAVING);
@@ -96,7 +135,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .amount(amount)
                 .creditAccountNumber(creditAccount.getAccountNumber())
                 .debitAccountNumber(debitAccount.getAccountNumber())
-                .narration("Savings - "+savingsGoal.getGoalId())
+                .narration("Savings funding - "+savingsGoal.getGoalId())
                 .transactionReference(transactionEntity.getTransactionReference())
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(transferRequestCBS);
@@ -158,6 +197,8 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     }
 
 
+
+
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         String description = "Savings Goal funding - "+savingsGoalTransactionEntity.getSavingsGoal().getGoalId();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
@@ -166,7 +207,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .transactionAmount(savingsGoalTransactionEntity.getTransactionAmount())
                 .transactionType(TransactionTypeConstant.DEBIT.name())
                 .category("SAVINGS_GOAL")
-                .debitAccountId(savingsGoalTransactionEntity.getDebitAccount().getId())
+                .debitAccountId(savingsGoalTransactionEntity.getDebitAccount().getAccountId())
                 .description(description)
                 .externalReference(savingsGoalTransactionEntity.getExternalReference())
                 .internalReference(savingsGoalTransactionEntity.getTransactionReference())

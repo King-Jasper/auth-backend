@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.servicesimpl;
 
 import com.mintfintech.savingsms.domain.models.restclient.ClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.JWTService;
 import com.mintfintech.savingsms.domain.services.MsRestClientService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
