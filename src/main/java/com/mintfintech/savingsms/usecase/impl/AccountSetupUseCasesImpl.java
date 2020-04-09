@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.UserCreationEvent;
@@ -90,5 +91,17 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         TierLevelTypeConstant tierLevelType = TierLevelTypeConstant.valueOf(tierLevel);
         Optional<TierLevelEntity> optionalTierLevelEntity = tierLevelEntityDao.findByTierLevelType(tierLevelType);
         return optionalTierLevelEntity.orElseGet(() -> tierLevelEntityDao.getByTierLevelType(TierLevelTypeConstant.TIER_ONE));
+    }
+
+    @Override
+    public void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent) {
+        Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(accountLimitUpdateEvent.getAccountId());
+        if(!mintAccountEntityOptional.isPresent()) {
+            return;
+        }
+        MintAccountEntity mintAccountEntity = mintAccountEntityOptional.get();
+        mintAccountEntity.setBulletTransactionLimit(accountLimitUpdateEvent.getBulletLimitAmount());
+        mintAccountEntity.setDailyTransactionLimit(accountLimitUpdateEvent.getDailyLimitAmount());
+        mintAccountEntityDao.saveRecord(mintAccountEntity);
     }
 }
