@@ -165,7 +165,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         if(fundAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded cannot be greater than the saving target amount.");
         }
-        if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0) {
+        if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
             throw new BadRequestException("Target amount cannot be greater than the saving plan maximum balance.");
         }
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
