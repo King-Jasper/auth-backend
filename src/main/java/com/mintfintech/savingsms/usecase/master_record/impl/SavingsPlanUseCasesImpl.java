@@ -58,8 +58,8 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
                 .maximumBalance(savingsPlanEntity.getMaximumBalance())
                 .minimumBalance(savingsPlanEntity.getMinimumBalance())
                 .name(savingsPlanEntity.getPlanName().getName())
-                .percentageInterestRate(savingsPlanEntity.getInterestRate())
-                .savingsDurationList(tenorModelList)
+                .interestRate(savingsPlanEntity.getInterestRate())
+                .durations(tenorModelList)
                 .build();
     }
 
