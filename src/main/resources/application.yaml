@@ -36,3 +36,9 @@ transaction:
   status-update:
     start-after-minutes: 15
     stop-after-minutes: 90
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
