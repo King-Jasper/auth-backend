@@ -28,7 +28,7 @@ import java.util.List;
  */
 @Api(tags = "Savings Goal Management Endpoints",  description = "Handles savings goal transaction management.")
 @RestController
-@RequestMapping(value = "/api/v1/savings-goal", headers = {"x-request-client-key", "Authorization"})
+@RequestMapping(value = "/api/v1/savings-goals", headers = {"x-request-client-key", "Authorization"})
 public class SavingsGoalController {
 
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
