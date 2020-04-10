@@ -88,8 +88,13 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
 
     @Override
-    public long countAccountSavingsGoalOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {
+    public long countAccountSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {
         return repository.countAllByRecordStatusAndMintAccountAndSavingsPlan(RecordStatusConstant.ACTIVE, mintAccountEntity, planEntity);
+    }
+
+    @Override
+    public long countAccountSavingsGoals(MintAccountEntity mintAccountEntity) {
+        return repository.countAllByRecordStatusAndMintAccount(RecordStatusConstant.ACTIVE, mintAccountEntity);
     }
 
     @Override

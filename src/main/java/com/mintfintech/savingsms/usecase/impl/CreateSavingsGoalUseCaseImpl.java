@@ -1,6 +1,5 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
@@ -20,7 +19,6 @@ import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
 import javax.transaction.Transactional;
@@ -97,6 +95,10 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");
+        }
+
+        if(savingsGoalEntityDao.countAccountSavingsGoals(mintAccount) >= 5) {
+            throw new BusinessLogicConflictException("Sorry, you have reached the maximum(5) active saving goals permitted for an account.");
         }
 
         String goalName = goalCreationRequest.getName();
@@ -183,7 +185,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                         "until your account is verified and upgraded.");
             }
             // maximum of 3 tier one goals expected.
-            long totalTierOneSavingGoals = savingsGoalEntityDao.countAccountSavingsGoalOnPlan(bankAccountEntity.getMintAccount(), planEntity);
+            long totalTierOneSavingGoals = savingsGoalEntityDao.countAccountSavingsGoalsOnPlan(bankAccountEntity.getMintAccount(), planEntity);
             if(totalTierOneSavingGoals >= 3) {
                 throw new BusinessLogicConflictException("Sorry, maximum of 3 saving goals allowed for your account until it is verified.");
             }
