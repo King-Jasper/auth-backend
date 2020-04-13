@@ -75,6 +75,11 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
         return repository.getSavingsGoalWithMatchingSavingHour(SavingsGoalStatusConstant.ACTIVE, currentHourTime);
     }
 
+    @Override
+    public PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize) {
+        return null;
+    }
+
     private static Specification<SavingsGoalEntity> withStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
                 .and(criteriaBuilder.equal(root.get("goalStatus"), SavingsGoalStatusConstant.ACTIVE),
@@ -88,13 +93,14 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
 
     @Override
-    public long countAccountSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {
-        return repository.countAllByRecordStatusAndMintAccountAndSavingsPlan(RecordStatusConstant.ACTIVE, mintAccountEntity, planEntity);
+    public long countUserCreatedSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {
+        return repository.countAllByRecordStatusAndMintAccountAndSavingsPlanAndSavingsGoalType(RecordStatusConstant.ACTIVE,
+                mintAccountEntity, planEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
     }
 
     @Override
-    public long countAccountSavingsGoals(MintAccountEntity mintAccountEntity) {
-        return repository.countAllByRecordStatusAndMintAccount(RecordStatusConstant.ACTIVE, mintAccountEntity);
+    public long countUserCreatedAccountSavingsGoals(MintAccountEntity mintAccountEntity) {
+        return repository.countAllByRecordStatusAndMintAccountAndSavingsGoalType(RecordStatusConstant.ACTIVE, mintAccountEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
     }
 
     @Override

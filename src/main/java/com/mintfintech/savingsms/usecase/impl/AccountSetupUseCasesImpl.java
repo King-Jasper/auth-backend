@@ -17,6 +17,8 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
@@ -39,19 +41,23 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     public void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(mintAccountCreationEvent.getAccountId());
         if(!mintAccountEntityOptional.isPresent()){
+            LocalDateTime dateCreated = LocalDateTime.parse(mintAccountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
             MintAccountEntity mintAccountEntity = MintAccountEntity.builder()
                     .accountId(mintAccountCreationEvent.getAccountId())
                     .accountType(AccountTypeConstant.valueOf(mintAccountCreationEvent.getAccountType()))
                     .name(mintAccountCreationEvent.getName()).build();
+            mintAccountEntity.setDateCreated(dateCreated);
             mintAccountEntity = mintAccountEntityDao.saveRecord(mintAccountEntity);
             log.info("mint account created successfully: {}", mintAccountEntity.getAccountId());
             UserCreationEvent userCreationEvent = mintAccountCreationEvent.getUserCreationEvent();
+            dateCreated = LocalDateTime.parse(userCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
             String name = String.format("%s %s", userCreationEvent.getFirstName(), userCreationEvent.getLastName());
             AppUserEntity appUserEntity = AppUserEntity.builder()
                     .userId(userCreationEvent.getUserId())
                     .email(userCreationEvent.getEmail())
                     .name(name).phoneNumber(userCreationEvent.getPhoneNumber())
                     .primaryAccount(mintAccountEntity).build();
+            appUserEntity.setDateCreated(dateCreated);
             appUserEntityDao.saveRecord(appUserEntity);
             log.info("User created successfully: {}", appUserEntity.getUserId());
             if(mintAccountEntity.getAccountType() == AccountTypeConstant.INDIVIDUAL) {
@@ -73,6 +79,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         Optional<MintBankAccountEntity> bankAccountEntityOptional = mintBankAccountEntityDao.findByAccountId(accountId);
         CurrencyEntity currencyEntity = currencyEntityDao.getByCode(accountCreationEvent.getCurrencyCode());
         if(!bankAccountEntityOptional.isPresent()) {
+            LocalDateTime dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
             TierLevelEntity accountTier = getAccountTierLevel(accountCreationEvent.getAccountTier());
             MintBankAccountEntity bankAccountEntity = MintBankAccountEntity.builder()
                     .accountGroup(BankAccountGroupConstant.valueOf(accountCreationEvent.getAccountGroup()))
@@ -84,6 +91,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
                     .dailyTransactionLimit(BigDecimal.valueOf(accountCreationEvent.getDailyTransactionLimit()))
                     .mintAccount(mintAccountEntity)
                     .currency(currencyEntity).build();
+            bankAccountEntity.setDateCreated(dateCreated);
             mintBankAccountEntityDao.saveRecord(bankAccountEntity);
         }
     }

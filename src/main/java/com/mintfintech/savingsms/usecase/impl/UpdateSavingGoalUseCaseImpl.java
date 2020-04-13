@@ -91,4 +91,9 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         String description = String.format("Cancelled saving frequency: %s on goal %s", oldState.getSavingsFrequency().name(), savingsGoalEntity.getName());
         auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
     }
+
+    @Override
+    public void updateSavingsMaturityStatus() {
+
+    }
 }

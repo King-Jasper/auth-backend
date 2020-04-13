@@ -16,9 +16,10 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     List<SavingsGoalEntity>  getAccountSavingGoals(MintAccountEntity accountEntity);
     Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
     Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccount(String name, SavingsPlanEntity planEntity, MintAccountEntity accountEntity);
-    long countAccountSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity);
-    long countAccountSavingsGoals(MintAccountEntity mintAccountEntity);
+    long countUserCreatedSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity);
+    long countUserCreatedAccountSavingsGoals(MintAccountEntity mintAccountEntity);
     long countEligibleInterestSavingsGoal();
     PagedResponse<SavingsGoalEntity> getPagedEligibleInterestSavingsGoal(int pageIndex, int recordSize);
     List<SavingsGoalEntity> getSavingGoalWithAutoSaveTime(LocalDateTime autoSaveTime);
+    PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize);
 }

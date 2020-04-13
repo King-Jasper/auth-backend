@@ -17,4 +17,5 @@ public class MintBankAccountCreationEvent {
     private String accountTier;
     private double dailyTransactionLimit;
     private String currencyCode;
+    private String dateCreated;
 }

@@ -97,7 +97,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             throw new UnauthorisedException("Request denied.");
         }
 
-        if(savingsGoalEntityDao.countAccountSavingsGoals(mintAccount) >= 5) {
+        if(savingsGoalEntityDao.countUserCreatedAccountSavingsGoals(mintAccount) >= 5) {
             throw new BusinessLogicConflictException("Sorry, you have reached the maximum(5) active saving goals permitted for an account.");
         }
 
@@ -185,7 +185,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                         "until your account is verified and upgraded.");
             }
             // maximum of 3 tier one goals expected.
-            long totalTierOneSavingGoals = savingsGoalEntityDao.countAccountSavingsGoalsOnPlan(bankAccountEntity.getMintAccount(), planEntity);
+            long totalTierOneSavingGoals = savingsGoalEntityDao.countUserCreatedSavingsGoalsOnPlan(bankAccountEntity.getMintAccount(), planEntity);
             if(totalTierOneSavingGoals >= 3) {
                 throw new BusinessLogicConflictException("Sorry, maximum of 3 saving goals allowed for your account until it is verified.");
             }
