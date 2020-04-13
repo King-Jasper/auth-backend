@@ -79,16 +79,18 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         boolean isMatured = now.until(savingsGoal.getMaturityDate(), ChronoUnit.DAYS) <= 0;
         final BigDecimal withdrawableBalance;
         if(isMatured) {
+            log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
             amountRequested = savingsGoal.getSavingsBalance();
             withdrawableBalance = savingsGoal.getSavingsBalance();
         }else {
             SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
             withdrawableBalance = savingsGoal.getSavingsBalance().subtract(planEntity.getMinimumBalance());
         }
+        System.out.println("withdrawal amount: "+withdrawableBalance+" amount requested: "+amountRequested);
         if(amountRequested.compareTo(withdrawableBalance) > 0) {
             throw new BusinessLogicConflictException("Sorry, maximum withdrawable balance is N"+ MoneyFormatterUtil.priceWithDecimal(withdrawableBalance));
         }
-        createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
+     //   createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
         if(isMatured) {
             return "Request queued successfully. Your account will be funded very soon.";
         }

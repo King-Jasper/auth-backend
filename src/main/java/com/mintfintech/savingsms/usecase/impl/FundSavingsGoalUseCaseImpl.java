@@ -46,6 +46,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private ApplicationEventService applicationEventService;
     private UpdateBankAccountBalanceUseCase updateAccountBalanceUseCase;
     private AppUserEntityDao appUserEntityDao;
+    private TierLevelEntityDao tierLevelEntityDao;
 
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest) {
@@ -69,6 +70,12 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
         if(debitAccount.getAvailableBalance().compareTo(amount) < 0) {
             throw new BadRequestException("Sorry, you have sufficient balance in your account for this request.");
+        }
+        TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(debitAccount.getAccountTierLevel().getId());
+        if(tierLevelEntity.getLevel() != TierLevelTypeConstant.TIER_THREE) {
+            if(amount.compareTo(tierLevelEntity.getBulletTransactionAmount()) > 0) {
+                throw new BadRequestException("Sorry, transaction limit on your account tier is N"+MoneyFormatterUtil.priceWithDecimal(tierLevelEntity.getBulletTransactionAmount()));
+            }
         }
         SavingsGoalFundingResponse response = fundSavingGoal(debitAccount, appUserEntity, savingsGoalEntity, amount);
         return response;

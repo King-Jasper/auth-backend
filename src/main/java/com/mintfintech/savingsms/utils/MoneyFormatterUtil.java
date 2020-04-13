@@ -44,8 +44,13 @@ public class MoneyFormatterUtil {
     }
 
     public static void main(String[] args) {
-        LocalDateTime now = LocalDateTime.now();
-        System.out.println(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")));
+        BigDecimal savingAmount = BigDecimal.valueOf(200.00);
+        BigDecimal amountRequested = BigDecimal.valueOf(500.00);
+        BigDecimal withdrawalAmount = savingAmount.subtract(amountRequested);
+        System.out.println(amountRequested.compareTo(withdrawalAmount));
+        System.out.println(withdrawalAmount);
+       // LocalDateTime now = LocalDateTime.now();
+       // System.out.println(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")));
         /*double interestRatePerDay = 6.5 / (100.0 * 365.0);
         BigDecimal bigDecimal = BigDecimal.valueOf(interestRatePerDay);
         BigDecimal interest = BigDecimal.valueOf(100000.00).multiply(bigDecimal).setScale(2, BigDecimal.ROUND_CEILING);
