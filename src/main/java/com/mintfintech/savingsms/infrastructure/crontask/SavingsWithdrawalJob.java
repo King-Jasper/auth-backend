@@ -17,12 +17,13 @@ public class SavingsWithdrawalJob {
         this.fundWithdrawalUseCase = fundWithdrawalUseCase;
     }
 
-    @Scheduled(cron = "0 5 0 ? * *") // runs by every 5 minutes
+    @Scheduled(cron = "0 0/5 0 ? * *") // runs by every 5 minutes
     public void processInterestAccountCrediting(){
+
         fundWithdrawalUseCase.processInterestCreditForFundWithdrawal();
     }
 
-    @Scheduled(cron = "0 5 0 ? * *") // runs by every 5 minutes
+    @Scheduled(cron = "0 0/5 0 ? * *") // runs by every 5 minutes
     public void processSavingAccountFunding(){
        fundWithdrawalUseCase.processSavingFundCrediting();
     }

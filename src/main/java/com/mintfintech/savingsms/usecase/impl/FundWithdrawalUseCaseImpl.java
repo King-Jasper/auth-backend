@@ -82,18 +82,18 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             throw new BadRequestException(message);
         }
         boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate());
-        final BigDecimal withdrawableBalance;
+        final BigDecimal availableBalance;
         if(isMatured) {
             log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
             amountRequested = savingsGoal.getSavingsBalance();
-            withdrawableBalance = savingsGoal.getSavingsBalance();
+            availableBalance = savingsGoal.getSavingsBalance();
         }else {
             SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
-            withdrawableBalance = savingsGoal.getSavingsBalance().subtract(planEntity.getMinimumBalance());
+            availableBalance = savingsGoal.getSavingsBalance().subtract(planEntity.getMinimumBalance());
         }
-        System.out.println("withdrawal amount: "+withdrawableBalance+" amount requested: "+amountRequested);
-        if(amountRequested.compareTo(withdrawableBalance) > 0) {
-            throw new BusinessLogicConflictException("Sorry, maximum withdrawable balance is N"+ MoneyFormatterUtil.priceWithDecimal(withdrawableBalance));
+        System.out.println("Available amount: "+availableBalance+" amount requested: "+amountRequested);
+        if(amountRequested.compareTo(availableBalance) > 0) {
+            throw new BusinessLogicConflictException("Sorry, maximum amount that can be withdrawn is N"+ MoneyFormatterUtil.priceWithDecimal(availableBalance));
         }
         createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
         if(isMatured) {
