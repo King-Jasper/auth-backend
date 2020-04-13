@@ -36,6 +36,8 @@ transaction:
   status-update:
     start-after-minutes: 15
     stop-after-minutes: 90
+savings-goal:
+  minimum-days-for-withdrawal: 3
 
 management:
   endpoints:

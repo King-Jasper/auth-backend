@@ -53,6 +53,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingPlanName(savingsPlanEntity.getPlanName().getName())
                 .maturityDate(maturityDate)
                 .nextSavingsDate(nextSavingsDate)
+                .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .build();
     }
 

@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferRe
 import com.mintfintech.savingsms.domain.models.corebankingservice.InterestWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -46,6 +47,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private UpdateBankAccountBalanceUseCase updateAccountBalanceUseCase;
     private CoreBankingServiceClient coreBankingServiceClient;
     private SystemIssueLogService systemIssueLogService;
+    private ApplicationProperty applicationProperty;
 
     @Override
     public String withdrawalSavings(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest withdrawalRequest) {
@@ -70,8 +72,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     public String processCustomerSavingWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser, BigDecimal amountRequested) {
         LocalDateTime now = LocalDateTime.now();
         long remainingDays = savingsGoal.getDateCreated().until(now, ChronoUnit.DAYS);
-        if(remainingDays < 30) {
-            throw new BusinessLogicConflictException("Sorry, you have "+(30 - remainingDays)+" days left before you can withdraw fund from your savings.");
+        int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
+        if(remainingDays < minimumDaysForWithdrawal) {
+            throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - remainingDays)+" days left before you can withdraw fund from your savings.");
         }
         boolean isMatured = now.until(savingsGoal.getMaturityDate(), ChronoUnit.DAYS) <= 0;
         final BigDecimal withdrawableBalance;
@@ -87,7 +90,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
         if(isMatured) {
-            return "Request queued successfully. Your account will be funded very soon";
+            return "Request queued successfully. Your account will be funded very soon.";
         }
         return "Request queued successfully. Your account will be funded within the next 2 business days.";
     }

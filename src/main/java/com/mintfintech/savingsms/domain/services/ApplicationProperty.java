@@ -35,6 +35,10 @@ public class ApplicationProperty {
         return environmentService.getVariable("microservices.accounts.service-name", "");
     }
 
+    public int savingsMinimumNumberOfDaysForWithdrawal() {
+        return Integer.parseInt(environmentService.getVariable("savings-goal.minimum-days-for-withdrawal", "30"));
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }
