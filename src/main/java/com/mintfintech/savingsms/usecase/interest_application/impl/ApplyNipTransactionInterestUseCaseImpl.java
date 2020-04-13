@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.interest_application.impl;
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
@@ -24,7 +25,7 @@ public class ApplyNipTransactionInterestUseCaseImpl implements ApplyNipTransacti
 
     private MintAccountEntityDao mintAccountEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
-    private SavingsGoalTransactionEntity savingsGoalTransactionEntity;
+    private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
     private AppUserEntityDao appUserEntityDao;
 
     @Override
