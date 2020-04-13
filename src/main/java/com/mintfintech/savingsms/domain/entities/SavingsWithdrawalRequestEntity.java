@@ -42,7 +42,7 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
     private BigDecimal accruedInterest = BigDecimal.ZERO;
 
     @Builder.Default
-    private BigDecimal amountSaved = BigDecimal.ZERO;
+    private BigDecimal balanceBeforeWithdrawal = BigDecimal.ZERO;
 
     @Builder.Default
     private boolean interestCreditedOnDebitAccount = false;

@@ -44,12 +44,12 @@ public class MoneyFormatterUtil {
     }
 
     public static void main(String[] args) {
-        BigDecimal savingAmount = BigDecimal.valueOf(200.00);
-        BigDecimal amountRequested = BigDecimal.valueOf(500.00);
-        BigDecimal withdrawalAmount = savingAmount.subtract(amountRequested);
-        System.out.println(amountRequested.compareTo(withdrawalAmount));
-        System.out.println(withdrawalAmount);
-       // LocalDateTime now = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime dateTimeOne = LocalDateTime.parse("2020-04-13T12:32:38.536");
+        long daysRemaining = now.until(dateTimeOne, ChronoUnit.DAYS);
+        System.out.println("remaining days: "+daysRemaining);
+        boolean sameDay = now.toLocalDate().isEqual(dateTimeOne.toLocalDate());
+        System.out.println("same Day: "+sameDay);
        // System.out.println(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")));
         /*double interestRatePerDay = 6.5 / (100.0 * 365.0);
         BigDecimal bigDecimal = BigDecimal.valueOf(interestRatePerDay);

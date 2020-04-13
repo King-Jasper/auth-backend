@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalBalanceUpdateEvent;
+import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -91,9 +92,9 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
             return false;
         }
         if(savingsGoalEntity.getLastInterestApplicationDate() != null) {
-            long hoursPast = savingsGoalEntity.getLastInterestApplicationDate().until(LocalDateTime.now(), ChronoUnit.HOURS);
-            log.info("Hours past for savings goal interest application: {} hours", hoursPast);
-            return hoursPast >= 23;
+            boolean interestAppliedToday = DateUtil.sameDay(LocalDateTime.now(), savingsGoalEntity.getLastInterestApplicationDate());
+            log.info("Interest has been applied today: {}", interestAppliedToday);
+            return !interestAppliedToday;
         }else {
             if(savingsInterestEntityDao.countInterestOnGoal(savingsGoalEntity) == 0) {
                 return true;

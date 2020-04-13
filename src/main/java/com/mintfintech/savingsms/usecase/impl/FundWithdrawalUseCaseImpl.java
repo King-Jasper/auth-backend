@@ -16,6 +16,7 @@ import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +77,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(remainingDays < minimumDaysForWithdrawal) {
             throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - remainingDays)+" days left before you can withdraw fund from your savings.");
         }
-        boolean isMatured = now.until(savingsGoal.getMaturityDate(), ChronoUnit.DAYS) <= 0;
+        if(savingsGoal.getSavingsBalance().compareTo(amountRequested) < 0) {
+            String message = String.format("Amount requested (N%s) cannot be greater than amount saved (N%s)", MoneyFormatterUtil.priceWithDecimal(amountRequested), MoneyFormatterUtil.priceWithDecimal(savingsGoal.getSavingsBalance()));
+            throw new BadRequestException(message);
+        }
+        boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate());
         final BigDecimal withdrawableBalance;
         if(isMatured) {
             log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
@@ -90,7 +95,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(amountRequested.compareTo(withdrawableBalance) > 0) {
             throw new BusinessLogicConflictException("Sorry, maximum withdrawable balance is N"+ MoneyFormatterUtil.priceWithDecimal(withdrawableBalance));
         }
-     //   createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
+        createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
         if(isMatured) {
             return "Request queued successfully. Your account will be funded very soon.";
         }
@@ -102,7 +107,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(savingsWithdrawalRequestEntityDao.countWithdrawalRequestWithinPeriod(savingsGoal, twoMinutesAgo, LocalDateTime.now()) > 0) {
             throw new BusinessLogicConflictException("Possible duplicate withdrawal request.");
         }
-        savingsGoal.setSavingsBalance(savingsGoal.getSavingsBalance().subtract(amountRequested));
+        BigDecimal currentBalance = savingsGoal.getSavingsBalance();
+        savingsGoal.setSavingsBalance(currentBalance.subtract(amountRequested));
         if(maturedGoal) {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
         }
@@ -111,7 +117,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 .amount(amountRequested)
                 .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
                 .accruedInterest(savingsGoal.getAccruedInterest())
-                .amountSaved(savingsGoal.getSavingsAmount())
+                .balanceBeforeWithdrawal(currentBalance)
                 .maturedGoal(maturedGoal)
                 .savingsGoal(savingsGoal)
                 .requestedBy(currentUser)
@@ -195,7 +201,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .transactionType(TransactionTypeConstant.DEBIT)
                     .transactionStatus(TransactionStatusConstant.PENDING)
                     .savingsGoal(savingsGoalEntity)
-                    .currentBalance(withdrawalRequestEntity.getAmountSaved())
+                    .currentBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()))
                     .build();
 
             transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
