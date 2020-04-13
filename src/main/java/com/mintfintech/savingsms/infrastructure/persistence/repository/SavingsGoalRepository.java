@@ -53,9 +53,9 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
     List<SavingsGoalEntity> getSavingsGoalWithMatchingSavingHour(@Param("status") SavingsGoalStatusConstant status,
                                                                                     @Param("dateWithHour24") String dateWithHour24);
 
-    @Query(value = "select s from SavingsGoalEntity s where s.goalStatus  =:status and " +
-            "s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and" +
-            " s.maturityDate between :fromTime and :toTime")
+    @Query(value = "select s from SavingsGoalEntity s where s.maturityDate is not null and " +
+            "s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER " +
+            "and s.goalStatus  =:status and s.maturityDate between :fromTime and :toTime")
     Page<SavingsGoalEntity> getSavingsGoalWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
                                                              @Param("fromTime") LocalDateTime fromTime,
                                                              @Param("toTime") LocalDateTime toTime, Pageable pageable);

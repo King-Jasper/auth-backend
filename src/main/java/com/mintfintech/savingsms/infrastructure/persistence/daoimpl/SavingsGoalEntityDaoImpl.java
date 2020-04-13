@@ -77,7 +77,9 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     @Override
     public PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize) {
-        return null;
+        Pageable pageable = PageRequest.of(pageIndex, recordSize);
+        Page<SavingsGoalEntity> goalEntityPage = repository.getSavingsGoalWithMaturityPeriod(SavingsGoalStatusConstant.ACTIVE, fromTime, toTime, pageable);
+        return new PagedResponse<>(goalEntityPage.getTotalElements() ,goalEntityPage.getTotalPages(), goalEntityPage.getContent());
     }
 
     private static Specification<SavingsGoalEntity> withStatus() {

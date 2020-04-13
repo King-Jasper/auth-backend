@@ -23,6 +23,7 @@ import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -92,8 +93,4 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
     }
 
-    @Override
-    public void updateSavingsMaturityStatus() {
-
-    }
 }

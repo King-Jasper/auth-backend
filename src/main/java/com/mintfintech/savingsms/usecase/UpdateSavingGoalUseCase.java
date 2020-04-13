@@ -11,5 +11,4 @@ import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 public interface UpdateSavingGoalUseCase {
     SavingsGoalModel updateSavingFrequency(AuthenticatedUser currentUser, SavingsFrequencyUpdateRequest autoSaveRequest);
     void cancelSavingFrequency(AuthenticatedUser currentUser, String goalId);
-    void updateSavingsMaturityStatus();
 }

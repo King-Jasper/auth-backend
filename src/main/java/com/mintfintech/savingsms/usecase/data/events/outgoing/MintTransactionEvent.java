@@ -22,4 +22,5 @@ public class MintTransactionEvent {
     private BigDecimal transactionAmount;
     private BigDecimal balanceBeforeTransaction;
     private BigDecimal balanceAfterTransaction;
+    private String dateCreated;
 }

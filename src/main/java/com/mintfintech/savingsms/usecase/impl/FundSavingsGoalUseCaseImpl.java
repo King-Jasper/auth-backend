@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 /**
@@ -66,7 +67,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 throw new BusinessLogicConflictException("Sorry, maximum amount for your savings plan is N"+ MoneyFormatterUtil.priceWithDecimal(planEntity.getMaximumBalance()));
             }
         }
-
         if(debitAccount.getAvailableBalance().compareTo(amount) < 0) {
             throw new BadRequestException("Sorry, you have sufficient balance in your account for this request.");
         }
@@ -108,6 +108,15 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             }
             savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
             savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+            SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
+            if(savingsPlanEntity.getPlanName() != SavingsPlanTypeConstant.SAVINGS_TIER_THREE) {
+                BigDecimal toBeNewBalance = savingsGoalEntity.getSavingsBalance().add(savingsAmount);
+                if(toBeNewBalance.compareTo(savingsPlanEntity.getMaximumBalance()) > 0) {
+                    log.info("Savings goal: {} Auto debit ignored. New balance {} will be above maximum balance for plan: {}" , savingsGoalEntity.getGoalId(), toBeNewBalance, savingsPlanEntity.getMaximumBalance());
+                    // send an email to the customer.
+                    continue;
+                }
+            }
            fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
         }
     }
@@ -196,9 +205,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         return savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
     }
 
-
-
-
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         String description = "Savings Goal funding - "+savingsGoalTransactionEntity.getSavingsGoal().getGoalId();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
@@ -212,6 +218,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .externalReference(savingsGoalTransactionEntity.getExternalReference())
                 .internalReference(savingsGoalTransactionEntity.getTransactionReference())
                 .spendingTagId(0)
+                .dateCreated(savingsGoalTransactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.MINT_TRANSACTION_LOG, new EventModel<>(transactionPayload));
     }
