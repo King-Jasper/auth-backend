@@ -52,6 +52,11 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
     }
 
     @Override
+    public Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType) {
+        return repository.findFirstByMintAccountAndSavingsGoalType(accountEntity, savingsGoalType);
+    }
+
+    @Override
     public long countEligibleInterestSavingsGoal() {
         return repository.countEligibleInterestSavingsGoal();
     }

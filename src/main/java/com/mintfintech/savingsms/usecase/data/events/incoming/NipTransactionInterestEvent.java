@@ -9,9 +9,10 @@ import java.math.BigDecimal;
  */
 @Data
 public class NipTransactionInterestEvent {
-    private String accountId;
+    private String debitAccountId;
     private String userId;
-    private String reference;
+    private String internalReference;
+    private String externalReference;
     private BigDecimal amount;
     private String dateCreated;
 }

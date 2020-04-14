@@ -135,7 +135,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
              withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSING_INTEREST_CREDIT);
              savingsWithdrawalRequestEntityDao.saveAndFlush(withdrawalRequestEntity);
              if(!withdrawalRequestEntity.isMaturedGoal()) {
-                   log.info("no interest will be applied. Goal is not matured. {}", withdrawalRequestEntity.getId());
+                   log.info("no interest will be withdrawn. Goal is not matured. {}", withdrawalRequestEntity.getId());
                    withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_FUND_DISBURSEMENT);
                    savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                    continue;
@@ -201,7 +201,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .transactionType(TransactionTypeConstant.DEBIT)
                     .transactionStatus(TransactionStatusConstant.PENDING)
                     .savingsGoal(savingsGoalEntity)
-                    .currentBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()))
+                    .currentBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal())
                     .build();
 
             transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
@@ -233,7 +233,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
-                transactionEntity.setNewBalance(savingsGoalEntity.getSavingsBalance());
+                transactionEntity.setNewBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()));
             }else {
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.FUND_DISBURSEMENT_FAILED);

@@ -39,6 +39,9 @@ transaction:
 savings-goal:
   minimum-days-for-withdrawal: 3
 
+mint-interest:
+  nip-transaction: 12.0
+
 management:
   endpoints:
     web:

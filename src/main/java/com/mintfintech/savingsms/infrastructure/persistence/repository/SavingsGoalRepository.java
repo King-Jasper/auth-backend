@@ -37,6 +37,8 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
 
     Optional<SavingsGoalEntity> findFirstByMintAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
 
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsGoalType(MintAccountEntity mintAccountEntity, SavingsGoalTypeConstant goalTypeConstant);
+
     @Query("select count(s) from SavingsGoalEntity s where s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
             "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")

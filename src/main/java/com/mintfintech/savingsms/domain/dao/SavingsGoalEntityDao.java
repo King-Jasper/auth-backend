@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 
 import java.time.LocalDateTime;
@@ -13,6 +14,7 @@ import java.util.Optional;
  */
 public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     String generateSavingGoalId();
+    Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType);
     List<SavingsGoalEntity>  getAccountSavingGoals(MintAccountEntity accountEntity);
     Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
     Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccount(String name, SavingsPlanEntity planEntity, MintAccountEntity accountEntity);
