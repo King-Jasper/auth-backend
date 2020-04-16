@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
@@ -42,6 +43,9 @@ public class ChangeSavingsPlanUseCaseImpl implements ChangeSavingsPlanUseCase {
             throw new BadRequestException("Invalid saving goal Id.");
         }
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityOptional.get();
+        if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be updated because it's created by the system.");
+        }
         SavingsPlanEntity planEntity = savingsPlanEntityDao.findPlanByPlanId(planId).orElseThrow(() -> new BadRequestException("Invalid savings plan Id."));
         if(planEntity.getId().equals(savingsGoalEntity.getSavingsPlan().getId())) {
             throw new BusinessLogicConflictException("You are already on "+planEntity.getPlanName().getName()+" plan");

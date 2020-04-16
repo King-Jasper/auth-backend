@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -45,6 +46,10 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, autoSaveRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
         SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
+
+        if(savingsGoal.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be updated because it's created by the system.");
+        }
 
         BigDecimal savingsAmount = BigDecimal.valueOf(autoSaveRequest.getAmount());
         if(planEntity.getMaximumBalance().compareTo(BigDecimal.ZERO) > 0 && savingsAmount.compareTo(planEntity.getMaximumBalance()) > 0) {
@@ -88,6 +93,9 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, goalId)
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
+        if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be cancelled because it's created by the system.");
+        }
 
         SavingsGoalEntity oldState = new SavingsGoalEntity();
         BeanUtils.copyProperties(savingsGoalEntity, oldState);
