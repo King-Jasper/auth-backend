@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -41,6 +42,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsGoalEntity.getNextAutoSaveDate() != null) {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
+
         return SavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
@@ -53,6 +55,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingPlanName(savingsPlanEntity.getPlanName().getName())
                 .maturityDate(maturityDate)
                 .nextSavingsDate(nextSavingsDate)
+                .customerCreated(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER)
+                .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .build();
     }
@@ -68,7 +72,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     @Override
     public List<SavingsGoalModel> getSavingsGoalList(MintAccountEntity mintAccountEntity) {
         List<SavingsGoalModel> savingsGoalList = savingsGoalEntityDao.getAccountSavingGoals(mintAccountEntity)
-                .stream().filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
+                .stream()
+                //.filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
                 .map(this::fromSavingsGoalEntityToModel)
                 .collect(Collectors.toList());
         return savingsGoalList;

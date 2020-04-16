@@ -55,6 +55,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, fundingRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
 
+        if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be funded because it's created by the system.");
+        }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(fundingRequest.getDebitAccountId(), accountEntity)
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
 
