@@ -50,6 +50,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
                 .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
                         .durationId(savingsPlanTenorEntity.getId())
                         .description(String.format("%d Days", savingsPlanTenorEntity.getDuration()))
+                        .value(savingsPlanTenorEntity.getDuration())
                         .build()
                 ).collect(Collectors.toList());
 
