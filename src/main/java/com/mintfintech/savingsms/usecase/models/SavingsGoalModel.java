@@ -25,5 +25,4 @@ public class SavingsGoalModel {
    private String maturityDate;
    private String nextSavingsDate;
    private String categoryCode;
-   private boolean customerCreated;
 }

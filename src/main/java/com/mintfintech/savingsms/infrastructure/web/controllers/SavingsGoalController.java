@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.ChangeSavingsPlanUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -51,7 +52,14 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns a list of savings goals for an account.")
+    @ApiOperation(value = "Returns a list of savings goals on an account.")
+    @GetMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<AccountSavingsGoalResponse>> getAllSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser));
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns a list of savings goals created by account user.")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsGoalModel>>> getAccountSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ApiResponseJSON<List<SavingsGoalModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getSavingsGoalList(authenticatedUser));
