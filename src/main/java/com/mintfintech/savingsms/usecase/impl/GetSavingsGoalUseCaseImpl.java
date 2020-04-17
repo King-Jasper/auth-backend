@@ -67,7 +67,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = false;
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-            matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) >= 0;
+            matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
         }
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())

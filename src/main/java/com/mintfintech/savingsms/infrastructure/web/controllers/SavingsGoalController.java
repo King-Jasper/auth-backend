@@ -44,7 +44,7 @@ public class SavingsGoalController {
     }
 
     @ApiOperation(value = "Creates a new savings goal.")
-    @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSON goalCreationRequestJSON) {
         SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
@@ -52,8 +52,8 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns a list of savings goals on an account.")
-    @GetMapping(value = "/account", produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Returns a comprehension list of account savings goal(mint and customer created goals).")
+    @GetMapping(value = "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<AccountSavingsGoalResponse>> getAllSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser));
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
