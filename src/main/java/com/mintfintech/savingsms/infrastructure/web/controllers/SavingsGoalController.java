@@ -44,7 +44,7 @@ public class SavingsGoalController {
     }
 
     @ApiOperation(value = "Creates a new savings goal.")
-    @PostMapping(value = "/", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSON goalCreationRequestJSON) {
         SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
