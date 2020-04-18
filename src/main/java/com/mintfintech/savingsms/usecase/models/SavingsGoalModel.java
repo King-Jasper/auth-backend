@@ -23,6 +23,7 @@ public class SavingsGoalModel {
    private BigDecimal accruedInterest;
    private String savingFrequency;
    private String maturityDate;
+   private String startDate;
    private String nextSavingsDate;
    private String categoryCode;
 }
