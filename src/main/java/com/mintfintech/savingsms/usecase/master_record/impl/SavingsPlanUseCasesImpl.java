@@ -19,6 +19,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -44,22 +45,23 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
         return savingsPlanEntityDao.getSavingsPlans().stream().map(this::fromEntityToModel).collect(Collectors.toList());
     }
 
-
     private SavingsPlanModel fromEntityToModel(SavingsPlanEntity savingsPlanEntity) {
         List<SavingsPlanTenorModel> tenorModelList = savingsPlanTenorEntityDao.getTenorListByPlan(savingsPlanEntity).stream()
                 .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
                         .durationId(savingsPlanTenorEntity.getId())
                         .description(String.format("%d Days", savingsPlanTenorEntity.getDuration()))
+                        .value(savingsPlanTenorEntity.getDuration())
                         .build()
-                ).collect(Collectors.toList());
+                ).sorted(Comparator.comparing(SavingsPlanTenorModel::getValue))
+                .collect(Collectors.toList());
 
         return SavingsPlanModel.builder()
                 .planId(savingsPlanEntity.getPlanId())
                 .maximumBalance(savingsPlanEntity.getMaximumBalance())
                 .minimumBalance(savingsPlanEntity.getMinimumBalance())
                 .name(savingsPlanEntity.getPlanName().getName())
-                .percentageInterestRate(savingsPlanEntity.getInterestRate())
-                .savingsDurationList(tenorModelList)
+                .interestRate(savingsPlanEntity.getInterestRate())
+                .durations(tenorModelList)
                 .build();
     }
 

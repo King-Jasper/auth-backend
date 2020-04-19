@@ -16,11 +16,14 @@ public class SavingsGoalModel {
    private String name;
    private boolean autoSaveEnabled;
    private String savingPlanName;
+   private String currentStatus;
    private BigDecimal savingsBalance;
    private BigDecimal savingsAmount;
    private BigDecimal targetAmount;
    private BigDecimal accruedInterest;
    private String savingFrequency;
    private String maturityDate;
+   private String startDate;
    private String nextSavingsDate;
+   private String categoryCode;
 }

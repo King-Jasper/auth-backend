@@ -36,3 +36,17 @@ transaction:
   status-update:
     start-after-minutes: 15
     stop-after-minutes: 90
+savings-goal:
+  minimum-days-for-withdrawal: 3
+
+mint-interest:
+  nip-transaction: 12.0
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: '*'
+  metrics:
+    tags:
+      application: ${spring.application.name}

@@ -1,7 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.security;
 
 import com.mintfintech.savingsms.domain.services.JWTService;
-import com.mintfintech.savingsms.infrastructure.servicesimpl.ApplicationProperty;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.authentication.dao.AbstractUserDetailsAuthenticationProvider;

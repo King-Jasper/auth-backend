@@ -12,7 +12,7 @@ import java.math.BigDecimal;
 @Builder
 @Data
 public class MintTransactionEvent {
-    private long debitAccountId;
+    private String debitAccountId;
     private String description;
     private String category;
     private long spendingTagId;
@@ -22,4 +22,5 @@ public class MintTransactionEvent {
     private BigDecimal transactionAmount;
     private BigDecimal balanceBeforeTransaction;
     private BigDecimal balanceAfterTransaction;
+    private String dateCreated;
 }

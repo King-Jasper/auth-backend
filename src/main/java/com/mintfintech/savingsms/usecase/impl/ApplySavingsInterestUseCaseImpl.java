@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.impl;
 
+import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsInterestEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
@@ -7,11 +8,14 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalBalanceUpdateEvent;
+import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -34,6 +38,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     private ApplicationEventService applicationEventService;
     private SavingsInterestEntityDao savingsInterestEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
+    private MintAccountEntityDao mintAccountEntityDao;
 
     @Override
     public void processInterestAndUpdateGoals() {
@@ -69,6 +74,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                 .interest(interest)
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
                 .savingsGoal(savingsGoalEntity)
+                .rate(planEntity.getInterestRate())
                 .build();
         savingsInterestEntityDao.saveRecord(savingsInterestEntity);
         savingsGoalEntity.setAccruedInterest(savingsInterestEntityDao.getTotalInterestAmountOnGoal(savingsGoalEntity));
@@ -77,10 +83,18 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private boolean shouldApplyInterest(SavingsGoalEntity savingsGoalEntity) {
+        if(savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
+            log.info("Saving goal not created by customer.");
+            return false;
+        }
+        if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {
+            log.info("Saving goal is not longer active.");
+            return false;
+        }
         if(savingsGoalEntity.getLastInterestApplicationDate() != null) {
-            long hoursPast = savingsGoalEntity.getLastInterestApplicationDate().until(LocalDateTime.now(), ChronoUnit.HOURS);
-            log.info("Hours past for savings goal interest application: {} hours", hoursPast);
-            return hoursPast >= 23;
+            boolean interestAppliedToday = DateUtil.sameDay(LocalDateTime.now(), savingsGoalEntity.getLastInterestApplicationDate());
+            log.info("Interest has been applied today: {}", interestAppliedToday);
+            return !interestAppliedToday;
         }else {
             if(savingsInterestEntityDao.countInterestOnGoal(savingsGoalEntity) == 0) {
                 return true;
@@ -91,7 +105,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private void publishInterestApplication(SavingsGoalEntity savingsGoalEntity) {
-        MintAccountEntity accountEntity = savingsGoalEntity.getMintAccount();
+        MintAccountEntity accountEntity = mintAccountEntityDao.getRecordById(savingsGoalEntity.getMintAccount().getId());
         SavingsGoalBalanceUpdateEvent updateEvent = SavingsGoalBalanceUpdateEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .accountId(accountEntity.getAccountId())

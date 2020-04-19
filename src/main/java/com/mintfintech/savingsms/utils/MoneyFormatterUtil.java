@@ -7,6 +7,7 @@ import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 
 /**
@@ -43,6 +44,13 @@ public class MoneyFormatterUtil {
     }
 
     public static void main(String[] args) {
+        LocalDateTime now = LocalDateTime.now();
+        LocalDateTime dateTimeOne = LocalDateTime.parse("2020-04-13T12:32:38.536");
+        long daysRemaining = now.until(dateTimeOne, ChronoUnit.DAYS);
+        System.out.println("remaining days: "+daysRemaining);
+        boolean sameDay = now.toLocalDate().isEqual(dateTimeOne.toLocalDate());
+        System.out.println("same Day: "+sameDay);
+       // System.out.println(now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH")));
         /*double interestRatePerDay = 6.5 / (100.0 * 365.0);
         BigDecimal bigDecimal = BigDecimal.valueOf(interestRatePerDay);
         BigDecimal interest = BigDecimal.valueOf(100000.00).multiply(bigDecimal).setScale(2, BigDecimal.ROUND_CEILING);

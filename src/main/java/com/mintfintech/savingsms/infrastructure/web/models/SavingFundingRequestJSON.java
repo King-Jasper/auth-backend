@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.web.models;
 
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
 import io.swagger.annotations.ApiModelProperty;
+import lombok.Data;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
@@ -11,6 +12,7 @@ import javax.validation.constraints.NotNull;
  * Created by jnwanya on
  * Fri, 03 Apr, 2020
  */
+@Data
 public class SavingFundingRequestJSON {
 
     @ApiModelProperty(notes = "The goalId to be funded", required = true)

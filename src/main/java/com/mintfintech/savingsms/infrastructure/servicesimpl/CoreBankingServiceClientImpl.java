@@ -4,9 +4,11 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mintfintech.savingsms.domain.models.corebankingservice.BalanceEnquiryResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.InterestWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.ClientResponse;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.MsRestClientService;
 import org.springframework.cloud.client.ServiceInstance;
@@ -41,6 +43,24 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
         String serviceUrl = String.format("%s/api/v1/transfer/intra-bank", baseUrl);
         try{
             String requestBody = gson.toJson(transferRequestCBS);
+            ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
+            MsClientResponse<FundTransferResponseCBS> response;
+            Type collectionType = new TypeToken<MsClientResponse<FundTransferResponseCBS>>(){}.getType();
+            response = gson.fromJson(clientResponse.getResponseBody(), collectionType);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            return response;
+        }catch (Exception ex){
+            return MsClientResponse.<FundTransferResponseCBS>builder().success(false).build();
+        }
+    }
+
+    @Override
+    public MsClientResponse<FundTransferResponseCBS> processSavingInterestWithdrawal(InterestWithdrawalRequestCBS withdrawalRequestCBS) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/transfer/interest-disbursement", baseUrl);
+        try{
+            String requestBody = gson.toJson(withdrawalRequestCBS);
             ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
             MsClientResponse<FundTransferResponseCBS> response;
             Type collectionType = new TypeToken<MsClientResponse<FundTransferResponseCBS>>(){}.getType();

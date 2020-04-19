@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.infrastructure.servicesimpl;
+package com.mintfintech.savingsms.domain.services;
 
 import com.mintfintech.savingsms.domain.services.EnvironmentService;
 
@@ -33,6 +33,14 @@ public class ApplicationProperty {
     }
     public String getAccountsServiceName() {
         return environmentService.getVariable("microservices.accounts.service-name", "");
+    }
+
+    public int savingsMinimumNumberOfDaysForWithdrawal() {
+        return Integer.parseInt(environmentService.getVariable("savings-goal.minimum-days-for-withdrawal", "30"));
+    }
+
+    public double getNipTransactionInterest() {
+        return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
     }
 
    /* public String getMintBankCode() {

@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 import com.google.gson.Gson;
 
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +27,7 @@ public class AccountMSEventListener {
     }
     private final String MINT_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.mint-account-creation";
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
+    private final String MINT_ACCOUNT_LIMIT_UPDATE_EVENT = "com.mintfintech.accounts-service.events.mint-account-limit-update";
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT})
     public void listenForAccountCreation(String payload) {
@@ -39,6 +41,13 @@ public class AccountMSEventListener {
         log.info("bank account creation: {}", payload);
         MintBankAccountCreationEvent event = gson.fromJson(payload, MintBankAccountCreationEvent.class);
         accountSetupUseCases.createIndividualBankAccount(event);
+    }
+
+    @KafkaListener(topics = {MINT_ACCOUNT_LIMIT_UPDATE_EVENT})
+    public void listenForMintAccountLimitUpdate(String payload) {
+        log.info("account limit update : {}", payload);
+        AccountLimitUpdateEvent event = gson.fromJson(payload, AccountLimitUpdateEvent.class);
+        accountSetupUseCases.updateAccountTransactionLimit(event);
     }
 
 }

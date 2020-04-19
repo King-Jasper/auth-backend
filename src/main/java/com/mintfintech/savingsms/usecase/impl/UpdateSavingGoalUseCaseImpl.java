@@ -1,14 +1,11 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -23,6 +20,7 @@ import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -34,6 +32,8 @@ import java.time.LocalDateTime;
 public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
 
     private MintAccountEntityDao mintAccountEntityDao;
+    private MintBankAccountEntityDao mintBankAccountEntityDao;
+    private TierLevelEntityDao tierLevelEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
@@ -47,10 +47,23 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
         SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
 
+        if(savingsGoal.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be updated because it's created by the system.");
+        }
+
         BigDecimal savingsAmount = BigDecimal.valueOf(autoSaveRequest.getAmount());
         if(planEntity.getMaximumBalance().compareTo(BigDecimal.ZERO) > 0 && savingsAmount.compareTo(planEntity.getMaximumBalance()) > 0) {
             throw new BusinessLogicConflictException("The maximum amount for your savings plan is N"+ MoneyFormatterUtil.priceWithDecimal(planEntity.getMaximumBalance()));
         }
+
+        MintBankAccountEntity currentAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(accountEntity, BankAccountTypeConstant.CURRENT);
+        TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(currentAccount.getAccountTierLevel().getId());
+        if(tierLevelEntity.getLevel() != TierLevelTypeConstant.TIER_THREE) {
+            if(savingsAmount.compareTo(tierLevelEntity.getBulletTransactionAmount()) > 0) {
+                throw new BadRequestException("Sorry, transaction limit on your account tier is N"+MoneyFormatterUtil.priceWithDecimal(tierLevelEntity.getBulletTransactionAmount()));
+            }
+        }
+
         SavingsGoalEntity oldState = new SavingsGoalEntity();
         BeanUtils.copyProperties(savingsGoal, oldState);
 
@@ -80,6 +93,9 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, goalId)
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
+        if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be cancelled because it's created by the system.");
+        }
 
         SavingsGoalEntity oldState = new SavingsGoalEntity();
         BeanUtils.copyProperties(savingsGoalEntity, oldState);
@@ -91,4 +107,5 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         String description = String.format("Cancelled saving frequency: %s on goal %s", oldState.getSavingsFrequency().name(), savingsGoalEntity.getName());
         auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
     }
+
 }

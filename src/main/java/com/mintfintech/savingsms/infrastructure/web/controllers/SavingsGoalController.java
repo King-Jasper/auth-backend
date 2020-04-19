@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.ChangeSavingsPlanUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -28,7 +29,7 @@ import java.util.List;
  */
 @Api(tags = "Savings Goal Management Endpoints",  description = "Handles savings goal transaction management.")
 @RestController
-@RequestMapping(value = "/api/v1/savings-goal", headers = {"x-request-client-key", "Authorization"})
+@RequestMapping(value = "/api/v1/savings-goals", headers = {"x-request-client-key", "Authorization"})
 public class SavingsGoalController {
 
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
@@ -51,7 +52,14 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns a list of savings goals for an account.")
+    @ApiOperation(value = "Returns a comprehension list of account savings goal(mint and customer created goals).")
+    @GetMapping(value = "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<AccountSavingsGoalResponse>> getAllSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser));
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns a list of savings goals created by account user.")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsGoalModel>>> getAccountSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ApiResponseJSON<List<SavingsGoalModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getSavingsGoalList(authenticatedUser));

@@ -1,6 +1,5 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
@@ -20,7 +19,6 @@ import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
 import javax.transaction.Transactional;
@@ -99,6 +97,10 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             throw new UnauthorisedException("Request denied.");
         }
 
+        if(savingsGoalEntityDao.countUserCreatedAccountSavingsGoals(mintAccount) >= 5) {
+            throw new BusinessLogicConflictException("Sorry, you have reached the maximum(5) active saving goals permitted for an account.");
+        }
+
         String goalName = goalCreationRequest.getName();
         if(savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(goalName, savingsPlan, mintAccount).isPresent()) {
             throw new BadRequestException("You already have a savings goal with same name.");
@@ -165,7 +167,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         if(fundAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded cannot be greater than the saving target amount.");
         }
-        if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0) {
+        if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
             throw new BadRequestException("Target amount cannot be greater than the saving plan maximum balance.");
         }
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
@@ -183,7 +185,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                         "until your account is verified and upgraded.");
             }
             // maximum of 3 tier one goals expected.
-            long totalTierOneSavingGoals = savingsGoalEntityDao.countAccountSavingsGoalOnPlan(bankAccountEntity.getMintAccount(), planEntity);
+            long totalTierOneSavingGoals = savingsGoalEntityDao.countUserCreatedSavingsGoalsOnPlan(bankAccountEntity.getMintAccount(), planEntity);
             if(totalTierOneSavingGoals >= 3) {
                 throw new BusinessLogicConflictException("Sorry, maximum of 3 saving goals allowed for your account until it is verified.");
             }

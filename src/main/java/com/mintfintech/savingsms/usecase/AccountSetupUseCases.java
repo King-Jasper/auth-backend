@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase;
 
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
 
@@ -10,4 +11,5 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCre
 public interface AccountSetupUseCases {
     void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent);
     void createIndividualBankAccount(MintBankAccountCreationEvent accountCreationEvent);
+    void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
 }

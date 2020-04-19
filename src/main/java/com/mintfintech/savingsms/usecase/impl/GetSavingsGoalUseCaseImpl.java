@@ -6,15 +6,20 @@ import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import lombok.AllArgsConstructor;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -41,6 +46,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsGoalEntity.getNextAutoSaveDate() != null) {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
+
         return SavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
@@ -53,7 +59,23 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingPlanName(savingsPlanEntity.getPlanName().getName())
                 .maturityDate(maturityDate)
                 .nextSavingsDate(nextSavingsDate)
+                .startDate(savingsGoalEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE))
+                .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
+                .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .build();
+    }
+
+    public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
+        boolean matured = false;
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
+            matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+        }
+        return MintSavingsGoalModel.builder()
+                .goalId(savingsGoalEntity.getGoalId())
+                .name(savingsGoalEntity.getName())
+                .savingsBalance(savingsGoalEntity.getSavingsBalance())
+                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .matured(matured).build();
     }
 
     @Override
@@ -67,7 +89,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     @Override
     public List<SavingsGoalModel> getSavingsGoalList(MintAccountEntity mintAccountEntity) {
         List<SavingsGoalModel> savingsGoalList = savingsGoalEntityDao.getAccountSavingGoals(mintAccountEntity)
-                .stream().filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
+                .stream()
+                .filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
                 .map(this::fromSavingsGoalEntityToModel)
                 .collect(Collectors.toList());
         return savingsGoalList;
@@ -77,5 +100,24 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public List<SavingsGoalModel> getSavingsGoalList(AuthenticatedUser authenticatedUser) {
         MintAccountEntity mintAccountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         return getSavingsGoalList(mintAccountEntity);
+    }
+
+    @Override
+    public AccountSavingsGoalResponse getAccountSavingsGoals(AuthenticatedUser authenticatedUser) {
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        List<MintSavingsGoalModel> mintGoalsList = new ArrayList<>();
+        List<SavingsGoalModel> savingsGoalList = new ArrayList<>();
+        List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getAccountSavingGoals(accountEntity);
+        for(SavingsGoalEntity savingsGoalEntity : savingsGoalEntityList) {
+            if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
+                 savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
+            }else {
+               mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
+            }
+        }
+        return AccountSavingsGoalResponse.builder()
+                .customerGoals(savingsGoalList)
+                .mintGoals(mintGoalsList)
+                .build();
     }
 }

@@ -25,8 +25,8 @@ import java.util.List;
 @RequestMapping(value = "/api/v1/common", headers = {"x-request-client-key"})
 public class MasterRecordsController {
 
-    private SavingsPlanUseCases savingsPlanUseCases;
-    private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
+    private final SavingsPlanUseCases savingsPlanUseCases;
+    private final SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
 
     public MasterRecordsController(SavingsPlanUseCases savingsPlanUseCases, SavingsGoalCategoryUseCase savingsGoalCategoryUseCase) {
         this.savingsPlanUseCases = savingsPlanUseCases;
