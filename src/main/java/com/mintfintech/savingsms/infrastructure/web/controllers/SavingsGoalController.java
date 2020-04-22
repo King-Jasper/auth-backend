@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalRespons
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -27,6 +28,7 @@ import java.util.List;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Api(tags = "Savings Goal Management Endpoints",  description = "Handles savings goal transaction management.")
 @RestController
 @RequestMapping(value = "/api/v1/savings-goals", headers = {"x-request-client-key", "Authorization"})
