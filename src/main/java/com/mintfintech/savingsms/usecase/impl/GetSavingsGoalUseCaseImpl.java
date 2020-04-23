@@ -53,7 +53,6 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsGoalEntity.getNextAutoSaveDate() != null) {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
-
         return SavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
@@ -70,16 +69,16 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .availableBalance(computeAvailableBalance(savingsGoalEntity))
+                .interestRate(savingsPlanEntity.getInterestRate())
                 .build();
     }
 
     private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity) {
          if(isCustomerGoalMatured(savingsGoalEntity)) {
-             return savingsGoalEntity.getSavingsBalance();
+             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
          }
         long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
-        // System.out.println("remaining days: "+remainingDays+" minidays: "+minimumDaysForWithdrawal);
         if(remainingDays >= minimumDaysForWithdrawal) {
             SavingsPlanEntity savingsPlanEntity = savingsGoalEntity.getSavingsPlan();
             return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
