@@ -18,6 +18,7 @@ public class SavingsGoalModel {
    private String savingPlanName;
    private String currentStatus;
    private BigDecimal savingsBalance;
+   private BigDecimal availableBalance;
    private BigDecimal savingsAmount;
    private BigDecimal targetAmount;
    private BigDecimal accruedInterest;

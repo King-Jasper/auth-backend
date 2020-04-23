@@ -10,4 +10,7 @@ public class DateUtil {
     public static boolean sameDay(LocalDateTime firstDateTime, LocalDateTime secondDateTime) {
         return firstDateTime.toLocalDate().isEqual(secondDateTime.toLocalDate());
     }
+    public static boolean isAfterDay(LocalDateTime firstDateTime, LocalDateTime secondDateTime) {
+        return firstDateTime.toLocalDate().isEqual(secondDateTime.toLocalDate());
+    }
 }
