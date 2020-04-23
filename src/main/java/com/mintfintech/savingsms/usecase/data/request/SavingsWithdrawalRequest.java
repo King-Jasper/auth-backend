@@ -12,4 +12,5 @@ import lombok.Data;
 public class SavingsWithdrawalRequest {
     private String goalId;
     private double amount = 0.0;
+    private String creditAccountId;
 }

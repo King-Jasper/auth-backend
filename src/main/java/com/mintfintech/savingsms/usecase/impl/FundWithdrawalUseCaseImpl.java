@@ -19,7 +19,9 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -33,6 +35,7 @@ import java.util.List;
  * Created by jnwanya on
  * Mon, 06 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -59,14 +62,28 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, withdrawalRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
 
-       // MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(accountEntity, BankAccountTypeConstant.CURRENT);
+        MintBankAccountEntity creditAccount;
+        if(StringUtils.isEmpty(withdrawalRequest.getCreditAccountId())){
+            creditAccount =  mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(accountEntity, BankAccountTypeConstant.CURRENT);
+        }else {
+            creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(withdrawalRequest.getCreditAccountId(), accountEntity)
+                    .orElseThrow(() -> new BadRequestException("Invalid credit account Id."));
+            if(creditAccount.getAccountType() != BankAccountTypeConstant.CURRENT) {
+                throw new BadRequestException("Invalid credit account Id.");
+            }
+        }
+
         if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
-            throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
+            return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity, amountRequested);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
             throw new BusinessLogicConflictException("Sorry, savings withdrawal not currently supported.");
         }
         return processCustomerSavingWithdrawal(savingsGoal, appUserEntity, amountRequested);
+    }
+
+    private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser, BigDecimal amountRequested) {
+        throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
     }
 
     @Transactional
