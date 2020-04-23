@@ -16,5 +16,6 @@ public class MintSavingsGoalModel {
     private String name;
     private BigDecimal savingsBalance;
     private BigDecimal accruedInterest;
+    private BigDecimal availableBalance;
     private boolean matured;
 }

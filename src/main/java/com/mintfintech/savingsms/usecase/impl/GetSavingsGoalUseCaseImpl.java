@@ -8,17 +8,22 @@ import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -27,6 +32,7 @@ import java.util.stream.Collectors;
  * Created by jnwanya on
  * Wed, 01 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @AllArgsConstructor
 @Named
 public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
@@ -34,6 +40,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
+    private ApplicationProperty applicationProperty;
 
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
@@ -62,19 +69,51 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .startDate(savingsGoalEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE))
                 .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
+                .availableBalance(computeAvailableBalance(savingsGoalEntity))
                 .build();
     }
 
-    public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
-        boolean matured = false;
-        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-            matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+    private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity) {
+         if(isCustomerGoalMatured(savingsGoalEntity)) {
+             return savingsGoalEntity.getSavingsBalance();
+         }
+        long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+        int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
+        // System.out.println("remaining days: "+remainingDays+" minidays: "+minimumDaysForWithdrawal);
+        if(remainingDays >= minimumDaysForWithdrawal) {
+            SavingsPlanEntity savingsPlanEntity = savingsGoalEntity.getSavingsPlan();
+            return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
         }
+        return BigDecimal.valueOf(0.00);
+    }
+
+   private boolean isCustomerGoalMatured(SavingsGoalEntity savingsGoalEntity) {
+       if(savingsGoalEntity.getMaturityDate() == null) {
+           return false;
+       }
+       LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
+       if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
+           return true;
+       }
+       return maturityDate.isBefore(LocalDateTime.now());
+   }
+   private boolean isMintGoalMatured(SavingsGoalEntity savingsGoalEntity) {
+       boolean matured = false;
+       if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
+           matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+       }
+       return matured;
+   }
+
+    public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
+        boolean matured = isMintGoalMatured(savingsGoalEntity);
+        BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance(): BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
                 .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .availableBalance(availableBalance)
                 .matured(matured).build();
     }
 
