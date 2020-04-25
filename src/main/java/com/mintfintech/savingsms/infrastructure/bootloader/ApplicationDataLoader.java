@@ -2,6 +2,8 @@ package com.mintfintech.savingsms.infrastructure.bootloader;
 
 import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
 import com.mintfintech.savingsms.usecase.master_record.*;
+import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -11,8 +13,10 @@ import org.springframework.stereotype.Component;
  * Created by jnwanya on
  * Fri, 14 Feb, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Component
+@AllArgsConstructor
 public class ApplicationDataLoader implements ApplicationListener<ContextRefreshedEvent> {
 
     private TierLevelDataUseCase tierLevelDataUseCase;
@@ -26,13 +30,6 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         this.coreBankingRestClient = coreBankingRestClient;
     }*/
 
-    public ApplicationDataLoader(TierLevelDataUseCase tierLevelDataUseCase, CurrencyDataUseCases currencyDataUseCases,
-                                 SavingsPlanUseCases savingsPlanUseCases, SavingsGoalCategoryUseCase savingsGoalCategoryUseCase) {
-        this.tierLevelDataUseCase = tierLevelDataUseCase;
-        this.currencyDataUseCases = currencyDataUseCases;
-        this.savingsPlanUseCases = savingsPlanUseCases;
-        this.savingsGoalCategoryUseCase = savingsGoalCategoryUseCase;
-    }
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
