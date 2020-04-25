@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
+import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
 import com.mintfintech.savingsms.usecase.master_record.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
@@ -18,6 +19,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private CurrencyDataUseCases currencyDataUseCases;
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
+    private MintAccountRepository mintAccountRepository;
     /*private CoreBankingRestClient coreBankingRestClient;
     @Autowired
     public void setCoreBankingRestClient(CoreBankingRestClient coreBankingRestClient) {
@@ -41,6 +43,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
+        issueFix();
 
         /*long amount = 50000;
         BigDecimal longAmount = BigDecimal.valueOf(amount);
@@ -48,5 +51,10 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         int value = longAmount.compareTo(doubleAmount);
         System.out.println("value: "+value);*/
 
+    }
+
+    private void issueFix() {
+        long totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
+        System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
     }
 }

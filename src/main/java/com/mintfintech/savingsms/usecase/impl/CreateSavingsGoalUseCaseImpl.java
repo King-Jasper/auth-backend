@@ -18,6 +18,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -51,7 +53,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
         SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08").get();
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
-        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getSavingPlanTenor(savingsPlanEntity, 30, SavingsDurationTypeConstant.DAYS);
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getLeastDurationOnSavingsPlan(savingsPlanEntity);
         SavingsGoalEntity savingsGoalEntity  = SavingsGoalEntity.builder()
                 .savingsGoalType(SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
                 .savingsFrequency(SavingsFrequencyTypeConstant.NONE)

@@ -18,5 +18,6 @@ public interface SavingsPlanTenorRepository extends JpaRepository<SavingsPlanTen
     List<SavingsPlanTenorEntity> getAllByRecordStatus(RecordStatusConstant statusConstant);
     Optional<SavingsPlanTenorEntity> findFirstBySavingsPlanAndDurationTypeAndDurationAndRecordStatus(
             SavingsPlanEntity savingsPlanEntity, SavingsDurationTypeConstant durationTypeConstant, int duration, RecordStatusConstant statusConstant);
+    SavingsPlanTenorEntity getFirstBySavingsPlanOrderByDurationAsc(SavingsPlanEntity savingsPlanEntity);
 
 }

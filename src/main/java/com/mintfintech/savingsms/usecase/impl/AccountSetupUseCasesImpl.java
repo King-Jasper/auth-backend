@@ -17,6 +17,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -38,6 +39,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     private TierLevelEntityDao tierLevelEntityDao;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
 
+    @Transactional
     @Override
     public void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(mintAccountCreationEvent.getAccountId());
