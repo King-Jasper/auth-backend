@@ -14,6 +14,7 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCre
 import com.mintfintech.savingsms.usecase.data.events.incoming.UserCreationEvent;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -79,7 +80,10 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         Optional<MintBankAccountEntity> bankAccountEntityOptional = mintBankAccountEntityDao.findByAccountId(accountId);
         CurrencyEntity currencyEntity = currencyEntityDao.getByCode(accountCreationEvent.getCurrencyCode());
         if(!bankAccountEntityOptional.isPresent()) {
-            LocalDateTime dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+            LocalDateTime dateCreated = LocalDateTime.now();
+            if(StringUtils.isEmpty(accountCreationEvent.getDateCreated())){
+                dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+            }
             TierLevelEntity accountTier = getAccountTierLevel(accountCreationEvent.getAccountTier());
             MintBankAccountEntity bankAccountEntity = MintBankAccountEntity.builder()
                     .accountGroup(BankAccountGroupConstant.valueOf(accountCreationEvent.getAccountGroup()))
