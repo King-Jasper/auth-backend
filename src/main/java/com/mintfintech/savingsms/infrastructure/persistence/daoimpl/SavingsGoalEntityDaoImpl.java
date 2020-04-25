@@ -48,7 +48,7 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     @Override
     public List<SavingsGoalEntity> getAccountSavingGoals(MintAccountEntity accountEntity) {
-        return repository.getAllByMintAccountAndRecordStatusOrderByDateCreatedDesc(accountEntity, RecordStatusConstant.ACTIVE);
+        return repository.getCurrentAccountGoals(accountEntity, RecordStatusConstant.ACTIVE);
     }
 
     @Override

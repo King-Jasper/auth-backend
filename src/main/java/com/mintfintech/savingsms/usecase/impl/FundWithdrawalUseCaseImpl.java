@@ -126,6 +126,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         savingsGoal.setSavingsBalance(currentBalance.subtract(amountRequested));
         if(maturedGoal) {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+            savingsGoal.setAccruedInterest(BigDecimal.valueOf(0.00));
         }
         savingsGoalEntityDao.saveRecord(savingsGoal);
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
@@ -202,7 +203,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSING_FUND_DISBURSEMENT);
             savingsWithdrawalRequestEntityDao.saveAndFlush(withdrawalRequestEntity);
             BigDecimal amountRequest = withdrawalRequestEntity.getAmount();
-
+            if(withdrawalRequestEntity.isMaturedGoal() && withdrawalRequestEntity.isInterestCreditedOnDebitAccount()){
+                amountRequest = amountRequest.add(withdrawalRequestEntity.getAccruedInterest());
+            }
             SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(withdrawalRequestEntity.getSavingsGoal().getId());
             MintAccountEntity mintAccountEntity = mintAccountEntityDao.getRecordById(savingsGoalEntity.getMintAccount().getId());
             MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccountEntity, BankAccountTypeConstant.SAVING);

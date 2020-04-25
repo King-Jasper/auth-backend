@@ -21,7 +21,15 @@ import java.util.Optional;
  * Tue, 18 Feb, 2020
  */
 public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, Long> {
-    List<SavingsGoalEntity> getAllByMintAccountAndRecordStatusOrderByDateCreatedDesc(MintAccountEntity accountEntity, RecordStatusConstant recordStatusConstant);
+
+
+
+    @Query("select s from SavingsGoalEntity s where s.mintAccount = ?1 and s.recordStatus = ?2 and" +
+            " (s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE or " +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.MATURED)")
+    List<SavingsGoalEntity> getCurrentAccountGoals(MintAccountEntity accountEntity, RecordStatusConstant recordStatusConstant);
+
+
     Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsPlanAndRecordStatusAndNameIgnoreCase(MintAccountEntity accountEntity,
                                                                                                      SavingsPlanEntity planEntity,
                                                                                                      RecordStatusConstant statusConstant,
