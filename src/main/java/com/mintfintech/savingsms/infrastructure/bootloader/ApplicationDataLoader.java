@@ -1,6 +1,10 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
+import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.master_record.*;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -8,6 +12,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 /**
  * Created by jnwanya on
@@ -24,6 +30,8 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
     private MintAccountRepository mintAccountRepository;
+    private CreateSavingsGoalUseCase createSavingsGoalUseCase;
+    private AppUserRepository appUserRepository;
     /*private CoreBankingRestClient coreBankingRestClient;
     @Autowired
     public void setCoreBankingRestClient(CoreBankingRestClient coreBankingRestClient) {
@@ -52,6 +60,13 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
 
     private void issueFix() {
         long totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
+        System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
+        List<MintAccountEntity>  mintAccountEntityList = mintAccountRepository.mintAccountsWithoutSavingGoals();
+        for(MintAccountEntity mintAccountEntity : mintAccountEntityList) {
+            AppUserEntity appUserEntity = appUserRepository.getFirstByPrimaryAccount(mintAccountEntity);
+            createSavingsGoalUseCase.createDefaultSavingsGoal(mintAccountEntity, appUserEntity);
+        }
+        totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
     }
 }

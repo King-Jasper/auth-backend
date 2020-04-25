@@ -16,7 +16,8 @@ public interface MintAccountRepository extends JpaRepository<MintAccountEntity, 
     Optional<MintAccountEntity> findFirstByAccountId(String accountId);
     List<MintAccountEntity> getAllByRecordStatus(RecordStatusConstant statusConstant);
 
-    @Query("select m from MintAccountEntity m where id not in (select s.mintAccount.id from SavingsGoalEntity s)")
+    @Query("select m from MintAccountEntity m where id not in (select s.mintAccount.id from " +
+            "SavingsGoalEntity s where s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)")
     List<MintAccountEntity> mintAccountsWithoutSavingGoals();
 
     @Query("select count(m) from MintAccountEntity m where id not in (select s.mintAccount.id" +
