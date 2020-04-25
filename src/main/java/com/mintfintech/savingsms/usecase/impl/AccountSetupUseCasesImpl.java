@@ -81,7 +81,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         CurrencyEntity currencyEntity = currencyEntityDao.getByCode(accountCreationEvent.getCurrencyCode());
         if(!bankAccountEntityOptional.isPresent()) {
             LocalDateTime dateCreated = LocalDateTime.now();
-            if(StringUtils.isEmpty(accountCreationEvent.getDateCreated())){
+            if(!StringUtils.isEmpty(accountCreationEvent.getDateCreated())){
                 dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
             }
             TierLevelEntity accountTier = getAccountTierLevel(accountCreationEvent.getAccountTier());
