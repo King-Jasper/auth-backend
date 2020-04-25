@@ -48,10 +48,10 @@ public class ApplicationConfig {
         HikariConfig config = new HikariConfig();
         config.addDataSourceProperty("autoReconnect",true);
         config.addDataSourceProperty("maxReconnects",5);
-        config.setMaximumPoolSize(15); // DEFAULT IS 10
-        config.setConnectionTimeout(60000);
-        config.setLeakDetectionThreshold(120000);
-        config.setMaxLifetime(300000);
+        //config.setMaximumPoolSize(10); // DEFAULT IS 10
+        //config.setConnectionTimeout(60000);
+        //config.setLeakDetectionThreshold(120000);
+        //config.setMaxLifetime(300000);
         config.setPoolName("SavingsMSDBPool");
         config.setUsername(databaseUsername);
         config.setPassword(databasePassword);

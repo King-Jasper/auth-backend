@@ -29,9 +29,9 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private CurrencyDataUseCases currencyDataUseCases;
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
-    private MintAccountRepository mintAccountRepository;
-    private CreateSavingsGoalUseCase createSavingsGoalUseCase;
-    private AppUserRepository appUserRepository;
+   // private MintAccountRepository mintAccountRepository;
+   // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
+   // private AppUserRepository appUserRepository;
     /*private CoreBankingRestClient coreBankingRestClient;
     @Autowired
     public void setCoreBankingRestClient(CoreBankingRestClient coreBankingRestClient) {
@@ -48,7 +48,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
-        issueFix();
+       // issueFix();
 
         /*long amount = 50000;
         BigDecimal longAmount = BigDecimal.valueOf(amount);
@@ -58,7 +58,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
 
     }
 
-    private void issueFix() {
+    /*private void issueFix() {
         long totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
         List<MintAccountEntity>  mintAccountEntityList = mintAccountRepository.mintAccountsWithoutSavingGoals();
@@ -68,5 +68,5 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         }
         totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
-    }
+    }*/
 }
