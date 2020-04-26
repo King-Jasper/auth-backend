@@ -124,6 +124,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
         savingsGoal.setSavingsBalance(currentBalance.subtract(amountRequested));
+        BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         if(maturedGoal) {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
             savingsGoal.setAccruedInterest(BigDecimal.valueOf(0.00));
@@ -132,7 +133,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
                 .amount(amountRequested)
                 .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
-                .accruedInterest(savingsGoal.getAccruedInterest())
+                .accruedInterest(accruedInterest)
                 .balanceBeforeWithdrawal(currentBalance)
                 .maturedGoal(maturedGoal)
                 .savingsGoal(savingsGoal)
