@@ -165,15 +165,14 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         if(debitAccount.getAvailableBalance().compareTo(fundAmount) < 0) {
             throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
         }
-
         if(fundAmount.compareTo(targetAmount) > 0) {
-            throw new BadRequestException("Amount to be funded cannot be greater than the saving target amount.");
+            throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
         }
         if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
-            throw new BadRequestException("Target amount cannot be greater than the saving plan maximum balance.");
+            throw new BadRequestException("Target amount cannot be greater than the savings plan maximum balance.");
         }
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
-            throw new BadRequestException("Amount to fund cannot be less than the saving plan minimum balance.");
+            throw new BadRequestException("Amount to fund cannot be less than the savings plan minimum balance.");
         }
 
     }

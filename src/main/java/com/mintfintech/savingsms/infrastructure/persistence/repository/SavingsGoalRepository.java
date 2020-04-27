@@ -30,18 +30,27 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
     List<SavingsGoalEntity> getCurrentAccountGoals(MintAccountEntity accountEntity, RecordStatusConstant recordStatusConstant);
 
 
-    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsPlanAndRecordStatusAndNameIgnoreCase(MintAccountEntity accountEntity,
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsPlanAndGoalStatusAndNameIgnoreCase(MintAccountEntity accountEntity,
                                                                                                      SavingsPlanEntity planEntity,
-                                                                                                     RecordStatusConstant statusConstant,
+                                                                                                     SavingsGoalStatusConstant goalStatus,
                                                                                                      String name);
 
-    long countAllByRecordStatusAndMintAccountAndSavingsPlanAndSavingsGoalType(RecordStatusConstant statusConstant,
-                                                                              MintAccountEntity accountEntity,
-                                                                              SavingsPlanEntity planEntity,
-                                                                              SavingsGoalTypeConstant goalTypeConstant);
+    @Query("select count(s) from SavingsGoalEntity s where s.mintAccount = ?2 and s.recordStatus = ?1 and s.savingsPlan = ?3 and " +
+            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS and" +
+            " (s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE or " +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.MATURED)")
+    long countActiveCustomerCreatedGoalsOnAccountAndPlan(RecordStatusConstant statusConstant, MintAccountEntity accountEntity,
+                                            SavingsPlanEntity planEntity, SavingsGoalTypeConstant goalTypeConstant);
 
-    long countAllByRecordStatusAndMintAccountAndSavingsGoalType(RecordStatusConstant statusConstant, MintAccountEntity accountEntity,
-                                                                SavingsGoalTypeConstant goalTypeConstant);
+    @Query("select count(s) from SavingsGoalEntity s where s.mintAccount = ?2 and s.recordStatus = ?1 and s.savingsGoalType = ?3 and " +
+            " (s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE or " +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.MATURED)")
+    long countActiveCustomerCreatedGoalsOnAccount(RecordStatusConstant statusConstant, MintAccountEntity accountEntity,
+                                                  SavingsGoalTypeConstant goalTypeConstant);
+
+    /*long countAllByRecordStatusAndMintAccountAndSavingsGoalType(RecordStatusConstant statusConstant,
+                                                                MintAccountEntity accountEntity,
+                                                                SavingsGoalTypeConstant goalTypeConstant);*/
 
     Optional<SavingsGoalEntity> findFirstByMintAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
 
@@ -58,10 +67,12 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
     Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);
 
 
+
     @Query(value = "select s from SavingsGoalEntity s where s.goalStatus = :status and s.autoSave = true and" +
             " s.nextAutoSaveDate is not null and to_char(s.nextAutoSaveDate, 'YYYY-MM-DD HH24') =:dateWithHour24")
     List<SavingsGoalEntity> getSavingsGoalWithMatchingSavingHour(@Param("status") SavingsGoalStatusConstant status,
                                                                                     @Param("dateWithHour24") String dateWithHour24);
+//169104628-12-10 19:08:16+01 BC
 
     @Query(value = "select s from SavingsGoalEntity s where s.maturityDate is not null and " +
             "s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER " +

@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.utils;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 
 /**
  * Created by jnwanya on
@@ -13,4 +15,5 @@ public class DateUtil {
     public static boolean isAfterDay(LocalDateTime firstDateTime, LocalDateTime secondDateTime) {
         return firstDateTime.toLocalDate().isEqual(secondDateTime.toLocalDate());
     }
+
 }

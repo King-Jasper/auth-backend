@@ -96,23 +96,19 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
                         ));
     }
 
-
-
-
     @Override
     public long countUserCreatedSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity) {
-        return repository.countAllByRecordStatusAndMintAccountAndSavingsPlanAndSavingsGoalType(RecordStatusConstant.ACTIVE,
-                mintAccountEntity, planEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
+        return repository.countActiveCustomerCreatedGoalsOnAccountAndPlan(RecordStatusConstant.ACTIVE, mintAccountEntity, planEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
     }
 
     @Override
     public long countUserCreatedAccountSavingsGoals(MintAccountEntity mintAccountEntity) {
-        return repository.countAllByRecordStatusAndMintAccountAndSavingsGoalType(RecordStatusConstant.ACTIVE, mintAccountEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
+        return repository.countActiveCustomerCreatedGoalsOnAccount(RecordStatusConstant.ACTIVE, mintAccountEntity, SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
     }
 
     @Override
     public Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccount(String name, SavingsPlanEntity planEntity, MintAccountEntity accountEntity) {
-        return repository.findFirstByMintAccountAndSavingsPlanAndRecordStatusAndNameIgnoreCase(accountEntity, planEntity, RecordStatusConstant.ACTIVE, name);
+        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndNameIgnoreCase(accountEntity, planEntity, SavingsGoalStatusConstant.ACTIVE, name);
     }
 
     @Override

@@ -119,17 +119,28 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             }
             savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
             savingsGoalEntityDao.saveRecord(savingsGoalEntity);
-            SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
-            if(savingsPlanEntity.getPlanName() != SavingsPlanTypeConstant.SAVINGS_TIER_THREE) {
-                BigDecimal toBeNewBalance = savingsGoalEntity.getSavingsBalance().add(savingsAmount);
-                if(toBeNewBalance.compareTo(savingsPlanEntity.getMaximumBalance()) > 0) {
-                    log.info("Savings goal: {} Auto debit ignored. New balance {} will be above maximum balance for plan: {}" , savingsGoalEntity.getGoalId(), toBeNewBalance, savingsPlanEntity.getMaximumBalance());
-                    // send an email to the customer.
-                    continue;
-                }
+            boolean proceedWithFunding = validateSavingTierRestriction(savingsGoalEntity, savingsAmount);
+            if(!proceedWithFunding) {
+                continue;
             }
            fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
         }
+    }
+
+    private boolean validateSavingTierRestriction(SavingsGoalEntity goalEntity, BigDecimal savingsAmount) {
+        SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getRecordById(goalEntity.getSavingsPlan().getId());
+        if(savingsPlanEntity.getPlanName() != SavingsPlanTypeConstant.SAVINGS_TIER_THREE) {
+            BigDecimal toBeNewBalance = goalEntity.getSavingsBalance().add(savingsAmount);
+            if(toBeNewBalance.compareTo(savingsPlanEntity.getMaximumBalance()) > 0) {
+                MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(goalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
+                if(bankAccountEntity.getAccountTierLevel().getLevel() != TierLevelTypeConstant.TIER_THREE) {
+                    log.info("Savings goal: {} Auto debit ignored. New balance {} will be above maximum balance for plan: {}" , goalEntity.getGoalId(), toBeNewBalance, savingsPlanEntity.getMaximumBalance());
+                    // send email to the customer
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override
