@@ -229,6 +229,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getDebitAccount().getId());
         String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)
@@ -236,7 +237,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .transactionAmount(savingsGoalTransactionEntity.getTransactionAmount())
                 .transactionType(TransactionTypeConstant.DEBIT.name())
                 .category("SAVINGS_GOAL")
-                .debitAccountId(savingsGoalTransactionEntity.getDebitAccount().getAccountId())
+                .debitAccountId(debitAccount.getAccountId())
                 .description(description)
                 .externalReference(savingsGoalTransactionEntity.getExternalReference())
                 .internalReference(savingsGoalTransactionEntity.getTransactionReference())
