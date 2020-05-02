@@ -72,6 +72,7 @@ public class AuditTrailServiceImpl implements AuditTrailService {
                 .auditType(auditType.name())
                 .actorId(currentUser != null ? currentUser.getUserId() : "")
                 .accountId(currentUser != null ? currentUser.getAccountId() : "")
+                .actorName(currentUser != null ? currentUser.getName() : "")
                 .description(description)
                 .newRecordPayload(payload)
                 .oldRecordPayload(oldRecord != null ? gson.toJson(oldRecord) : "")

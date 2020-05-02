@@ -15,7 +15,7 @@ import javax.transaction.Transactional;
 @Named
 public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
 
-    private AppSequenceRepository repository;
+    private final AppSequenceRepository repository;
     public AppSequenceEntityDaoImpl(AppSequenceRepository repository) {
         this.repository = repository;
     }

@@ -14,6 +14,7 @@ public class AuditLogEvent {
     private String auditType;
     private String description;
     private String actorId;
+    private String actorName;
     private String accountId;
     private String oldRecordPayload;
     private String newRecordPayload;

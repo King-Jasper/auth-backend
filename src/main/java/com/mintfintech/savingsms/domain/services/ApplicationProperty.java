@@ -43,6 +43,11 @@ public class ApplicationProperty {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
     }
 
+    public String getSystemAdminEmail() {
+        return environmentService.getVariable("mint.email.system-admin");
+    }
+
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

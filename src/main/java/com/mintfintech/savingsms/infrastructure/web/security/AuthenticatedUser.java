@@ -5,6 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.util.ArrayList;
 import java.util.Collection;
 
 /**
@@ -18,8 +19,9 @@ public class AuthenticatedUser implements UserDetails {
     private String accountId;
     private String userId;
     private String password;
+    private String name;
     private boolean active = true;
-    private Collection<SimpleGrantedAuthority> authorities;
+    private Collection<SimpleGrantedAuthority> authorities = new ArrayList<>();
     private String accessPlatform;
     private String clientType;
 
@@ -51,6 +53,10 @@ public class AuthenticatedUser implements UserDetails {
     @Override
     public boolean isEnabled() {
         return active;
+    }
+
+    public void addAuthority(String name) {
+        authorities.add(new SimpleGrantedAuthority(name));
     }
 
     @Override

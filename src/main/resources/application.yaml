@@ -31,6 +31,8 @@ microservices:
 mint:
   bank-code: 50304
   support-phonenumber: 08067507490
+  email:
+    system-admin: justin.nwanya@bankwithmint.com
 
 transaction:
   status-update:
