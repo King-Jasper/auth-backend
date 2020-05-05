@@ -16,6 +16,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
@@ -27,6 +28,7 @@ import java.time.LocalDateTime;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Named
 @AllArgsConstructor
 public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {

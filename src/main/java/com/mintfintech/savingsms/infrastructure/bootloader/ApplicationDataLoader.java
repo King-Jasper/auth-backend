@@ -1,10 +1,13 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
+import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
 import com.mintfintech.savingsms.usecase.master_record.*;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -13,6 +16,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 /**
@@ -29,6 +33,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private CurrencyDataUseCases currencyDataUseCases;
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
+    private Gson gson;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -55,7 +60,6 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         BigDecimal doubleAmount = BigDecimal.valueOf(50000.00);
         int value = longAmount.compareTo(doubleAmount);
         System.out.println("value: "+value);*/
-
     }
 
     /*private void issueFix() {
