@@ -141,9 +141,8 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .amount(savingsAmount)
                 .status("FAILED")
                 .name(appUserEntity.getName())
-                .recipient(appUserEntity.getEmail())
-                .type(EmailNotificationType.SAVINGS_GOAL_FUNDING_FAILURE.getName()).build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.NEW_EMAIL_NOTIFICATION, new EventModel<>(failureEvent));
+                .recipient(appUserEntity.getEmail()).build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_FAILURE, new EventModel<>(failureEvent));
     }
 
     private boolean validateSavingTierRestriction(SavingsGoalEntity goalEntity, BigDecimal savingsAmount) {
@@ -160,9 +159,8 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                             .amount(savingsAmount)
                             .status("ABORTED")
                             .name(appUserEntity.getName())
-                            .recipient(appUserEntity.getEmail())
-                            .type(EmailNotificationType.SAVINGS_GOAL_FUNDING_FAILURE.getName()).build();
-                    applicationEventService.publishEvent(ApplicationEventService.EventType.NEW_EMAIL_NOTIFICATION, new EventModel<>(failureEvent));
+                            .recipient(appUserEntity.getEmail()).build();
+                    applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_FAILURE, new EventModel<>(failureEvent));
                     return false;
                 }
             }

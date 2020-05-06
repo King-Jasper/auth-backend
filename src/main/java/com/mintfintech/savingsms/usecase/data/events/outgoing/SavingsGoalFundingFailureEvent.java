@@ -13,7 +13,6 @@ import java.math.BigDecimal;
 @Data
 public class SavingsGoalFundingFailureEvent {
     private String name;
-    private String type;
     private String recipient;
     private BigDecimal amount;
     private String status;

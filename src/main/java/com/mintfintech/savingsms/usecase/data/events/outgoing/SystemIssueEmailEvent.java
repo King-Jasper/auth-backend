@@ -10,7 +10,6 @@ import lombok.Data;
 @Builder
 @Data
 public class SystemIssueEmailEvent {
-    private String type;
     private String recipient;
     private String title;
     private String detail;

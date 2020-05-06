@@ -36,9 +36,8 @@ public class SystemIssueLogServiceImpl implements SystemIssueLogService {
         log.info("SYSTEM ISSUE: {}: DETAIL {}", title, detail);
         SystemIssueEmailEvent emailEvent = SystemIssueEmailEvent.builder()
                 .detail(detail).title(title+" ("+systemName+")")
-                .type(EmailNotificationType.SYSTEM_ISSUE_ALERT.getName())
                 .recipient(applicationProperty.getSystemAdminEmail())
                 .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.NEW_EMAIL_NOTIFICATION, new EventModel<>(emailEvent));
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SYSTEM_ISSUE_ALERT, new EventModel<>(emailEvent));
     }
 }

@@ -8,10 +8,7 @@ import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.UserCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -117,5 +114,18 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         mintAccountEntity.setBulletTransactionLimit(accountLimitUpdateEvent.getBulletLimitAmount());
         mintAccountEntity.setDailyTransactionLimit(accountLimitUpdateEvent.getDailyLimitAmount());
         mintAccountEntityDao.saveRecord(mintAccountEntity);
+    }
+
+    @Override
+    public void updateBankAccountTierLevel(BankAccountTierUpgradeEvent tierUpgradeEvent) {
+        Optional<MintBankAccountEntity> optionalMintBankAccountEntity = mintBankAccountEntityDao.findByAccountNumber(tierUpgradeEvent.getAccountNumber());
+        if(!optionalMintBankAccountEntity.isPresent()) {
+            return;
+        }
+        MintBankAccountEntity bankAccountEntity = optionalMintBankAccountEntity.get();
+        TierLevelEntity tierLevelEntity = getAccountTierLevel(tierUpgradeEvent.getNewTierLevel());
+        bankAccountEntity.setAccountTierLevel(tierLevelEntity);
+        mintBankAccountEntityDao.saveRecord(bankAccountEntity);
+        log.info("Account tier updated successfully.");
     }
 }
