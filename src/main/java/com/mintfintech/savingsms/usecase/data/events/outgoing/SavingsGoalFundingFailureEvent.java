@@ -17,4 +17,5 @@ public class SavingsGoalFundingFailureEvent {
     private BigDecimal amount;
     private String status;
     private String failureMessage;
+    private String goalName;
 }

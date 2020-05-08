@@ -144,6 +144,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         SavingsGoalFundingFailureEvent  failureEvent = SavingsGoalFundingFailureEvent.builder()
                 .failureMessage(failureMessage)
                 .amount(savingsAmount)
+                .goalName(goalEntity.getName())
                 .status("FAILED")
                 .name(appUserEntity.getName())
                 .recipient(appUserEntity.getEmail()).build();

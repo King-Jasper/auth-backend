@@ -10,7 +10,7 @@ import com.mintfintech.savingsms.domain.models.EventModel;
 public interface ApplicationEventService {
     void publishEvent(EventType eventType, EventModel<?> domain);
 
-    enum EventType { //savings-goal-funding-failure
+    enum EventType {
         EMAIL_SYSTEM_ISSUE_ALERT("com.mintfintech.services.events.notification.email.system-internal-issue-alert"),
         EMAIL_SAVINGS_GOAL_FUNDING_FAILURE("com.mintfintech.services.events.notification.email.savings-funding-failure"),
         EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS("com.mintfintech.services.events.notification.email.savings-funding-success"),
