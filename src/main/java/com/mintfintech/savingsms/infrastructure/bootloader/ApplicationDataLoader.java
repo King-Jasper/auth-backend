@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccou
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
 import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
 import com.mintfintech.savingsms.usecase.master_record.*;
 import lombok.AllArgsConstructor;
@@ -55,7 +56,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         } ).start();
         log.info("Application started");
        // issueFix();
-        // test();
+
 
         /*long amount = 50000;
         BigDecimal longAmount = BigDecimal.valueOf(amount);
@@ -75,15 +76,4 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
     }*/
-
-    void test() {
-        SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
-                .amount(BigDecimal.valueOf(45000.00))
-                .goalName("My Dubai Trip")
-                .reference("MS00000002919")
-                .name("Justin Nwanya")
-                .recipient("nwanyajustin@gmail.com")
-                .build();
-        System.out.println(gson.toJson(fundingEvent));
-    }
 }
