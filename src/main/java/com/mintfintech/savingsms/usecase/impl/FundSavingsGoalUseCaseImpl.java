@@ -13,11 +13,10 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.TransactionReceiptEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
-import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
@@ -85,6 +84,9 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             }
         }
         SavingsGoalFundingResponse response = fundSavingGoal(debitAccount, appUserEntity, savingsGoalEntity, amount);
+        if("00".equalsIgnoreCase(response.getResponseCode())){
+            sendSavingsFundingSuccessNotification(savingsGoalEntity, response, amount);
+        }
         return response;
     }
 
@@ -131,6 +133,9 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
             }
+            if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
+                sendSavingsFundingSuccessNotification(savingsGoalEntity, fundingResponse, savingsAmount);
+            }
         }
     }
 
@@ -143,6 +148,19 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .name(appUserEntity.getName())
                 .recipient(appUserEntity.getEmail()).build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_FAILURE, new EventModel<>(failureEvent));
+    }
+
+    private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
+        AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
+        SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
+                .amount(savingsAmount)
+                .goalName(goalEntity.getName())
+                .reference(fundingResponse.getTransactionReference())
+                .name(appUserEntity.getName())
+                .recipient(appUserEntity.getEmail())
+                .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
     }
 
     private boolean validateSavingTierRestriction(SavingsGoalEntity goalEntity, BigDecimal savingsAmount) {
