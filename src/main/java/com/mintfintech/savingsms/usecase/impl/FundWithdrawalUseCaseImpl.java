@@ -56,6 +56,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private SystemIssueLogService systemIssueLogService;
     private ApplicationProperty applicationProperty;
     private ApplicationEventService applicationEventService;
+    private TierLevelEntityDao tierLevelEntityDao;
 
     @Override
     public String withdrawalSavings(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest withdrawalRequest) {
@@ -134,16 +135,52 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsGoal.setAccruedInterest(BigDecimal.valueOf(0.00));
         }
         savingsGoalEntityDao.saveRecord(savingsGoal);
-        SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
-                .amount(amountRequested)
-                .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
-                .accruedInterest(accruedInterest)
-                .balanceBeforeWithdrawal(currentBalance)
-                .maturedGoal(maturedGoal)
-                .savingsGoal(savingsGoal)
-                .requestedBy(currentUser)
-                .build();
-        savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+
+        MintBankAccountEntity savingAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.SAVING);
+        TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(savingAccount.getAccountTierLevel().getId());
+        if(tierLevelEntity.getLevel() == TierLevelTypeConstant.TIER_THREE || (amountRequested.compareTo(tierLevelEntity.getBulletTransactionAmount()) <= 0)) {
+            // no need of splitting the withdrawal due to bullet transaction limit.
+            SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
+                    .amount(amountRequested)
+                    .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
+                    .accruedInterest(accruedInterest)
+                    .balanceBeforeWithdrawal(currentBalance)
+                    .maturedGoal(maturedGoal)
+                    .savingsGoal(savingsGoal)
+                    .requestedBy(currentUser)
+                    .build();
+            savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+            return;
+        }
+        BigDecimal maximumTransactionAmount = tierLevelEntity.getBulletTransactionAmount();
+        int numberOfWithdrawals =  amountRequested.divide(maximumTransactionAmount, BigDecimal.ROUND_DOWN).intValue();
+        BigDecimal lastWithdrawalAmountWithInterest = amountRequested.remainder(maximumTransactionAmount);
+        BigDecimal newCurrentBalance = currentBalance;
+        for(int i = 0; i < numberOfWithdrawals; i++) {
+            SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
+                    .amount(maximumTransactionAmount)
+                    .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_FUND_DISBURSEMENT)
+                    .accruedInterest(BigDecimal.valueOf(0.0))
+                    .balanceBeforeWithdrawal(newCurrentBalance)
+                    .maturedGoal(maturedGoal)
+                    .savingsGoal(savingsGoal)
+                    .requestedBy(currentUser)
+                    .build();
+            savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+            newCurrentBalance = newCurrentBalance.subtract(maximumTransactionAmount);
+        }
+        if(lastWithdrawalAmountWithInterest.compareTo(BigDecimal.ZERO) > 0) {
+            SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
+                    .amount(lastWithdrawalAmountWithInterest)
+                    .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
+                    .accruedInterest(accruedInterest)
+                    .balanceBeforeWithdrawal(newCurrentBalance)
+                    .maturedGoal(maturedGoal)
+                    .savingsGoal(savingsGoal)
+                    .requestedBy(currentUser)
+                    .build();
+            savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+        }
     }
 
     @Override
@@ -160,6 +197,12 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                    withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_FUND_DISBURSEMENT);
                    savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                    continue;
+             }
+             if(withdrawalRequestEntity.getAccruedInterest().compareTo(BigDecimal.ZERO) == 0) {
+                 log.info("Accrued Interest is zero. No interest withdrawal. Goal is not matured. {}", withdrawalRequestEntity.getId());
+                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_FUND_DISBURSEMENT);
+                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                 continue;
              }
              SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(withdrawalRequestEntity.getSavingsGoal().getId());
              MintAccountEntity mintAccountEntity = mintAccountEntityDao.getRecordById(savingsGoalEntity.getMintAccount().getId());
