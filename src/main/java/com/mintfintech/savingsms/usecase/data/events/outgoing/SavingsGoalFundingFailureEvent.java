@@ -18,4 +18,5 @@ public class SavingsGoalFundingFailureEvent {
     private String status;
     private String failureMessage;
     private String goalName;
+    private String transactionDate;
 }

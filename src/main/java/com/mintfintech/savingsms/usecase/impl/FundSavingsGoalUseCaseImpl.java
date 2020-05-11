@@ -147,6 +147,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .goalName(goalEntity.getName())
                 .status("FAILED")
                 .name(appUserEntity.getName())
+                .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .recipient(appUserEntity.getEmail()).build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_FAILURE, new EventModel<>(failureEvent));
     }
