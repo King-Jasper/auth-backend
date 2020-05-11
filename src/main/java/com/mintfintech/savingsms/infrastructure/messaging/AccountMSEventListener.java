@@ -19,8 +19,8 @@ import javax.inject.Named;
 @Slf4j
 @Named
 public class AccountMSEventListener {
-    private Gson gson;
-    private AccountSetupUseCases accountSetupUseCases;
+    private final Gson gson;
+    private final AccountSetupUseCases accountSetupUseCases;
 
     public AccountMSEventListener(Gson gson,  AccountSetupUseCases accountSetupUseCases) {
         this.gson = gson;
@@ -46,12 +46,12 @@ public class AccountMSEventListener {
         accountSetupUseCases.createIndividualBankAccount(event);
     }
 
-    @KafkaListener(topics = {MINT_ACCOUNT_LIMIT_UPDATE_EVENT})
+   /* @KafkaListener(topics = {MINT_ACCOUNT_LIMIT_UPDATE_EVENT})
     public void listenForMintAccountLimitUpdate(String payload) {
         log.info("account limit update : {}", payload);
         AccountLimitUpdateEvent event = gson.fromJson(payload, AccountLimitUpdateEvent.class);
         accountSetupUseCases.updateAccountTransactionLimit(event);
-    }
+    }*/
 
     @KafkaListener(topics = {MINT_BANK_ACCOUNT_TIER_UPDATE_EVENT})
     public void listenForMintBankAccountTierUpdate(String payload) {

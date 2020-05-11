@@ -30,10 +30,10 @@ public class MintAccountEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private AccountTypeConstant accountType = AccountTypeConstant.INDIVIDUAL;
 
-    @Builder.Default
-    private BigDecimal dailyTransactionLimit = BigDecimal.ZERO;
+    //@Builder.Default
+    //private BigDecimal dailyTransactionLimit = BigDecimal.ZERO;
 
-    @Builder.Default
-    private BigDecimal bulletTransactionLimit = BigDecimal.ZERO;
+    //@Builder.Default
+    //private BigDecimal bulletTransactionLimit = BigDecimal.ZERO;
 
 }

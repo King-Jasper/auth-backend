@@ -104,7 +104,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         return optionalTierLevelEntity.orElseGet(() -> tierLevelEntityDao.getByTierLevelType(TierLevelTypeConstant.TIER_ONE));
     }
 
-    @Override
+   /*@Override
     public void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(accountLimitUpdateEvent.getAccountId());
         if(!mintAccountEntityOptional.isPresent()) {
@@ -114,7 +114,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         mintAccountEntity.setBulletTransactionLimit(accountLimitUpdateEvent.getBulletLimitAmount());
         mintAccountEntity.setDailyTransactionLimit(accountLimitUpdateEvent.getDailyLimitAmount());
         mintAccountEntityDao.saveRecord(mintAccountEntity);
-    }
+    }*/
 
     @Override
     public void updateBankAccountTierLevel(BankAccountTierUpgradeEvent tierUpgradeEvent) {

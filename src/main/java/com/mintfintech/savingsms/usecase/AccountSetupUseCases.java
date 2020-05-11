@@ -12,6 +12,6 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCre
 public interface AccountSetupUseCases {
     void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent);
     void createIndividualBankAccount(MintBankAccountCreationEvent accountCreationEvent);
-    void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
+  //  void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
     void updateBankAccountTierLevel(BankAccountTierUpgradeEvent accountTierUpgradeEvent);
 }
