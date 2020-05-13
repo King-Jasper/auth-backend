@@ -35,11 +35,14 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
     @Builder.Default
     private BigDecimal amount = BigDecimal.ZERO;
 
+    @Builder.Default
+    private BigDecimal savingsBalanceWithdrawal = BigDecimal.ZERO;
+
    // @ManyToOne(optional = false, fetch = FetchType.LAZY)
    // private MintBankAccountEntity creditAccount;
 
     @Builder.Default
-    private BigDecimal accruedInterest = BigDecimal.ZERO;
+    private BigDecimal interestWithdrawal = BigDecimal.ZERO;
 
     @Builder.Default
     private BigDecimal balanceBeforeWithdrawal = BigDecimal.ZERO;

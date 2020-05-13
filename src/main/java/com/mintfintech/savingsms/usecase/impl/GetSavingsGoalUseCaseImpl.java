@@ -99,7 +99,11 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
    private boolean isMintGoalMatured(SavingsGoalEntity savingsGoalEntity) {
        boolean matured = false;
        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-           matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           if(applicationProperty.isProductionEnvironment()) {
+               matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           }else {
+               matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           }
        }
        return matured;
    }

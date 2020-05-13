@@ -56,14 +56,16 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
 
     Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsGoalType(MintAccountEntity mintAccountEntity, SavingsGoalTypeConstant goalTypeConstant);
 
-    @Query("select count(s) from SavingsGoalEntity s where s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
-            "and s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
-            "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    @Query("select count(s) from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
+            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) and " +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     long countEligibleInterestSavingsGoal();
 
-    @Query("select s from SavingsGoalEntity s where s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
-            "and s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
-            "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
+            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) " +
+            " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);
 
 
@@ -72,7 +74,7 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             " s.nextAutoSaveDate is not null and to_char(s.nextAutoSaveDate, 'YYYY-MM-DD HH24') =:dateWithHour24")
     List<SavingsGoalEntity> getSavingsGoalWithMatchingSavingHour(@Param("status") SavingsGoalStatusConstant status,
                                                                                     @Param("dateWithHour24") String dateWithHour24);
-//169104628-12-10 19:08:16+01 BC
+
 
     @Query(value = "select s from SavingsGoalEntity s where s.maturityDate is not null and " +
             "s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER " +
