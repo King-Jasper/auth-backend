@@ -13,6 +13,8 @@ import java.math.BigDecimal;
 @Data
 public class AccountLimitUpdateEvent {
     private String accountId;
-    private BigDecimal dailyLimitAmount;
-    private BigDecimal bulletLimitAmount;
+    private BigDecimal intraBankMaximumTransactionLimit;
+    private BigDecimal intraBankDailyTransactionLimit;
+    private BigDecimal interBankMaximumTransactionLimit;
+    private BigDecimal interBankDailyTransactionLimit;
 }

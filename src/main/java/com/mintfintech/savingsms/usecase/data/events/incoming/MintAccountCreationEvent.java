@@ -14,6 +14,7 @@ public class MintAccountCreationEvent {
     private String name;
     private String accountType;
     private BigDecimal dailyTransactionLimit;
+    private BigDecimal bulletTransactionLimit;
     private UserCreationEvent userCreationEvent;
     private String dateCreated;
 }
