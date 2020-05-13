@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalBalanceUpdateEvent;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
@@ -29,6 +30,7 @@ import java.util.List;
  * Created by jnwanya on
  * Fri, 03 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -83,10 +85,10 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private boolean shouldApplyInterest(SavingsGoalEntity savingsGoalEntity) {
-        if(savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
+       /* if(savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
             log.info("Saving goal not created by customer.");
             return false;
-        }
+        }*/
         if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {
             log.info("Saving goal is not longer active.");
             return false;
