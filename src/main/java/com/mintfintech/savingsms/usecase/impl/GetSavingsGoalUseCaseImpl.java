@@ -110,7 +110,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = isMintGoalMatured(savingsGoalEntity);
-        BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance(): BigDecimal.valueOf(0.00);
+        BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
