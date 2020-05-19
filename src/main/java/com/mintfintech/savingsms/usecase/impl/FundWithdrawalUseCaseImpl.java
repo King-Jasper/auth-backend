@@ -30,8 +30,12 @@ import org.springframework.http.HttpStatus;
 import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
+import java.time.temporal.Temporal;
+import java.time.temporal.TemporalAdjuster;
 import java.util.List;
 
 /**
@@ -141,6 +145,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - remainingDays)+" days left before you can withdraw fund from your savings.");
         }
         boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate()) || savingsGoal.getMaturityDate().isBefore(now);
+        if(!isMatured) {
+            throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
+        }
         final BigDecimal totalAvailableBalance;
         if(isMatured) {
             log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
@@ -168,6 +175,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(savingsWithdrawalRequestEntityDao.countWithdrawalRequestWithinPeriod(savingsGoal, twoMinutesAgo, LocalDateTime.now()) > 0) {
             throw new BusinessLogicConflictException("Possible duplicate withdrawal request.");
         }
+        LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal remainingSavings, remainingInterest;
@@ -178,6 +186,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }else {
             remainingInterest = accruedInterest;
             remainingSavings = currentBalance.subtract(amountRequested);
+            dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
         }
         savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoal.setSavingsBalance(remainingSavings);
@@ -196,6 +205,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .maturedGoal(maturedGoal)
                     .savingsGoal(savingsGoal)
                     .requestedBy(currentUser)
+                    .dateForWithdrawal(dateForWithdrawal)
                     .build();
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
             return;
@@ -214,6 +224,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .maturedGoal(maturedGoal)
                     .savingsGoal(savingsGoal)
                     .requestedBy(currentUser)
+                    .dateForWithdrawal(dateForWithdrawal)
                     .build();
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
             newCurrentBalance = newCurrentBalance.subtract(maximumTransactionAmount);
@@ -229,6 +240,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .maturedGoal(maturedGoal)
                     .savingsGoal(savingsGoal)
                     .requestedBy(currentUser)
+                    .dateForWithdrawal(dateForWithdrawal)
                     .build();
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
         }
@@ -241,6 +253,16 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
              log.info("Withdrawal request pending interest credit: {}", withdrawalRequestEntityList.size());
          }
          for(SavingsWithdrawalRequestEntity withdrawalRequestEntity: withdrawalRequestEntityList) {
+
+             if(!withdrawalRequestEntity.isMaturedGoal()){
+                 LocalDateTime dateForWithdrawal = withdrawalRequestEntity.getDateForWithdrawal().atTime(LocalTime.of(9, 0));
+                 LocalDateTime now = LocalDateTime.now();
+                 if(now.isBefore(dateForWithdrawal)) {
+                     log.info("Withdrawal time  {} not yet reached {}", dateForWithdrawal, now);
+                     return;
+                 }
+             }
+
              withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSING_INTEREST_CREDIT);
              savingsWithdrawalRequestEntityDao.saveAndFlush(withdrawalRequestEntity);
              if(!withdrawalRequestEntity.isMaturedGoal()) {

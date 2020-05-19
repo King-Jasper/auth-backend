@@ -77,12 +77,12 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
          if(isCustomerGoalMatured(savingsGoalEntity)) {
              return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
          }
-        long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+        /*long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
         if(remainingDays >= minimumDaysForWithdrawal) {
             SavingsPlanEntity savingsPlanEntity = savingsGoalEntity.getSavingsPlan();
             return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
-        }
+        }*/
         return BigDecimal.valueOf(0.00);
     }
 

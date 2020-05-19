@@ -5,6 +5,7 @@ import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 /**
  * Created by jnwanya on
@@ -41,6 +42,8 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
    // @ManyToOne(optional = false, fetch = FetchType.LAZY)
    // private MintBankAccountEntity creditAccount;
 
+
+
     @Builder.Default
     private BigDecimal interestWithdrawal = BigDecimal.ZERO;
 
@@ -56,4 +59,6 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
 
     @OneToOne(optional = true, fetch = FetchType.LAZY)
     private SavingsGoalTransactionEntity fundDisbursementTransaction;
+
+    private LocalDate dateForWithdrawal;
 }
