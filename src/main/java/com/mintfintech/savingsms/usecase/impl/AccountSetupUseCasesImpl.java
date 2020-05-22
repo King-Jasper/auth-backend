@@ -117,6 +117,19 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     }*/
 
     @Override
+    public void updateNotificationPreference(NotificationPreferenceUpdateEvent preferenceUpdateEvent) {
+        Optional<AppUserEntity> appUserEntityOptional = appUserEntityDao.findAppUserByUserId(preferenceUpdateEvent.getUserId());
+        if(!appUserEntityOptional.isPresent()){
+            return;
+        }
+        AppUserEntity appUserEntity = appUserEntityOptional.get();
+        appUserEntity.setEmailNotificationEnabled(preferenceUpdateEvent.isEmailEnabled());
+        appUserEntity.setSmsNotificationEnabled(preferenceUpdateEvent.isSmsEnabled());
+        appUserEntity.setGcmNotificationEnabled(preferenceUpdateEvent.isGcmEnabled());
+        appUserEntityDao.saveRecord(appUserEntity);
+    }
+
+    @Override
     public void updateBankAccountTierLevel(BankAccountTierUpgradeEvent tierUpgradeEvent) {
         Optional<MintBankAccountEntity> optionalMintBankAccountEntity = mintBankAccountEntityDao.findByAccountNumber(tierUpgradeEvent.getAccountNumber());
         if(!optionalMintBankAccountEntity.isPresent()) {

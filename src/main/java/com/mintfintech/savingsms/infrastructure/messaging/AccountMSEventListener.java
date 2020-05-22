@@ -3,10 +3,7 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 import com.google.gson.Gson;
 
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.BankAccountTierUpgradeEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 
@@ -30,6 +27,7 @@ public class AccountMSEventListener {
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
     private final String MINT_ACCOUNT_LIMIT_UPDATE_EVENT = "com.mintfintech.accounts-service.events.mint-account-limit-update";
     private final String MINT_BANK_ACCOUNT_TIER_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-tier-level-upgrade";
+    private final String MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-tier-level-upgrade";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT})
@@ -44,6 +42,13 @@ public class AccountMSEventListener {
         log.info("bank account creation: {}", payload);
         MintBankAccountCreationEvent event = gson.fromJson(payload, MintBankAccountCreationEvent.class);
         accountSetupUseCases.createIndividualBankAccount(event);
+    }
+
+    @KafkaListener(topics = {MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT})
+    public void listenForUserNotificationPreferenceUpdate(String payload) {
+        log.info("notification preference update: {}", payload);
+        NotificationPreferenceUpdateEvent event = gson.fromJson(payload, NotificationPreferenceUpdateEvent.class);
+        accountSetupUseCases.updateNotificationPreference(event);
     }
 
    /* @KafkaListener(topics = {MINT_ACCOUNT_LIMIT_UPDATE_EVENT})

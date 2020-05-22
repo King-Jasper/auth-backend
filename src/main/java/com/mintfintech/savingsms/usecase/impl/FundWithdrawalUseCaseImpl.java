@@ -33,6 +33,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.Temporal;
 import java.time.temporal.TemporalAdjuster;
@@ -373,7 +374,6 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
                 transactionEntity.setNewBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()));
-
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
 
                 SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
@@ -381,6 +381,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                         .amount(amountRequest)
                         .name(appUserEntity.getName())
                         .recipient(appUserEntity.getEmail())
+                        .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                         .build();
                 applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_WITHDRAWAL, new EventModel<>(withdrawalSuccessEvent));
             }else {

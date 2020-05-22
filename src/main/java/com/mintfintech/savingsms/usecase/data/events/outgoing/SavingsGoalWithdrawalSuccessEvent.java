@@ -16,4 +16,5 @@ public class SavingsGoalWithdrawalSuccessEvent {
     private BigDecimal amount;
     private String name;
     private String recipient;
+    private String transactionDate;
 }
