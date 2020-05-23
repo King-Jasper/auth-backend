@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.SavingsPlanTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsDurationTypeConstant;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -14,6 +15,7 @@ public interface SavingsPlanTenorEntityDao extends CrudDao<SavingsPlanTenorEntit
     long countSavingsPlanTenor();
     List<SavingsPlanTenorEntity> getTenorList();
     SavingsPlanTenorEntity getSavingPlanTenor(SavingsPlanEntity planEntity, int duration, SavingsDurationTypeConstant durationTypeConstant);
+    Optional<SavingsPlanTenorEntity> findSavingPlanTenor(SavingsPlanEntity planEntity, int duration);
     SavingsPlanTenorEntity getLeastDurationOnSavingsPlan(SavingsPlanEntity planEntity);
     List<SavingsPlanTenorEntity> getTenorListByPlan(SavingsPlanEntity planEntity);
    // Optional<SavingsPlanTenorEntity> findTenorByPlanAndId(SavingsPlanEntity planEntity, Long tenorId);

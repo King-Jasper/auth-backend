@@ -40,6 +40,11 @@ public class SavingsPlanTenorEntityDaoImpl implements SavingsPlanTenorEntityDao 
     }
 
     @Override
+    public Optional<SavingsPlanTenorEntity> findSavingPlanTenor(SavingsPlanEntity planEntity, int duration) {
+        return repository.findFirstBySavingsPlanAndDurationAndRecordStatus(planEntity, duration, RecordStatusConstant.ACTIVE);
+    }
+
+    @Override
     public SavingsPlanTenorEntity getLeastDurationOnSavingsPlan(SavingsPlanEntity planEntity) {
         return repository.getFirstBySavingsPlanOrderByDurationAsc(planEntity);
     }

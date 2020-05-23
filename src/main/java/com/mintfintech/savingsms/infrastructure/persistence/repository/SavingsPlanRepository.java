@@ -16,4 +16,5 @@ public interface SavingsPlanRepository extends JpaRepository<SavingsPlanEntity, 
     Optional<SavingsPlanEntity> findFirstByPlanId(String planId);
     List<SavingsPlanEntity> getAllByRecordStatus(RecordStatusConstant statusConstant);
     SavingsPlanEntity getFirstByRecordStatusAndPlanName(RecordStatusConstant statusConstant, SavingsPlanTypeConstant planTypeConstant);
+    Optional<SavingsPlanEntity> findFirstByRecordStatusAndPlanName(RecordStatusConstant statusConstant, SavingsPlanTypeConstant planTypeConstant);
 }

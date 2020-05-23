@@ -15,5 +15,6 @@ public interface SavingsPlanEntityDao extends CrudDao<SavingsPlanEntity, Long> {
     long countSavingPlans();
     List<SavingsPlanEntity> getSavingsPlans();
     SavingsPlanEntity getPlanByType(SavingsPlanTypeConstant planTypeConstant);
+    Optional<SavingsPlanEntity> findBPlanByType(SavingsPlanTypeConstant planTypeConstant);
     Optional<SavingsPlanEntity> findPlanByPlanId(String planId);
 }
