@@ -44,6 +44,11 @@ public class SavingsPlanEntityDaoImpl implements SavingsPlanEntityDao {
     }
 
     @Override
+    public Optional<SavingsPlanEntity> findBPlanByType(SavingsPlanTypeConstant planTypeConstant) {
+        return repository.findFirstByRecordStatusAndPlanName(RecordStatusConstant.ACTIVE, planTypeConstant);
+    }
+
+    @Override
     public Optional<SavingsPlanEntity> findPlanByPlanId(String planId) {
         return repository.findFirstByPlanId(planId);
     }

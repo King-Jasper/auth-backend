@@ -3,9 +3,11 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsPlanTenorEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsPlanTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 @Named
 public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
+    private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
@@ -45,6 +48,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getRecordById(savingsGoalEntity.getSavingsPlanTenor().getId());
         String maturityDate = "";
         String nextSavingsDate = "";
         if(savingsGoalEntity.getMaturityDate() != null) {
@@ -53,6 +57,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsGoalEntity.getNextAutoSaveDate() != null) {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
+
         return SavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
@@ -69,7 +74,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .availableBalance(computeAvailableBalance(savingsGoalEntity))
-                .interestRate(savingsPlanEntity.getInterestRate())
+                .interestRate(planTenorEntity.getInterestRate())
                 .build();
     }
 

@@ -34,6 +34,6 @@ public class SavingsPlanEntity extends AbstractBaseEntity<Long> {
     @Column(nullable = false)
     private BigDecimal maximumBalance;
 
-    private double interestRate;
+   // private double interestRate;
 
 }
