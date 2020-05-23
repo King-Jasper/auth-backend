@@ -38,7 +38,7 @@ public class SavingsGoalTransactionController {
 
     @ApiOperation(value = "Fund a savings goal.", notes = "Please note that the response code in the return object " +
             "determines if the transaction status. 00: SUCCESSFUL, 02: FAILED, 01: PENDING")
-    @PostMapping(value = {"/savings-goal/transaction/fund-goal", "/savings-goals/transaction/fund-goal"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = {"/savings-goals/transaction/fund-goal"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalFundingResponse>> fundSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                        @RequestBody @Valid SavingFundingRequestJSON requestJSON) {
 
@@ -48,7 +48,7 @@ public class SavingsGoalTransactionController {
     }
 
     @ApiOperation(value = "Withdraw from a savings goal.", notes = "The amount is needed for goal that has not matured yet, else the saved amount is withdrawn.")
-    @PostMapping(value = {"/savings-goal/transaction/withdraw-fund", "/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = {"/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                        @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());

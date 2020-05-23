@@ -8,14 +8,13 @@ import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.UserCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,6 +36,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     private TierLevelEntityDao tierLevelEntityDao;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
 
+    @Transactional
     @Override
     public void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(mintAccountCreationEvent.getAccountId());
@@ -79,7 +79,10 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         Optional<MintBankAccountEntity> bankAccountEntityOptional = mintBankAccountEntityDao.findByAccountId(accountId);
         CurrencyEntity currencyEntity = currencyEntityDao.getByCode(accountCreationEvent.getCurrencyCode());
         if(!bankAccountEntityOptional.isPresent()) {
-            LocalDateTime dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+            LocalDateTime dateCreated = LocalDateTime.now();
+            if(!StringUtils.isEmpty(accountCreationEvent.getDateCreated())){
+                dateCreated = LocalDateTime.parse(accountCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+            }
             TierLevelEntity accountTier = getAccountTierLevel(accountCreationEvent.getAccountTier());
             MintBankAccountEntity bankAccountEntity = MintBankAccountEntity.builder()
                     .accountGroup(BankAccountGroupConstant.valueOf(accountCreationEvent.getAccountGroup()))
@@ -101,7 +104,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         return optionalTierLevelEntity.orElseGet(() -> tierLevelEntityDao.getByTierLevelType(TierLevelTypeConstant.TIER_ONE));
     }
 
-    @Override
+   /*@Override
     public void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(accountLimitUpdateEvent.getAccountId());
         if(!mintAccountEntityOptional.isPresent()) {
@@ -111,5 +114,31 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         mintAccountEntity.setBulletTransactionLimit(accountLimitUpdateEvent.getBulletLimitAmount());
         mintAccountEntity.setDailyTransactionLimit(accountLimitUpdateEvent.getDailyLimitAmount());
         mintAccountEntityDao.saveRecord(mintAccountEntity);
+    }*/
+
+    @Override
+    public void updateNotificationPreference(NotificationPreferenceUpdateEvent preferenceUpdateEvent) {
+        Optional<AppUserEntity> appUserEntityOptional = appUserEntityDao.findAppUserByUserId(preferenceUpdateEvent.getUserId());
+        if(!appUserEntityOptional.isPresent()){
+            return;
+        }
+        AppUserEntity appUserEntity = appUserEntityOptional.get();
+        appUserEntity.setEmailNotificationEnabled(preferenceUpdateEvent.isEmailEnabled());
+        appUserEntity.setSmsNotificationEnabled(preferenceUpdateEvent.isSmsEnabled());
+        appUserEntity.setGcmNotificationEnabled(preferenceUpdateEvent.isGcmEnabled());
+        appUserEntityDao.saveRecord(appUserEntity);
+    }
+
+    @Override
+    public void updateBankAccountTierLevel(BankAccountTierUpgradeEvent tierUpgradeEvent) {
+        Optional<MintBankAccountEntity> optionalMintBankAccountEntity = mintBankAccountEntityDao.findByAccountNumber(tierUpgradeEvent.getAccountNumber());
+        if(!optionalMintBankAccountEntity.isPresent()) {
+            return;
+        }
+        MintBankAccountEntity bankAccountEntity = optionalMintBankAccountEntity.get();
+        TierLevelEntity tierLevelEntity = getAccountTierLevel(tierUpgradeEvent.getNewTierLevel());
+        bankAccountEntity.setAccountTierLevel(tierLevelEntity);
+        mintBankAccountEntityDao.saveRecord(bankAccountEntity);
+        log.info("Account tier updated successfully.");
     }
 }

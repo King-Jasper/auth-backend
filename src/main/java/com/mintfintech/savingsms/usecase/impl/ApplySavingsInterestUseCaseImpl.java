@@ -1,13 +1,7 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsInterestEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
@@ -17,6 +11,7 @@ import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalBalanceUpdateEvent;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
@@ -29,6 +24,7 @@ import java.util.List;
  * Created by jnwanya on
  * Fri, 03 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -37,7 +33,8 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private ApplicationEventService applicationEventService;
     private SavingsInterestEntityDao savingsInterestEntityDao;
-    private SavingsPlanEntityDao savingsPlanEntityDao;
+    private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
+   // private SavingsPlanEntityDao savingsPlanEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
 
     @Override
@@ -66,15 +63,16 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private void applyInterest(SavingsGoalEntity savingsGoalEntity) {
-        SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
-        BigDecimal interestRatePerDay = BigDecimal.valueOf(planEntity.getInterestRate() / (100.0 * 365.0));
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getRecordById(savingsGoalEntity.getSavingsPlanTenor().getId());
+       // SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
+        BigDecimal interestRatePerDay = BigDecimal.valueOf(planTenorEntity.getInterestRate() / (100.0 * 365.0));
         BigDecimal interest = savingsGoalEntity.getSavingsBalance().multiply(interestRatePerDay).setScale(2, BigDecimal.ROUND_CEILING);
 
         SavingsInterestEntity savingsInterestEntity = SavingsInterestEntity.builder()
                 .interest(interest)
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
                 .savingsGoal(savingsGoalEntity)
-                .rate(planEntity.getInterestRate())
+                .rate(planTenorEntity.getInterestRate())
                 .build();
         savingsInterestEntityDao.saveRecord(savingsInterestEntity);
         savingsGoalEntity.setAccruedInterest(savingsInterestEntityDao.getTotalInterestAmountOnGoal(savingsGoalEntity));
@@ -83,8 +81,12 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private boolean shouldApplyInterest(SavingsGoalEntity savingsGoalEntity) {
-        if(savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
+       /* if(savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
             log.info("Saving goal not created by customer.");
+            return false;
+        }*/
+        if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT && savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.valueOf(50000.0)) >= 0){
+            log.info("Interest cannot be applied to mint savings goal above 50k.");
             return false;
         }
         if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {

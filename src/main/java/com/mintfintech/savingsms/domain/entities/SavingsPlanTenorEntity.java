@@ -28,5 +28,8 @@ public class SavingsPlanTenorEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private SavingsDurationTypeConstant durationType;
 
+    private double interestRate;
+
+    private String durationDescription;
 
 }

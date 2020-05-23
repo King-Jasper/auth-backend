@@ -3,9 +3,11 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsPlanEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsPlanTenorEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsPlanTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 @Named
 public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
+    private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
@@ -45,6 +48,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getRecordById(savingsGoalEntity.getSavingsPlanTenor().getId());
         String maturityDate = "";
         String nextSavingsDate = "";
         if(savingsGoalEntity.getMaturityDate() != null) {
@@ -70,20 +74,20 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
                 .availableBalance(computeAvailableBalance(savingsGoalEntity))
+                .interestRate(planTenorEntity.getInterestRate())
                 .build();
     }
 
     private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity) {
          if(isCustomerGoalMatured(savingsGoalEntity)) {
-             return savingsGoalEntity.getSavingsBalance();
+             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
          }
-        long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+        /*long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
-        // System.out.println("remaining days: "+remainingDays+" minidays: "+minimumDaysForWithdrawal);
         if(remainingDays >= minimumDaysForWithdrawal) {
             SavingsPlanEntity savingsPlanEntity = savingsGoalEntity.getSavingsPlan();
             return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
-        }
+        }*/
         return BigDecimal.valueOf(0.00);
     }
 
@@ -100,14 +104,18 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
    private boolean isMintGoalMatured(SavingsGoalEntity savingsGoalEntity) {
        boolean matured = false;
        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-           matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           if(applicationProperty.isProductionEnvironment()) {
+               matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           }else {
+               matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+           }
        }
        return matured;
    }
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = isMintGoalMatured(savingsGoalEntity);
-        BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance(): BigDecimal.valueOf(0.00);
+        BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())

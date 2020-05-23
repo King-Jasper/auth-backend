@@ -28,8 +28,8 @@ import java.util.List;
 @Named
 public class TierLevelDataUseCaseImpl implements TierLevelDataUseCase {
 
-    private TierLevelEntityDao tierLevelEntityDao;
-    private Gson gson;
+    private final TierLevelEntityDao tierLevelEntityDao;
+    private final Gson gson;
 
     public TierLevelDataUseCaseImpl(TierLevelEntityDao tierLevelEntityDao, Gson gson) {
         this.tierLevelEntityDao = tierLevelEntityDao;
@@ -38,7 +38,6 @@ public class TierLevelDataUseCaseImpl implements TierLevelDataUseCase {
 
     @Override
     public void createDefaultTierLevels() {
-        System.out.println("DEFAULT TIER LEVEL CALLED");
         if(tierLevelEntityDao.countRecords() != 0) {
             return;
         }

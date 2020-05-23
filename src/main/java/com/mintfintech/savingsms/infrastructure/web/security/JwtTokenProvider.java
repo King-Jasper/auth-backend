@@ -51,11 +51,7 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
         String accountId = attributes.get("accountId");
         String clientType = attributes.get("client");
         log.info("accountId: {}, userId: {} client: {}", accountId, userId, clientType);
-        /*Optional<AppUserEntity> userEntityOptional = appUserEntityDao.findUserByUserId(userId);
-        if(!userEntityOptional.isPresent()){
-            return Optional.empty();
-        }*/
-      //  AppUserEntity user = userEntityOptional.get();
+        String systemGroup = attributes.getOrDefault("system_group", "");
         String platform = "MOBILE";
         if(clientType.equalsIgnoreCase("web")) {
             platform = "WEB";
@@ -64,8 +60,12 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
         authenticatedUser.setUserId(userId);
         authenticatedUser.setAccountId(accountId);
         authenticatedUser.setAccessPlatform(platform);
+        authenticatedUser.setName(attributes.getOrDefault("name", ""));
         authenticatedUser.setClientType(clientType.toUpperCase());
         authenticatedUser.setPassword(userId);
+        if(!systemGroup.isEmpty()) {
+            authenticatedUser.addAuthority(systemGroup);
+        }
         //authenticatedUser.setMsToken(jwtService.expiringToken(stringMap, applicationProperty.getMicroserviceTokenSecretKey(), applicationProperty.getMicroServiceTokenExpiryTimeInMinutes()));
         return Optional.of(authenticatedUser);
     }

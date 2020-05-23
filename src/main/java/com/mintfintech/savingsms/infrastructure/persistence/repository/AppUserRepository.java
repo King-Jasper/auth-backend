@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -14,4 +15,6 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
     Optional<AppUserEntity> findFirstByUserIdAndRecordStatus(String userId, RecordStatusConstant statusConstant);
     Optional<AppUserEntity> findFirstByPhoneNumber(String phoneNumber);
     Optional<AppUserEntity> findFirstByUserId(String userId);
+
+    AppUserEntity getFirstByPrimaryAccount(MintAccountEntity account);
 }

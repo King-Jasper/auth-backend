@@ -29,4 +29,13 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
 
     private String email;
 
+    @Builder.Default
+    private boolean emailNotificationEnabled = true;
+
+    @Builder.Default
+    private boolean smsNotificationEnabled = true;;
+
+    @Builder.Default
+    private boolean gcmNotificationEnabled = true;;
+
 }

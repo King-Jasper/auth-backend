@@ -16,6 +16,7 @@ public class SavingsGoalModel {
    private String name;
    private boolean autoSaveEnabled;
    private String savingPlanName;
+   private double interestRate;
    private String currentStatus;
    private BigDecimal savingsBalance;
    private BigDecimal availableBalance;

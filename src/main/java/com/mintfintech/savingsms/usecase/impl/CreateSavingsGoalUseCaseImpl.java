@@ -18,6 +18,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -51,7 +53,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
         SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08").get();
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
-        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getSavingPlanTenor(savingsPlanEntity, 30, SavingsDurationTypeConstant.DAYS);
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getLeastDurationOnSavingsPlan(savingsPlanEntity);
         SavingsGoalEntity savingsGoalEntity  = SavingsGoalEntity.builder()
                 .savingsGoalType(SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
                 .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
@@ -63,13 +65,23 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .savingsBalance(BigDecimal.ZERO)
                 .accruedInterest(BigDecimal.ZERO)
                 .mintAccount(mintAccountEntity)
-                .name("Mint Accrued Interest.")
+                .name("Savings From Transfers")
                 .savingsPlanTenor(planTenorEntity)
                 .creator(appUserEntity)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(BigDecimal.ZERO)
                 .goalCategory(goalCategoryEntity)
                 .build();
+
+        SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
+                .goalId(savingsGoalEntity.getGoalId())
+                .accountId(mintAccountEntity.getAccountId())
+                .savingsBalance(savingsGoalEntity.getSavingsBalance())
+                .name("Savings From Transfers")
+                .withdrawalAccountNumber("")
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
+
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
 
@@ -163,15 +175,14 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         if(debitAccount.getAvailableBalance().compareTo(fundAmount) < 0) {
             throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
         }
-
         if(fundAmount.compareTo(targetAmount) > 0) {
-            throw new BadRequestException("Amount to be funded cannot be greater than the saving target amount.");
+            throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
         }
-        if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
-            throw new BadRequestException("Target amount cannot be greater than the saving plan maximum balance.");
-        }
+        /*if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
+            throw new BadRequestException("Target amount cannot be greater than the savings plan maximum balance.");
+        }*/
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
-            throw new BadRequestException("Amount to fund cannot be less than the saving plan minimum balance.");
+            throw new BadRequestException("Amount to fund cannot be less than the savings plan minimum balance.");
         }
 
     }

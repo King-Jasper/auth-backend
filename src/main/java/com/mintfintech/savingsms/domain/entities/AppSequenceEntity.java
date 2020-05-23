@@ -33,6 +33,9 @@ public class AppSequenceEntity {
     private SequenceType sequenceType;
     private long value;
 
+    @Version
+    private long version; // for optimistic locking
+
     /**
      * Gets the current sequence value.
      *

@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.services;
 import com.mintfintech.savingsms.domain.services.EnvironmentService;
 
 import javax.inject.Named;
+import java.util.Arrays;
 
 /**
  * Created by jnwanya on
@@ -41,6 +42,23 @@ public class ApplicationProperty {
 
     public double getNipTransactionInterest() {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
+    }
+
+    public String getSystemAdminEmail() {
+        return environmentService.getVariable("mint.email.system-admin");
+    }
+
+
+    public boolean isDevelopmentEnvironment() {
+        return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("dev"));
+    }
+
+    public boolean isStagingEnvironment() {
+        return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("staging"));
+    }
+
+    public boolean isProductionEnvironment() {
+        return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("prod"));
     }
 
    /* public String getMintBankCode() {

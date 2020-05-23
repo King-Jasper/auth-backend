@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import javax.inject.Named;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -33,7 +34,7 @@ public class UpdateSavingsGoalMaturityUseCaseImpl implements UpdateSavingsGoalMa
         LocalDateTime startTime, endTime;
         if(now.getHour() > 12)  {
             startTime = now.withHour(12).withMinute(0);
-            endTime = LocalDateTime.from(LocalDateTime.MAX);
+            endTime = LocalDateTime.of(LocalDate.now(), LocalTime.MAX).withNano(0);
         }else {
             startTime = LocalDate.now().atStartOfDay();
             endTime = now.withHour(12).withMinute(0);
