@@ -7,15 +7,21 @@
     "tenors" : [
       {
         "durationType": "DAYS",
-        "duration": 30
+        "duration": 30,
+        "description": "1 month",
+        "interestRate": 6.32
       },
       {
         "durationType": "DAYS",
-        "duration": 60
+        "duration": 60,
+        "description": "2 months",
+        "interestRate": 6.60
       },
       {
         "durationType": "DAYS",
-        "duration": 90
+        "duration": 90,
+        "description": "3 months",
+        "interestRate": 6.88
       }
     ]
   },
@@ -27,15 +33,27 @@
     "tenors" : [
       {
         "durationType": "DAYS",
-        "duration": 60
+        "duration": 60,
+        "description": "2 months",
+        "interestRate": 6.60
       },
       {
         "durationType": "DAYS",
-        "duration": 90
+        "duration": 90,
+        "description": "3 months",
+        "interestRate": 6.88
       },
       {
         "durationType": "DAYS",
-        "duration": 120
+        "duration": 182,
+        "description": "6 months",
+        "interestRate": 7.16
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 365,
+        "description": "1 year",
+        "interestRate": 7.44
       }
     ]
   },
@@ -47,16 +65,29 @@
     "tenors" : [
       {
         "durationType": "DAYS",
-        "duration": 90
+        "duration": 90,
+        "description": "3 months",
+        "interestRate": 7.44
       },
       {
         "durationType": "DAYS",
-        "duration": 120
+        "duration": 182,
+        "description": "6 months",
+        "interestRate": 7.71
       },
       {
         "durationType": "DAYS",
-        "duration": 150
+        "duration": 365,
+        "description": "1 year",
+        "interestRate": 7.99
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 730,
+        "description": "2 years",
+        "interestRate": 15.98
       }
     ]
   }
 ]
+

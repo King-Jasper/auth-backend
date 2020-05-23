@@ -70,7 +70,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
         if(savingsPlanEntityDao.countSavingPlans() != 0) {
             return;
         }
-        InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans.json");
+        InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans-old.json");
         try {
             String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             if(!StringUtils.isEmpty(fileContent)) {
