@@ -13,4 +13,5 @@ public class SavingsPlanTenorModel {
     private long durationId;
     private String description;
     private int value;
+    private double interestRate;
 }

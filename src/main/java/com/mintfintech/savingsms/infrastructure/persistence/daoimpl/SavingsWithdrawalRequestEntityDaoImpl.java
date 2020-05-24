@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsWi
 import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.inject.Named;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -41,7 +42,8 @@ public class SavingsWithdrawalRequestEntityDaoImpl implements SavingsWithdrawalR
 
     @Override
     public List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant) {
-        return repository.getAllByRecordStatusAndWithdrawalRequestStatusOrderByDateModifiedAsc(RecordStatusConstant.ACTIVE, withdrawalRequestStatusConstant);
+        LocalDate now = LocalDate.now();
+        return repository.getSavingsWithdrawalRequest(RecordStatusConstant.ACTIVE, withdrawalRequestStatusConstant, now);
     }
 
     @Override

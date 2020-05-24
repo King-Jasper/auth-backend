@@ -1,0 +1,62 @@
+[
+  {
+    "name": "SAVINGS_TIER_ONE",
+    "minimumBalance": 100.00,
+    "maximumBalance": 100000.00,
+    "interestRate": 6.5,
+    "tenors" : [
+      {
+        "durationType": "DAYS",
+        "duration": 30
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 60
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 90
+      }
+    ]
+  },
+  {
+    "name": "SAVINGS_TIER_TWO",
+    "minimumBalance": 100000.00,
+    "maximumBalance": 1000000.00,
+    "interestRate": 8.5,
+    "tenors" : [
+      {
+        "durationType": "DAYS",
+        "duration": 60
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 90
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 120
+      }
+    ]
+  },
+  {
+    "name": "SAVINGS_TIER_THREE",
+    "minimumBalance": 1000000.00,
+    "maximumBalance": 0.00,
+    "interestRate": 10.5,
+    "tenors" : [
+      {
+        "durationType": "DAYS",
+        "duration": 90
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 120
+      },
+      {
+        "durationType": "DAYS",
+        "duration": 150
+      }
+    ]
+  }
+]

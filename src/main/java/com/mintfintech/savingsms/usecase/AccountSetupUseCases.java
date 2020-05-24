@@ -1,9 +1,6 @@
 package com.mintfintech.savingsms.usecase;
 
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountLimitUpdateEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.BankAccountTierUpgradeEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintAccountCreationEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintBankAccountCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 
 /**
  * Created by jnwanya on
@@ -14,4 +11,5 @@ public interface AccountSetupUseCases {
     void createIndividualBankAccount(MintBankAccountCreationEvent accountCreationEvent);
   //  void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
     void updateBankAccountTierLevel(BankAccountTierUpgradeEvent accountTierUpgradeEvent);
+    void updateNotificationPreference(NotificationPreferenceUpdateEvent preferenceUpdateEvent);
 }
