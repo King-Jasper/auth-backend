@@ -7,6 +7,8 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Created by jnwanya on
@@ -29,6 +31,16 @@ public class SavingsPlanChangeEntity extends AbstractBaseEntity<Long> {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private SavingsPlanEntity newPlan;
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    private SavingsPlanTenorEntity currentPlanTenor;
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    private SavingsPlanTenorEntity newPlanTenor;
+
+    private LocalDateTime currentMaturityDate;
+
+    private LocalDateTime newMaturityDate;
 
     private BigDecimal savingAmount;
 

@@ -69,9 +69,9 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
 
     @Override
     public void createDefaultSavingsPlan() {
-        /*if(savingsPlanEntityDao.countSavingPlans() != 0) {
+        if(savingsPlanEntityDao.countSavingPlans() != 0) {
            return;
-        }*/
+        }
         InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans.json");
         try {
             String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
