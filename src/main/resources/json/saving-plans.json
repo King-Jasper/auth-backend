@@ -8,19 +8,19 @@
       {
         "durationType": "DAYS",
         "duration": 30,
-        "description": "1 month",
+        "description": "30 days (1 month)",
         "interestRate": 6.32
       },
       {
         "durationType": "DAYS",
         "duration": 60,
-        "description": "2 months",
+        "description": "60 days (2 months)",
         "interestRate": 6.60
       },
       {
         "durationType": "DAYS",
         "duration": 90,
-        "description": "3 months",
+        "description": "90 days (3 months)",
         "interestRate": 6.88
       }
     ]
@@ -34,25 +34,25 @@
       {
         "durationType": "DAYS",
         "duration": 60,
-        "description": "2 months",
+        "description": "60 days (2 months)",
         "interestRate": 6.60
       },
       {
         "durationType": "DAYS",
         "duration": 90,
-        "description": "3 months",
+        "description": "90 days (3 months)",
         "interestRate": 6.88
       },
       {
         "durationType": "DAYS",
         "duration": 182,
-        "description": "6 months",
+        "description": "182 days (6 months)",
         "interestRate": 7.16
       },
       {
         "durationType": "DAYS",
         "duration": 365,
-        "description": "1 year",
+        "description": "365 days (1 year)",
         "interestRate": 7.44
       }
     ]
@@ -66,25 +66,25 @@
       {
         "durationType": "DAYS",
         "duration": 90,
-        "description": "3 months",
+        "description": "90 days (3 months)",
         "interestRate": 7.44
       },
       {
         "durationType": "DAYS",
         "duration": 182,
-        "description": "6 months",
+        "description": "182 days (6 months)",
         "interestRate": 7.71
       },
       {
         "durationType": "DAYS",
         "duration": 365,
-        "description": "1 year",
+        "description": "365 days (1 year)",
         "interestRate": 7.99
       },
       {
         "durationType": "DAYS",
         "duration": 730,
-        "description": "2 years",
+        "description": "730 days (2 years)",
         "interestRate": 15.98
       }
     ]
