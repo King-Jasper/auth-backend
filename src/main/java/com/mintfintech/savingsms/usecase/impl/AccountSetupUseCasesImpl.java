@@ -141,4 +141,15 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         mintBankAccountEntityDao.saveRecord(bankAccountEntity);
         log.info("Account tier updated successfully.");
     }
+
+    @Override
+    public void updateUserDeviceNotificationId(String userId, String gcmTokenId) {
+        Optional<AppUserEntity> appUserEntityOptional = appUserEntityDao.findAppUserByUserId(userId);
+        if(!appUserEntityOptional.isPresent()){
+            return;
+        }
+        AppUserEntity appUserEntity = appUserEntityOptional.get();
+        appUserEntity.setDeviceGcmNotificationToken(gcmTokenId);
+        appUserEntityDao.saveRecord(appUserEntity);
+    }
 }
