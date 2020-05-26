@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
@@ -22,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -158,19 +160,36 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
-        if(!appUserEntity.isEmailNotificationEnabled()){
+        if(appUserEntity.isEmailNotificationEnabled()){
+            SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
+                    .amount(savingsAmount)
+                    .goalName(goalEntity.getName())
+                    .reference(fundingResponse.getTransactionReference())
+                    .name(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
+        }else {
             log.info("Email notification disabled: {}", appUserEntity.getEmail());
-            return;
         }
-        SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
-                .amount(savingsAmount)
-                .goalName(goalEntity.getName())
-                .reference(fundingResponse.getTransactionReference())
-                .name(appUserEntity.getName())
-                .recipient(appUserEntity.getEmail())
-                .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
+        if(appUserEntity.isGcmNotificationEnabled()) {
+            if("".equalsIgnoreCase(appUserEntity.getDeviceGcmNotificationToken())) {
+                //device token does not exist for user. probably a web user.
+                return;
+            }
+            String text = String.format("Congrats, you just saved N%s in your savings goal(%s)", MoneyFormatterUtil.priceWithoutDecimal(savingsAmount), goalEntity.getName());
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+            pushNotificationEvent.setUserId(appUserEntity.getUserId());
+            if(appUserEntity.getDeviceGcmNotificationToken() == null) {
+                //accounts will publish the device token value if it exist.
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN_ACCOUNTS, new EventModel<>(pushNotificationEvent));
+                appUserEntity.setDeviceGcmNotificationToken("");
+                appUserEntityDao.saveRecord(appUserEntity);
+            }else {
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
+            }
+        }
     }
 
     private boolean validateSavingTierRestriction(SavingsGoalEntity goalEntity, BigDecimal savingsAmount) {
@@ -214,7 +233,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
-        String narration = "Savings goal funding - "+savingsGoal.getGoalId()+"|"+savingsGoal.getName();
+        String narration = constructFundingNarration(savingsGoal);
         MintFundTransferRequestCBS transferRequestCBS = MintFundTransferRequestCBS.builder()
                 .amount(amount)
                 .creditAccountNumber(creditAccount.getAccountNumber())
@@ -300,26 +319,11 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.MINT_TRANSACTION_LOG, new EventModel<>(transactionPayload));
     }
 
-   /* private void publishAccountDebitAlert(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, String narration) {
-        try {
-            TransactionReceiptEmailEvent receiptEmailEvent = TransactionReceiptEmailEvent.builder()
-                    .name(appUserEntity.getName())
-                    .type(EmailNotificationType.TRANSACTION_DEBIT_ALERT.getName())
-                    .recipient(appUserEntity.getEmail())
-                    .amount(fundTransferEntity.getAmount())
-                    .currentBalance(debitAccount.getAvailableBalance())
-                    .narration(fundTransferEntity.getNarration())
-                    .recipientAccountName(creditAccount.getAccountName())
-                    .recipientAccountNumber(creditAccount.getAccountNumber())
-                    .reference(fundTransferEntity.getTransactionReference())
-                    .senderAccountNumber(MoneyFormatterUtil.maskAccountNumber(debitAccount.getAccountNumber()))
-                    .senderName(debitAccount.getAccountName())
-                    .transactionTime(fundTransferEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME))
-                    .transactionType("DEBIT")
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.NEW_EMAIL_NOTIFICATION, new EventModel<>(receiptEmailEvent));
-        }catch (Exception ex){
-            ex.printStackTrace();
+    private String constructFundingNarration(SavingsGoalEntity savingsGoalEntity) {
+        String narration = String.format("SGF-%s %s", savingsGoalEntity.getGoalId(), savingsGoalEntity.getName());
+        if(narration.length() > 61) {
+            return narration.substring(0, 60);
         }
-    }*/
+        return narration;
+    }
 }

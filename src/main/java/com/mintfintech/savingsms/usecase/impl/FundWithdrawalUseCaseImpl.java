@@ -15,7 +15,9 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SmsLogEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -333,6 +335,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccountEntity, BankAccountTypeConstant.SAVING);
             MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccountEntity, BankAccountTypeConstant.CURRENT);
 
+            BigDecimal balanceBeforeProcess = creditAccount.getAvailableBalance();
+
             SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
                     .transactionAmount(amountRequest)
                     .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
@@ -348,11 +352,13 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             withdrawalRequestEntity.setFundDisbursementTransaction(transactionEntity);
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
 
+            String narration = constructWithdrawalNarration(savingsGoalEntity);
+
             MintFundTransferRequestCBS transferRequestCBS = MintFundTransferRequestCBS.builder()
                     .amount(amountRequest)
                     .creditAccountNumber(creditAccount.getAccountNumber())
                     .debitAccountNumber(debitAccount.getAccountNumber())
-                    .narration("Savings withdrawal - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName())
+                    .narration(narration)
                     .transactionReference(transactionEntity.getTransactionReference())
                     .build();
             MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(transferRequestCBS);
@@ -375,15 +381,39 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
                 transactionEntity.setNewBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()));
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
+                if(appUserEntity.isEmailNotificationEnabled()) {
+                    SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
+                            .goalName(savingsGoalEntity.getName())
+                            .amount(amountRequest)
+                            .name(appUserEntity.getName())
+                            .recipient(appUserEntity.getEmail())
+                            .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                            .build();
+                    applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_WITHDRAWAL, new EventModel<>(withdrawalSuccessEvent));
+                }
+                if(appUserEntity.isGcmNotificationEnabled()) {
+                    if(!StringUtils.isEmpty(appUserEntity.getDeviceGcmNotificationToken())){
+                        String text = "Your savings withdrawal has been processed. You can access your fund from your account now.";
+                        PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+                        applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
+                    }
+                }
+                if(appUserEntity.isSmsNotificationEnabled()) {
+                    String smsTransactionDate = transactionEntity.getDateCreated().format(DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mma"));
+                    String creditSms = String.format("Credit\nAmt:NGN%s Cr\nAcc:%s\nDesc:%s\nTime:%s\nBal: NGN%s",
+                            MoneyFormatterUtil.priceWithDecimal(amountRequest), creditAccount.getAccountNumber(),
+                            narration, smsTransactionDate, MoneyFormatterUtil.priceWithDecimal(balanceBeforeProcess.add(amountRequest)));
 
-                SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
-                        .goalName(savingsGoalEntity.getName())
-                        .amount(amountRequest)
-                        .name(appUserEntity.getName())
-                        .recipient(appUserEntity.getEmail())
-                        .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                        .build();
-                applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_WITHDRAWAL, new EventModel<>(withdrawalSuccessEvent));
+                    SmsLogEvent creditSmsLogEvent = SmsLogEvent.builder()
+                            .accountId(mintAccountEntity.getAccountId())
+                            .userId(appUserEntity.getUserId())
+                            .charged(true)
+                            .message(creditSms)
+                            .phoneNumber(appUserEntity.getPhoneNumber())
+                            .build();
+                    applicationEventService.publishEvent(ApplicationEventService.EventType.SMS_NOTIFICATION, new EventModel<>(creditSmsLogEvent));
+                }
+
             }else {
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.FUND_DISBURSEMENT_FAILED);
@@ -394,6 +424,14 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 updateAccountBalanceUseCase.processBalanceUpdate(mintAccountEntity);
             }
         }
+    }
+
+    private String constructWithdrawalNarration(SavingsGoalEntity savingsGoalEntity) {
+       String narration = String.format("SGW-%s %s", savingsGoalEntity.getGoalId(), savingsGoalEntity.getName());
+       if(narration.length() > 61) {
+           return narration.substring(0, 60);
+       }
+       return narration;
     }
 
 }
