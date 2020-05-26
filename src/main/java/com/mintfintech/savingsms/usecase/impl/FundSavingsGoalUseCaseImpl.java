@@ -141,6 +141,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void sendSavingsFundingFailureNotification(SavingsGoalEntity goalEntity, BigDecimal savingsAmount, String failureMessage) {
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
+        if(!appUserEntity.isEmailNotificationEnabled()){
+            log.info("Email notification disabled: {}", appUserEntity.getEmail());
+            return;
+        }
         SavingsGoalFundingFailureEvent  failureEvent = SavingsGoalFundingFailureEvent.builder()
                 .failureMessage(failureMessage)
                 .amount(savingsAmount)
@@ -154,6 +158,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
+        if(!appUserEntity.isEmailNotificationEnabled()){
+            log.info("Email notification disabled: {}", appUserEntity.getEmail());
+            return;
+        }
         SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
                 .amount(savingsAmount)
                 .goalName(goalEntity.getName())
@@ -206,7 +214,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
-        String narration = "Savings goal funding - "+savingsGoal.getGoalId();
+        String narration = "Savings goal funding - "+savingsGoal.getGoalId()+"|"+savingsGoal.getName();
         MintFundTransferRequestCBS transferRequestCBS = MintFundTransferRequestCBS.builder()
                 .amount(amount)
                 .creditAccountNumber(creditAccount.getAccountNumber())
@@ -275,7 +283,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getDebitAccount().getId());
-        String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId();
+        String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)
                 .balanceBeforeTransaction(openingBalance)

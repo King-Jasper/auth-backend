@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.models;
 
+import com.mintfintech.savingsms.usecase.data.request.PlanChangeRequest;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -17,4 +18,14 @@ public class SavingsGoalPlanUpdateRequestJSON {
     @NotNull
     @NotEmpty
     private String planId;
+
+    @ApiModelProperty(notes = "The new savings plan duration Id", required = true)
+    private long durationId;
+
+    public PlanChangeRequest toRequest() {
+        return PlanChangeRequest.builder()
+                .durationId(durationId)
+                .planId(planId)
+                .build();
+    }
 }

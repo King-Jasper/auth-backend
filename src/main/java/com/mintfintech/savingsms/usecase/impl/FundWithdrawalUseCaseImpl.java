@@ -166,7 +166,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
         if(isMatured) {
-            return "Request queued successfully. Your account will be funded very soon.";
+            return "Request queued successfully. Your account will be funded shortly.";
         }
         return "Request queued successfully. Your account will be funded within the next 2 business days.";
     }
@@ -352,7 +352,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                     .amount(amountRequest)
                     .creditAccountNumber(creditAccount.getAccountNumber())
                     .debitAccountNumber(debitAccount.getAccountNumber())
-                    .narration("Savings withdrawal - "+savingsGoalEntity.getGoalId())
+                    .narration("Savings withdrawal - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName())
                     .transactionReference(transactionEntity.getTransactionReference())
                     .build();
             MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(transferRequestCBS);

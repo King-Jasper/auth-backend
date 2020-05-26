@@ -85,11 +85,11 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Change the current saving plan.")
+    @ApiOperation(value = "Change the current saving plan.", notes = "This will extend the savings goal duration.")
     @PutMapping(value = "/{goalId}/change-plan", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> changeSavingsGoalPlan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @PathVariable String goalId, @RequestBody @Valid SavingsGoalPlanUpdateRequestJSON requestJSON) {
-        SavingsGoalModel response = changeSavingsPlanUseCase.changePlan(authenticatedUser, goalId, requestJSON.getPlanId());
+        SavingsGoalModel response = changeSavingsPlanUseCase.changePlan(authenticatedUser, goalId, requestJSON.toRequest());
         ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Changed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
