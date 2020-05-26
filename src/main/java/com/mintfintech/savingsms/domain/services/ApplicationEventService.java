@@ -9,7 +9,7 @@ import com.mintfintech.savingsms.domain.models.EventModel;
  */
 public interface ApplicationEventService {
     void publishEvent(EventType eventType, EventModel<?> domain);
-
+//
     enum EventType {
         EMAIL_SYSTEM_ISSUE_ALERT("com.mintfintech.services.events.notification.email.system-internal-issue-alert"),
         EMAIL_SAVINGS_GOAL_FUNDING_FAILURE("com.mintfintech.services.events.notification.email.savings-funding-failure"),
@@ -18,6 +18,9 @@ public interface ApplicationEventService {
         SAVING_GOAL_CREATION("com.mintfintech.saving-service.events.saving-goal-creation"),
         SAVING_GOAL_BALANCE_UPDATE("com.mintfintech.saving-service.events.saving-goal-balance-update"),
         MINT_TRANSACTION_LOG("com.mintfintech.fund-transaction-service.events.transaction-log"),
+        PUSH_NOTIFICATION_TOKEN_ACCOUNTS("com.mintfintech.services.events.accounts-service.gcm"),
+        PUSH_NOTIFICATION_TOKEN("com.mintfintech.services.events.notification.gcm.token"),
+        SMS_NOTIFICATION("com.mintfintech.services.events.accounts-service.sms"),
         APPLICATION_AUDIT_TRAIL("com.mintfintech.report-service.events.audit-trail");
         private final String topic;
 
