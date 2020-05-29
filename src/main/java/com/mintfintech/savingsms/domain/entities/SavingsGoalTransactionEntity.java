@@ -28,10 +28,7 @@ public class SavingsGoalTransactionEntity extends AbstractBaseEntity<Long> {
     private BigDecimal transactionAmount;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private MintBankAccountEntity debitAccount;
-
-    @ManyToOne(optional = true, fetch = FetchType.LAZY)
-    private MintBankAccountEntity creditAccount;
+    private MintBankAccountEntity bankAccount;
 
     @Builder.Default
     @Column(nullable = false)

@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -24,6 +25,7 @@ import java.util.Optional;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor

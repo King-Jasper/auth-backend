@@ -5,5 +5,6 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Mon, 03 Feb, 2020
  */
 public enum BankAccountTypeConstant {
-    CURRENT, SAVING
+    CURRENT,
+    // SAVING
 }
