@@ -14,7 +14,7 @@ import java.util.Optional;
 @Named
 public class CurrencyEntityDaoImpl implements CurrencyEntityDao {
 
-    private CurrencyRepository repository;
+    private final CurrencyRepository repository;
     public CurrencyEntityDaoImpl(CurrencyRepository repository) {
         this.repository = repository;
     }
