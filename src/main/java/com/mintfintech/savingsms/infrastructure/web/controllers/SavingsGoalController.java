@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -49,9 +50,11 @@ public class SavingsGoalController {
     @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSON goalCreationRequestJSON) {
-        SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
+
+        throw new BusinessLogicConflictException("Goal creation temporarily disabled.");
+       /* SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
         ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK); */
     }
 
     @ApiOperation(value = "Returns a comprehension list of account savings goal(mint and customer created goals).")
