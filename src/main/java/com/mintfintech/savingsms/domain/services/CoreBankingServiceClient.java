@@ -1,10 +1,7 @@
 package com.mintfintech.savingsms.domain.services;
 
 
-import com.mintfintech.savingsms.domain.models.corebankingservice.BalanceEnquiryResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.InterestWithdrawalRequestCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.*;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 
 /**
@@ -14,6 +11,7 @@ import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 public interface CoreBankingServiceClient {
     MsClientResponse<FundTransferResponseCBS> processMintFundTransfer(MintFundTransferRequestCBS transferRequestCBS);
     MsClientResponse<BalanceEnquiryResponseCBS> retrieveAccountBalance(String accountNumber);
-    MsClientResponse<FundTransferResponseCBS> processSavingInterestWithdrawal(InterestWithdrawalRequestCBS withdrawalRequestCBS);
-
+    MsClientResponse<FundTransferResponseCBS> processSavingFunding(SavingsFundingRequestCBS transferRequestCBS);
+    MsClientResponse<FundTransferResponseCBS> updateAccruedInterest(InterestAccruedUpdateRequestCBS updateRequest);
+    MsClientResponse<FundTransferResponseCBS> processSavingsWithdrawal(SavingsWithdrawalRequestCBS requestCBS);
 }

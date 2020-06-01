@@ -31,8 +31,8 @@ public class SavingsWithdrawalRequestEntityDaoImpl implements SavingsWithdrawalR
     }
 
     @Override
-    public String generateInterestTransactionReference() {
-        return String.format("MI%09d%s", appSequenceEntityDao.getNextSequenceId(SequenceType.SAVING_INTEREST_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
+    public String generateTransactionReference() {
+        return String.format("MSW%08d%s", appSequenceEntityDao.getNextSequenceId(SequenceType.SAVING_INTEREST_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
     }
 
     @Override

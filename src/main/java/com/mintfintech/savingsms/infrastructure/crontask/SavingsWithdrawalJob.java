@@ -14,18 +14,19 @@ import javax.inject.Named;
 @Named
 public class SavingsWithdrawalJob {
 
-    private FundWithdrawalUseCase fundWithdrawalUseCase;
+    private final FundWithdrawalUseCase fundWithdrawalUseCase;
     public SavingsWithdrawalJob(FundWithdrawalUseCase fundWithdrawalUseCase) {
         this.fundWithdrawalUseCase = fundWithdrawalUseCase;
     }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    public void processInterestAccountCrediting(){
-        fundWithdrawalUseCase.processInterestCreditForFundWithdrawal();
-    }
-
-    @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    public void processSavingAccountFunding(){
-       fundWithdrawalUseCase.processSavingFundCrediting();
+    public void processSavingsGoalWithdrawal(){
+        try {
+            fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
+            Thread.sleep(500);
+            fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
+            Thread.sleep(500);
+            fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();
+        }catch (Exception ignored) { }
     }
 }

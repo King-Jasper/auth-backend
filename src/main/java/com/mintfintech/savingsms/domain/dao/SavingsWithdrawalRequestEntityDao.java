@@ -13,7 +13,7 @@ import java.util.List;
  */
 public interface SavingsWithdrawalRequestEntityDao extends CrudDao<SavingsWithdrawalRequestEntity, Long> {
     SavingsWithdrawalRequestEntity saveAndFlush(SavingsWithdrawalRequestEntity savingsWithdrawalRequestEntity);
-    String generateInterestTransactionReference();
+    String generateTransactionReference();
     long countWithdrawalRequestWithinPeriod(SavingsGoalEntity savingsGoal, LocalDateTime fromTime, LocalDateTime toTime);
     List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant);
 }
