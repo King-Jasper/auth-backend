@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase.interest_application;
+package com.mintfintech.savingsms.usecase;
 
 import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
 

@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
@@ -22,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
@@ -36,6 +38,7 @@ import java.util.List;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -87,7 +90,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
         SavingsGoalFundingResponse response = fundSavingGoal(debitAccount, appUserEntity, savingsGoalEntity, amount);
         if("00".equalsIgnoreCase(response.getResponseCode())){
-            sendSavingsFundingSuccessNotification(savingsGoalEntity, response, amount);
+             sendSavingsFundingSuccessNotification(savingsGoalEntity, response, amount);
         }
         return response;
     }
@@ -95,7 +98,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     @Override
     public void processSavingsGoalScheduledSaving() {
         LocalDateTime now = LocalDateTime.now();
-        log.info("savings goal funding job: {}", now.toString());
         List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getSavingGoalWithAutoSaveTime(now);
         for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
             if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE || !savingsGoalEntity.isAutoSave()) {
@@ -218,12 +220,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
-        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(debitAccount.getMintAccount(), BankAccountTypeConstant.SAVING);
         SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
                 .transactionAmount(amount)
                 .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                .debitAccount(debitAccount)
-                .creditAccount(creditAccount)
+                .bankAccount(debitAccount)
                 .transactionType(TransactionTypeConstant.CREDIT)
                 .transactionStatus(TransactionStatusConstant.PENDING)
                 .savingsGoal(savingsGoal)
@@ -234,14 +234,16 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
         String narration = constructFundingNarration(savingsGoal);
-        MintFundTransferRequestCBS transferRequestCBS = MintFundTransferRequestCBS.builder()
+
+        SavingsFundingRequestCBS fundingRequestCBS = SavingsFundingRequestCBS.builder()
                 .amount(amount)
-                .creditAccountNumber(creditAccount.getAccountNumber())
                 .debitAccountNumber(debitAccount.getAccountNumber())
+                .goalId(savingsGoal.getGoalId())
+                .goalName(savingsGoal.getName())
                 .narration(narration)
-                .transactionReference(transactionEntity.getTransactionReference())
+                .reference(transactionEntity.getTransactionReference())
                 .build();
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(transferRequestCBS);
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingFunding(fundingRequestCBS);
         transactionEntity = processResponse(transactionEntity, msClientResponse);
 
         SavingsGoalFundingResponse fundingResponse = SavingsGoalFundingResponse.builder()
@@ -301,7 +303,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getDebitAccount().getId());
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
         String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)

@@ -2,7 +2,7 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
-import com.mintfintech.savingsms.usecase.interest_application.ApplyNipTransactionInterestUseCase;
+import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import javax.inject.Named;

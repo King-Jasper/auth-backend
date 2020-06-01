@@ -73,7 +73,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .goalCategory(goalCategoryEntity)
                 .build();
 
-        SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
+       /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .accountId(mintAccountEntity.getAccountId())
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
@@ -81,7 +81,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .withdrawalAccountNumber("")
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
-
+         */
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
 
@@ -159,14 +159,14 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
 
 
-        SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
+       /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .accountId(mintAccount.getAccountId())
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
                 .name(goalName)
                 .withdrawalAccountNumber(debitAccount.getAccountNumber())
                 .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
+        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent)); */
 
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
     }
