@@ -17,7 +17,7 @@ public class SavingsInterestJob {
         this.applySavingsInterestUseCase = applySavingsInterestUseCase;
     }
 
-    @Scheduled(cron = "0 30 23 ? * *") // runs by 11:30PM every day
+    @Scheduled(cron = "0 30 23 ? * *") // runs by 11:30PM every day 23
     public void processInterestApplication() {
          applySavingsInterestUseCase.processInterestAndUpdateGoals();
     }

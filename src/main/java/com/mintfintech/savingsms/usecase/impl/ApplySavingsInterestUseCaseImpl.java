@@ -122,6 +122,10 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     }
 
     private void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
+        if(totalAccumulatedInterest.compareTo(BigDecimal.ZERO) == 0) {
+            log.info("NO ACCUMULATED INTEREST: {}", totalAccumulatedInterest);
+            return;
+        }
 
         String reference = accumulatedInterestEntityDao.generatedReference();
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()

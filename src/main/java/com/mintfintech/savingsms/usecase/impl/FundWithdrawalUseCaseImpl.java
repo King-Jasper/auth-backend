@@ -143,9 +143,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         LocalDateTime now = LocalDateTime.now();
         long remainingDays = savingsGoal.getDateCreated().until(now, ChronoUnit.DAYS);
         int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
-        if(remainingDays < minimumDaysForWithdrawal) {
+       /* if(remainingDays < minimumDaysForWithdrawal) {
             throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - remainingDays)+" days left before you can withdraw fund from your savings.");
-        }
+        }*/
         boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate()) || savingsGoal.getMaturityDate().isBefore(now);
         if(!isMatured) {
             throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
@@ -345,7 +345,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             }
             SavingsWithdrawalRequestCBS withdrawalRequestCBS = SavingsWithdrawalRequestCBS.builder()
                     .accountNumber(creditAccount.getAccountNumber())
-                    .amount(withdrawalRequestEntity.getInterestWithdrawal())
+                    .amount(withdrawalRequestEntity.getSavingsBalanceWithdrawal())
                     .goalId(savingsGoalEntity.getGoalId())
                     .reference(reference)
                     .narration("SGSW - "+savingsGoalEntity.getGoalId())
@@ -377,7 +377,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     }
 
     @Override
-    public void processSuspenseFundDisburseToCustomer() {
+    public void processSuspenseFundDisbursementToCustomer() {
         List<SavingsWithdrawalRequestEntity> withdrawalRequestEntityList = savingsWithdrawalRequestEntityDao.getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant.PENDING_FUND_DISBURSEMENT);
         if(!withdrawalRequestEntityList.isEmpty()) {
             log.info("Withdrawal request pending interest credit: {}", withdrawalRequestEntityList.size());
@@ -415,7 +415,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             }
             SavingsWithdrawalRequestCBS withdrawalRequestCBS = SavingsWithdrawalRequestCBS.builder()
                     .accountNumber(creditAccount.getAccountNumber())
-                    .amount(withdrawalRequestEntity.getInterestWithdrawal())
+                    .amount(amountRequest)
                     .goalId(savingsGoalEntity.getGoalId())
                     .reference(transactionEntity.getTransactionReference())
                     .narration(narration)

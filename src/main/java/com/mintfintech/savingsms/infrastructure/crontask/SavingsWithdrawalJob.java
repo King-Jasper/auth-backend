@@ -21,10 +21,12 @@ public class SavingsWithdrawalJob {
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
     public void processSavingsGoalWithdrawal(){
-        fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
-        //Thread.sleep(1000);
-        fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
-        //Thread.sleep(1000);
-        fundWithdrawalUseCase.processSuspenseFundDisburseToCustomer();
+        try {
+            fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
+            Thread.sleep(500);
+            fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
+            Thread.sleep(500);
+            fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();
+        }catch (Exception ignored) { }
     }
 }
