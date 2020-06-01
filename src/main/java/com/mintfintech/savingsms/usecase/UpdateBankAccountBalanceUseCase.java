@@ -11,5 +11,4 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.AccountBalanceUpda
 public interface UpdateBankAccountBalanceUseCase {
     void processBalanceUpdate(AccountBalanceUpdateEvent balanceUpdateEvent);
     MintBankAccountEntity processBalanceUpdate(MintBankAccountEntity bankAccountEntity);
-    void processBalanceUpdate(MintAccountEntity mintAccountEntity);
 }

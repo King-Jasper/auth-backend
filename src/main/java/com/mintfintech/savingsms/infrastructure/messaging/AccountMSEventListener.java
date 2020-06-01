@@ -27,7 +27,9 @@ public class AccountMSEventListener {
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
     private final String MINT_ACCOUNT_LIMIT_UPDATE_EVENT = "com.mintfintech.accounts-service.events.mint-account-limit-update";
     private final String MINT_BANK_ACCOUNT_TIER_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-tier-level-upgrade";
-    private final String MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-tier-level-upgrade";
+    private final String MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.user-notification-preference-update";
+    private final String CUSTOMER_DEVICE_CHANGE_EVENT = "com.mintfintech.accounts-service.events.user.device-change";
+    private final String GCM_NOTIFICATION_DETAIL_EVENT = "com.mintfintech.accounts-service.events.user-gcm-detail-broadcast";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT})
@@ -63,6 +65,13 @@ public class AccountMSEventListener {
         log.info("account limit update : {}", payload);
         BankAccountTierUpgradeEvent event = gson.fromJson(payload, BankAccountTierUpgradeEvent.class);
         accountSetupUseCases.updateBankAccountTierLevel(event);
+    }
+
+    @KafkaListener(topics = {CUSTOMER_DEVICE_CHANGE_EVENT, GCM_NOTIFICATION_DETAIL_EVENT})
+    public void listenForCustomerDeviceChange(String payload) {
+        log.info("customer push notification detail: {}", payload);
+        CustomerDeviceChangeEvent deviceChangeEvent = gson.fromJson(payload, CustomerDeviceChangeEvent.class);
+        accountSetupUseCases.updateUserDeviceNotificationId(deviceChangeEvent.getCustomerId(), deviceChangeEvent.getDeviceUniqueId());
     }
 
 }

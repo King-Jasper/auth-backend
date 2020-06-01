@@ -63,6 +63,7 @@ public class UpdateBankAccountBalanceUseCaseImpl implements UpdateBankAccountBal
         return bankAccountEntity;
     }
 
+    /*
     @Override
     public void processBalanceUpdate(MintAccountEntity mintAccountEntity) {
         List<MintBankAccountEntity> bankAccountEntityList = mintBankAccountEntityDao.getAccountsByMintAccount(mintAccountEntity);
@@ -75,5 +76,5 @@ public class UpdateBankAccountBalanceUseCaseImpl implements UpdateBankAccountBal
                 processBalanceUpdate(bankAccountEntity);
             }
         }
-    }
+    }*/
 }

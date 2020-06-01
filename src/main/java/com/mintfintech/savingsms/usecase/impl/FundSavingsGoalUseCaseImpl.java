@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
@@ -13,6 +14,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
@@ -21,7 +23,9 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -34,6 +38,7 @@ import java.util.List;
  * Created by jnwanya on
  * Thu, 02 Apr, 2020
  */
+@FieldDefaults(makeFinal = true)
 @Slf4j
 @Named
 @AllArgsConstructor
@@ -85,7 +90,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
         SavingsGoalFundingResponse response = fundSavingGoal(debitAccount, appUserEntity, savingsGoalEntity, amount);
         if("00".equalsIgnoreCase(response.getResponseCode())){
-            sendSavingsFundingSuccessNotification(savingsGoalEntity, response, amount);
+             sendSavingsFundingSuccessNotification(savingsGoalEntity, response, amount);
         }
         return response;
     }
@@ -93,7 +98,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     @Override
     public void processSavingsGoalScheduledSaving() {
         LocalDateTime now = LocalDateTime.now();
-        log.info("savings goal funding job: {}", now.toString());
         List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getSavingGoalWithAutoSaveTime(now);
         for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
             if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE || !savingsGoalEntity.isAutoSave()) {
@@ -141,6 +145,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void sendSavingsFundingFailureNotification(SavingsGoalEntity goalEntity, BigDecimal savingsAmount, String failureMessage) {
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
+        if(!appUserEntity.isEmailNotificationEnabled()){
+            log.info("Email notification disabled: {}", appUserEntity.getEmail());
+            return;
+        }
         SavingsGoalFundingFailureEvent  failureEvent = SavingsGoalFundingFailureEvent.builder()
                 .failureMessage(failureMessage)
                 .amount(savingsAmount)
@@ -154,15 +162,36 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
-        SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
-                .amount(savingsAmount)
-                .goalName(goalEntity.getName())
-                .reference(fundingResponse.getTransactionReference())
-                .name(appUserEntity.getName())
-                .recipient(appUserEntity.getEmail())
-                .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
-                .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
+        if(appUserEntity.isEmailNotificationEnabled()){
+            SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
+                    .amount(savingsAmount)
+                    .goalName(goalEntity.getName())
+                    .reference(fundingResponse.getTransactionReference())
+                    .name(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
+        }else {
+            log.info("Email notification disabled: {}", appUserEntity.getEmail());
+        }
+        if(appUserEntity.isGcmNotificationEnabled()) {
+            if("".equalsIgnoreCase(appUserEntity.getDeviceGcmNotificationToken())) {
+                //device token does not exist for user. probably a web user.
+                return;
+            }
+            String text = String.format("Congrats, you just saved N%s in your savings goal(%s)", MoneyFormatterUtil.priceWithoutDecimal(savingsAmount), goalEntity.getName());
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+            pushNotificationEvent.setUserId(appUserEntity.getUserId());
+            if(appUserEntity.getDeviceGcmNotificationToken() == null) {
+                //accounts will publish the device token value if it exist.
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN_ACCOUNTS, new EventModel<>(pushNotificationEvent));
+                appUserEntity.setDeviceGcmNotificationToken("");
+                appUserEntityDao.saveRecord(appUserEntity);
+            }else {
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
+            }
+        }
     }
 
     private boolean validateSavingTierRestriction(SavingsGoalEntity goalEntity, BigDecimal savingsAmount) {
@@ -191,12 +220,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
-        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(debitAccount.getMintAccount(), BankAccountTypeConstant.SAVING);
         SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
                 .transactionAmount(amount)
                 .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                .debitAccount(debitAccount)
-                .creditAccount(creditAccount)
+                .bankAccount(debitAccount)
                 .transactionType(TransactionTypeConstant.CREDIT)
                 .transactionStatus(TransactionStatusConstant.PENDING)
                 .savingsGoal(savingsGoal)
@@ -206,15 +233,17 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
-        String narration = "Savings goal funding - "+savingsGoal.getGoalId();
-        MintFundTransferRequestCBS transferRequestCBS = MintFundTransferRequestCBS.builder()
+        String narration = constructFundingNarration(savingsGoal);
+
+        SavingsFundingRequestCBS fundingRequestCBS = SavingsFundingRequestCBS.builder()
                 .amount(amount)
-                .creditAccountNumber(creditAccount.getAccountNumber())
                 .debitAccountNumber(debitAccount.getAccountNumber())
+                .goalId(savingsGoal.getGoalId())
+                .goalName(savingsGoal.getName())
                 .narration(narration)
-                .transactionReference(transactionEntity.getTransactionReference())
+                .reference(transactionEntity.getTransactionReference())
                 .build();
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(transferRequestCBS);
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingFunding(fundingRequestCBS);
         transactionEntity = processResponse(transactionEntity, msClientResponse);
 
         SavingsGoalFundingResponse fundingResponse = SavingsGoalFundingResponse.builder()
@@ -274,8 +303,8 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
     private void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getDebitAccount().getId());
-        String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId();
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
+        String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)
                 .balanceBeforeTransaction(openingBalance)
@@ -292,26 +321,11 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.MINT_TRANSACTION_LOG, new EventModel<>(transactionPayload));
     }
 
-   /* private void publishAccountDebitAlert(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, String narration) {
-        try {
-            TransactionReceiptEmailEvent receiptEmailEvent = TransactionReceiptEmailEvent.builder()
-                    .name(appUserEntity.getName())
-                    .type(EmailNotificationType.TRANSACTION_DEBIT_ALERT.getName())
-                    .recipient(appUserEntity.getEmail())
-                    .amount(fundTransferEntity.getAmount())
-                    .currentBalance(debitAccount.getAvailableBalance())
-                    .narration(fundTransferEntity.getNarration())
-                    .recipientAccountName(creditAccount.getAccountName())
-                    .recipientAccountNumber(creditAccount.getAccountNumber())
-                    .reference(fundTransferEntity.getTransactionReference())
-                    .senderAccountNumber(MoneyFormatterUtil.maskAccountNumber(debitAccount.getAccountNumber()))
-                    .senderName(debitAccount.getAccountName())
-                    .transactionTime(fundTransferEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME))
-                    .transactionType("DEBIT")
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.NEW_EMAIL_NOTIFICATION, new EventModel<>(receiptEmailEvent));
-        }catch (Exception ex){
-            ex.printStackTrace();
+    private String constructFundingNarration(SavingsGoalEntity savingsGoalEntity) {
+        String narration = String.format("SGF-%s %s", savingsGoalEntity.getGoalId(), savingsGoalEntity.getName());
+        if(narration.length() > 61) {
+            return narration.substring(0, 60);
         }
-    }*/
+        return narration;
+    }
 }

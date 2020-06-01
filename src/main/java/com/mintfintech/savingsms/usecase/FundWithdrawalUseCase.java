@@ -9,7 +9,7 @@ import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
  */
 public interface FundWithdrawalUseCase {
     String withdrawalSavings(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest withdrawalRequest);
-    void processInterestCreditForFundWithdrawal();
-    void processSavingFundCrediting();
-
+    void processInterestWithdrawalToSuspenseAccount();
+    void processSavingsWithdrawalToSuspenseAccount();
+    void processSuspenseFundDisbursementToCustomer();
 }

@@ -12,4 +12,5 @@ public interface AccountSetupUseCases {
   //  void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
     void updateBankAccountTierLevel(BankAccountTierUpgradeEvent accountTierUpgradeEvent);
     void updateNotificationPreference(NotificationPreferenceUpdateEvent preferenceUpdateEvent);
+    void updateUserDeviceNotificationId(String userId, String gcmTokenId);
 }

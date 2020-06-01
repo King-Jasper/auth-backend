@@ -38,4 +38,6 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
     @Builder.Default
     private boolean gcmNotificationEnabled = true;;
 
+    private String deviceGcmNotificationToken;
+
 }
