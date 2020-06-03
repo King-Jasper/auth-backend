@@ -181,7 +181,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 return;
             }
             String text = String.format("Congrats, you just saved N%s in your savings goal(%s)", MoneyFormatterUtil.priceWithoutDecimal(savingsAmount), goalEntity.getName());
-            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("New Savings", text, appUserEntity.getDeviceGcmNotificationToken());
             pushNotificationEvent.setUserId(appUserEntity.getUserId());
             if(appUserEntity.getDeviceGcmNotificationToken() == null) {
                 //accounts will publish the device token value if it exist.
