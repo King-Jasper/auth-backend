@@ -121,7 +121,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         return false;
     }
 
-    private void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
+    public void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
         if(totalAccumulatedInterest.compareTo(BigDecimal.ZERO) == 0) {
             log.info("NO ACCUMULATED INTEREST: {}", totalAccumulatedInterest);
             return;

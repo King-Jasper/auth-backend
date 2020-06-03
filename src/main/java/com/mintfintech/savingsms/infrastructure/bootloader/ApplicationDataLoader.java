@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
+import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
@@ -35,6 +36,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private CurrencyDataUseCases currencyDataUseCases;
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
+    private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private Gson gson;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
@@ -55,9 +57,8 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
-       // issueFix();
-
-
+        applySavingsInterestUseCase.updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal.valueOf(0.42));
+       //issueFix();
         /*long amount = 50000;
         BigDecimal longAmount = BigDecimal.valueOf(amount);
         BigDecimal doubleAmount = BigDecimal.valueOf(50000.00);
