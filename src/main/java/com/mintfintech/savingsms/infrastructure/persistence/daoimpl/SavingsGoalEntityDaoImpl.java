@@ -53,7 +53,7 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     @Override
     public Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType) {
-        return repository.findFirstByMintAccountAndSavingsGoalType(accountEntity, savingsGoalType);
+        return repository.findFirstByMintAccountAndSavingsGoalTypeAndRecordStatus(accountEntity, savingsGoalType, RecordStatusConstant.ACTIVE);
     }
 
     @Override
@@ -70,7 +70,7 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     @Override
     public Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId) {
-        return repository.findFirstByMintAccountAndGoalId(accountEntity, goalId);
+        return repository.findFirstByMintAccountAndGoalIdAndRecordStatus(accountEntity, goalId, RecordStatusConstant.ACTIVE);
     }
 
     @Override
@@ -108,7 +108,8 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     @Override
     public Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccount(String name, SavingsPlanEntity planEntity, MintAccountEntity accountEntity) {
-        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndNameIgnoreCase(accountEntity, planEntity, SavingsGoalStatusConstant.ACTIVE, name);
+        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndRecordStatusAndNameIgnoreCase(accountEntity, planEntity,
+                SavingsGoalStatusConstant.ACTIVE, RecordStatusConstant.ACTIVE, name);
     }
 
     @Override
