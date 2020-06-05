@@ -86,7 +86,7 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         savingsGoal = savingsGoalEntityDao.saveRecord(savingsGoal);
 
         String description = String.format("Savings frequency: %s set on goal: %s", savingsGoal.getSavingsFrequency().name(), savingsGoal.getName());
-        auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoal, oldState);
+        auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, savingsGoal, oldState);
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoal);
     }
 
@@ -107,7 +107,7 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
 
         String description = String.format("Cancelled saving frequency: %s on goal %s", oldState.getSavingsFrequency().name(), savingsGoalEntity.getName());
-        auditTrailService.createAuditLog(AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
+        auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, savingsGoalEntity, oldState);
     }
 
 }
