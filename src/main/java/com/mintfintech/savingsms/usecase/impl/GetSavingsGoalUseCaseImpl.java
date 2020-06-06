@@ -187,10 +187,14 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             SavingsPlanTypeConstant planType = SavingsPlanTypeConstant.valueOf(searchRequest.getSavingsTier());
             savingsPlan = savingsPlanEntityDao.getPlanByType(planType);
         }
+        SavingsSearchDTO.AutoSaveStatus autoSaveStatus = null;
+        if("ALL".equalsIgnoreCase(searchRequest.getAutoSavedStatus())) {
+            autoSaveStatus = SavingsSearchDTO.AutoSaveStatus.valueOf(searchRequest.getAutoSavedStatus());
+        }
         SavingsSearchDTO searchDTO = SavingsSearchDTO.builder()
                 .goalId(searchRequest.getGoalId())
                 .account(accountEntity)
-                .autoSavedEnabled(searchRequest.isAutoSavedEnabled())
+                .autoSaveStatus(autoSaveStatus)
                 .goalStatus(SavingsGoalStatusConstant.valueOf(searchRequest.getSavingsStatus()))
                 .savingsPlan(savingsPlan)
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)

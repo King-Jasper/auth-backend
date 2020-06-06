@@ -16,7 +16,7 @@ public class SavingsSearchRequest {
     private String savingsTier;
     private String goalId;
     private String savingsStatus;
-    private boolean autoSavedEnabled;
+    private String autoSavedStatus;
     private LocalDate fromDate;
     private LocalDate toDate;
 }
