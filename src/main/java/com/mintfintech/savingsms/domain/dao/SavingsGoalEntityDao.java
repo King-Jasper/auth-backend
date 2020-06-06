@@ -3,6 +3,8 @@ package com.mintfintech.savingsms.domain.dao;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
+import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
+import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,4 +26,6 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     PagedResponse<SavingsGoalEntity> getPagedEligibleInterestSavingsGoal(int pageIndex, int recordSize);
     List<SavingsGoalEntity> getSavingGoalWithAutoSaveTime(LocalDateTime autoSaveTime);
     PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize);
+
+    Page<SavingsGoalEntity> searchSavingsGoal(SavingsSearchDTO savingsSearchDTO, int pageIndex, int recordSize);
 }
