@@ -183,7 +183,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElse(null);
         }
         SavingsPlanEntity savingsPlan = null;
-        if(!StringUtils.isEmpty(searchRequest.getSavingsTier())) {
+        if(!StringUtils.isEmpty(searchRequest.getSavingsTier()) && !searchRequest.getSavingsTier().equalsIgnoreCase("ALL")) {
             SavingsPlanTypeConstant planType = SavingsPlanTypeConstant.valueOf(searchRequest.getSavingsTier());
             savingsPlan = savingsPlanEntityDao.getPlanByType(planType);
         }

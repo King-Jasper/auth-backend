@@ -15,6 +15,8 @@ import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,6 +30,8 @@ import java.time.LocalDate;
  * Created by jnwanya on
  * Sat, 06 Jun, 2020
  */
+@Secured("ADMIN_PORTAL")
+@Validated
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Api(tags = "Savings Goal Report Endpoints (BO)",  description = "Back-office: Handles savings goal report management.")
 @RestController
@@ -45,6 +49,9 @@ public class SavingsGoalReportController {
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                              @RequestParam("size") int size, @RequestParam("page") int page) {
+        if(size > 20) {
+            size = 20;
+        }
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
                 .goalId(goalId).savingsStatus(goalStatus)
                 .accountId(accountId).savingsTier(planType)
