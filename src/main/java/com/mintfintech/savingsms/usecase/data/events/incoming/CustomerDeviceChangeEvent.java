@@ -10,5 +10,6 @@ import lombok.Data;
 public class CustomerDeviceChangeEvent {
     private String customerId;
     private String deviceUniqueId;
+    private String deviceNotificationId;
     private String deviceModel;
 }

@@ -7,17 +7,21 @@ import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
+import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
 import javax.persistence.criteria.Expression;
+import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -87,6 +91,28 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
         return new PagedResponse<>(goalEntityPage.getTotalElements() ,goalEntityPage.getTotalPages(), goalEntityPage.getContent());
     }
 
+    @Override
+    public Page<SavingsGoalEntity> searchSavingsGoal(SavingsSearchDTO searchDTO, int pageIndex, int recordSize) {
+        Pageable pageable = PageRequest.of(pageIndex, recordSize, Sort.by("dateCreated").descending());
+        Specification<SavingsGoalEntity> specification = withActiveStatus();
+        if(searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
+            specification = specification.and(withDateRange(searchDTO.getFromDate(), searchDTO.getToDate()));
+        }
+        if(searchDTO.getAccount() != null) {
+            specification = specification.and(withMintAccount(searchDTO.getAccount()));
+        }
+        if(!StringUtils.isEmpty(searchDTO.getGoalId())) {
+            specification = specification.and(withGoalId(searchDTO.getGoalId()));
+        }
+        if(searchDTO.getGoalStatus() != null) {
+            specification = specification.and(withGoalStatus(searchDTO.getGoalStatus()));
+        }
+        if(searchDTO.getSavingsPlan() != null) {
+            specification = specification.and(withPlan(searchDTO.getSavingsPlan()));
+        }
+        return repository.findAll(specification, pageable);
+    }
+
     private static Specification<SavingsGoalEntity> withStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder
                 .and(criteriaBuilder.equal(root.get("goalStatus"), SavingsGoalStatusConstant.ACTIVE),
@@ -125,5 +151,32 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
     @Override
     public SavingsGoalEntity saveRecord(SavingsGoalEntity record) {
         return repository.save(record);
+    }
+
+
+    private static Specification<SavingsGoalEntity> withActiveStatus() {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
+                criteriaBuilder.equal(root.get("recordStatus"), SavingsGoalStatusConstant.ACTIVE),
+                criteriaBuilder.equal(root.get("creationSource"), SavingsGoalCreationSourceConstant.CUSTOMER)));
+    }
+
+    private static Specification<SavingsGoalEntity> withGoalStatus(SavingsGoalStatusConstant goalStatus) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("goalStatus"), goalStatus));
+    }
+
+    private static Specification<SavingsGoalEntity> withDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return ((fundTransferRoot, criteriaQuery, criteriaBuilder) -> criteriaBuilder.between(fundTransferRoot.get("dateCreated"), startDate, endDate));
+    }
+
+    private static Specification<SavingsGoalEntity> withMintAccount(MintAccountEntity account) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("mintAccount"), account.getId()));
+    }
+
+    private static Specification<SavingsGoalEntity> withGoalId(String goalId) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("goalId"), goalId));
+    }
+
+    private static Specification<SavingsGoalEntity> withPlan(SavingsPlanEntity savingsPlan) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("savingsPlan"), savingsPlan.getId()));
     }
 }

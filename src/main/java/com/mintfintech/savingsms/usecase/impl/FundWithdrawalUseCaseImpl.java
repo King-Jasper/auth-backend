@@ -457,7 +457,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 if(appUserEntity.isGcmNotificationEnabled()) {
                     if(!StringUtils.isEmpty(appUserEntity.getDeviceGcmNotificationToken())){
                         String text = "Your savings withdrawal has been processed. You can access your fund from your account now.";
-                        PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+                        PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("Account Funded", text, appUserEntity.getDeviceGcmNotificationToken());
                         applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
                     }
                 }

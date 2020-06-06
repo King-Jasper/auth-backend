@@ -71,7 +71,7 @@ public class AccountMSEventListener {
     public void listenForCustomerDeviceChange(String payload) {
         log.info("customer push notification detail: {}", payload);
         CustomerDeviceChangeEvent deviceChangeEvent = gson.fromJson(payload, CustomerDeviceChangeEvent.class);
-        accountSetupUseCases.updateUserDeviceNotificationId(deviceChangeEvent.getCustomerId(), deviceChangeEvent.getDeviceUniqueId());
+        accountSetupUseCases.updateUserDeviceNotificationId(deviceChangeEvent.getCustomerId(), deviceChangeEvent.getDeviceNotificationId());
     }
 
 }

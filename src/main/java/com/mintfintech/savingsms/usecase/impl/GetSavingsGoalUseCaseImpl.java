@@ -9,10 +9,15 @@ import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
+import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
+import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
@@ -20,6 +25,8 @@ import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.data.domain.Page;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -166,5 +173,32 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .customerGoals(savingsGoalList)
                 .mintGoals(mintGoalsList)
                 .build();
+    }
+
+
+    @Override
+    public PagedDataResponse<SavingsGoalModel> getPagedSavingsGoals(SavingsSearchRequest searchRequest, int page, int size) {
+        MintAccountEntity accountEntity = null;
+        if(!StringUtils.isEmpty(searchRequest.getAccountId())) {
+            accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElse(null);
+        }
+        SavingsPlanEntity savingsPlan = null;
+        if(!StringUtils.isEmpty(searchRequest.getSavingsTier())) {
+            SavingsPlanTypeConstant planType = SavingsPlanTypeConstant.valueOf(searchRequest.getSavingsTier());
+            savingsPlan = savingsPlanEntityDao.getPlanByType(planType);
+        }
+        SavingsSearchDTO searchDTO = SavingsSearchDTO.builder()
+                .goalId(searchRequest.getGoalId())
+                .account(accountEntity)
+                .autoSavedEnabled(searchRequest.isAutoSavedEnabled())
+                .goalStatus(SavingsGoalStatusConstant.valueOf(searchRequest.getSavingsStatus()))
+                .savingsPlan(savingsPlan)
+                .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
+                .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59): null)
+                .build();
+
+        Page<SavingsGoalEntity> goalEntityPage = savingsGoalEntityDao.searchSavingsGoal(searchDTO, page, size);
+        return new PagedDataResponse<>(goalEntityPage.getTotalElements(), goalEntityPage.getTotalPages(),
+                goalEntityPage.get().map(this::fromSavingsGoalEntityToModel).collect(Collectors.toList()));
     }
 }

@@ -13,13 +13,16 @@ import java.util.ArrayList;
 public class PushNotificationEvent {
     private ArrayList<String> tokens = new ArrayList<>();
     private String topic;
+    private String title;
     private String message;
     private String userId;
+    private Object data = null;
 
     public PushNotificationEvent() {}
 
-    public PushNotificationEvent(String message, String tokenId) {
+    public PushNotificationEvent(String title, String message, String tokenId) {
         this.message = message;
+        this.title = title;
         if(!StringUtils.isEmpty(tokenId)){
             this.tokens.add(tokenId);
         }

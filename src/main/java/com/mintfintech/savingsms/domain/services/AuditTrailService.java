@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.services;
 
 import com.mintfintech.savingsms.domain.entities.AbstractBaseEntity;
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 
 /**
  * Created by jnwanya on
@@ -8,6 +9,6 @@ import com.mintfintech.savingsms.domain.entities.AbstractBaseEntity;
  */
 public interface AuditTrailService{
     enum AuditType { UPDATE, CREATE, DELETE}
-    <T extends AbstractBaseEntity<Long>> void createAuditLog(AuditType auditType, String description, T oldRecord, T newRecord);
-    <T extends AbstractBaseEntity<Long>> void createAuditLog(AuditType auditType, String description, T record);
+    <T extends AbstractBaseEntity<Long>> void createAuditLog(AuthenticatedUser authenticatedUser, AuditType auditType, String description, T oldRecord, T newRecord);
+    <T extends AbstractBaseEntity<Long>> void createAuditLog(AuthenticatedUser authenticatedUser, AuditType auditType, String description, T record);
 }

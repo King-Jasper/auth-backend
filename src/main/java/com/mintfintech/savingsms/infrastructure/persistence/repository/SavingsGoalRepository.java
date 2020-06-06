@@ -10,6 +10,7 @@ import org.apache.kafka.common.record.Record;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -21,7 +22,7 @@ import java.util.Optional;
  * Created by jnwanya on
  * Tue, 18 Feb, 2020
  */
-public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, Long> {
+public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, Long>, JpaSpecificationExecutor<SavingsGoalEntity> {
 
 
 

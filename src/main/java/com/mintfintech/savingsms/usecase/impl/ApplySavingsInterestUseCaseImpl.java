@@ -161,6 +161,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
         accumulatedInterestEntity.setResponseMessage(responseCBS.getResponseMessage());
         accumulatedInterestEntity.setResponseCode(responseCBS.getResponseCode());
+        accumulatedInterestEntity.setExternalReference(responseCBS.getBankOneReference());
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
     }
 
