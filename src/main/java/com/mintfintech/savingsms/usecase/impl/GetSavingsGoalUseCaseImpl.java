@@ -122,12 +122,20 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = isMintGoalMatured(savingsGoalEntity);
+        BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
+        if(accruedInterest.compareTo(BigDecimal.ZERO) > 0) {
+            accruedInterest = accruedInterest.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        }
+        BigDecimal savingsBalance = savingsGoalEntity.getSavingsBalance();
+        if(savingsBalance.compareTo(BigDecimal.ZERO) > 0) {
+            savingsBalance = savingsBalance.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        }
         BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
-                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .savingsBalance(savingsBalance)
+                .accruedInterest(accruedInterest)
                 .availableBalance(availableBalance)
                 .matured(matured).build();
     }
@@ -183,14 +191,18 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElse(null);
         }
         SavingsPlanEntity savingsPlan = null;
-        if(!StringUtils.isEmpty(searchRequest.getSavingsTier())) {
+        if(!StringUtils.isEmpty(searchRequest.getSavingsTier()) && !searchRequest.getSavingsTier().equalsIgnoreCase("ALL")) {
             SavingsPlanTypeConstant planType = SavingsPlanTypeConstant.valueOf(searchRequest.getSavingsTier());
             savingsPlan = savingsPlanEntityDao.getPlanByType(planType);
+        }
+        SavingsSearchDTO.AutoSaveStatus autoSaveStatus = null;
+        if(!"ALL".equalsIgnoreCase(searchRequest.getAutoSavedStatus())) {
+            autoSaveStatus = SavingsSearchDTO.AutoSaveStatus.valueOf(searchRequest.getAutoSavedStatus());
         }
         SavingsSearchDTO searchDTO = SavingsSearchDTO.builder()
                 .goalId(searchRequest.getGoalId())
                 .account(accountEntity)
-                .autoSavedEnabled(searchRequest.isAutoSavedEnabled())
+                .autoSaveStatus(autoSaveStatus)
                 .goalStatus(SavingsGoalStatusConstant.valueOf(searchRequest.getSavingsStatus()))
                 .savingsPlan(savingsPlan)
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)

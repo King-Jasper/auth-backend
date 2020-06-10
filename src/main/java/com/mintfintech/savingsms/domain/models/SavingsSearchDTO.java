@@ -14,6 +14,7 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class SavingsSearchDTO {
+    public enum AutoSaveStatus { ENABLED, DISABLED }
     private LocalDateTime fromDate;
     private LocalDateTime toDate;
     private SavingsGoalStatusConstant goalStatus;
@@ -22,5 +23,6 @@ public class SavingsSearchDTO {
     private SavingsPlanEntity savingsPlan;
    // private String customerEmail;
    // private String customerPhoneNumber;
-    private boolean autoSavedEnabled;
+   // private boolean autoSavedEnabled;
+    private AutoSaveStatus autoSaveStatus;
 }

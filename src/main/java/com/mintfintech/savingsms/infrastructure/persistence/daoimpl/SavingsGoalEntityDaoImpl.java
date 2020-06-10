@@ -110,6 +110,10 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
         if(searchDTO.getSavingsPlan() != null) {
             specification = specification.and(withPlan(searchDTO.getSavingsPlan()));
         }
+        if(searchDTO.getAutoSaveStatus() != null) {
+            boolean autoSave = searchDTO.getAutoSaveStatus() == SavingsSearchDTO.AutoSaveStatus.ENABLED;
+            specification = specification.and(withAutoSaveStatus(autoSave));
+        }
         return repository.findAll(specification, pageable);
     }
 
@@ -156,7 +160,7 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     private static Specification<SavingsGoalEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
-                criteriaBuilder.equal(root.get("recordStatus"), SavingsGoalStatusConstant.ACTIVE),
+                criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE),
                 criteriaBuilder.equal(root.get("creationSource"), SavingsGoalCreationSourceConstant.CUSTOMER)));
     }
 
@@ -178,5 +182,9 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
 
     private static Specification<SavingsGoalEntity> withPlan(SavingsPlanEntity savingsPlan) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("savingsPlan"), savingsPlan.getId()));
+    }
+
+    private static Specification<SavingsGoalEntity> withAutoSaveStatus(boolean autoSaveStatus) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("autoSave"), autoSaveStatus));
     }
 }

@@ -20,8 +20,8 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String planId;
 
-    @ApiModelProperty(notes = "The amount to be funded.", required = true)
-    @Min(100)
+    @ApiModelProperty(notes = "The amount to be funded. N100 minimum", required = true)
+    @Min(value = 100, message = "Minimum of N100")
     private double fundingAmount;
 
     @ApiModelProperty(notes = "The bank accountId to be debited", required = true)
@@ -34,8 +34,8 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String name;
 
-    @ApiModelProperty(notes = "The savings target amount.", required = true)
-    @Min(100)
+    @ApiModelProperty(notes = "The savings target amount. N100 minimum", required = true)
+    @Min(value = 100, message = "Minimum of N100")
     private double targetAmount;
 
     @ApiModelProperty(notes = "The savings category code", required = true)
