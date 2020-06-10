@@ -161,6 +161,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     }
 
     private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
+
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
         if(appUserEntity.isEmailNotificationEnabled()){
             SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()

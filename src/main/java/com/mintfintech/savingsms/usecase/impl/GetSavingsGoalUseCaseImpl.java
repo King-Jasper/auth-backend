@@ -122,12 +122,20 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = isMintGoalMatured(savingsGoalEntity);
+        BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
+        if(accruedInterest.compareTo(BigDecimal.ZERO) > 0) {
+            accruedInterest = accruedInterest.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        }
+        BigDecimal savingsBalance = savingsGoalEntity.getSavingsBalance();
+        if(savingsBalance.compareTo(BigDecimal.ZERO) > 0) {
+            savingsBalance = savingsBalance.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        }
         BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
-                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .savingsBalance(savingsBalance)
+                .accruedInterest(accruedInterest)
                 .availableBalance(availableBalance)
                 .matured(matured).build();
     }
