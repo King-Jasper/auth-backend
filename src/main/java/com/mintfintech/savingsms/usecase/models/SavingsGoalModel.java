@@ -24,6 +24,7 @@ public class SavingsGoalModel {
    private BigDecimal targetAmount;
    private BigDecimal accruedInterest;
    private String savingFrequency;
+   private String noWithdrawalErrorMessage;
    private String maturityDate;
    private String startDate;
    private String nextSavingsDate;

@@ -65,6 +65,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
 
+        boolean isMatured = isCustomerGoalMatured(savingsGoalEntity);
+
         return SavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .name(savingsGoalEntity.getName())
@@ -80,13 +82,14 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .startDate(savingsGoalEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE))
                 .categoryCode(savingsGoalEntity.getGoalCategory().getCode())
                 .currentStatus(savingsGoalEntity.getGoalStatus().name())
-                .availableBalance(computeAvailableBalance(savingsGoalEntity))
+                .availableBalance(computeAvailableBalance(savingsGoalEntity, isMatured))
                 .interestRate(planTenorEntity.getInterestRate())
+                .noWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured))
                 .build();
     }
 
-    private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity) {
-         if(isCustomerGoalMatured(savingsGoalEntity)) {
+    private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity, boolean matured) {
+         if(matured) {
              return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
          }
         /*long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
@@ -96,6 +99,13 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
         }*/
         return BigDecimal.valueOf(0.00);
+    }
+
+    private String getCustomerSavingsNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured){
+        if(matured){
+            return  "";
+        }
+        return "Sorry, your savings goal is not yet due for withdrawal.";
     }
 
    private boolean isCustomerGoalMatured(SavingsGoalEntity savingsGoalEntity) {
@@ -120,6 +130,13 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
        return matured;
    }
 
+   private String getMintGoalNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured) {
+        if(matured){
+            return  "";
+        }
+        return "Sorry, the minimum amount for withdrawal is N1000.";
+   }
+
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = isMintGoalMatured(savingsGoalEntity);
         BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
@@ -137,6 +154,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingsBalance(savingsBalance)
                 .accruedInterest(accruedInterest)
                 .availableBalance(availableBalance)
+                .noWithdrawalErrorMessage(getMintGoalNoWithdrawalErrorMessage(savingsGoalEntity, matured))
                 .matured(matured).build();
     }
 
