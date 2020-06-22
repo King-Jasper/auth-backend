@@ -46,23 +46,40 @@ public class GetSavingsTransactionUseCaseImpl implements GetSavingsTransactionUs
         List<SavingsMaturityStat> maturityStatList = savingsGoalEntityDao.savingsMaturityStatisticsList(startDate, endDate);
         SavingsMaturityStatSummary maturityStatModel = new SavingsMaturityStatSummary();
         List<SavingsMaturityStatModel> savingsMaturityStatList = new ArrayList<>();
-        for(int i = 0; i <= days; i++) {
+        int year = fromDate.getYear();
+        for(SavingsMaturityStat modelStat : maturityStatList) {
+            LocalDate statDate = LocalDate.of(year, modelStat.getMonth(), modelStat.getDay());
+            SavingsMaturityStatModel maturityStat = new SavingsMaturityStatModel();
+            maturityStat.setMaturityDate(statDate.format(DateTimeFormatter.ISO_DATE));
+            maturityStat.setTotalRecords(modelStat.getTotalRecords());
+            maturityStat.setTotalAmount(modelStat.getTotalInterest().add(modelStat.getTotalSavings()));
+            maturityStat.setTotalInterest(modelStat.getTotalInterest());
+            maturityStat.setTotalSavings(modelStat.getTotalSavings());
+            maturityStatModel.setTotalAmount(maturityStatModel.getTotalAmount().add(maturityStat.getTotalAmount()));
+            maturityStatModel.setTotalInterest(maturityStatModel.getTotalInterest().add(modelStat.getTotalInterest()));
+            maturityStatModel.setTotalSavings(maturityStatModel.getTotalSavings().add(modelStat.getTotalSavings()));
+            maturityStatModel.setTotalSavingsRecord(maturityStatModel.getTotalSavingsRecord() + modelStat.getTotalRecords());
+            savingsMaturityStatList.add(maturityStat);
+        }
+       /* for(int i = 0; i <= days; i++) {
             final int day = fromDate.getDayOfMonth();
             final int month = fromDate.getMonthValue();
             SavingsMaturityStatModel maturityStat = new SavingsMaturityStatModel();
             maturityStat.setMaturityDate(fromDate.format(DateTimeFormatter.ISO_DATE));
             Optional<SavingsMaturityStat> statOptional = maturityStatList.stream().filter(modelStat -> month == modelStat.getMonth() && day == modelStat.getDay()).findFirst();
             statOptional.ifPresent(modelStat -> {
-                maturityStat.setTotalAmount(modelStat.getTotalInterest().add(maturityStat.getTotalSavings()));
+                maturityStat.setTotalRecords(modelStat.getTotalRecords());
+                maturityStat.setTotalAmount(modelStat.getTotalInterest().add(modelStat.getTotalSavings()));
                 maturityStat.setTotalInterest(modelStat.getTotalInterest());
                 maturityStat.setTotalSavings(modelStat.getTotalSavings());
                 maturityStatModel.setTotalAmount(maturityStatModel.getTotalAmount().add(maturityStat.getTotalAmount()));
-                maturityStatModel.setTotalInterest(modelStat.getTotalInterest());
-                maturityStatModel.setTotalSavings(modelStat.getTotalSavings());
+                maturityStatModel.setTotalInterest(maturityStatModel.getTotalInterest().add(modelStat.getTotalInterest()));
+                maturityStatModel.setTotalSavings(maturityStatModel.getTotalSavings().add(modelStat.getTotalSavings()));
+                maturityStatModel.setTotalSavingsRecord(maturityStatModel.getTotalSavingsRecord() + modelStat.getTotalRecords());
             });
             savingsMaturityStatList.add(maturityStat);
             fromDate = fromDate.plusDays(1);
-        }
+        }*/
         maturityStatModel.setSavingsMaturityStatList(savingsMaturityStatList);
         return maturityStatModel;
     }
