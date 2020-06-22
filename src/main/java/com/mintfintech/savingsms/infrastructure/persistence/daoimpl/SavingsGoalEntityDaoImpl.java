@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +18,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.repository.query.Param;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
@@ -33,11 +35,12 @@ import java.util.Optional;
  * Tue, 18 Feb, 2020
  */
 @Named
-public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
+public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Long> implements SavingsGoalEntityDao {
 
-    private SavingsGoalRepository repository;
-    private AppSequenceEntityDao appSequenceEntityDao;
+    private final SavingsGoalRepository repository;
+    private final AppSequenceEntityDao appSequenceEntityDao;
     public SavingsGoalEntityDaoImpl(SavingsGoalRepository repository, AppSequenceEntityDao appSequenceEntityDao) {
+        super(repository);
         this.repository = repository;
         this.appSequenceEntityDao = appSequenceEntityDao;
     }
@@ -75,6 +78,11 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
     @Override
     public Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId) {
         return repository.findFirstByMintAccountAndGoalIdAndRecordStatus(accountEntity, goalId, RecordStatusConstant.ACTIVE);
+    }
+
+    @Override
+    public Optional<SavingsGoalEntity> findSavingGoalByGoalId(String goalId) {
+        return repository.findFirstByGoalIdAndRecordStatus(goalId, RecordStatusConstant.ACTIVE);
     }
 
     @Override
@@ -143,20 +151,9 @@ public class SavingsGoalEntityDaoImpl implements SavingsGoalEntityDao {
     }
 
     @Override
-    public Optional<SavingsGoalEntity> findById(Long aLong) {
-        return repository.findById(aLong);
+    public List<SavingsMaturityStat> savingsMaturityStatisticsList(LocalDateTime startDate, LocalDateTime endDate) {
+         return repository.getSavingsMaturityStatistics(startDate, endDate);
     }
-
-    @Override
-    public SavingsGoalEntity getRecordById(Long aLong) throws RuntimeException {
-        return findById(aLong).orElseThrow(() -> new RuntimeException("Not found. SavingsGoalEntity with id: "+aLong));
-    }
-
-    @Override
-    public SavingsGoalEntity saveRecord(SavingsGoalEntity record) {
-        return repository.save(record);
-    }
-
 
     private static Specification<SavingsGoalEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(

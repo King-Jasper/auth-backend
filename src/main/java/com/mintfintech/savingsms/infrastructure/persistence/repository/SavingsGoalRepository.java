@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.apache.kafka.common.record.Record;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -14,6 +15,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -57,6 +59,8 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
 
     Optional<SavingsGoalEntity> findFirstByMintAccountAndGoalIdAndRecordStatus(MintAccountEntity accountEntity, String goalId, RecordStatusConstant status);
 
+    Optional<SavingsGoalEntity> findFirstByGoalIdAndRecordStatus(String goalId, RecordStatusConstant status);
+
     Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsGoalTypeAndRecordStatus(MintAccountEntity mintAccountEntity,
                                                                                         SavingsGoalTypeConstant goalTypeConstant,
                                                                                         RecordStatusConstant status);
@@ -88,5 +92,13 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
     Page<SavingsGoalEntity> getSavingsGoalWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
                                                              @Param("fromTime") LocalDateTime fromTime,
                                                              @Param("toTime") LocalDateTime toTime, Pageable pageable);
+
+
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat(DAY(s.maturityDate), MONTH(s.maturityDate), sum(s.accruedInterest), sum(s.savingsBalance)) " +
+            "from SavingsGoalEntity s where s.maturityDate is not null and s.maturityDate between :startDate and :endDate and" +
+            " s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            "group by DAY(s.maturityDate), MONTH(s.maturityDate)")
+    List<SavingsMaturityStat> getSavingsMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 }
