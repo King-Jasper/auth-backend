@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDateTime;
@@ -19,6 +20,7 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType);
     List<SavingsGoalEntity>  getAccountSavingGoals(MintAccountEntity accountEntity);
     Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
+    Optional<SavingsGoalEntity> findSavingGoalByGoalId(String goalId);
     Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccount(String name, SavingsPlanEntity planEntity, MintAccountEntity accountEntity);
     long countUserCreatedSavingsGoalsOnPlan(MintAccountEntity mintAccountEntity, SavingsPlanEntity planEntity);
     long countUserCreatedAccountSavingsGoals(MintAccountEntity mintAccountEntity);
@@ -28,4 +30,5 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize);
 
     Page<SavingsGoalEntity> searchSavingsGoal(SavingsSearchDTO savingsSearchDTO, int pageIndex, int recordSize);
+    List<SavingsMaturityStat> savingsMaturityStatisticsList(LocalDateTime startDate, LocalDateTime endDate);
 }

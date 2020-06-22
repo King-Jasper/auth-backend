@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.models;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.Setter;
 
 import java.math.BigDecimal;
 
@@ -10,7 +11,6 @@ import java.math.BigDecimal;
  * Wed, 19 Feb, 2020
  */
 @Data
-@Builder
 public class SavingsGoalModel {
    private String goalId;
    private String name;

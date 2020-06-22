@@ -2,8 +2,11 @@ package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.backoffice.GetSavingsTransactionUseCase;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
+import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummary;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -17,10 +20,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
@@ -40,10 +40,11 @@ import java.time.LocalDate;
 public class SavingsGoalReportController {
 
     GetSavingsGoalUseCase getSavingsGoalUseCase;
+    GetSavingsTransactionUseCase getSavingsTransactionUseCase;
 
     @ApiOperation(value = "Returns paginated list of savings goal.")
     @GetMapping(value = "savings-goals", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsGoalModel>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "goalId", required = false) String goalId,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "goalId", required = false) String goalId,
                                                                                              @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
                                                                                              @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
                                                                                              @NotBlank @Pattern(regexp = "(ALL|SAVINGS_TIER_ONE|SAVINGS_TIER_TWO|SAVINGS_TIER_THREE)") @RequestParam("planType") String planType,
@@ -59,8 +60,27 @@ public class SavingsGoalReportController {
                 .fromDate(fromDate).toDate(toDate)
                 .autoSavedStatus(autoSaveStatus)
                 .build();
-        PagedDataResponse<SavingsGoalModel> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
-        ApiResponseJSON<PagedDataResponse<SavingsGoalModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
+        ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+
+    @ApiOperation(value = "Returns savings goal details by goal id.")
+    @GetMapping(value = "savings-goals/{goalId}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PortalSavingsGoalResponse>> getSavingsGoal(@PathVariable("goalId") String goalId) {
+
+        PortalSavingsGoalResponse response = getSavingsGoalUseCase.getPortalSavingsGoalResponseByGoalId(goalId);
+        ApiResponseJSON<PortalSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns savings maturity statistics information.")
+    @GetMapping(value = "savings-goals/maturity-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<SavingsMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate") LocalDate fromDate,
+                                                                                                            @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate") LocalDate toDate) {
+        SavingsMaturityStatSummary response = getSavingsTransactionUseCase.getSavingsMaturityStatistics(fromDate, toDate);
+        ApiResponseJSON<SavingsMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
