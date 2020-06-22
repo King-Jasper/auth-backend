@@ -21,10 +21,13 @@ public class SavingsMaturityStat {
 
     private BigDecimal totalSavings;
 
-    public SavingsMaturityStat(int day, int month, BigDecimal totalInterest, BigDecimal totalSavings) {
+    private long totalRecords;
+
+    public SavingsMaturityStat(int day, int month, long totalRecords, BigDecimal totalInterest, BigDecimal totalSavings) {
         this.day = day;
         this.month = month;
         this.totalInterest = totalInterest;
         this.totalSavings = totalSavings;
+        this.totalRecords = totalRecords;
     }
 }

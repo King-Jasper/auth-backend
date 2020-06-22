@@ -94,7 +94,7 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
                                                              @Param("toTime") LocalDateTime toTime, Pageable pageable);
 
 
-    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat(DAY(s.maturityDate), MONTH(s.maturityDate), sum(s.accruedInterest), sum(s.savingsBalance)) " +
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat(DAY(s.maturityDate), MONTH(s.maturityDate), count(s), sum(s.accruedInterest), sum(s.savingsBalance)) " +
             "from SavingsGoalEntity s where s.maturityDate is not null and s.maturityDate between :startDate and :endDate and" +
             " s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +

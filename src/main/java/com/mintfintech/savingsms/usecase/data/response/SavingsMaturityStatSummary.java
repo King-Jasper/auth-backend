@@ -14,6 +14,6 @@ public class SavingsMaturityStatSummary {
     private BigDecimal totalAmount = BigDecimal.ZERO;
     private BigDecimal totalInterest = BigDecimal.ZERO;
     private BigDecimal totalSavings = BigDecimal.ZERO;
-   // private long totalSavingsRecord = 0;
+    private long totalSavingsRecord = 0;
     private List<SavingsMaturityStatModel> savingsMaturityStatList;
 }

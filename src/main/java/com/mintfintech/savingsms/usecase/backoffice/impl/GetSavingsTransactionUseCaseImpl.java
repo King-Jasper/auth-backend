@@ -53,12 +53,14 @@ public class GetSavingsTransactionUseCaseImpl implements GetSavingsTransactionUs
             maturityStat.setMaturityDate(fromDate.format(DateTimeFormatter.ISO_DATE));
             Optional<SavingsMaturityStat> statOptional = maturityStatList.stream().filter(modelStat -> month == modelStat.getMonth() && day == modelStat.getDay()).findFirst();
             statOptional.ifPresent(modelStat -> {
-                maturityStat.setTotalAmount(modelStat.getTotalInterest().add(maturityStat.getTotalSavings()));
+                maturityStat.setTotalRecords(modelStat.getTotalRecords());
+                maturityStat.setTotalAmount(modelStat.getTotalInterest().add(modelStat.getTotalSavings()));
                 maturityStat.setTotalInterest(modelStat.getTotalInterest());
                 maturityStat.setTotalSavings(modelStat.getTotalSavings());
-                maturityStatModel.setTotalAmount(maturityStatModel.getTotalAmount().add(maturityStat.getTotalAmount()));
-                maturityStatModel.setTotalInterest(modelStat.getTotalInterest());
-                maturityStatModel.setTotalSavings(modelStat.getTotalSavings());
+                maturityStatModel.setTotalAmount(modelStat.getTotalInterest().add(modelStat.getTotalSavings()));
+                maturityStatModel.setTotalInterest(maturityStatModel.getTotalInterest().add(modelStat.getTotalInterest()));
+                maturityStatModel.setTotalSavings(maturityStatModel.getTotalSavings().add(modelStat.getTotalSavings()));
+                maturityStatModel.setTotalSavingsRecord(maturityStatModel.getTotalSavingsRecord() + modelStat.getTotalRecords());
             });
             savingsMaturityStatList.add(maturityStat);
             fromDate = fromDate.plusDays(1);
