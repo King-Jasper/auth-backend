@@ -1,9 +1,7 @@
 package com.mintfintech.savingsms.utils;
 
-import java.time.DayOfWeek;
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.LocalTime;
+import java.time.*;
+import java.util.Date;
 
 /**
  * Created by jnwanya on
@@ -30,6 +28,10 @@ public class DateUtil {
             }
         }
         return result;
+    }
+
+    public static Date fromLocalDateTimeToDate(LocalDateTime localDateTime) {
+        return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
     }
 
 }

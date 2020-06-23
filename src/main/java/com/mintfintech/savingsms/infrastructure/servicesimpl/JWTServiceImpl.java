@@ -1,15 +1,16 @@
 package com.mintfintech.savingsms.infrastructure.servicesimpl;
 
 import com.mintfintech.savingsms.domain.services.JWTService;
+import com.mintfintech.savingsms.utils.DateUtil;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.impl.compression.GzipCompressionCodec;
-import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
@@ -51,15 +52,15 @@ public class JWTServiceImpl implements JWTService {
 
     private String newToken(final Map<String, String> attributes, String secretKey, final int expiresInMin) {
         secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-        DateTime now = DateTime.now();
+        LocalDateTime now = LocalDateTime.now();
         final Claims claims = Jwts
                 .claims()
                 .setIssuer(issuer)
-                .setIssuedAt(now.toDate());
+                .setIssuedAt(DateUtil.fromLocalDateTimeToDate(now));
 
         if (expiresInMin > 0) {
-            final DateTime expiresAt = now.plusMinutes(expiresInMin);
-            claims.setExpiration(expiresAt.toDate());
+            final LocalDateTime expiresAt = now.plusMinutes(expiresInMin);
+            claims.setExpiration(DateUtil.fromLocalDateTimeToDate(expiresAt));
         }
         claims.putAll(attributes);
         return Jwts

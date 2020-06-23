@@ -19,7 +19,7 @@ import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -141,7 +141,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                 .narration(narration)
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.updateAccruedInterest(updateRequestCBS);
-        if(msClientResponse.getStatusCode() != HttpStatus.SC_OK) {
+        if(msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
             String message = msClientResponse.getMessage();
             accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
             accumulatedInterestEntity.setResponseMessage(message);
