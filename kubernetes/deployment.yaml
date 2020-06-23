@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    com.mintfintech.service: savings-service
+  name: savings-service
+spec:
+  replicas: 1 #CHANGE
+  minReadySeconds: 45
+  selector:
+    matchLabels:
+      com.mintfintech.service: savings-service
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        com.mintfintech.service: savings-service
+    spec:
+      imagePullSecrets:
+        - name: regcred
+      serviceAccountName: savings-service
+      containers:
+      - image: mintfintech/savings-service:prod
+        imagePullPolicy: Always
+        name: savings-service
+        ports:
+        - name: liveness-port
+          containerPort: 8090
+        - name: readiness-port
+          containerPort: 8090
+        readinessProbe:
+          httpGet:
+            path: /
+            port: readiness-port
+          failureThreshold: 5
+          periodSeconds: 10
+          initialDelaySeconds: 60
+        livenessProbe:
+          httpGet:
+            path: /
+            port: liveness-port
+          failureThreshold: 5
+          periodSeconds: 10
+          initialDelaySeconds: 60
+        env:
+        - name: SAVINGS_SERVICE_SERVICE_HOST
+          value: http://savings-service
+        - name: SPRING_PROFILES_ACTIVE
+          value: prod
+        - name: KUBERNETES_NAMESPACE
+          value: staging
+        volumeMounts:
+        - name: config
+          mountPath: "/config"
+          readOnly: true
+      volumes:
+        - name: config
+          configMap:
+            name: savings-service
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30

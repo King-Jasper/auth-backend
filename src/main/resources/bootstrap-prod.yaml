@@ -1,8 +1,4 @@
 spring:
-  application:
-    name: savings-service
-  profiles:
-    active: dev
   cloud:
     consul:
       host: localhost
@@ -13,8 +9,13 @@ spring:
         prefer-ip-address: true
     kubernetes:
       reload:
-        enabled: false
+        enabled: true
       config:
-        enabled: false
-server:
-  port: 8096
+        sources:
+          - namespace: ${KUBERNETES_NAMESPACE}
+            name: ${spring.application.name}
+        enabled: true
+management:
+  endpoint:
+    restart:
+      enabled: true
