@@ -87,7 +87,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     @Override
     public PortalSavingsGoalResponse fromSavingsGoalEntityToPortalSavingsGoalResponse (SavingsGoalEntity savingsGoalEntity) {
-        PortalSavingsGoalResponse goalResponse = (PortalSavingsGoalResponse) fromSavingsGoalEntityToModel(savingsGoalEntity);
+        PortalSavingsGoalResponse goalResponse = fromSavingsGoalEntityToModel(savingsGoalEntity);
         MintAccountEntity mintAccountEntity = mintAccountEntityDao.getRecordById(savingsGoalEntity.getMintAccount().getId());
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
         goalResponse.setAccountId(mintAccountEntity.getAccountId());
