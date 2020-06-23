@@ -8,7 +8,6 @@ import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalRespons
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
-
 import java.util.List;
 
 /**

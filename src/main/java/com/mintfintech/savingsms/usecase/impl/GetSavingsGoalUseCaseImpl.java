@@ -65,6 +65,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         boolean isMatured = isCustomerGoalMatured(savingsGoalEntity);
 
         SavingsGoalModel goalModel = new SavingsGoalModel();
+        goalModel.setName(savingsGoalEntity.getName());
         goalModel.setGoalId(savingsGoalEntity.getGoalId());
         goalModel.setAccruedInterest(savingsGoalEntity.getAccruedInterest());
         goalModel.setTargetAmount(savingsGoalEntity.getTargetAmount());
@@ -79,7 +80,6 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setSavingsAmount(savingsGoalEntity.getSavingsAmount());
         goalModel.setSavingsBalance(savingsGoalEntity.getSavingsBalance());
         goalModel.setSavingPlanName(savingsPlanEntity.getPlanName().getName());
-        goalModel.setSavingPlanName(savingsGoalEntity.getName());
         goalModel.setSavingFrequency(savingsGoalEntity.getSavingsFrequency() != null ? savingsGoalEntity.getSavingsFrequency().name() : "");
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
         return goalModel;
@@ -87,7 +87,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     @Override
     public PortalSavingsGoalResponse fromSavingsGoalEntityToPortalSavingsGoalResponse (SavingsGoalEntity savingsGoalEntity) {
-        PortalSavingsGoalResponse goalResponse = (PortalSavingsGoalResponse) fromSavingsGoalEntityToModel(savingsGoalEntity);
+        PortalSavingsGoalResponse goalResponse = fromSavingsGoalEntityToModel(savingsGoalEntity);
         MintAccountEntity mintAccountEntity = mintAccountEntityDao.getRecordById(savingsGoalEntity.getMintAccount().getId());
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
         goalResponse.setAccountId(mintAccountEntity.getAccountId());
