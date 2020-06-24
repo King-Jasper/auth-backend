@@ -29,9 +29,9 @@ spec:
         name: savings-service
         ports:
         - name: liveness-port
-          containerPort: 8090
+          containerPort: 8096
         - name: readiness-port
-          containerPort: 8090
+          containerPort: 8096
         readinessProbe:
           httpGet:
             path: /
