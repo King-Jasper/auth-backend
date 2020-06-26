@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.crontask;
 
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.inject.Named;
@@ -20,6 +21,7 @@ public class SavingsWithdrawalJob {
     }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
+    @SchedulerLock(name = "SavingsWithdrawalJob_processSavingsGoalWithdrawal", lockAtMostForString = "PT6M")
     public void processSavingsGoalWithdrawal(){
         try {
             fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();

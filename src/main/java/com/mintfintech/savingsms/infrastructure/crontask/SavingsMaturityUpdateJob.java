@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.crontask;
 
 import com.mintfintech.savingsms.usecase.UpdateSavingsGoalMaturityUseCase;
 import lombok.extern.slf4j.Slf4j;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.inject.Named;
@@ -14,12 +15,13 @@ import javax.inject.Named;
 @Named
 public class SavingsMaturityUpdateJob {
 
-    private UpdateSavingsGoalMaturityUseCase updateSavingsGoalMaturityUseCase;
+    private final UpdateSavingsGoalMaturityUseCase updateSavingsGoalMaturityUseCase;
     public SavingsMaturityUpdateJob(UpdateSavingsGoalMaturityUseCase updateSavingsGoalMaturityUseCase) {
         this.updateSavingsGoalMaturityUseCase = updateSavingsGoalMaturityUseCase;
     }
 
     @Scheduled(cron = "0 0 9,12,15 ? * *") // runs by 9am, 12noon, 3pm every day
+    @SchedulerLock(name = "SavingsMaturityUpdateJob_processSavingsMaturityUpdate", lockAtMostForString = "PT30M")
     public void processSavingsMaturityUpdate() {
         log.info("cron task processSavingsMaturityUpdate");
         updateSavingsGoalMaturityUseCase.updateStatusForMaturedSavingsGoal();

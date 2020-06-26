@@ -25,6 +25,13 @@ spec:
       serviceAccountName: savings-service
       containers:
       - image: mintfintech/savings-service:prod
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "2000Mi"
+            cpu: "1000m"
         imagePullPolicy: Always
         name: savings-service
         ports:
