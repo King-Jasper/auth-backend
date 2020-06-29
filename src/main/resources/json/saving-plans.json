@@ -33,6 +33,12 @@
     "tenors" : [
       {
         "durationType": "DAYS",
+        "duration": 30,
+        "description": "30 days (1 month)",
+        "interestRate": 6.32
+      },
+      {
+        "durationType": "DAYS",
         "duration": 60,
         "description": "60 days (2 months)",
         "interestRate": 6.60

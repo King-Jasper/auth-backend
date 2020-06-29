@@ -31,9 +31,9 @@ import java.util.stream.Collectors;
 @Named
 public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
 
-    private SavingsPlanEntityDao savingsPlanEntityDao;
-    private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
-    private Gson gson;
+    private final SavingsPlanEntityDao savingsPlanEntityDao;
+    private final SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
+    private final Gson gson;
 
     public SavingsPlanUseCasesImpl(SavingsPlanEntityDao savingsPlanEntityDao, SavingsPlanTenorEntityDao savingsPlanTenorEntityDao, Gson gson) {
         this.savingsPlanEntityDao = savingsPlanEntityDao;
@@ -69,9 +69,9 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
 
     @Override
     public void createDefaultSavingsPlan() {
-        if(savingsPlanEntityDao.countSavingPlans() != 0) {
+        /*if(savingsPlanEntityDao.countSavingPlans() != 0) {
            return;
-        }
+        }*/
         InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans.json");
         try {
             String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
