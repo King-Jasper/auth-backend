@@ -61,6 +61,10 @@ public class ApplicationProperty {
         return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("prod"));
     }
 
+    public boolean isKubernetesEnvironment() {
+        return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("kubernetes"));
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

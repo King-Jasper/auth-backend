@@ -97,8 +97,7 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
     }
 
     public String getServiceBaseUrl() {
-        // kubernetes
-        if(applicationProperty.isProductionEnvironment()) {
+        if(applicationProperty.isKubernetesEnvironment()) {
             return String.format("http://%s", applicationProperty.getCoreBankingServiceName());
         }
         List<ServiceInstance> list = discoveryClient.getInstances(applicationProperty.getCoreBankingServiceName());

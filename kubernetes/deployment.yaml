@@ -24,7 +24,7 @@ spec:
         - name: regcred
       serviceAccountName: savings-service
       containers:
-      - image: mintfintech/savings-service:prod
+      - image: mintfintech/savings-service
         resources:
           requests:
             memory: "64Mi"
@@ -57,7 +57,7 @@ spec:
         - name: SAVINGS_SERVICE_SERVICE_HOST
           value: http://savings-service
         - name: SPRING_PROFILES_ACTIVE
-          value: prod
+          value: sandbox
         - name: KUBERNETES_NAMESPACE
           value: staging
         volumeMounts:
