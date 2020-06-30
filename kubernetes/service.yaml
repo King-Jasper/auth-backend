@@ -2,14 +2,14 @@ apiVersion: v1
 kind: Service
 metadata:
   labels:
-    com.mintfintech.service: authorization-api-gateway
-  name: authorization-api-gateway
+    com.mintfintech.service: savings-service
+  name: savings-service
 spec:
   ports:
     - port: 80
       protocol: TCP
       targetPort: 8096
   selector:
-    com.mintfintech.service: authorization-api-gateway
+    com.mintfintech.service: savings-service
   sessionAffinity: None
   type: ClusterIP #NodePort
