@@ -18,4 +18,5 @@ public class SavingsGoalFundingEvent {
     private String goalName;
     private String transactionDate;
     private BigDecimal amount;
+    private BigDecimal savingsBalance;
 }

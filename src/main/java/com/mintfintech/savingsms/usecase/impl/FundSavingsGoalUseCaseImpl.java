@@ -171,6 +171,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                     .name(appUserEntity.getName())
                     .recipient(appUserEntity.getEmail())
                     .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .savingsBalance(goalEntity.getSavingsBalance())
                     .build();
             applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
         }else {
