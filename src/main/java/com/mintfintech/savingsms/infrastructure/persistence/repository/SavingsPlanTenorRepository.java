@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.SavingsPlanTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsDurationTypeConstant;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
@@ -20,5 +21,12 @@ public interface SavingsPlanTenorRepository extends JpaRepository<SavingsPlanTen
             SavingsPlanEntity savingsPlanEntity, SavingsDurationTypeConstant durationTypeConstant, int duration, RecordStatusConstant statusConstant);
     Optional<SavingsPlanTenorEntity> findFirstBySavingsPlanAndDurationAndRecordStatus(SavingsPlanEntity savingsPlanEntity,  int duration, RecordStatusConstant statusConstant);
     SavingsPlanTenorEntity getFirstBySavingsPlanOrderByDurationAsc(SavingsPlanEntity savingsPlanEntity);
+    Optional<SavingsPlanTenorEntity> findFirstByMinimumDurationAndMaximumDurationAndRecordStatus(int minDuration, int maxDuration, RecordStatusConstant statusConstant);
+
+    @Query("select s from SavingsPlanTenorEntity s where s.recordStatus = ?2 and s.maximumDuration >= ?1 and s.minimumDuration <= ?1")
+    Optional<SavingsPlanTenorEntity> findSavingsTenorForDuration(int duration, RecordStatusConstant status);
+
+    @Query("select max(s.maximumDuration) from SavingsPlanTenorEntity s where s.recordStatus = ?1")
+    int getMaximumSavingsDuration(RecordStatusConstant status);
 
 }

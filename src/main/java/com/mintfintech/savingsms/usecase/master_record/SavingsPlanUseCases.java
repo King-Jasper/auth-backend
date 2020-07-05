@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.usecase.master_record;
 
 import com.mintfintech.savingsms.usecase.models.SavingsPlanModel;
+import com.mintfintech.savingsms.usecase.models.SavingsPlanTenorModel;
+import com.mintfintech.savingsms.usecase.models.deprecated.SavingsPlanDModel;
 
 import java.util.List;
 
@@ -10,5 +12,8 @@ import java.util.List;
  */
 public interface SavingsPlanUseCases {
     void createDefaultSavingsPlan();
+    void createDefaultSavingsTenor();
+    List<SavingsPlanDModel> savingsPlanDeprecatedList();
     List<SavingsPlanModel> savingsPlanList();
+    List<SavingsPlanTenorModel> savingsTenorList();
 }

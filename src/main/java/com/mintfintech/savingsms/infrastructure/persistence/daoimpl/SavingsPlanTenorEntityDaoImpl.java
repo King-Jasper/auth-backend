@@ -18,7 +18,7 @@ import java.util.Optional;
  */
 @Named
 public class SavingsPlanTenorEntityDaoImpl implements SavingsPlanTenorEntityDao {
-    private SavingsPlanTenorRepository repository;
+    private final SavingsPlanTenorRepository repository;
     public SavingsPlanTenorEntityDaoImpl(SavingsPlanTenorRepository repository) {
         this.repository = repository;
     }
@@ -42,6 +42,21 @@ public class SavingsPlanTenorEntityDaoImpl implements SavingsPlanTenorEntityDao 
     @Override
     public Optional<SavingsPlanTenorEntity> findSavingPlanTenor(SavingsPlanEntity planEntity, int duration) {
         return repository.findFirstBySavingsPlanAndDurationAndRecordStatus(planEntity, duration, RecordStatusConstant.ACTIVE);
+    }
+
+    @Override
+    public Optional<SavingsPlanTenorEntity> findSavingPlanTenor(int minimumDuration, int maximumDuration) {
+        return repository.findFirstByMinimumDurationAndMaximumDurationAndRecordStatus(minimumDuration, maximumDuration, RecordStatusConstant.ACTIVE);
+    }
+
+    @Override
+    public Optional<SavingsPlanTenorEntity> findSavingsPlanTenorForDuration(int duration) {
+        return repository.findSavingsTenorForDuration(duration, RecordStatusConstant.ACTIVE);
+    }
+
+    @Override
+    public int getMaximumSavingsDuration() {
+        return repository.getMaximumSavingsDuration(RecordStatusConstant.ACTIVE);
     }
 
     @Override
