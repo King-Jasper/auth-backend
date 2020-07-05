@@ -54,6 +54,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             tierLevelDataUseCase.createDefaultTierLevels();
             currencyDataUseCases.createDefaultRecords();
             savingsPlanUseCases.createDefaultSavingsPlan();
+            savingsPlanUseCases.createDefaultSavingsTenor();
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");

@@ -1,5 +1,6 @@
-package com.mintfintech.savingsms.usecase.models;
+package com.mintfintech.savingsms.usecase.models.deprecated;
 
+import com.mintfintech.savingsms.usecase.models.SavingsPlanTenorModel;
 import lombok.Builder;
 import lombok.Data;
 
@@ -8,13 +9,15 @@ import java.util.List;
 
 /**
  * Created by jnwanya on
- * Tue, 31 Mar, 2020
+ * Sun, 05 Jul, 2020
  */
 @Data
 @Builder
-public class SavingsPlanModel {
+public class SavingsPlanDModel {
     private String planId;
     private String name;
     private BigDecimal minimumBalance;
     private BigDecimal maximumBalance;
+    private double interestRate;
+    private List<SavingsPlanTenorModel> durations;
 }

@@ -16,7 +16,10 @@ public interface SavingsPlanTenorEntityDao extends CrudDao<SavingsPlanTenorEntit
     List<SavingsPlanTenorEntity> getTenorList();
     SavingsPlanTenorEntity getSavingPlanTenor(SavingsPlanEntity planEntity, int duration, SavingsDurationTypeConstant durationTypeConstant);
     Optional<SavingsPlanTenorEntity> findSavingPlanTenor(SavingsPlanEntity planEntity, int duration);
+    Optional<SavingsPlanTenorEntity> findSavingPlanTenor(int minimumDuration, int maximumDuration);
     SavingsPlanTenorEntity getLeastDurationOnSavingsPlan(SavingsPlanEntity planEntity);
     List<SavingsPlanTenorEntity> getTenorListByPlan(SavingsPlanEntity planEntity);
+    Optional<SavingsPlanTenorEntity> findSavingsPlanTenorForDuration(int duration);
+    int getMaximumSavingsDuration();
    // Optional<SavingsPlanTenorEntity> findTenorByPlanAndId(SavingsPlanEntity planEntity, Long tenorId);
 }

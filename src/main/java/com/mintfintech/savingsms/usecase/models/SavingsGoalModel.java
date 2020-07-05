@@ -32,4 +32,6 @@ public class SavingsGoalModel extends PortalSavingsGoalResponse {
    private String startDate;
    private String nextSavingsDate;
    private String categoryCode;
+   private boolean lockedSavings;
+  // private int chosenSavingsDurationInDays;
 }

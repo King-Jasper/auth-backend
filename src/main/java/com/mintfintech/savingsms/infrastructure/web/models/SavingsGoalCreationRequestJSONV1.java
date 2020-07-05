@@ -10,10 +10,10 @@ import javax.validation.constraints.NotNull;
 
 /**
  * Created by jnwanya on
- * Sun, 05 Jul, 2020
+ * Thu, 02 Apr, 2020
  */
 @Data
-public class SavingsGoalCreationRequestJSON {
+public class SavingsGoalCreationRequestJSONV1 {
 
     @ApiModelProperty(notes = "The savings plan Id", required = true)
     @NotNull
@@ -43,16 +43,13 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String categoryCode;
 
-    @ApiModelProperty(notes = "The savings duration in days.", required = true)
-    private int durationInDays;
-
-    private boolean lockedSavings;
+    @ApiModelProperty(notes = "The savings plan duration Id.", required = true)
+    private long durationId;
 
     public SavingsGoalCreationRequest toRequest() {
         return SavingsGoalCreationRequest.builder()
                 .debitAccountId(debitAccountId)
-                .durationInDays(durationInDays)
-                .lockedSavings(lockedSavings)
+                .durationId(durationId)
                 .fundingAmount(fundingAmount)
                 .name(name)
                 .planId(planId)

@@ -70,7 +70,7 @@ public class SwaggerConfig {
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.mintfintech.savingsms.infrastructure.web.controllers"))
                 .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.ant("/api/v1/**"))
+                .paths(PathSelectors.ant("/api/v*/**"))
                 .build();
 
     }

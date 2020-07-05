@@ -40,6 +40,10 @@ public class ApplicationProperty {
         return Integer.parseInt(environmentService.getVariable("savings-goal.minimum-days-for-withdrawal", "30"));
     }
 
+    public double savingsInterestPercentageDeduction() {
+        return Double.parseDouble(environmentService.getVariable("savings-goal.interest-percentage-deduction", "50"));
+    }
+
     public double getNipTransactionInterest() {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
     }

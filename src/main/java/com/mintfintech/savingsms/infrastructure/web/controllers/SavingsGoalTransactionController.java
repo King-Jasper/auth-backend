@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.SavingFundingRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSONV1;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
@@ -47,10 +48,21 @@ public class SavingsGoalTransactionController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+
+    @Deprecated
     @ApiOperation(value = "Withdraw from a savings goal.", notes = "The amount is needed for goal that has not matured yet, else the saved amount is withdrawn.")
     @PostMapping(value = {"/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                       @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
+                                                                                       @RequestBody @Valid SavingsWithdrawalRequestJSONV1 requestJSON) {
+        String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Withdraw from a savings goal.")
+    @RequestMapping(method = RequestMethod.POST, value = {"/api/v2/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                        @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
