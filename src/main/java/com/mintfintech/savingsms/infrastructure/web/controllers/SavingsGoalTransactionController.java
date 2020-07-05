@@ -27,8 +27,11 @@ import javax.validation.Valid;
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Savings Goal Transaction Endpoints",  description = "Handles savings goal transaction management.")
 @RestController
-@RequestMapping(value = "/api/v1", headers = {"x-request-client-key", "Authorization"})
+@RequestMapping(headers = {"x-request-client-key", "Authorization"})
 public class SavingsGoalTransactionController {
+
+    private final String v1BaseUrl = "/api/v1/savings-goals";
+    private final String v2BaseUrl = "/api/v2/savings-goals";
 
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private FundWithdrawalUseCase fundWithdrawalUseCase;
@@ -39,7 +42,7 @@ public class SavingsGoalTransactionController {
 
     @ApiOperation(value = "Fund a savings goal.", notes = "Please note that the response code in the return object " +
             "determines if the transaction status. 00: SUCCESSFUL, 02: FAILED, 01: PENDING")
-    @PostMapping(value = {"/savings-goals/transaction/fund-goal"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = v1BaseUrl +"/transaction/fund-goal", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalFundingResponse>> fundSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                        @RequestBody @Valid SavingFundingRequestJSON requestJSON) {
 
@@ -50,8 +53,8 @@ public class SavingsGoalTransactionController {
 
 
     @Deprecated
-    @ApiOperation(value = "Withdraw from a savings goal.", notes = "The amount is needed for goal that has not matured yet, else the saved amount is withdrawn.")
-    @PostMapping(value = {"/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Withdraw savings goal fund.", notes = "The amount is needed for goal that has not matured yet, else the saved amount is withdrawn.")
+    @PostMapping(value = v1BaseUrl + "/transaction/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                        @RequestBody @Valid SavingsWithdrawalRequestJSONV1 requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
@@ -59,8 +62,8 @@ public class SavingsGoalTransactionController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Withdraw from a savings goal.")
-    @RequestMapping(method = RequestMethod.POST, value = {"/api/v2/savings-goals/transaction/withdraw-fund"}, consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @ApiOperation(value = "Withdraw savings goal fund.")
+    @PostMapping(value = v2BaseUrl +"/transaction/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                         @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
