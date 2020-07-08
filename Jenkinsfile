@@ -15,11 +15,6 @@ pipeline {
         HOME = '.'
     }
     stages {
-        stage('clone repo') {
-            steps {
-                checkout scm
-            }
-        }
         stage('Mvn Clean Package') {
             steps {
                 sh "mvn clean package"
