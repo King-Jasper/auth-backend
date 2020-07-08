@@ -84,6 +84,7 @@ pipeline {
                             //change image tag in the deployment file
                             sh("sed -i.bak 's|${dockerImageName}|${dockerImageName}:prod-${env.BUILD_NUMBER}|' ./kubernetes/deployment.yaml")
                             sh("sed -i.bak 's|${defaultDeploymentNamespace}|production|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultDeploymentNamespace}|production|' ./kubernetes/cluster_role.yaml")
                             sh("sed -i.bak 's|${defaultAppProfile}|prod|' ./kubernetes/deployment.yaml")
                             sh 'kubectl apply --validate=true --dry-run=client -f kubernetes/'
                             sh "kubectl apply --namespace=${productionNamespace}  -f kubernetes/"
