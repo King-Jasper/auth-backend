@@ -15,6 +15,7 @@ pipeline {
         HOME = '.'
     }
     stages {
+        
         stage('Mvn Clean Package') {
             steps {
                 sh "mvn clean package"
