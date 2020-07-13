@@ -1,0 +1,21 @@
+kind: Role
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: savings-service-r
+rules:
+  - apiGroups: [""] # "" indicates the core API group
+    resources: ["services", "pods", "configmaps", "endpoints"]
+    verbs: ["get", "watch", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: savings-service-rb
+subjects:
+  - kind: ServiceAccount
+    name: savings-service
+    namespace: sandbox
+roleRef:
+  kind: Role
+  name: savings-service-r
+  apiGroup: rbac.authorization.k8s.io

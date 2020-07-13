@@ -1,0 +1,21 @@
+spring:
+  cloud:
+    consul:
+      host: localhost
+      port: 8500
+      discovery:
+        instance-id: ${spring.application.name}
+        enabled: true
+        prefer-ip-address: true
+    kubernetes:
+      reload:
+        enabled: true
+      config:
+        sources:
+          - namespace: ${KUBERNETES_NAMESPACE}
+            name: ${spring.application.name}
+        enabled: true
+management:
+  endpoint:
+    restart:
+      enabled: true

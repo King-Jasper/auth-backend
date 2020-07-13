@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.crontask;
 
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
+import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 
 import javax.inject.Named;
@@ -12,11 +13,12 @@ import javax.inject.Named;
 @Named
 public class SavingsFundingJob {
 
-    private FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private final FundSavingsGoalUseCase fundSavingsGoalUseCase;
     public SavingsFundingJob(FundSavingsGoalUseCase fundSavingsGoalUseCase) {
         this.fundSavingsGoalUseCase = fundSavingsGoalUseCase;
     }
 
+    @SchedulerLock(name = "SavingsFundingJob_processSavingFundingForSetInterval", lockAtMostForString = "PT30M")
     @Scheduled(cron = "0 0 0/1 1/1 * ?") // runs every one hour.
     public void processSavingFundingForSetInterval() {
         fundSavingsGoalUseCase.processSavingsGoalScheduledSaving();

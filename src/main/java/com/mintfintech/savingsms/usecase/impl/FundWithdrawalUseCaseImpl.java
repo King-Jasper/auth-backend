@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
@@ -63,13 +64,15 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private ApplicationProperty applicationProperty;
     private ApplicationEventService applicationEventService;
     private TierLevelEntityDao tierLevelEntityDao;
+    private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
+
 
     @Override
     public String withdrawalSavings(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest withdrawalRequest) {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
-        BigDecimal amountRequested = BigDecimal.valueOf(withdrawalRequest.getAmount());
+       // BigDecimal amountRequested = BigDecimal.valueOf(withdrawalRequest.getAmount());
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, withdrawalRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
 
@@ -83,17 +86,16 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BadRequestException("Invalid credit account Id.");
             }
         }
-
         if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
-            return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity, amountRequested);
+            return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
             throw new BusinessLogicConflictException("Sorry, savings withdrawal not currently supported.");
         }
-        return processCustomerSavingWithdrawal(savingsGoal, appUserEntity, amountRequested);
+        return processCustomerSavingWithdrawal(savingsGoal, appUserEntity);
     }
 
-    private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser, BigDecimal amountRequested) {
+    private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser) {
         if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
             throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
         }
@@ -104,12 +106,12 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(!matured) {
             throw new BusinessLogicConflictException("Sorry, can you only withdraw when your balance is up to N"+MoneyFormatterUtil.priceWithDecimal(minimumWithdrawalBalance));
         }
-        BigDecimal totalAvailableAmount = savingsBalance.add(accruedInterest);
-        if(amountRequested.compareTo(totalAvailableAmount) > 0) {
+        BigDecimal amountForWithdrawal = savingsBalance.add(accruedInterest);
+        /*if(amountRequested.compareTo(totalAvailableAmount) > 0) {
             throw new BadRequestException("Amount requested ("+MoneyFormatterUtil.priceWithDecimal(amountRequested)+") cannot be above total available balance ("+MoneyFormatterUtil.priceWithDecimal(totalAvailableAmount)+")");
-        }
-        BigDecimal remainingInterest, remainingSavings;
-        int outcome = amountRequested.compareTo(savingsBalance);
+        }*/
+        BigDecimal remainingInterest = BigDecimal.ZERO, remainingSavings = BigDecimal.ZERO;
+       /* int outcome = amountRequested.compareTo(savingsBalance);
         if(outcome > 0) {
             remainingInterest = totalAvailableAmount.subtract(amountRequested);
             remainingSavings = BigDecimal.ZERO;
@@ -119,13 +121,13 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }else {
             remainingInterest = accruedInterest;
             remainingSavings = savingsBalance.subtract(amountRequested);
-        }
+        }*/
         savingsGoal.setSavingsBalance(remainingSavings);
         savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
-                .amount(amountRequested)
+                .amount(amountForWithdrawal)
                 .savingsBalanceWithdrawal(savingsBalance.subtract(remainingSavings))
                 .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
                 .interestWithdrawal(accruedInterest.subtract(remainingInterest))
@@ -139,17 +141,21 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     }
 
     @Transactional
-    public String processCustomerSavingWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser, BigDecimal amountRequested) {
+    public String processCustomerSavingWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser) {
         LocalDateTime now = LocalDateTime.now();
-        long remainingDays = savingsGoal.getDateCreated().until(now, ChronoUnit.DAYS);
-        int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
-       /* if(remainingDays < minimumDaysForWithdrawal) {
-            throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - remainingDays)+" days left before you can withdraw fund from your savings.");
-        }*/
         boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate()) || savingsGoal.getMaturityDate().isBefore(now);
         if(!isMatured) {
-            throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
+            if(savingsGoal.isLockedSavings()) {
+                throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
+            }
+            long numberOfDaysSaved = savingsGoal.getDateCreated().until(now, ChronoUnit.DAYS);
+            int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
+            if(numberOfDaysSaved < minimumDaysForWithdrawal) {
+                throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - numberOfDaysSaved)+" days left before you can withdraw your savings.");
+            }
         }
+
+       /*
         final BigDecimal totalAvailableBalance;
         if(isMatured) {
             log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
@@ -164,42 +170,40 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         if(isMatured){
             amountRequested = totalAvailableBalance;
-        }
-        createWithdrawalRequest(savingsGoal, amountRequested, isMatured, currentUser);
+        }*/
+        createWithdrawalRequest(savingsGoal, isMatured, currentUser);
         if(isMatured) {
             return "Request queued successfully. Your account will be funded shortly.";
         }
         return "Request queued successfully. Your account will be funded within the next 2 business days.";
     }
 
-    private synchronized void createWithdrawalRequest(SavingsGoalEntity savingsGoal, BigDecimal amountRequested, boolean maturedGoal, AppUserEntity currentUser) {
+    private synchronized void createWithdrawalRequest(SavingsGoalEntity savingsGoal, boolean maturedGoal, AppUserEntity currentUser) {
         LocalDateTime twoMinutesAgo = LocalDateTime.now().minusSeconds(120);
         if(savingsWithdrawalRequestEntityDao.countWithdrawalRequestWithinPeriod(savingsGoal, twoMinutesAgo, LocalDateTime.now()) > 0) {
             throw new BusinessLogicConflictException("Possible duplicate withdrawal request.");
         }
+        BigDecimal withdrawalAmount = computeAvailableAmountUseCase.getAvailableAmount(savingsGoal);
         LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
-        BigDecimal remainingSavings, remainingInterest;
-        if(maturedGoal) {
-            remainingSavings = BigDecimal.valueOf(0.00);
-            remainingInterest = BigDecimal.valueOf(0.00);
-            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
-        }else {
-            remainingInterest = accruedInterest;
-            remainingSavings = currentBalance.subtract(amountRequested);
+        BigDecimal remainingSavings = BigDecimal.valueOf(0.00), remainingInterest = BigDecimal.valueOf(0.00);
+        if(!maturedGoal) {
+           // there is deduction on accrued interest for un-matured goal
+            remainingInterest = currentBalance.add(accruedInterest).subtract(withdrawalAmount);
             dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
         }
+        savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
         savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoal.setSavingsBalance(remainingSavings);
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT);
         TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(creditAccount.getAccountTierLevel().getId());
-        if(tierLevelEntity.getLevel() == TierLevelTypeConstant.TIER_THREE || (amountRequested.compareTo(tierLevelEntity.getBulletTransactionAmount()) <= 0)) {
+        if(tierLevelEntity.getLevel() == TierLevelTypeConstant.TIER_THREE || (withdrawalAmount.compareTo(tierLevelEntity.getBulletTransactionAmount()) <= 0)) {
             // no need of splitting the withdrawal due to bullet transaction limit.
             SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
-                    .amount(amountRequested)
+                    .amount(withdrawalAmount)
                     .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT)
                     .interestWithdrawal(accruedInterest.subtract(remainingInterest))
                     .savingsBalanceWithdrawal(currentBalance.subtract(remainingSavings))
@@ -213,8 +217,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             return;
         }
         BigDecimal maximumTransactionAmount = tierLevelEntity.getBulletTransactionAmount();
-        int numberOfWithdrawals =  amountRequested.divide(maximumTransactionAmount, BigDecimal.ROUND_DOWN).intValue();
-        BigDecimal lastWithdrawalAmountWithInterest = amountRequested.remainder(maximumTransactionAmount);
+        int numberOfWithdrawals =  withdrawalAmount.divide(maximumTransactionAmount, BigDecimal.ROUND_DOWN).intValue();
+        BigDecimal lastWithdrawalAmountWithInterest = withdrawalAmount.remainder(maximumTransactionAmount);
         BigDecimal newCurrentBalance = currentBalance;
         for(int i = 0; i < numberOfWithdrawals; i++) {
             SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
@@ -457,7 +461,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 if(appUserEntity.isGcmNotificationEnabled()) {
                     if(!StringUtils.isEmpty(appUserEntity.getDeviceGcmNotificationToken())){
                         String text = "Your savings withdrawal has been processed. You can access your fund from your account now.";
-                        PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+                        PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("Account Funded", text, appUserEntity.getDeviceGcmNotificationToken());
                         applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
                     }
                 }

@@ -19,7 +19,7 @@ import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.HttpStatus;
+import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -80,7 +80,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     private BigDecimal applyInterest(SavingsGoalEntity savingsGoalEntity) {
         SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getRecordById(savingsGoalEntity.getSavingsPlanTenor().getId());
         BigDecimal interestRatePerDay = BigDecimal.valueOf(planTenorEntity.getInterestRate() / (100.0 * 365.0));
-        BigDecimal interest = savingsGoalEntity.getSavingsBalance().multiply(interestRatePerDay).setScale(2, BigDecimal.ROUND_CEILING);
+        BigDecimal interest = savingsGoalEntity.getSavingsBalance().multiply(interestRatePerDay).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 
         SavingsInterestEntity savingsInterestEntity = SavingsInterestEntity.builder()
                 .interest(interest)
@@ -121,7 +121,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         return false;
     }
 
-    private void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
+    public void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
         if(totalAccumulatedInterest.compareTo(BigDecimal.ZERO) == 0) {
             log.info("NO ACCUMULATED INTEREST: {}", totalAccumulatedInterest);
             return;
@@ -141,7 +141,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                 .narration(narration)
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.updateAccruedInterest(updateRequestCBS);
-        if(msClientResponse.getStatusCode() != HttpStatus.SC_OK) {
+        if(msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
             String message = msClientResponse.getMessage();
             accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
             accumulatedInterestEntity.setResponseMessage(message);
@@ -161,6 +161,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
         accumulatedInterestEntity.setResponseMessage(responseCBS.getResponseMessage());
         accumulatedInterestEntity.setResponseCode(responseCBS.getResponseCode());
+        accumulatedInterestEntity.setExternalReference(responseCBS.getBankOneReference());
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
     }
 

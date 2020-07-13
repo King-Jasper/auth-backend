@@ -6,7 +6,7 @@
   },
   {
     "tier": "TIER_TWO",
-    "bullet_transaction": 200000.00,
+    "bullet_transaction": 100000.00,
     "maximum_balance": 500000.00
   },
   {

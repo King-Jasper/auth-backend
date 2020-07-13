@@ -52,8 +52,8 @@ public class ChangeSavingsPlanUseCaseImpl implements ChangeSavingsPlanUseCase {
             throw new BusinessLogicConflictException("You are already on "+planEntity.getPlanName().getName()+" plan");
         }
         SavingsPlanTenorEntity planTenor = savingsPlanTenorEntityDao.findById(changeRequest.getDurationId()).orElseThrow(() -> new BadRequestException("Invalid savings tenor Id."));
-        if(planTenor.getSavingsPlan().getId().equals(planEntity.getId())) {
-            throw new BadRequestException("Savings tenor is not in selected savings plan.");
+        if(!planTenor.getSavingsPlan().getId().equals(planEntity.getId())) {
+            throw new BadRequestException("Savings duration is not part of the selected savings plan.");
         }
         MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccountEntity, BankAccountTypeConstant.CURRENT);
         TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(bankAccountEntity.getAccountTierLevel().getId());

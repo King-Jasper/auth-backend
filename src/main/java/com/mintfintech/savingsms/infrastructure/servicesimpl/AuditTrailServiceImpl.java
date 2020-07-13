@@ -55,18 +55,19 @@ public class AuditTrailServiceImpl implements AuditTrailService {
 
     @Async
     @Override
-    public <T extends AbstractBaseEntity<Long>> void createAuditLog(AuditType auditType, String description, T record) {
-        createLog(auditType, description, record, null);
+    public <T extends AbstractBaseEntity<Long>> void createAuditLog(AuthenticatedUser authenticatedUser, AuditType auditType, String description, T record) {
+        createLog(authenticatedUser, auditType, description, record, null);
     }
 
     @Async
     @Override
-    public <T extends AbstractBaseEntity<Long>> void createAuditLog(AuditType auditType, String description, T oldRecord, T newRecord) {
-        createLog(auditType, description, newRecord, oldRecord);
+    public <T extends AbstractBaseEntity<Long>> void createAuditLog(AuthenticatedUser authenticatedUser, AuditType auditType, String description, T oldRecord, T newRecord) {
+        createLog(authenticatedUser, auditType, description, newRecord, oldRecord);
     }
 
-    private <T extends AbstractBaseEntity<Long>> void createLog(AuditType auditType, String description, T newRecord, T oldRecord) {
-        AuthenticatedUser currentUser = getCurrentUser();
+    private <T extends AbstractBaseEntity<Long>> void createLog(AuthenticatedUser currentUser, AuditType auditType, String description, T newRecord, T oldRecord) {
+        //AuthenticatedUser currentUser = getCurrentUser();
+        //log.info("authenticated user: {}", currentUser != null ? currentUser.toString() :  "Not found");
         String payload = gson.toJson(newRecord);
         AuditLogEvent auditLogEvent = AuditLogEvent.builder()
                 .auditType(auditType.name())
@@ -81,13 +82,14 @@ public class AuditTrailServiceImpl implements AuditTrailService {
         applicationEventService.publishEvent(ApplicationEventService.EventType.APPLICATION_AUDIT_TRAIL, new EventModel<>(auditLogEvent));
     }
 
+   /*
     private AuthenticatedUser getCurrentUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if(authentication != null && authentication.getPrincipal() != null) {
             return (AuthenticatedUser) authentication.getPrincipal();
         }
         return null;
-    }
+    }*/
 
     private static class  HibernateProxyTypeAdapter extends TypeAdapter<HibernateProxy> {
 

@@ -17,6 +17,4 @@ public class SavingsPlanModel {
     private String name;
     private BigDecimal minimumBalance;
     private BigDecimal maximumBalance;
-    private double interestRate;
-    private List<SavingsPlanTenorModel> durations;
 }

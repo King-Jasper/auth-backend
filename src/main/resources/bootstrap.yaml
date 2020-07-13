@@ -11,5 +11,10 @@ spring:
         instance-id: ${spring.application.name}
         enabled: true
         prefer-ip-address: true
+    kubernetes:
+      reload:
+        enabled: false
+      config:
+        enabled: false
 server:
   port: 8096

@@ -16,5 +16,9 @@ public class SavingsGoalCreationRequest {
     private String debitAccountId;
     private String name;
     private double targetAmount;
+    // To be removed
     private long durationId;
+
+    private int durationInDays;
+    private boolean lockedSavings;
 }

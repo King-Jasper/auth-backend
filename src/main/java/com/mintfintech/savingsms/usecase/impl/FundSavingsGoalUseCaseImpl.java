@@ -161,6 +161,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     }
 
     private void sendSavingsFundingSuccessNotification(SavingsGoalEntity goalEntity, SavingsGoalFundingResponse fundingResponse, BigDecimal savingsAmount) {
+
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
         if(appUserEntity.isEmailNotificationEnabled()){
             SavingsGoalFundingEvent fundingEvent = SavingsGoalFundingEvent.builder()
@@ -170,6 +171,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                     .name(appUserEntity.getName())
                     .recipient(appUserEntity.getEmail())
                     .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
+                    .savingsBalance(goalEntity.getSavingsBalance())
                     .build();
             applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS, new EventModel<>(fundingEvent));
         }else {
@@ -181,7 +183,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 return;
             }
             String text = String.format("Congrats, you just saved N%s in your savings goal(%s)", MoneyFormatterUtil.priceWithoutDecimal(savingsAmount), goalEntity.getName());
-            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent(text, appUserEntity.getDeviceGcmNotificationToken());
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("New Savings", text, appUserEntity.getDeviceGcmNotificationToken());
             pushNotificationEvent.setUserId(appUserEntity.getUserId());
             if(appUserEntity.getDeviceGcmNotificationToken() == null) {
                 //accounts will publish the device token value if it exist.

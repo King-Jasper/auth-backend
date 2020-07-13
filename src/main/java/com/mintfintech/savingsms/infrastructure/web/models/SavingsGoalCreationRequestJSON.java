@@ -10,7 +10,7 @@ import javax.validation.constraints.NotNull;
 
 /**
  * Created by jnwanya on
- * Thu, 02 Apr, 2020
+ * Sun, 05 Jul, 2020
  */
 @Data
 public class SavingsGoalCreationRequestJSON {
@@ -20,8 +20,8 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String planId;
 
-    @ApiModelProperty(notes = "The amount to be funded.", required = true)
-    @Min(100)
+    @ApiModelProperty(notes = "The amount to be funded. N100 minimum", required = true)
+    @Min(value = 100, message = "Minimum of N100")
     private double fundingAmount;
 
     @ApiModelProperty(notes = "The bank accountId to be debited", required = true)
@@ -34,8 +34,8 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String name;
 
-    @ApiModelProperty(notes = "The savings target amount.", required = true)
-    @Min(100)
+    @ApiModelProperty(notes = "The savings target amount. N100 minimum", required = true)
+    @Min(value = 100, message = "Minimum of N100")
     private double targetAmount;
 
     @ApiModelProperty(notes = "The savings category code", required = true)
@@ -43,13 +43,16 @@ public class SavingsGoalCreationRequestJSON {
     @NotEmpty
     private String categoryCode;
 
-    @ApiModelProperty(notes = "The savings plan duration Id.", required = true)
-    private long durationId;
+    @ApiModelProperty(notes = "The savings duration in days.", required = true)
+    private int durationInDays;
+
+    private boolean lockedSavings;
 
     public SavingsGoalCreationRequest toRequest() {
         return SavingsGoalCreationRequest.builder()
                 .debitAccountId(debitAccountId)
-                .durationId(durationId)
+                .durationInDays(durationInDays)
+                .lockedSavings(lockedSavings)
                 .fundingAmount(fundingAmount)
                 .name(name)
                 .planId(planId)
