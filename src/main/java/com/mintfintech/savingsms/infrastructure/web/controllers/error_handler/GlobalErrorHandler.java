@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -46,6 +47,11 @@ public class GlobalErrorHandler {
         log.info("error message: {}", exception.getMessage());
         ApiResponseJSON<String> apiResponse = new ApiResponseJSON<>("Request validation failure. Please check your request data.");
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = AccessDeniedException.class)
+    public ResponseEntity<ApiResponseJSON<Object>> handleUnauthorisedOperationException(AccessDeniedException exception) {
+        return new ResponseEntity<>(new ApiResponseJSON<>("Sorry, you don't have the required privilege for the request."), HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(value = {MethodArgumentNotValidException.class})
