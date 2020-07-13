@@ -14,6 +14,7 @@ import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
@@ -24,6 +25,7 @@ import javax.validation.Valid;
  * Created by jnwanya on
  * Fri, 03 Apr, 2020
  */
+
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Savings Goal Transaction Endpoints",  description = "Handles savings goal transaction management.")
 @RestController

@@ -42,6 +42,7 @@ public class SavingsGoalReportController {
     GetSavingsGoalUseCase getSavingsGoalUseCase;
     GetSavingsTransactionUseCase getSavingsTransactionUseCase;
 
+    @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
     @ApiOperation(value = "Returns paginated list of savings goal.")
     @GetMapping(value = "savings-goals", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "goalId", required = false) String goalId,
@@ -66,6 +67,7 @@ public class SavingsGoalReportController {
     }
 
 
+    @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
     @ApiOperation(value = "Returns savings goal details by goal id.")
     @GetMapping(value = "savings-goals/{goalId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PortalSavingsGoalResponse>> getSavingsGoal(@PathVariable("goalId") String goalId) {
@@ -75,6 +77,7 @@ public class SavingsGoalReportController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured("09") // Privilege: VIEW_DASHBOARD_STATISTICS
     @ApiOperation(value = "Returns savings maturity statistics information.")
     @GetMapping(value = "savings-goals/maturity-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate") LocalDate fromDate,
