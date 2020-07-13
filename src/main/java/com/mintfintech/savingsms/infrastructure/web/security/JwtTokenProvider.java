@@ -10,6 +10,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Optional;
 
@@ -52,6 +53,7 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
         String clientType = attributes.get("client");
         log.info("accountId: {}, userId: {} client: {}", accountId, userId, clientType);
         String systemGroup = attributes.getOrDefault("system_group", "");
+        String privilegeCodes = attributes.getOrDefault("privilege_codes", "");
         String platform = "MOBILE";
         if(clientType.equalsIgnoreCase("web")) {
             platform = "WEB";
@@ -65,6 +67,9 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
         authenticatedUser.setPassword(userId);
         if(!systemGroup.isEmpty()) {
             authenticatedUser.addAuthority(systemGroup);
+        }
+        if(!privilegeCodes.isEmpty()) {
+            Arrays.stream(privilegeCodes.split(":")).forEach(authenticatedUser::addAuthority);
         }
         //authenticatedUser.setMsToken(jwtService.expiringToken(stringMap, applicationProperty.getMicroserviceTokenSecretKey(), applicationProperty.getMicroServiceTokenExpiryTimeInMinutes()));
         return Optional.of(authenticatedUser);
