@@ -7,9 +7,10 @@ pipeline {
         AWS_ACCESS_KEY_ID     = credentials('AWS_KEY')
         imageTag = "${env.BUILD_NUMBER}"
         AWS_SECRET_ACCESS_KEY = credentials('AWS_Secret')
+        sandboxNamespace = "sandbox"
         stagingNamespace = "staging"
         productionNamespace = "production"
-        defaultDeploymentNamespace = "staging"
+        defaultDeploymentNamespace = "sandbox"
         defaultAppProfile = "sandbox"
         dockerImageName = "mintfintech/savings-service"
         HOME = '.'
@@ -88,15 +89,28 @@ pipeline {
                         catch (error) {
                             throw error
                         }
-                    } else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox")) {
+                    } else if ("${env.BRANCH_NAME}".equalsIgnoreCase("staging")) {
                         try {
                             sh "aws eks update-kubeconfig --name mint-k8-cluster"
                             //change image tag in the deployment file
                             sh("sed -i.bak 's|${dockerImageName}|${dockerImageName}:sandbox-${env.BUILD_NUMBER}|' ./kubernetes/deployment.yaml")
                             sh("sed -i.bak 's|${defaultDeploymentNamespace}|staging|' ./kubernetes/deployment.yaml")
-                            sh("sed -i.bak 's|${defaultAppProfile}|sandbox|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultAppProfile}|staging|' ./kubernetes/deployment.yaml")
                             sh 'kubectl apply --validate=true --dry-run=client -f kubernetes/'
                             sh "kubectl apply --namespace=${stagingNamespace}  -f kubernetes/"
+                        }
+                        catch (error) {
+                            throw error
+                        }
+                    }else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox")) {
+                        try {
+                            sh "aws eks update-kubeconfig --name mint-k8-cluster"
+                            //change image tag in the deployment file
+                            sh("sed -i.bak 's|${dockerImageName}|${dockerImageName}:sandbox-${env.BUILD_NUMBER}|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultDeploymentNamespace}|sandbox|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultAppProfile}|sandbox|' ./kubernetes/deployment.yaml")
+                            sh 'kubectl apply --validate=true --dry-run=client -f kubernetes/'
+                            sh "kubectl apply --namespace=${sandboxNamespace}  -f kubernetes/"
                         }
                         catch (error) {
                             throw error
