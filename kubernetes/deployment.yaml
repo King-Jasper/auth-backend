@@ -59,7 +59,7 @@ spec:
         - name: SPRING_PROFILES_ACTIVE
           value: sandbox
         - name: KUBERNETES_NAMESPACE
-          value: staging
+          value: sandbox
         volumeMounts:
         - name: config
           mountPath: "/config"

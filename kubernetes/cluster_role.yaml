@@ -14,7 +14,7 @@ metadata:
 subjects:
   - kind: ServiceAccount
     name: savings-service
-    namespace: staging
+    namespace: sandbox
 roleRef:
   kind: Role
   name: savings-service-r
