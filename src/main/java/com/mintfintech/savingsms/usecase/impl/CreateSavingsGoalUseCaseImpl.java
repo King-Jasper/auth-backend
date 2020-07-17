@@ -113,6 +113,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     @Override
     public SavingsGoalModel createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest) {
 
+        log.info("Request payload: {}", goalCreationRequest.toString());
+
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.findCategoryByCode(goalCreationRequest.getCategoryCode())
