@@ -132,9 +132,12 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             selectedDuration = goalCreationRequest.getDurationInDays();
         }
 
-        if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
-            throw new BadRequestException("Invalid savings duration for selected plan.");
+        if(planTenor.getSavingsPlan() != null && selectedDuration == 0) {
+            if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
+                throw new BadRequestException("Invalid savings duration for selected plan.");
+            }
         }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(goalCreationRequest.getDebitAccountId())
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
