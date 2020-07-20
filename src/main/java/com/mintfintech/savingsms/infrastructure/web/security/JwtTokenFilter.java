@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.Optional;
 
 import static java.util.Optional.ofNullable;
-import static org.apache.http.HttpHeaders.AUTHORIZATION;
 
 /**
  * Created by jnwanya on
@@ -24,6 +23,8 @@ import static org.apache.http.HttpHeaders.AUTHORIZATION;
  */
 @Slf4j
 public class JwtTokenFilter extends AbstractAuthenticationProcessingFilter {
+
+    private final static String AUTHORIZATION = "Authorization";
 
     public JwtTokenFilter(final RequestMatcher protectedRoutes) {
         super(protectedRoutes);

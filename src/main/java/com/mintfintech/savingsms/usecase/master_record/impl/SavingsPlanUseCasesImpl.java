@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
 import com.mintfintech.savingsms.usecase.models.SavingsPlanModel;
 import com.mintfintech.savingsms.usecase.models.SavingsPlanTenorModel;
+import com.mintfintech.savingsms.usecase.models.deprecated.SavingsPlanDModel;
 import io.micrometer.core.instrument.util.IOUtils;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
@@ -46,7 +47,29 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
         return savingsPlanEntityDao.getSavingsPlans().stream().map(this::fromEntityToModel).collect(Collectors.toList());
     }
 
-    private SavingsPlanModel fromEntityToModel(SavingsPlanEntity savingsPlanEntity) {
+    @Deprecated
+    @Override
+    public List<SavingsPlanDModel> savingsPlanDeprecatedList() {
+        return savingsPlanEntityDao.getSavingsPlans().stream().map(this::fromEntityToOldModel).collect(Collectors.toList());
+    }
+
+    @Override
+    public List<SavingsPlanTenorModel> savingsTenorList() {
+        return savingsPlanTenorEntityDao.getTenorList().stream()
+                .filter(savingsPlanTenorEntity ->  savingsPlanTenorEntity.getMaximumDuration() > 0)
+                .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
+                        .durationId(savingsPlanTenorEntity.getId())
+                        .description(savingsPlanTenorEntity.getDurationDescription())
+                        .value(savingsPlanTenorEntity.getDuration())
+                        .interestRate(savingsPlanTenorEntity.getInterestRate())
+                        .maximumDuration(savingsPlanTenorEntity.getMaximumDuration())
+                        .minimumDuration(savingsPlanTenorEntity.getMinimumDuration())
+                        .build()
+                ).sorted(Comparator.comparing(SavingsPlanTenorModel::getValue))
+                .collect(Collectors.toList());
+    }
+
+    private SavingsPlanDModel fromEntityToOldModel(SavingsPlanEntity savingsPlanEntity) {
         List<SavingsPlanTenorModel> tenorModelList = savingsPlanTenorEntityDao.getTenorListByPlan(savingsPlanEntity).stream()
                 .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
                         .durationId(savingsPlanTenorEntity.getId())
@@ -57,7 +80,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
                 ).sorted(Comparator.comparing(SavingsPlanTenorModel::getValue))
                 .collect(Collectors.toList());
 
-        return SavingsPlanModel.builder()
+        return SavingsPlanDModel.builder()
                 .planId(savingsPlanEntity.getPlanId())
                 .maximumBalance(savingsPlanEntity.getMaximumBalance())
                 .minimumBalance(savingsPlanEntity.getMinimumBalance())
@@ -67,12 +90,21 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
                 .build();
     }
 
+    private SavingsPlanModel fromEntityToModel(SavingsPlanEntity savingsPlanEntity) {
+        return SavingsPlanModel.builder()
+                .planId(savingsPlanEntity.getPlanId())
+                .maximumBalance(savingsPlanEntity.getMaximumBalance())
+                .minimumBalance(savingsPlanEntity.getMinimumBalance())
+                .name(savingsPlanEntity.getPlanName().getName())
+                .build();
+    }
+
     @Override
     public void createDefaultSavingsPlan() {
         /*if(savingsPlanEntityDao.countSavingPlans() != 0) {
            return;
-        }*/
-        InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans.json");
+        }
+        InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans_v1.json");
         try {
             String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
             if(!StringUtils.isEmpty(fileContent)) {
@@ -85,6 +117,38 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
             e.printStackTrace();
             System.out.println("Unable to saving plans records: " + e.getMessage());
         }
+    }
+
+    @Override
+    public void createDefaultSavingsTenor() {
+        /*if(savingsPlanTenorEntityDao.countSavingsPlanTenor() != 0) {
+            return;
+        }*/
+        InputStream inputStream = TypeReference.class.getResourceAsStream("/json/savings-tenors.json");
+        try {
+            String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
+            if(!StringUtils.isEmpty(fileContent)) {
+                Type collectionType = new TypeToken<List<SavingsPlanDataTenor>>(){}.getType();
+                List<SavingsPlanDataTenor> responseList = gson.fromJson(fileContent, collectionType);
+                System.out.println("total savings tenor: " + responseList.size());
+                responseList.forEach(this::createOrUpdateSavingsTenor);
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            System.out.println("Unable to saving plans records: " + e.getMessage());
+        }
+    }
+
+    private void createOrUpdateSavingsTenor(SavingsPlanDataTenor planDataTenor)  {
+        Optional<SavingsPlanTenorEntity> planTenorOptional = savingsPlanTenorEntityDao.findSavingPlanTenor(planDataTenor.minimumDuration, planDataTenor.maximumDuration);
+        SavingsPlanTenorEntity planTenor = planTenorOptional.orElseGet(SavingsPlanTenorEntity::new);
+        planTenor.setDuration(planDataTenor.minimumDuration);
+        planTenor.setMinimumDuration(planDataTenor.minimumDuration);
+        planTenor.setMaximumDuration(planDataTenor.maximumDuration);
+        planTenor.setDurationType(SavingsDurationTypeConstant.valueOf(planDataTenor.durationType));
+        planTenor.setInterestRate(planDataTenor.interestRate);
+        planTenor.setDurationDescription(planDataTenor.description);
+        savingsPlanTenorEntityDao.saveRecord(planTenor);
     }
 
     private void createOrUpdateSavingsPlan(SavingsPlanData savingsPlanData) {
@@ -100,16 +164,6 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
             planEntity.setPlanId(savingsPlanEntityDao.generatePlanId());
         }
         planEntity = savingsPlanEntityDao.saveRecord(planEntity);
-        for(SavingsPlanDataTenor planDataTenor: savingsPlanData.getTenors()) {
-            Optional<SavingsPlanTenorEntity> planTenorOptional = savingsPlanTenorEntityDao.findSavingPlanTenor(planEntity, planDataTenor.duration);
-            SavingsPlanTenorEntity planTenor = planTenorOptional.orElseGet(SavingsPlanTenorEntity::new);
-            planTenor.setDuration(planDataTenor.duration);
-            planTenor.setDurationType(SavingsDurationTypeConstant.valueOf(planDataTenor.durationType));
-            planTenor.setSavingsPlan(planEntity);
-            planTenor.setInterestRate(planDataTenor.interestRate);
-            planTenor.setDurationDescription(planDataTenor.description);
-            savingsPlanTenorEntityDao.saveRecord(planTenor);
-        }
     }
 
     @Data
@@ -117,14 +171,15 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
         private String name;
         private double minimumBalance;
         private double maximumBalance;
-        private double interestRate;
-        private List<SavingsPlanDataTenor> tenors;
+       // private double interestRate;
+       // private List<SavingsPlanDataTenor> tenors;
     }
     @Data
     private static class SavingsPlanDataTenor {
         private String durationType;
-        private int duration;
         private String description;
         private double interestRate;
+        private int minimumDuration;
+        private int maximumDuration;
     }
 }

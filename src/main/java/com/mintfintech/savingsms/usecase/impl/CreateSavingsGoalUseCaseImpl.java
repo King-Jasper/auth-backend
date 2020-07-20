@@ -25,6 +25,7 @@ import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -46,8 +47,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
-    private ApplicationEventService applicationEventService;
-    private AuditTrailService auditTrailService;
+   // private ApplicationEventService applicationEventService;
+   // private AuditTrailService auditTrailService;
 
     @Override
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
@@ -85,9 +86,34 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
 
+    private SavingsPlanTenorEntity getSavingsPlanTenor(SavingsGoalCreationRequest goalCreationRequest) {
+        SavingsPlanTenorEntity planTenor;
+        if(goalCreationRequest.getDurationId() != 0) {
+            planTenor = savingsPlanTenorEntityDao.findById(goalCreationRequest.getDurationId())
+                    .orElseThrow(() -> new BadRequestException("Invalid savings plan duration."));
+        }else {
+            if(goalCreationRequest.getDurationInDays() < 30) {
+                throw new BusinessLogicConflictException("Savings duration must be a minimum of 30 days.");
+            }
+            Optional<SavingsPlanTenorEntity> durationOptional = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(goalCreationRequest.getDurationInDays());
+            if(!durationOptional.isPresent()) {
+                int maximumDuration = savingsPlanTenorEntityDao.getMaximumSavingsDuration();
+                if(goalCreationRequest.getDurationInDays() > maximumDuration) {
+                    throw new BusinessLogicConflictException("Maximum savings duration is "+maximumDuration+" days.");
+                }
+                // very unlikely to happen
+                throw new BusinessLogicConflictException("Sorry, selected duration is currently not supported.");
+            }
+            planTenor = durationOptional.get();
+        }
+        return planTenor;
+    }
+
     @Transactional
     @Override
     public SavingsGoalModel createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest) {
+
+        log.info("Request payload: {}", goalCreationRequest.toString());
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
@@ -97,12 +123,21 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         SavingsPlanEntity savingsPlan = savingsPlanEntityDao.findPlanByPlanId(goalCreationRequest.getPlanId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings plan Id."));
 
-        SavingsPlanTenorEntity planTenor = savingsPlanTenorEntityDao.findById(goalCreationRequest.getDurationId())
-                .orElseThrow(() -> new BadRequestException("Invalid savings plan duration."));
 
-        if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
-            throw new BadRequestException("Invalid savings duration for selected plan.");
+        SavingsPlanTenorEntity planTenor = getSavingsPlanTenor(goalCreationRequest);
+        int selectedDuration = planTenor.getDuration();
+        boolean lockedSavings = true;
+        if(goalCreationRequest.getDurationInDays() != 0) {
+            lockedSavings = goalCreationRequest.isLockedSavings();
+            selectedDuration = goalCreationRequest.getDurationInDays();
         }
+
+        if(planTenor.getSavingsPlan() != null && selectedDuration == 0) {
+            if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
+                throw new BadRequestException("Invalid savings duration for selected plan.");
+            }
+        }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(goalCreationRequest.getDebitAccountId())
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
@@ -122,7 +157,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         validateAmount(debitAccount, targetAmount, fundingAmount, savingsPlan);
         validateTier(debitAccount, savingsPlan);
 
-        LocalDateTime maturityDate = LocalDateTime.now().plusDays(planTenor.getDuration());
+        LocalDateTime maturityDate = LocalDateTime.now().plusDays(selectedDuration);
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
                 .mintAccount(mintAccount)
@@ -142,16 +177,12 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
                 .name(goalName)
                 .maturityDate(maturityDate)
+                .lockedSavings(lockedSavings)
+                .selectedDuration(selectedDuration)
                 .build();
 
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
-
-       /* try {
-            SavingsGoalEntity oldState = new SavingsGoalEntity();
-            BeanUtils.copyProperties(savingsGoalEntity, oldState);
-            auditTrailService.createAuditLog(AuditTrailService.AuditType.CREATE, "test", oldState);
-        }catch (Exception ex){ex.printStackTrace();} */
 
         SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
         if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {

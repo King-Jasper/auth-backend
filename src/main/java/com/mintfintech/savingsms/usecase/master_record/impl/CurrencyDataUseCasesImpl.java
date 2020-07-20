@@ -8,7 +8,7 @@ import com.mintfintech.savingsms.domain.entities.CurrencyEntity;
 import com.mintfintech.savingsms.usecase.master_record.CurrencyDataUseCases;
 import com.mintfintech.savingsms.usecase.models.CurrencyModel;
 import io.micrometer.core.instrument.util.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.io.InputStream;

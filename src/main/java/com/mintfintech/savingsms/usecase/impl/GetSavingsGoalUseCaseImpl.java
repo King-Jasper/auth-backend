@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
@@ -18,7 +19,6 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
-import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
@@ -48,6 +48,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private MintAccountEntityDao mintAccountEntityDao;
     private AppUserEntityDao appUserEntityDao;
     private ApplicationProperty applicationProperty;
+    private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
 
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
@@ -62,14 +63,13 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
 
-        boolean isMatured = isCustomerGoalMatured(savingsGoalEntity);
-
+        boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
         SavingsGoalModel goalModel = new SavingsGoalModel();
         goalModel.setName(savingsGoalEntity.getName());
         goalModel.setGoalId(savingsGoalEntity.getGoalId());
         goalModel.setAccruedInterest(savingsGoalEntity.getAccruedInterest());
         goalModel.setTargetAmount(savingsGoalEntity.getTargetAmount());
-        goalModel.setAvailableBalance(computeAvailableBalance(savingsGoalEntity, isMatured));
+        goalModel.setAvailableBalance(computeAvailableAmountUseCase.getAvailableAmount(savingsGoalEntity));
         goalModel.setAutoSaveEnabled(savingsGoalEntity.isAutoSave());
         goalModel.setInterestRate(planTenorEntity.getInterestRate());
         goalModel.setCategoryCode(savingsGoalEntity.getGoalCategory().getCode());
@@ -82,6 +82,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setSavingPlanName(savingsPlanEntity.getPlanName().getName());
         goalModel.setSavingFrequency(savingsGoalEntity.getSavingsFrequency() != null ? savingsGoalEntity.getSavingsFrequency().name() : "");
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
+        goalModel.setLockedSavings(savingsGoalEntity.isLockedSavings());
+        // goalModel.setChosenSavingsDurationInDays(savingsGoalEntity.getSelectedDuration());
         return goalModel;
     }
 
@@ -96,47 +98,24 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         return goalResponse;
     }
 
-    private BigDecimal computeAvailableBalance(SavingsGoalEntity savingsGoalEntity, boolean matured) {
-         if(matured) {
-             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
-         }
-        /*long remainingDays = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
-        int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
-        if(remainingDays >= minimumDaysForWithdrawal) {
-            SavingsPlanEntity savingsPlanEntity = savingsGoalEntity.getSavingsPlan();
-            return savingsGoalEntity.getSavingsBalance().subtract(savingsPlanEntity.getMinimumBalance());
-        }*/
-        return BigDecimal.valueOf(0.00);
-    }
 
     private String getCustomerSavingsNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured){
         if(matured){
             return  "";
         }
-        return "Sorry, your savings goal is not yet due for withdrawal.";
+        if(savingsGoalEntity.isLockedSavings()) {
+            return "Sorry, your savings goal is not yet due matured for withdrawal.";
+        }
+        long savingsDuration = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+        if(savingsDuration >=  applicationProperty.savingsMinimumNumberOfDaysForWithdrawal()) {
+            return "";
+        }
+        long remainingDays = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal() - savingsDuration;
+        return "Sorry, your savings goal will be available for withdrawal in "+remainingDays+" day(s) time";
+
     }
 
-   private boolean isCustomerGoalMatured(SavingsGoalEntity savingsGoalEntity) {
-       if(savingsGoalEntity.getMaturityDate() == null) {
-           return false;
-       }
-       LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
-       if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
-           return true;
-       }
-       return maturityDate.isBefore(LocalDateTime.now());
-   }
-   private boolean isMintGoalMatured(SavingsGoalEntity savingsGoalEntity) {
-       boolean matured = false;
-       if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-           if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-               matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
-           }else {
-               matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
-           }
-       }
-       return matured;
-   }
+
 
    private String getMintGoalNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured) {
         if(matured){
@@ -146,7 +125,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
    }
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
-        boolean matured = isMintGoalMatured(savingsGoalEntity);
+        boolean matured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
         BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
         if(accruedInterest.compareTo(BigDecimal.ZERO) > 0) {
             accruedInterest = accruedInterest.setScale(2, BigDecimal.ROUND_HALF_EVEN);

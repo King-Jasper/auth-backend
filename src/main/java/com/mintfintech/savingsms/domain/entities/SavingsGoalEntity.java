@@ -69,6 +69,9 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     @Builder.Default
     private boolean autoSave = false;
 
+    @Builder.Default
+    private boolean lockedSavings = true;
+
     @Enumerated(EnumType.STRING)
     private SavingsFrequencyTypeConstant savingsFrequency;
 
@@ -77,5 +80,8 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     private LocalDateTime maturityDate;
 
     private LocalDateTime lastInterestApplicationDate;
+
+    @Builder.Default
+    private int selectedDuration = 0;
 
 }

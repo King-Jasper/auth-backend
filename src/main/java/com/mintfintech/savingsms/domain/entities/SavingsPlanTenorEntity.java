@@ -19,10 +19,15 @@ import javax.persistence.*;
 @Table(name = "savings_plan_tenor")
 public class SavingsPlanTenorEntity extends AbstractBaseEntity<Long> {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
     private SavingsPlanEntity savingsPlan;
 
-    private int duration;
+    @Builder.Default
+    private int duration = 0;
+
+    private int minimumDuration;
+
+    private int maximumDuration;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
