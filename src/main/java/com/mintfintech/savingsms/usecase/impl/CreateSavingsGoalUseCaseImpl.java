@@ -113,6 +113,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     @Override
     public SavingsGoalModel createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest) {
 
+        log.info("Request payload: {}", goalCreationRequest.toString());
+
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.findCategoryByCode(goalCreationRequest.getCategoryCode())
@@ -130,9 +132,12 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             selectedDuration = goalCreationRequest.getDurationInDays();
         }
 
-        if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
-            throw new BadRequestException("Invalid savings duration for selected plan.");
+        if(planTenor.getSavingsPlan() != null && selectedDuration == 0) {
+            if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
+                throw new BadRequestException("Invalid savings duration for selected plan.");
+            }
         }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(goalCreationRequest.getDebitAccountId())
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
