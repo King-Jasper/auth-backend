@@ -101,7 +101,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
 
     @Override
     public void createDefaultSavingsPlan() {
-        /*if(savingsPlanEntityDao.countSavingPlans() != 0) {
+        if(savingsPlanEntityDao.countSavingPlans() != 0) {
            return;
         }
         InputStream inputStream = TypeReference.class.getResourceAsStream("/json/saving-plans_v1.json");
