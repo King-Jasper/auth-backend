@@ -144,9 +144,11 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             throw new UnauthorisedException("Request denied.");
         }
 
+        /*
         if(savingsGoalEntityDao.countUserCreatedAccountSavingsGoals(mintAccount) >= 5) {
             throw new BusinessLogicConflictException("Sorry, you have reached the maximum(5) active saving goals permitted for an account.");
         }
+        */
 
         String goalName = goalCreationRequest.getName();
         if(savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(goalName, savingsPlan, mintAccount).isPresent()) {
