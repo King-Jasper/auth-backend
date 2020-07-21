@@ -101,7 +101,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal savingsBalance = savingsGoal.getSavingsBalance();
-        BigDecimal minimumWithdrawalBalance = applicationProperty.isProductionEnvironment() ? BigDecimal.valueOf(1000.00) : BigDecimal.valueOf(20.00);
+        BigDecimal minimumWithdrawalBalance = (applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) ? BigDecimal.valueOf(1000.00) : BigDecimal.valueOf(20.00);
         boolean matured = minimumWithdrawalBalance.compareTo(savingsBalance) <= 0;
         if(!matured) {
             throw new BusinessLogicConflictException("Sorry, can you only withdraw when your balance is up to N"+MoneyFormatterUtil.priceWithDecimal(minimumWithdrawalBalance));

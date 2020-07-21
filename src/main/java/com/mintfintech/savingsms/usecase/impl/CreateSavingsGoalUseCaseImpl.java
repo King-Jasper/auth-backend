@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
@@ -47,6 +48,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private ApplicationProperty applicationProperty;
    // private ApplicationEventService applicationEventService;
    // private AuditTrailService auditTrailService;
 
@@ -113,6 +115,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     @Override
     public SavingsGoalModel createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest) {
 
+        log.info("Request payload: {}", goalCreationRequest.toString());
+
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.findCategoryByCode(goalCreationRequest.getCategoryCode())
@@ -130,18 +134,23 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             selectedDuration = goalCreationRequest.getDurationInDays();
         }
 
-        if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
-            throw new BadRequestException("Invalid savings duration for selected plan.");
+        if(planTenor.getSavingsPlan() != null && selectedDuration == 0) {
+            if(!savingsPlan.getId().equals(planTenor.getSavingsPlan().getId())){
+                throw new BadRequestException("Invalid savings duration for selected plan.");
+            }
         }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(goalCreationRequest.getDebitAccountId())
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");
         }
 
+        /*
         if(savingsGoalEntityDao.countUserCreatedAccountSavingsGoals(mintAccount) >= 5) {
             throw new BusinessLogicConflictException("Sorry, you have reached the maximum(5) active saving goals permitted for an account.");
         }
+        */
 
         String goalName = goalCreationRequest.getName();
         if(savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(goalName, savingsPlan, mintAccount).isPresent()) {

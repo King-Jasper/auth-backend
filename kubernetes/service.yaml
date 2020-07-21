@@ -6,7 +6,8 @@ metadata:
   name: savings-service
 spec:
   ports:
-    - port: 80
+    - name: http8096
+      port: 80
       protocol: TCP
       targetPort: 8096
   selector:

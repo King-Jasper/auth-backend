@@ -57,7 +57,7 @@ spec:
         - name: SAVINGS_SERVICE_SERVICE_HOST
           value: http://savings-service
         - name: SPRING_PROFILES_ACTIVE
-          value: sandbox
+          value: dev
         - name: KUBERNETES_NAMESPACE
           value: sandbox
         volumeMounts:

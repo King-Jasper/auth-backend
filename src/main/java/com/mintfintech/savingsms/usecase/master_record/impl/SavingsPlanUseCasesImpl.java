@@ -56,6 +56,7 @@ public class SavingsPlanUseCasesImpl implements SavingsPlanUseCases {
     @Override
     public List<SavingsPlanTenorModel> savingsTenorList() {
         return savingsPlanTenorEntityDao.getTenorList().stream()
+                .filter(savingsPlanTenorEntity ->  savingsPlanTenorEntity.getMaximumDuration() > 0)
                 .map(savingsPlanTenorEntity -> SavingsPlanTenorModel.builder()
                         .durationId(savingsPlanTenorEntity.getId())
                         .description(savingsPlanTenorEntity.getDurationDescription())
