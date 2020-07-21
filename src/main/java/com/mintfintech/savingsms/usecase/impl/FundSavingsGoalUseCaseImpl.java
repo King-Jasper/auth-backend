@@ -70,15 +70,16 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
 
         BigDecimal amount = BigDecimal.valueOf(fundingRequest.getAmount());
+       /*
+        No maximum amount for savings goal
         SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoalEntity.getSavingsPlan().getId());
-
         if(planEntity.getPlanName() != SavingsPlanTypeConstant.SAVINGS_TIER_THREE) {
             BigDecimal currentBalance = savingsGoalEntity.getSavingsBalance();
             BigDecimal totalAmount = currentBalance.add(amount);
             if(totalAmount.compareTo(planEntity.getMaximumBalance()) > 0) {
                 throw new BusinessLogicConflictException("Sorry, maximum amount for your savings plan is N"+ MoneyFormatterUtil.priceWithDecimal(planEntity.getMaximumBalance()));
             }
-        }
+        }*/
         if(debitAccount.getAvailableBalance().compareTo(amount) < 0) {
             throw new BadRequestException("Sorry, you have sufficient balance in your account for this request.");
         }
