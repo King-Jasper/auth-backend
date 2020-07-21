@@ -26,14 +26,14 @@ import java.util.stream.Collectors;
 @Named
 public class SavingsGoalCategoryUseCaseImpl implements SavingsGoalCategoryUseCase {
 
-    private SavingsGoalCategoryEntityDao savingsGoalCategoryEntityDao;
-    private Gson gson;
+    private final SavingsGoalCategoryEntityDao savingsGoalCategoryEntityDao;
+    private final Gson gson;
 
     @Override
     public void createDefaultSavingsCategory() {
-        if(savingsGoalCategoryEntityDao.countSavingsGoalCategory() != 0) {
+        /*if(savingsGoalCategoryEntityDao.countSavingsGoalCategory() != 0) {
             return;
-        }
+        }*/
         InputStream inputStream = TypeReference.class.getResourceAsStream("/json/savings-goal-category.json");
         try {
             String fileContent = IOUtils.toString(inputStream, StandardCharsets.UTF_8);

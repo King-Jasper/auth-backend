@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
@@ -47,6 +48,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private ApplicationProperty applicationProperty;
    // private ApplicationEventService applicationEventService;
    // private AuditTrailService auditTrailService;
 
