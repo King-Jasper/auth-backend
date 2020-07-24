@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.entities.AccumulatedInterestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AccumulatedInterestRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.inject.Named;
 
@@ -24,8 +25,11 @@ public class AccumulatedInterestEntityDaoImpl extends CrudDaoImpl<AccumulatedInt
         this.appSequenceEntityDao = appSequenceEntityDao;
     }
 
+    @Value("${accumulated-interest.reference.prefix:MAI}")
+    private String referencePrefix;
+
     @Override
     public String generatedReference() {
-        return String.format("MAI%08d%s", appSequenceEntityDao.getNextSequenceId(SequenceType.ACCUMULATED_INTEREST_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
+        return String.format("%s%08d%s", referencePrefix, appSequenceEntityDao.getNextSequenceId(SequenceType.ACCUMULATED_INTEREST_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
     }
 }
