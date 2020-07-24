@@ -97,6 +97,7 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Deprecated
     @ApiOperation(value = "Change the current saving plan.", notes = "This will extend the savings goal duration.")
     @PutMapping(value = v1BaseUrl + "/{goalId}/change-plan", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> changeSavingsGoalPlan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
