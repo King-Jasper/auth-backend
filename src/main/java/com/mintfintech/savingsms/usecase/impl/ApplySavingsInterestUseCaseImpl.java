@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferRe
 import com.mintfintech.savingsms.domain.models.corebankingservice.InterestAccruedUpdateRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;

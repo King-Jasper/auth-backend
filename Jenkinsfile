@@ -11,7 +11,7 @@ pipeline {
         stagingNamespace = "staging"
         productionNamespace = "production"
         defaultDeploymentNamespace = "sandbox"
-        defaultAppProfile = "sandbox"
+        defaultAppProfile = "dev"
         dockerImageName = "mintfintech/savings-service"
         HOME = '.'
     }
@@ -96,6 +96,7 @@ pipeline {
                             sh("sed -i.bak 's|${dockerImageName}|${dockerImageName}:sandbox-${env.BUILD_NUMBER}|' ./kubernetes/deployment.yaml")
                             sh("sed -i.bak 's|${defaultDeploymentNamespace}|staging|' ./kubernetes/deployment.yaml")
                             sh("sed -i.bak 's|${defaultAppProfile}|staging|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultDeploymentNamespace}|staging|' ./kubernetes/cluster_role.yaml")
                             sh 'kubectl apply --validate=true --dry-run=client -f kubernetes/'
                             sh "kubectl apply --namespace=${stagingNamespace}  -f kubernetes/"
                         }
@@ -108,7 +109,8 @@ pipeline {
                             //change image tag in the deployment file
                             sh("sed -i.bak 's|${dockerImageName}|${dockerImageName}:sandbox-${env.BUILD_NUMBER}|' ./kubernetes/deployment.yaml")
                             sh("sed -i.bak 's|${defaultDeploymentNamespace}|sandbox|' ./kubernetes/deployment.yaml")
-                            sh("sed -i.bak 's|${defaultAppProfile}|sandbox|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultAppProfile}|dev|' ./kubernetes/deployment.yaml")
+                            sh("sed -i.bak 's|${defaultDeploymentNamespace}|sandbox|' ./kubernetes/cluster_role.yaml")
                             sh 'kubectl apply --validate=true --dry-run=client -f kubernetes/'
                             sh "kubectl apply --namespace=${sandboxNamespace}  -f kubernetes/"
                         }
