@@ -36,7 +36,6 @@ import static org.springframework.http.HttpStatus.FORBIDDEN;
  */
 @Configuration
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-
     private static final RequestMatcher PUBLIC_URLS = new OrRequestMatcher(
             new AntPathRequestMatcher("/*"),
             new AntPathRequestMatcher("/swagger-resources/**"),
