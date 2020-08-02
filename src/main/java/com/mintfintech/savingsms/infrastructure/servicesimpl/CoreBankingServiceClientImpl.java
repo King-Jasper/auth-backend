@@ -66,6 +66,24 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
         return processTransferRequest(serviceUrl, requestBody);
     }
 
+    @Override
+    public MsClientResponse<TransactionStatusResponseCBS> reQueryTransactionStatus(TransactionStatusRequestCBS transactionStatusRequestCBS) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/transfer/requery-transaction-status", baseUrl);
+        try{
+            String requestBody = gson.toJson(transactionStatusRequestCBS);
+            ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
+            MsClientResponse<TransactionStatusResponseCBS> response;
+            Type collectionType = new TypeToken<MsClientResponse<TransactionStatusResponseCBS>>(){}.getType();
+            response = gson.fromJson(clientResponse.getResponseBody(), collectionType);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            return response;
+        }catch (Exception ex){
+            return MsClientResponse.<TransactionStatusResponseCBS>builder().success(false).build();
+        }
+    }
+
     private MsClientResponse<FundTransferResponseCBS> processTransferRequest(String serviceUrl, String requestBody) {
         try{
             ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
