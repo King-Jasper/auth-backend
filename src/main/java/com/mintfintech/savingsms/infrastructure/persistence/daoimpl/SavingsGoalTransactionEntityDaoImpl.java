@@ -3,12 +3,19 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalTransactionRepository;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -39,6 +46,12 @@ public class SavingsGoalTransactionEntityDaoImpl implements SavingsGoalTransacti
     @Override
     public SavingsGoalTransactionEntity getRecordById(Long aLong) throws RuntimeException {
         return findById(aLong).orElseThrow(() -> new RuntimeException("Not found. SavingsGoalTransactionEntity with Id: "+aLong));
+    }
+
+    @Override
+    public List<SavingsGoalTransactionEntity> getTransactionByTypeAndStatusBeforeTime(TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus, LocalDateTime beforeTime, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getAllByRecordStatusAndTransactionTypeAndTransactionStatusAndDateCreatedBefore(RecordStatusConstant.ACTIVE, transactionType, transactionStatus, beforeTime, pageable);
     }
 
     @Override
