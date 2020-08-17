@@ -32,14 +32,14 @@ public class AccountMSEventListener {
     private final String GCM_NOTIFICATION_DETAIL_EVENT = "com.mintfintech.accounts-service.events.user-gcm-detail-broadcast";
 
 
-    @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT})
+    @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
     public void listenForAccountCreation(String payload) {
         log.info("mint account creation: {}", payload);
         MintAccountCreationEvent mintAccountCreationEvent = gson.fromJson(payload, MintAccountCreationEvent.class);
         accountSetupUseCases.createMintAccount(mintAccountCreationEvent);
     }
 
-    @KafkaListener(topics = {MINT_BANK_ACCOUNT_CREATION_EVENT})
+    @KafkaListener(topics = {MINT_BANK_ACCOUNT_CREATION_EVENT, MINT_BANK_ACCOUNT_CREATION_EVENT+".savings-service"})
     public void listenForMintBankCreation(String payload) {
         log.info("bank account creation: {}", payload);
         MintBankAccountCreationEvent event = gson.fromJson(payload, MintBankAccountCreationEvent.class);

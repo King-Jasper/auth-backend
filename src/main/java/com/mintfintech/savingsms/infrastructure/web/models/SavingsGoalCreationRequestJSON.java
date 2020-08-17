@@ -15,9 +15,7 @@ import javax.validation.constraints.NotNull;
 @Data
 public class SavingsGoalCreationRequestJSON {
 
-    @ApiModelProperty(notes = "The savings plan Id", required = true)
-    @NotNull
-    @NotEmpty
+    @ApiModelProperty(notes = "The savings plan Id. This is optional, defaults to tier one", required = true)
     private String planId;
 
     @ApiModelProperty(notes = "The amount to be funded. N100 minimum", required = true)
