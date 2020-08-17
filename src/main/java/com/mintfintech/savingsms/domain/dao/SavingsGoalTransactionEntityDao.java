@@ -1,7 +1,11 @@
 package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -11,4 +15,5 @@ import java.util.Optional;
 public interface SavingsGoalTransactionEntityDao extends CrudDao<SavingsGoalTransactionEntity, Long> {
     String generateTransactionReference();
     Optional<SavingsGoalTransactionEntity> findTransactionByReference(String transactionReference);
+    List<SavingsGoalTransactionEntity> getTransactionByTypeAndStatusBeforeTime(TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus, LocalDateTime beforeTime, int size);
 }

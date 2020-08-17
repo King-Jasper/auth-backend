@@ -21,6 +21,7 @@ import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import javax.transaction.Transactional;
@@ -122,10 +123,12 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.findCategoryByCode(goalCreationRequest.getCategoryCode())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal category code."));
 
-        SavingsPlanEntity savingsPlan = savingsPlanEntityDao.findPlanByPlanId(goalCreationRequest.getPlanId())
-                .orElseThrow(() -> new BadRequestException("Invalid savings plan Id."));
-
-
+        SavingsPlanEntity savingsPlan;
+        if(!StringUtils.isEmpty(goalCreationRequest.getPlanId())) {
+            savingsPlan = savingsPlanEntityDao.findPlanByPlanId(goalCreationRequest.getPlanId()).orElseThrow(() -> new BadRequestException("Invalid savings plan Id."));
+        }else {
+            savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
+        }
         SavingsPlanTenorEntity planTenor = getSavingsPlanTenor(goalCreationRequest);
         int selectedDuration = planTenor.getDuration();
         boolean lockedSavings = true;
