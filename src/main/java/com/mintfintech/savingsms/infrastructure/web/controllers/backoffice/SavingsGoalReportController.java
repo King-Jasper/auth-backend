@@ -22,6 +22,9 @@ import org.springframework.security.access.annotation.Secured;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
@@ -59,6 +62,28 @@ public class SavingsGoalReportController {
                 .goalId(goalId).savingsStatus(goalStatus)
                 .accountId(accountId).savingsTier(planType)
                 .fromDate(fromDate).toDate(toDate)
+                .autoSavedStatus(autoSaveStatus)
+                .build();
+        PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
+        ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+    @ApiOperation(value = "Returns paginated list of customer savings goal using accountId.")
+    @GetMapping(value = "customer/{accountId}/savings-goal", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getCustomerSavingsGoalByAccountId(@PathVariable(value = "accountId") String accountId,
+                                                                                                                           @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
+                                                                                                                           @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
+                                                                                                                           @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+                                                                                                                           @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
+                                                                                                                           @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                                                           @Valid @Min(value = 0) @RequestParam("page") int page) {
+
+        SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
+                .savingsStatus(goalStatus)
+                .accountId(accountId)
+                .fromDate(fromDate)
+                .toDate(toDate)
                 .autoSavedStatus(autoSaveStatus)
                 .build();
         PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
