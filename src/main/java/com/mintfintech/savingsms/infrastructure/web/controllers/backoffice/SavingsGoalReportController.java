@@ -68,7 +68,7 @@ public class SavingsGoalReportController {
         ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
-    @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+    @Secured("06") // Privilege: CAN_VIEW_CUSTOMER_INFORMATION
     @ApiOperation(value = "Returns paginated list of customer savings goal using accountId.")
     @GetMapping(value = "customer/{accountId}/savings-goal", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getCustomerSavingsGoalByAccountId(@PathVariable(value = "accountId") String accountId,
