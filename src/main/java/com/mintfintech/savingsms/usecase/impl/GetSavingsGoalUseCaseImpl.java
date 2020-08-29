@@ -219,7 +219,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public PagedDataResponse<PortalSavingsGoalResponse> getPagedSavingsGoals(SavingsSearchRequest searchRequest, int page, int size) {
         MintAccountEntity accountEntity = null;
         if(!StringUtils.isEmpty(searchRequest.getAccountId())) {
-            accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElse(null);
+            accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElseThrow(()->new BadRequestException("Invalid account Id"));
         }
         SavingsPlanEntity savingsPlan = null;
         if(!StringUtils.isEmpty(searchRequest.getSavingsTier()) && !searchRequest.getSavingsTier().equalsIgnoreCase("ALL")) {
