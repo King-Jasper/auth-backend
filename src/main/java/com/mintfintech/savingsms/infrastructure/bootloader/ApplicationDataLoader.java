@@ -3,8 +3,10 @@ package com.mintfintech.savingsms.infrastructure.bootloader;
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
+import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
@@ -20,6 +22,7 @@ import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -38,6 +41,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private Gson gson;
+    private SavingsGoalRepository repository;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -65,6 +69,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         BigDecimal doubleAmount = BigDecimal.valueOf(50000.00);
         int value = longAmount.compareTo(doubleAmount);
         System.out.println("value: "+value);*/
+        updateValue();
     }
 
     /*private void issueFix() {
@@ -78,4 +83,17 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         totalCount = mintAccountRepository.countMintAccountsWithoutSavingGoals();
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
     }*/
+
+    private void updateValue() {
+        List<SavingsGoalEntity> goalEntities = repository.getSavings();
+        for(SavingsGoalEntity goalEntity: goalEntities) {
+            int duration = goalEntity.getSelectedDuration();
+            if(duration > 0) {
+                LocalDateTime dateCreated = goalEntity.getDateCreated();
+                LocalDateTime maturityDate = dateCreated.plusDays(duration);
+                goalEntity.setMaturityDate(maturityDate);
+                repository.save(goalEntity);
+            }
+        }
+    }
 }
