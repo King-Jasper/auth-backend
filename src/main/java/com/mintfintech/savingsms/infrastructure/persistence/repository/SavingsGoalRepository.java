@@ -101,4 +101,10 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             "group by DAY(s.maturityDate), MONTH(s.maturityDate)")
     List<SavingsMaturityStat> getSavingsMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
+
+    @Query("select s from SavingsGoalEntity s where s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
+            "s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
+            "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    List<SavingsGoalEntity> getSavings();
+
 }
