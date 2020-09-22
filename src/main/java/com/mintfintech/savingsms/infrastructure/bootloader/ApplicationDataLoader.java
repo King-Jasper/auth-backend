@@ -69,7 +69,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         BigDecimal doubleAmount = BigDecimal.valueOf(50000.00);
         int value = longAmount.compareTo(doubleAmount);
         System.out.println("value: "+value);*/
-        updateValue();
+        //updateValue();
     }
 
     /*private void issueFix() {
