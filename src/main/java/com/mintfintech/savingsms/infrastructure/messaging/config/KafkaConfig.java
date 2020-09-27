@@ -1,5 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.messaging.config;
 
+import com.mintfintech.savingsms.domain.services.EnvironmentService;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
@@ -23,11 +25,19 @@ import java.util.Map;
 @Configuration
 public class KafkaConfig {
 
-    @Value("${spring.kafka.bootstrap-servers}")
-    private String bootstrapServiceConfig;
+    private final String bootstrapServiceConfig;
 
     @Value("${spring.kafka.consumer.group-id}")
     private String consumerGroupId;
+
+    public KafkaConfig(EnvironmentService environmentService) {
+        String value = environmentService.getVariable("KAFKA_BROKERS_URL");
+        if(StringUtils.isEmpty(value)) {
+            System.out.println("KAFKA_BROKERS_URL is EMPTY");
+            value = environmentService.getVariable("spring.kafka.bootstrap-servers", "localhost:9092");
+        }
+        bootstrapServiceConfig = value;
+    }
 
 
     public ProducerFactory<String, String> producerFactory()  {
