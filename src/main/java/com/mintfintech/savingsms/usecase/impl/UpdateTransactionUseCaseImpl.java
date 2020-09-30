@@ -47,7 +47,7 @@ public class UpdateTransactionUseCaseImpl implements UpdateTransactionUseCase {
                    .build();
            MsClientResponse<TransactionStatusResponseCBS> msClientResponse = coreBankingServiceClient.reQueryTransactionStatus(requestCBS);
            if(!msClientResponse.isSuccess()) {
-               systemIssueLogService.logIssue("Transaction requery failure", msClientResponse.toString());
+               systemIssueLogService.logIssue("TransactionRequest Failed", "Transaction requery failure", msClientResponse.toString());
                continue;
            }
            TransactionStatusResponseCBS responseCBS = msClientResponse.getData();

@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SystemIssueEmailEvent;
 import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.inject.Named;
@@ -31,13 +32,27 @@ public class SystemIssueLogServiceImpl implements SystemIssueLogService {
     }
 
 
+
     @Override
-    public void logIssue(String title, String detail) {
+    public void logIssue(String emailTitle, String title, String detail) {
+        String env = "";
+        if(applicationProperty.isProductionEnvironment()) {
+            env = "Production";
+        }else if(applicationProperty.isStagingEnvironment()) {
+            env = "Staging";
+        }else {
+            env = "Development";
+        }
+        title = String.format("%s - (%s:%s)", title, systemName, env);
         log.info("SYSTEM ISSUE: {}: DETAIL {}", title, detail);
         SystemIssueEmailEvent emailEvent = SystemIssueEmailEvent.builder()
-                .detail(detail).title(title+" ("+systemName+")")
+                .detail(detail)
+                .title(title)
                 .recipient(applicationProperty.getSystemAdminEmail())
                 .build();
+        if(!StringUtils.isEmpty(emailTitle)) {
+            emailEvent.setSubject(emailTitle);
+        }
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SYSTEM_ISSUE_ALERT, new EventModel<>(emailEvent));
     }
 }

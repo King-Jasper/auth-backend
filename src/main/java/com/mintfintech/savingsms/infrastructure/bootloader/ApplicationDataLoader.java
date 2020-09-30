@@ -42,6 +42,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private SavingsGoalRepository repository;
     private Gson gson;
+    private SavingsGoalRepository repository;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -69,6 +70,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         BigDecimal doubleAmount = BigDecimal.valueOf(50000.00);
         int value = longAmount.compareTo(doubleAmount);
         System.out.println("value: "+value);*/
+        //updateValue();
     }
 
     /*private void issueFix() {

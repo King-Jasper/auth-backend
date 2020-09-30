@@ -13,4 +13,5 @@ public class SystemIssueEmailEvent {
     private String recipient;
     private String title;
     private String detail;
+    private String subject;
 }

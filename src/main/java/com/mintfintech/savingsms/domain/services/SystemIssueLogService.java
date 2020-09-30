@@ -5,5 +5,5 @@ package com.mintfintech.savingsms.domain.services;
  * Tue, 07 Apr, 2020
  */
 public interface SystemIssueLogService {
-    void logIssue(String title, String detail);
+    void logIssue(String emailSubject, String title, String detail);
 }

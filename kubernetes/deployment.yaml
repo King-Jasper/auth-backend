@@ -60,6 +60,11 @@ spec:
           value: dev
         - name: KUBERNETES_NAMESPACE
           value: sandbox
+        - name: KAFKA_BROKERS_URL
+          valueFrom:
+            configMapKeyRef:
+              name: configs
+              key: KAFKA_HOST
         volumeMounts:
         - name: config
           mountPath: "/config"
