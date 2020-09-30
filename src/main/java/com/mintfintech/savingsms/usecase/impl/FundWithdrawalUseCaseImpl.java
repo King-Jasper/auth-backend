@@ -309,7 +309,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.INTEREST_CREDITING_FAILED);
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                 systemIssueLogService.logIssue("Interest To Suspense Withdrawal failed", message);
+                 systemIssueLogService.logIssue("Interest Withdrawal Failed", "Interest To Suspense Withdrawal failed", message);
                  continue;
              }
              FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -321,7 +321,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.INTEREST_CREDITING_FAILED);
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; response code: %s;  response message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), responseCBS.getResponseCode(), responseCBS.getResponseMessage());
-                 systemIssueLogService.logIssue("Interest To Suspense Withdrawal failed", message);
+                 systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
              }
          }
     }
@@ -362,7 +362,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.SAVINGS_CREDITING_FAILED);
                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Savings To Suspense Withdrawal failed", message);
+                systemIssueLogService.logIssue("Savings Withdrawal Failed", "Savings To Suspense Withdrawal failed", message);
                 continue;
             }
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -374,7 +374,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.SAVINGS_CREDITING_FAILED);
                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; response code: %s;  response message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), responseCBS.getResponseCode(), responseCBS.getResponseMessage());
-                systemIssueLogService.logIssue("Savings To Suspense Withdrawal failed", message);
+                systemIssueLogService.logIssue("Savings Withdrawal Failed", "Savings To Suspense Withdrawal failed", message);
             }
         }
 
@@ -431,7 +431,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingsWithdrawal(withdrawalRequestCBS);
             if(!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Suspense To Customer funding failed", message);
+                systemIssueLogService.logIssue("Suspense Withdrawal Failed", "Suspense To Customer funding failed", message);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
                 savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.FUND_DISBURSEMENT_FAILED);

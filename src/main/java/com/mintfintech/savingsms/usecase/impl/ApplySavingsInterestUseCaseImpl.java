@@ -147,7 +147,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
             accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
             accumulatedInterestEntity.setResponseMessage(message);
             accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
-            systemIssueLogService.logIssue("Accumulated Interest Update Failure", reference+" - "+message);
+            systemIssueLogService.logIssue("Interest Posting Failed", "Accumulated Interest Update Failure", reference+" - "+message);
             return;
         }
         FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -156,7 +156,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
             accumulatedInterestEntity.setResponseMessage(responseCBS.getResponseMessage());
             accumulatedInterestEntity.setResponseCode(responseCBS.getResponseCode());
             accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
-            systemIssueLogService.logIssue("Accumulated Interest Update Failure", reference+" - "+responseCBS.getResponseMessage());
+            systemIssueLogService.logIssue("Interest Posting Failed","Accumulated Interest Update Failure", reference+" - "+responseCBS.getResponseMessage());
             return;
         }
         accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
