@@ -42,7 +42,6 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private SavingsGoalRepository repository;
     private Gson gson;
-    private SavingsGoalRepository repository;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
