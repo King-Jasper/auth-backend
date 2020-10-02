@@ -315,8 +315,17 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
              FundTransferResponseCBS responseCBS = msClientResponse.getData();
              withdrawalRequestEntity.setInterestCreditResponseCode(responseCBS.getResponseCode());
              if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
-                savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                 String savingsCreditCode = withdrawalRequestEntity.getSavingsCreditResponseCode();
+                 if(StringUtils.isEmpty(savingsCreditCode) || !"00".equalsIgnoreCase(savingsCreditCode)) {
+                     withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
+                     savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                 }else {
+                     withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED_INTEREST_CREDIT);
+                     savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                     String message = String.format("Goal Id: %s; withdrawal Id: %s ; Unable to resolve next status of withdrawal: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), withdrawalRequestEntity.getWithdrawalRequestStatus());
+                     systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
+                 }
+
              }else {
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.INTEREST_CREDITING_FAILED);
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);

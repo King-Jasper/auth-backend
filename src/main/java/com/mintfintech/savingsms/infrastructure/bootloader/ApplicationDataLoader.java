@@ -40,8 +40,8 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private SavingsPlanUseCases savingsPlanUseCases;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
-    private Gson gson;
     private SavingsGoalRepository repository;
+    private Gson gson;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -84,16 +84,5 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
         System.out.println("MINT ACCOUNTS WITHOUT GOALS: "+totalCount);
     }*/
 
-    private void updateValue() {
-        List<SavingsGoalEntity> goalEntities = repository.getSavings();
-        for(SavingsGoalEntity goalEntity: goalEntities) {
-            int duration = goalEntity.getSelectedDuration();
-            if(duration > 0) {
-                LocalDateTime dateCreated = goalEntity.getDateCreated();
-                LocalDateTime maturityDate = dateCreated.plusDays(duration);
-                goalEntity.setMaturityDate(maturityDate);
-                repository.save(goalEntity);
-            }
-        }
-    }
+
 }

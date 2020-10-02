@@ -7,6 +7,7 @@ package com.mintfintech.savingsms.domain.entities.enums;
 public enum  WithdrawalRequestStatusConstant {
     PENDING_INTEREST_CREDIT,
     PROCESSING_INTEREST_CREDIT,
+    PROCESSED_INTEREST_CREDIT,
     INTEREST_CREDITING_FAILED,
     PENDING_SAVINGS_CREDIT,
     PROCESSING_SAVINGS_CREDIT,
