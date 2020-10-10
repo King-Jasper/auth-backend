@@ -497,6 +497,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
             if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
                 updateAccountBalanceUseCase.processBalanceUpdate(creditAccount);
+            }else {
+                String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Fund disbursement Failed", "savings disbursement failed", message);
             }
         }
     }

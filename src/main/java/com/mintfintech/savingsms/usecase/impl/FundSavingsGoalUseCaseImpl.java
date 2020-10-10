@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFunding
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
@@ -54,6 +55,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private UpdateBankAccountBalanceUseCase updateAccountBalanceUseCase;
     private AppUserEntityDao appUserEntityDao;
     private TierLevelEntityDao tierLevelEntityDao;
+    private SystemIssueLogService systemIssueLogService;
 
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest) {
@@ -137,6 +139,9 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             SavingsGoalFundingResponse fundingResponse = fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
             if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
+
+                String message = String.format("Goal Id: %s; message: %s", savingsGoalEntity.getGoalId(),  fundingResponse.getResponseMessage());
+                systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
             }
             if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 sendSavingsFundingSuccessNotification(savingsGoalEntity, fundingResponse, savingsAmount);
