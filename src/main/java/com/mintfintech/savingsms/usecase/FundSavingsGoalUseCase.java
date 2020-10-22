@@ -2,7 +2,10 @@ package com.mintfintech.savingsms.usecase;
 
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
+import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
+import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 
 import java.math.BigDecimal;

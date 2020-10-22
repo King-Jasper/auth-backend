@@ -268,15 +268,14 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                      return;
                  }
              }
-
              withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSING_INTEREST_CREDIT);
              savingsWithdrawalRequestEntityDao.saveAndFlush(withdrawalRequestEntity);
-             if(!withdrawalRequestEntity.isMaturedGoal()) {
+             /*if(!withdrawalRequestEntity.isMaturedGoal()) {
                    log.info("no interest will be withdrawn. Goal is not matured. {}", withdrawalRequestEntity.getId());
                    withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
                    savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                    continue;
-             }
+             }*/
              if(withdrawalRequestEntity.getInterestWithdrawal().compareTo(BigDecimal.ZERO) == 0) {
                  log.info("Interest Withdrawal value is zero. No interest withdrawal. {}", withdrawalRequestEntity.getId());
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
@@ -498,6 +497,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
             if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
                 updateAccountBalanceUseCase.processBalanceUpdate(creditAccount);
+            }else {
+                String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Fund disbursement Failed", "savings disbursement failed", message);
             }
         }
     }

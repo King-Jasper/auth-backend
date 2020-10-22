@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFunding
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
@@ -17,7 +18,10 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEve
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
+import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
+import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
+import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -54,6 +58,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private UpdateBankAccountBalanceUseCase updateAccountBalanceUseCase;
     private AppUserEntityDao appUserEntityDao;
     private TierLevelEntityDao tierLevelEntityDao;
+    private SystemIssueLogService systemIssueLogService;
 
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest) {
@@ -137,6 +142,9 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             SavingsGoalFundingResponse fundingResponse = fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
             if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
+
+                String message = String.format("Goal Id: %s; message: %s", savingsGoalEntity.getGoalId(),  fundingResponse.getResponseMessage());
+                systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
             }
             if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 sendSavingsFundingSuccessNotification(savingsGoalEntity, fundingResponse, savingsAmount);
@@ -331,4 +339,5 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
         return narration;
     }
+
 }
