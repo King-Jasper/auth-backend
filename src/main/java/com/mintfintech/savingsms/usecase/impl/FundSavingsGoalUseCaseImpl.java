@@ -18,7 +18,10 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEve
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
+import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
+import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
+import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -336,4 +339,5 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
         return narration;
     }
+
 }

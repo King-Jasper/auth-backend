@@ -15,4 +15,6 @@ public interface CoreBankingServiceClient {
     MsClientResponse<FundTransferResponseCBS> updateAccruedInterest(InterestAccruedUpdateRequestCBS updateRequest);
     MsClientResponse<FundTransferResponseCBS> processSavingsWithdrawal(SavingsWithdrawalRequestCBS requestCBS);
     MsClientResponse<TransactionStatusResponseCBS> reQueryTransactionStatus(TransactionStatusRequestCBS transactionStatusRequestCBS);
+    MsClientResponse<String> generateSavingsFundingReference(SavingsFundingReferenceRequestCBS requestCBS);
+    MsClientResponse<SavingsFundingVerificationResponseCBS> verifySavingsFundingRequest(String transactionReference);
 }
