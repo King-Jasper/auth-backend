@@ -91,7 +91,7 @@ public class SavingsGoalTransactionController {
     }
 
     @ApiOperation(value = "Returns the transaction status of an savings funding request.")
-    @GetMapping(value =  v2BaseUrl +"transaction/reference/{reference}/verify", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value =  v2BaseUrl +"/transaction/reference/{reference}/verify", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<OnlineFundingResponse>> verifyTransactionReference(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                              @PathVariable("reference") String reference) {
         OnlineFundingResponse fundingResponse = onlineFundingUseCase.verifyFundingRequest(authenticatedUser, reference);
