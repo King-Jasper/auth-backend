@@ -2,12 +2,15 @@ package com.mintfintech.savingsms.usecase;
 
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsInterestModel;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
+import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
+
 import java.util.List;
 
 /**
@@ -23,4 +26,6 @@ public interface GetSavingsGoalUseCase {
     PagedDataResponse<PortalSavingsGoalResponse> getPagedSavingsGoals(SavingsSearchRequest searchRequest, int page, int size);
     PortalSavingsGoalResponse fromSavingsGoalEntityToPortalSavingsGoalResponse (SavingsGoalEntity savingsGoalEntity);
     PortalSavingsGoalResponse getPortalSavingsGoalResponseByGoalId(String goalId);
+    PagedDataResponse<SavingsTransactionModel> getSavingsTransactions(String goalId, int page, int size);
+    PagedDataResponse<SavingsInterestModel> getSavingsInterest(String goalId, int page, int size);
 }

@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
+import com.mintfintech.savingsms.domain.entities.SavingsInterestModel;
 import com.mintfintech.savingsms.infrastructure.web.models.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ChangeSavingsPlanUseCase;
@@ -7,7 +8,9 @@ import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
+import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
+import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.experimental.FieldDefaults;
@@ -37,12 +40,10 @@ public class SavingsGoalController {
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private UpdateSavingGoalUseCase updateSavingGoalUseCase;
-    private ChangeSavingsPlanUseCase changeSavingsPlanUseCase;
-    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase, ChangeSavingsPlanUseCase changeSavingsPlanUseCase) {
+    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase) {
         this.createSavingsGoalUseCase = createSavingsGoalUseCase;
         this.getSavingsGoalUseCase = getSavingsGoalUseCase;
         this.updateSavingGoalUseCase = updateSavingGoalUseCase;
-        this.changeSavingsPlanUseCase = changeSavingsPlanUseCase;
     }
 
     @Deprecated
@@ -97,6 +98,7 @@ public class SavingsGoalController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    /*
     @Deprecated
     @ApiOperation(value = "Change the current saving plan.", notes = "This will extend the savings goal duration.")
     @PutMapping(value = v1BaseUrl + "/{goalId}/change-plan", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -104,6 +106,23 @@ public class SavingsGoalController {
                                                                                         @PathVariable String goalId, @RequestBody @Valid SavingsGoalPlanUpdateRequestJSON requestJSON) {
         SavingsGoalModel response = changeSavingsPlanUseCase.changePlan(authenticatedUser, goalId, requestJSON.toRequest());
         ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Changed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }*/
+
+    @ApiOperation(value = "Returns a list of transactions on savings.")
+    @GetMapping(value = v2BaseUrl + "/{goalId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>>> getSavingsTransactions(@PathVariable String goalId,
+                                                                                                              @RequestParam("size") int size, @RequestParam("page") int page) {
+        PagedDataResponse<SavingsTransactionModel> response = getSavingsGoalUseCase.getSavingsTransactions(goalId, size, page);
+        ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns a list of accrued interest on savings.")
+    @GetMapping(value = v2BaseUrl + "/{goalId}/accrued-interest", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsInterestModel>>> getSavingsInterest(@PathVariable String goalId, @RequestParam("size") int size, @RequestParam("page") int page) {
+        PagedDataResponse<SavingsInterestModel> response = getSavingsGoalUseCase.getSavingsInterest(goalId, size, page);
+        ApiResponseJSON<PagedDataResponse<SavingsInterestModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

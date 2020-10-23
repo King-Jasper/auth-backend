@@ -23,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +50,8 @@ import java.util.stream.Collectors;
 public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
+    private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
+    private SavingsInterestEntityDao savingsInterestEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
@@ -244,5 +247,41 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         return new PagedDataResponse<>(goalEntityPage.getTotalElements(), goalEntityPage.getTotalPages(),
                 goalEntityPage.get().map(this::fromSavingsGoalEntityToPortalSavingsGoalResponse)
                         .collect(Collectors.toList()));
+    }
+
+
+    @Override
+    public PagedDataResponse<SavingsTransactionModel> getSavingsTransactions(String goalId, int page, int size) {
+        SavingsGoalEntity goalEntity = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new NotFoundException("Invalid savings goal Id."));
+        Page<SavingsGoalTransactionEntity> transactionEntityPage = savingsGoalTransactionEntityDao.getTransactions(goalEntity, page, size);
+        return new PagedDataResponse<>(transactionEntityPage.getTotalElements(), transactionEntityPage.getTotalElements(),
+                transactionEntityPage.get().map(this::fromSavingTransactionToModel)
+        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public PagedDataResponse<SavingsInterestModel> getSavingsInterest(String goalId, int page, int size) {
+        SavingsGoalEntity goalEntity = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new NotFoundException("Invalid savings goal Id."));
+        Page<SavingsInterestEntity> interestPage = savingsInterestEntityDao.getAccruedInterestOnGoal(goalEntity, page, size);
+        return new PagedDataResponse<>(interestPage.getTotalElements(), interestPage.getTotalPages(),
+                interestPage.get().map(interestEntity -> SavingsInterestModel.builder()
+                        .interestAmount(interestEntity.getInterest())
+                        .rate(interestEntity.getRate())
+                        .savingsBalance(interestEntity.getSavingsBalance())
+                        .build())
+                .collect(Collectors.toList()));
+    }
+
+    private SavingsTransactionModel fromSavingTransactionToModel(SavingsGoalTransactionEntity transactionEntity) {
+        return SavingsTransactionModel.builder()
+                .amount(transactionEntity.getTransactionAmount())
+                .automated(transactionEntity.getPerformedBy() == null)
+                .reference(transactionEntity.getTransactionReference())
+                .savingsBalance(transactionEntity.getNewBalance())
+                .transactionStatus(transactionEntity.getTransactionStatus().name())
+                .transactionType(transactionEntity.getTransactionType().name())
+                .build();
     }
 }
