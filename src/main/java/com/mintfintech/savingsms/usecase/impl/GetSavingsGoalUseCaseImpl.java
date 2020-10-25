@@ -122,16 +122,27 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         }
         long remainingDays = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal() - savingsDuration;
         return "Sorry, your savings goal will be available for withdrawal in "+remainingDays+" day(s) time";
-
     }
-
 
 
    private String getMintGoalNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured) {
         if(matured){
             return  "";
         }
-        return "Sorry, the minimum amount for withdrawal is N1000.";
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                return "Sorry, the minimum amount for withdrawal is N1000.";
+            }else {
+                return "Sorry, the minimum amount for withdrawal is N100.";
+            }
+        }else {
+            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                return "Sorry, the minimum amount for withdrawal is N1000.";
+            }else {
+                return "Sorry, the minimum amount for withdrawal is N20.";
+            }
+        }
+
    }
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
