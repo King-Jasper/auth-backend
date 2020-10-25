@@ -70,6 +70,12 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
             }else {
                 matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
+        }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+            }else {
+                matured = BigDecimal.valueOf(100.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+            }
         }
         return matured;
     }

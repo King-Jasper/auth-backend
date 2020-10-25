@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingRespons
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.models.RoundUpSettingModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -49,6 +50,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private RoundUpSavingsSettingEntityDao roundUpSavingsSettingEntityDao;
     private ApplicationProperty applicationProperty;
    // private ApplicationEventService applicationEventService;
    // private AuditTrailService auditTrailService;
@@ -87,6 +89,67 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
          */
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+    }
+
+    @Override
+    public RoundUpSettingModel setupRoundUpSavings(AuthenticatedUser authenticatedUser, RoundUpSettingModel roundUpSetting) {
+
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        if(accountEntity.getAccountType() != AccountTypeConstant.INDIVIDUAL) {
+            throw new BusinessLogicConflictException("Sorry, this feature is for individual account.");
+        }
+        AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+        RoundUpSavingsTypeConstant ftRoundUpSavingsType = RoundUpSavingsTypeConstant.valueOf(roundUpSetting.getFundTransferRoundUpType());
+        RoundUpSavingsTypeConstant cpRoundUpSavingsType = RoundUpSavingsTypeConstant.valueOf(roundUpSetting.getCardPaymentRoundUpType());
+        RoundUpSavingsTypeConstant bpRoundUpSavingsType = RoundUpSavingsTypeConstant.valueOf(roundUpSetting.getBillPaymentRoundUpType());
+
+
+        Optional<RoundUpSavingsSettingEntity> settingEntityOpt = roundUpSavingsSettingEntityDao.findRoundUpSavingsByUser(appUserEntity);
+        RoundUpSavingsSettingEntity settingEntity = settingEntityOpt.orElseGet(RoundUpSavingsSettingEntity::new);
+        settingEntity.setAccount(accountEntity);
+        settingEntity.setCreator(appUserEntity);
+        settingEntity.setFundTransferRoundUpType(ftRoundUpSavingsType);
+        settingEntity.setBillPaymentRoundUpType(bpRoundUpSavingsType);
+        settingEntity.setCardPaymentRoundUpType(cpRoundUpSavingsType);
+
+        boolean enabled = bpRoundUpSavingsType != RoundUpSavingsTypeConstant.NONE || cpRoundUpSavingsType != RoundUpSavingsTypeConstant.NONE || ftRoundUpSavingsType != RoundUpSavingsTypeConstant.NONE;
+        settingEntity.setEnabled(enabled);
+        settingEntity = roundUpSavingsSettingEntityDao.saveRecord(settingEntity);
+
+
+        Optional<SavingsGoalEntity> roundUpSavingsOpt = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.ROUND_UP_SAVINGS);
+        if(!roundUpSavingsOpt.isPresent()) {
+            SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08").get();
+            SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
+            SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.getLeastDurationOnSavingsPlan(savingsPlanEntity);
+            SavingsGoalEntity savingsGoalEntity  = SavingsGoalEntity.builder()
+                    .savingsGoalType(SavingsGoalTypeConstant.ROUND_UP_SAVINGS)
+                    .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
+                    .savingsPlan(savingsPlanEntity)
+                    .autoSave(false)
+                    .creationSource(SavingsGoalCreationSourceConstant.MINT)
+                    .goalStatus(SavingsGoalStatusConstant.ACTIVE)
+                    .targetAmount(BigDecimal.ZERO)
+                    .savingsBalance(BigDecimal.ZERO)
+                    .accruedInterest(BigDecimal.ZERO)
+                    .mintAccount(accountEntity)
+                    .name("Round-Up Savings")
+                    .savingsPlanTenor(planTenorEntity)
+                    .creator(appUserEntity)
+                    .goalId(savingsGoalEntityDao.generateSavingGoalId())
+                    .savingsAmount(BigDecimal.ZERO)
+                    .goalCategory(goalCategoryEntity)
+                    .build();
+            savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+        }else {
+            SavingsGoalEntity savingsGoalEntity = roundUpSavingsOpt.get();
+            if(!enabled) {
+                savingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.INACTIVE);
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+            }
+        }
+        roundUpSetting.setId(settingEntity.getId());
+        return roundUpSetting;
     }
 
     private SavingsPlanTenorEntity getSavingsPlanTenor(SavingsGoalCreationRequest goalCreationRequest) {
@@ -240,4 +303,6 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             }
         }
     }
+
+
 }
