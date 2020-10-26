@@ -178,7 +178,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public List<SavingsGoalModel> getSavingsGoalList(MintAccountEntity mintAccountEntity) {
         List<SavingsGoalModel> savingsGoalList = savingsGoalEntityDao.getAccountSavingGoals(mintAccountEntity)
                 .stream()
-                .filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
+                .filter(savingsGoalEntity -> savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.MINT)
                 .map(this::fromSavingsGoalEntityToModel)
                 .collect(Collectors.toList());
         return savingsGoalList;

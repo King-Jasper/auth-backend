@@ -90,13 +90,16 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
+            if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED) {
+                throw new BusinessLogicConflictException("Processing fund withdrawal. Please be patient.");
+            }
             throw new BusinessLogicConflictException("Sorry, savings withdrawal not currently supported.");
         }
         return processCustomerSavingWithdrawal(savingsGoal, appUserEntity);
     }
 
     private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser) {
-        if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+        if(savingsGoal.getCreationSource() != SavingsGoalCreationSourceConstant.MINT){
             throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
         }
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
@@ -455,6 +458,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
                 transactionEntity.setNewBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()));
+                SavingsGoalEntity goalEntity = savingsGoalEntityDao.getRecordById(withdrawalRequestEntity.getSavingsGoal().getId());
+                if(goalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
+                    goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    savingsGoalEntityDao.saveRecord(goalEntity);
+                }
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
                 if(appUserEntity.isEmailNotificationEnabled()) {
                     SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
