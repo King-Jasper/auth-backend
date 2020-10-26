@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.entities.enums.PaymentGatewayTypeConstan
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.models.corebankingservice.GeneratedReferenceCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingReferenceRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingVerificationResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
@@ -171,12 +172,12 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
                 .amountInNaira(fundingRequest.getAmount())
                 .paymentGateway(fundingRequest.getPaymentGateway())
                 .build();
-        MsClientResponse<String> msClientResponse = coreBankingServiceClient.generateSavingsFundingReference(requestCBS);
+        MsClientResponse<GeneratedReferenceCBS> msClientResponse = coreBankingServiceClient.generateSavingsFundingReference(requestCBS);
         if(!msClientResponse.isSuccess()){
             String message = StringUtils.isEmpty(msClientResponse.getMessage())? "Sorry, request could not be completed at the moment." : msClientResponse.getMessage();
             throw new BusinessLogicConflictException(message);
         }
-        return msClientResponse.getData();
+        return msClientResponse.getData().getReference();
     }
 
     private BigDecimal computeTransactionFee(BigDecimal fundingAmount) {

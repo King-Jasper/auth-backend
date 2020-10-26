@@ -85,22 +85,22 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
     }
 
     @Override
-    public MsClientResponse<String> generateSavingsFundingReference(SavingsFundingReferenceRequestCBS requestCBS) {
+    public MsClientResponse<GeneratedReferenceCBS> generateSavingsFundingReference(SavingsFundingReferenceRequestCBS requestCBS) {
         String baseUrl = getServiceBaseUrl();
         String serviceUrl = String.format("%s/api/v1/savings-transaction/generate-funding-payment-reference", baseUrl);
         String requestBody = gson.toJson(requestCBS);
         try{
             ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
             System.out.println(clientResponse.toString());
-            MsClientResponse<String> response;
-            Type collectionType = new TypeToken<MsClientResponse<String>>(){}.getType();
+            MsClientResponse<GeneratedReferenceCBS> response;
+            Type collectionType = new TypeToken<MsClientResponse<GeneratedReferenceCBS>>(){}.getType();
             response = gson.fromJson(clientResponse.getResponseBody(), collectionType);
             response.setStatusCode(clientResponse.getStatusCode());
             response.setSuccess(response.getData() != null);
             System.out.println(response.toString());
             return response;
         }catch (Exception ex){
-            return MsClientResponse.<String>builder().success(false).build();
+            return MsClientResponse.<GeneratedReferenceCBS>builder().success(false).build();
         }
     }
 
