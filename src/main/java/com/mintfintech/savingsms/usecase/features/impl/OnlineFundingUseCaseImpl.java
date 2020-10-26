@@ -52,6 +52,7 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
 
     @Override
     public ReferenceGenerationResponse createFundingRequest(AuthenticatedUser authenticatedUser, OnlineFundingRequest fundingRequest) {
+        AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         if(fundingRequest.getAmount() < 100) {
             throw new BadRequestException("Sorry, minimum amount that can be funded is N100.00");
         }
@@ -71,6 +72,7 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
                 .paymentGateway(gatewayType)
                 .savingsGoal(savingsGoal)
                 .paymentStatus(TransactionStatusConstant.PENDING)
+                .creator(currentUser)
                 .build();
         savingsFundingRequestEntityDao.saveRecord(entity);
 
