@@ -89,7 +89,7 @@ public class RoundUpSavingsController {
     @GetMapping(value = v2BaseUrl+ "/roundup-savings/{id}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<RoundUpSavingsTransactionModel>>> getRoundUpSavingsTransaction(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                                            @PathVariable Long id, @RequestParam("size") int size, @RequestParam("page") int page) {
-        PagedDataResponse<RoundUpSavingsTransactionModel> response = getRoundUpSavingsUseCase.getRoundUpSavingsTransaction(authenticatedUser, id, size, page);
+        PagedDataResponse<RoundUpSavingsTransactionModel> response = getRoundUpSavingsUseCase.getRoundUpSavingsTransaction(authenticatedUser, id, page, size);
         ApiResponseJSON<PagedDataResponse<RoundUpSavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
