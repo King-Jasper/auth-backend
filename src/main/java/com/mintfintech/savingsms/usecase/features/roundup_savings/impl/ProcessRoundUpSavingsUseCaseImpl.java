@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase.impl;
+package com.mintfintech.savingsms.usecase.features.roundup_savings.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
@@ -8,7 +8,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFunding
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.ProcessRoundUpSavingsUseCase;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
@@ -70,9 +70,11 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         BigDecimal transactionAmount = transactionPayload.getTransactionAmount();
         BigDecimal amountToSave = getAmountToSave(roundUpType, transactionAmount);
         if(amountToSave.compareTo(BigDecimal.ZERO) == 0) {
+            log.info("Amount to save is {}", amountToSave);
             return;
         }
         if(!hasSufficientBalance(transactionPayload, amountToSave)) {
+            log.info("Insufficient balance to process roundup savings");
             return;
         }
         MintAccountEntity accountEntity = debitAccount.getMintAccount();
@@ -88,6 +90,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .amountSaved(amountToSave)
                 .transactionAmount(transactionAmount)
                 .transactionReference(transactionPayload.getInternalReference())
+                .transactionType(transactionCategory)
                 .build();
         savingsTransactionEntity = roundUpSavingsTransactionEntityDao.saveRecord(savingsTransactionEntity);
         processSavingFunding(savingsTransactionEntity);

@@ -1,7 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
-import com.mintfintech.savingsms.usecase.ProcessRoundUpSavingsUseCase;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
 import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;

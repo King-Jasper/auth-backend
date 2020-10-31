@@ -3,8 +3,13 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.RoundUpSavingsSettingEntity;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -15,4 +20,9 @@ public interface RoundUpSavingsSettingRepository extends JpaRepository<RoundUpSa
     Optional<RoundUpSavingsSettingEntity> findTopByCreatorAndEnabledTrue(AppUserEntity appUserEntity);
     Optional<RoundUpSavingsSettingEntity> findTopByCreator(AppUserEntity appUserEntity);
     Optional<RoundUpSavingsSettingEntity> findTopByAccount(MintAccountEntity mintAccountEntity);
+
+    @Query("select r from RoundUpSavingsSettingEntity r where r.enabled = false and r.roundUpSavings.savingsBalance = ?1 and " +
+            "r.roundUpSavings.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE and " +
+            "r.dateDeactivated < ?2 order by r.dateCreated asc")
+    List<RoundUpSavingsSettingEntity> getDeactivatedSavingsForDeletion(BigDecimal amount, LocalDateTime beforeTime, Pageable pageable);
 }

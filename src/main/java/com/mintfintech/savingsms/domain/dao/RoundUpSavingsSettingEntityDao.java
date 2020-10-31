@@ -4,6 +4,8 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.RoundUpSavingsSettingEntity;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,4 +16,5 @@ public interface RoundUpSavingsSettingEntityDao extends CrudDao<RoundUpSavingsSe
     Optional<RoundUpSavingsSettingEntity> findRoundUpSavingsByUser(AppUserEntity user);
     Optional<RoundUpSavingsSettingEntity> findRoundUpSavingsByAccount(MintAccountEntity mintAccount);
     Optional<RoundUpSavingsSettingEntity> findActiveRoundUpSavingsByUser(AppUserEntity user);
+    List<RoundUpSavingsSettingEntity> getDeactivateSavingsWithZeroBalance(LocalDateTime deactivatedBeforeTime, int size);
 }

@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase;
+package com.mintfintech.savingsms.usecase.features.roundup_savings;
 
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
 

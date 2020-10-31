@@ -11,6 +11,7 @@ import lombok.Data;
 @Builder
 public class RoundUpSettingModel {
     private Long id;
+    private String roundUpType;
     private String fundTransferRoundUpType;
     private String billPaymentRoundUpType;
     private String cardPaymentRoundUpType;

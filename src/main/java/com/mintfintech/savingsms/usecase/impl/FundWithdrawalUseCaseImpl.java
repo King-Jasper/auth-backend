@@ -104,10 +104,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         }
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal savingsBalance = savingsGoal.getSavingsBalance();
-        BigDecimal minimumWithdrawalBalance = (applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) ? BigDecimal.valueOf(1000.00) : BigDecimal.valueOf(20.00);
-        boolean matured = minimumWithdrawalBalance.compareTo(savingsBalance) <= 0;
+        boolean matured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal);
         if(!matured) {
-            throw new BusinessLogicConflictException("Sorry, can you only withdraw when your balance is up to N"+MoneyFormatterUtil.priceWithDecimal(minimumWithdrawalBalance));
+            throw new BusinessLogicConflictException("Sorry, your savings is not yet matured for withdrawal");
         }
         BigDecimal amountForWithdrawal = savingsBalance.add(accruedInterest);
         /*if(amountRequested.compareTo(totalAvailableAmount) > 0) {
@@ -140,6 +139,13 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 .requestedBy(currentUser)
                 .build();
         savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+
+        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+            savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+        }
+
         return "Request queued successfully. Your account will be funded very soon.";
     }
 

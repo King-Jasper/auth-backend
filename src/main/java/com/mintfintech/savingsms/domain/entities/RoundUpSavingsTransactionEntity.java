@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.RoundUpSavingsTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.RoundUpTransactionTypeConstant;
+import com.mintfintech.savingsms.usecase.data.value_objects.RoundUpTransactionCategoryType;
 import lombok.*;
 
 import javax.persistence.*;
@@ -31,6 +33,10 @@ public class RoundUpSavingsTransactionEntity extends AbstractBaseEntity<Long> {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private RoundUpSavingsTypeConstant savingsRoundUpType;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private RoundUpTransactionCategoryType transactionType;
 
     @Column(nullable = false)
     private BigDecimal transactionAmount;

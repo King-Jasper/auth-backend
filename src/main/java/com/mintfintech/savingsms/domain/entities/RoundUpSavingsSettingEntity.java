@@ -37,7 +37,14 @@ public class RoundUpSavingsSettingEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private RoundUpSavingsTypeConstant billPaymentRoundUpType;
 
+    @OneToOne(fetch = FetchType.EAGER)
+    private SavingsGoalEntity roundUpSavings;
+
     @Builder.Default
     private boolean enabled = false;
+
+    private LocalDateTime dateDeactivated;
+
+    private LocalDateTime dateActivated;
 
 }

@@ -71,10 +71,17 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                 matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
-            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+            boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
+            if(!applicationProperty.isProductionEnvironment() && !applicationProperty.isStagingEnvironment()) {
+                 long daysPassed = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+                 matured = daysPassed > 4 && hasFund;
             }else {
-                matured = BigDecimal.valueOf(100.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
+                if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
+                    matured = hasFund;
+                }else {
+                    matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
+                }
             }
         }
         return matured;

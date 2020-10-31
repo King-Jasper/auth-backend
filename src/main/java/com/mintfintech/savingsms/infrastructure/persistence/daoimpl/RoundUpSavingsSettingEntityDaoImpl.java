@@ -5,7 +5,13 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.RoundUpSavingsSettingEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.RoundUpSavingsSettingRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import javax.inject.Named;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -34,5 +40,11 @@ public class RoundUpSavingsSettingEntityDaoImpl extends CrudDaoImpl<RoundUpSavin
     @Override
     public Optional<RoundUpSavingsSettingEntity> findActiveRoundUpSavingsByUser(AppUserEntity user) {
         return repository.findTopByCreatorAndEnabledTrue(user);
+    }
+
+    @Override
+    public List<RoundUpSavingsSettingEntity> getDeactivateSavingsWithZeroBalance(LocalDateTime deactivatedBeforeTime, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getDeactivatedSavingsForDeletion(BigDecimal.ZERO, deactivatedBeforeTime, pageable);
     }
 }

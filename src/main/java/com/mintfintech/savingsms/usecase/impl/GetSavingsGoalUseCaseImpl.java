@@ -155,6 +155,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsBalance.compareTo(BigDecimal.ZERO) > 0) {
             savingsBalance = savingsBalance.setScale(2, BigDecimal.ROUND_HALF_EVEN);
         }
+        String maturityDate = "";
+        if(savingsGoalEntity.getMaturityDate() != null) {
+            maturityDate = savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME);
+        }
         BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
@@ -162,6 +166,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingsBalance(savingsBalance)
                 .accruedInterest(accruedInterest)
                 .availableBalance(availableBalance)
+                .maturityDate(maturityDate)
                 .noWithdrawalErrorMessage(getMintGoalNoWithdrawalErrorMessage(savingsGoalEntity, matured))
                 .matured(matured).build();
     }
