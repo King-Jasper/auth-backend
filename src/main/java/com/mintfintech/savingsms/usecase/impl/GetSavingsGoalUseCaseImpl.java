@@ -130,11 +130,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             return  "";
         }
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
-            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-                return "Sorry, the minimum amount for withdrawal is N1000.";
-            }else {
-                return "Sorry, the minimum amount for withdrawal is N100.";
-            }
+            long remainingDays = LocalDateTime.now().until(savingsGoalEntity.getMaturityDate(), ChronoUnit.DAYS);
+            return "Sorry, your savings will be matured in "+remainingDays+" day(s) time";
         }else {
             if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
                 return "Sorry, the minimum amount for withdrawal is N1000.";
