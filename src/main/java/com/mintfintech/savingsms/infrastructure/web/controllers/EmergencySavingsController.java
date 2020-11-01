@@ -29,7 +29,7 @@ import javax.validation.Valid;
 @RequestMapping(headers = {"x-request-client-key", "Authorization"})
 public class EmergencySavingsController {
 
-    private String v2BaseUrl = "/api/v2/savings-goals";
+    private final String v2BaseUrl = "/api/v2/savings-goals";
 
     private CreateEmergencySavingsUseCase createEmergencySavingsUseCase;
     private GetEmergencySavingsUseCase getEmergencySavingsUseCase;
