@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -25,6 +26,20 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
 
     @Override
     public BigDecimal getAvailableAmount(SavingsGoalEntity savingsGoalEntity) {
+
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+            long days = savingsGoalEntity.getSavingsStartDate().until(LocalDate.now(), ChronoUnit.DAYS);
+            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                if(days < 30) {
+                    return savingsGoalEntity.getSavingsBalance();
+                }
+            }else {
+                if(days < 5) {
+                    return savingsGoalEntity.getSavingsBalance();
+                }
+            }
+            return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
+        }
         boolean matured = isMaturedSavingsGoal(savingsGoalEntity);
         if(matured) {
             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
@@ -53,6 +68,9 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
 
     private boolean isMaturedCustomerGoal(SavingsGoalEntity savingsGoalEntity) {
         if(savingsGoalEntity.getMaturityDate() == null) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+                return savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
+            }
             return false;
         }
         LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();

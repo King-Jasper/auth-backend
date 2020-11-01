@@ -152,7 +152,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     @Transactional
     public String processCustomerSavingWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser) {
         LocalDateTime now = LocalDateTime.now();
-        boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate()) || savingsGoal.getMaturityDate().isBefore(now);
+        boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal);
         if(!isMatured) {
             if(savingsGoal.isLockedSavings()) {
                 throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
@@ -163,23 +163,6 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - numberOfDaysSaved)+" days left before you can withdraw your savings.");
             }
         }
-
-       /*
-        final BigDecimal totalAvailableBalance;
-        if(isMatured) {
-            log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
-            totalAvailableBalance = savingsGoal.getSavingsBalance().add(savingsGoal.getAccruedInterest());
-        }else {
-            SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
-            totalAvailableBalance = savingsGoal.getSavingsBalance().subtract(planEntity.getMinimumBalance());
-        }
-        System.out.println("Available amount: "+totalAvailableBalance+" amount requested: "+amountRequested);
-        if(amountRequested.compareTo(totalAvailableBalance) > 0) {
-            throw new BusinessLogicConflictException("Sorry, maximum amount that can be withdrawn is N"+ MoneyFormatterUtil.priceWithDecimal(totalAvailableBalance));
-        }
-        if(isMatured){
-            amountRequested = totalAvailableBalance;
-        }*/
         createWithdrawalRequest(savingsGoal, isMatured, currentUser);
         if(isMatured) {
             return "Request queued successfully. Your account will be funded shortly.";

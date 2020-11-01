@@ -203,6 +203,10 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
             savingsGoal.setSavingsBalance(savingsGoal.getSavingsBalance().add(amount));
             savingsGoalEntityDao.saveRecord(savingsGoal);
+            if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.INACTIVE) {
+                savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+                savingsGoalEntityDao.saveRecord(savingsGoal);
+            }
             transactionEntity.setNewBalance(savingsGoal.getSavingsBalance());
             savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
             debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);

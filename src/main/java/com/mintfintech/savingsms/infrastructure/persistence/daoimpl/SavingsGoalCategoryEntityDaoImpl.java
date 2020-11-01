@@ -16,7 +16,7 @@ import java.util.Optional;
 @Named
 public class SavingsGoalCategoryEntityDaoImpl implements SavingsGoalCategoryEntityDao {
 
-    private SavingsGoalCategoryRepository repository;
+    private final SavingsGoalCategoryRepository repository;
     public SavingsGoalCategoryEntityDaoImpl(SavingsGoalCategoryRepository repository) {
         this.repository = repository;
     }
@@ -24,6 +24,11 @@ public class SavingsGoalCategoryEntityDaoImpl implements SavingsGoalCategoryEnti
     @Override
     public Optional<SavingsGoalCategoryEntity> findCategoryByCode(String code) {
         return repository.findFirstByCode(code);
+    }
+
+    @Override
+    public SavingsGoalCategoryEntity getCategoryByCode(String code) {
+        return findCategoryByCode(code).orElseThrow(() -> new RuntimeException("No category with code - "+code));
     }
 
     @Override

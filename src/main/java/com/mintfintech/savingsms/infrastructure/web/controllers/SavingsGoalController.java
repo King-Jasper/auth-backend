@@ -59,7 +59,6 @@ public class SavingsGoalController {
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createSavingsGoalV1(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSONV1 goalCreationRequestJSON) {
 
-       // throw new BusinessLogicConflictException("Goal creation temporarily disabled.");
         SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
         ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
