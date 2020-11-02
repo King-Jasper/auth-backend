@@ -17,5 +17,5 @@ public class SavingsTransactionModel {
     private BigDecimal savingsBalance;
     private String reference;
     private String transactionStatus;
-    private boolean automated;
+    private String transactionDate;
 }

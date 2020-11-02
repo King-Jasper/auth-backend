@@ -17,4 +17,6 @@ public class SavingsInterestModel {
     private double rate;
 
     private BigDecimal savingsBalance;
+
+    private String interestDate;
 }

@@ -283,6 +283,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                         .interestAmount(interestEntity.getInterest())
                         .rate(interestEntity.getRate())
                         .savingsBalance(interestEntity.getSavingsBalance())
+                        .interestDate(interestEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                         .build())
                 .collect(Collectors.toList()));
     }
@@ -290,7 +291,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private SavingsTransactionModel fromSavingTransactionToModel(SavingsGoalTransactionEntity transactionEntity) {
         return SavingsTransactionModel.builder()
                 .amount(transactionEntity.getTransactionAmount())
-                .automated(transactionEntity.getPerformedBy() == null)
+                .transactionDate(transactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .reference(transactionEntity.getTransactionReference())
                 .savingsBalance(transactionEntity.getNewBalance())
                 .transactionStatus(transactionEntity.getTransactionStatus().name())
