@@ -70,11 +70,11 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
         RoundUpSavingsSettingEntity settingEntity;
         if(!settingEntityOpt.isPresent()) {
             settingEntity = new RoundUpSavingsSettingEntity();
+            settingEntity.setAccount(accountEntity);
+            settingEntity.setCreator(appUserEntity);
         }else {
             settingEntity = settingEntityOpt.get();
         }
-        settingEntity.setAccount(accountEntity);
-        settingEntity.setCreator(appUserEntity);
         settingEntity.setFundTransferRoundUpType(roundUpSavingsType);
         settingEntity.setBillPaymentRoundUpType(roundUpSavingsType);
         settingEntity.setCardPaymentRoundUpType(roundUpSavingsType);
