@@ -67,7 +67,12 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
         }
 
         Optional<RoundUpSavingsSettingEntity> settingEntityOpt = roundUpSavingsSettingEntityDao.findRoundUpSavingsByUser(appUserEntity);
-        RoundUpSavingsSettingEntity settingEntity = settingEntityOpt.orElseGet(RoundUpSavingsSettingEntity::new);
+        RoundUpSavingsSettingEntity settingEntity;
+        if(!settingEntityOpt.isPresent()) {
+            settingEntity = new RoundUpSavingsSettingEntity();
+        }else {
+            settingEntity = settingEntityOpt.get();
+        }
         settingEntity.setAccount(accountEntity);
         settingEntity.setCreator(appUserEntity);
         settingEntity.setFundTransferRoundUpType(roundUpSavingsType);
