@@ -17,4 +17,5 @@ public class EmergencySavingsCreationRequest {
     private double targetAmount;
     private LocalDate startDate;
     private String frequency;
+    private boolean autoDebit;
 }

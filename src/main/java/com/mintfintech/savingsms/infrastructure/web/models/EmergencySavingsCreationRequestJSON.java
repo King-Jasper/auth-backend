@@ -29,21 +29,21 @@ public class EmergencySavingsCreationRequestJSON {
     @Min(value = 500, message = "Minimum of N500")
     private double targetAmount;
 
-    @NotNull
-    @ApiModelProperty(notes = "Start Date for the savings.", required = true)
+    @ApiModelProperty(notes = "Start Date for the savings.", required = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
     private LocalDate startDate;
 
-    @ApiModelProperty(notes = "Frequency Types: DAILY | WEEKLY | MONTHLY", required = true)
-    @NotEmpty
-    @NotNull
-    @Pattern(regexp = "(DAILY|WEEKLY|MONTHLY)")
+    @ApiModelProperty(notes = "Frequency Types: DAILY | WEEKLY | MONTHLY", required = false)
+    @Pattern(regexp = "(DAILY|WEEKLY|MONTHLY)", message = "Invalid frequency type.")
     private String frequency;
 
     @ApiModelProperty(notes = "The bank accountId to be debited", required = true)
     @NotNull
     @NotEmpty
     private String debitAccountId;
+
+    @ApiModelProperty(notes = "Indicate if savings funding is automated", required = true)
+    private boolean autoDebit;
 
     public EmergencySavingsCreationRequest toRequest() {
         return EmergencySavingsCreationRequest.builder()
@@ -52,6 +52,7 @@ public class EmergencySavingsCreationRequestJSON {
                 .name(name)
                 .startDate(startDate)
                 .targetAmount(targetAmount)
+                .autoDebit(autoDebit)
                 .build();
     }
 }

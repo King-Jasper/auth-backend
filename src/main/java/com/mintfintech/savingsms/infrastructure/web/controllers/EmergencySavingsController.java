@@ -50,7 +50,7 @@ public class EmergencySavingsController {
 
     @ApiOperation(value = "Get account emergency savings.")
     @GetMapping(value = v2BaseUrl+ "/emergency-savings", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> getRoundUpSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+    public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         SavingsGoalModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
         ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);

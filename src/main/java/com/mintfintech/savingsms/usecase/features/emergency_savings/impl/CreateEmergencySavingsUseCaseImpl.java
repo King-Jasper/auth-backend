@@ -62,20 +62,25 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         BigDecimal targetAmount = BigDecimal.valueOf(creationRequest.getTargetAmount());
         BigDecimal fundingAmount = BigDecimal.valueOf(creationRequest.getFundingAmount());
         String goalName = creationRequest.getName();
-
-        LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
-        SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
-        LocalDateTime nextSavingsDate;
-        LocalDateTime nearestHour = startDate.plusHours(1).withMinute(0).withSecond(0);
-        if(frequencyType == SavingsFrequencyTypeConstant.DAILY) {
-            nextSavingsDate = nearestHour.plusDays(1);
-        }else if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
-            nextSavingsDate = nearestHour.plusWeeks(1);
-        }else {
-            nextSavingsDate = nearestHour.plusMonths(1);
+        LocalDateTime nextSavingsDate = null;
+        SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.NONE;
+        SavingsGoalStatusConstant statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        if(creationRequest.isAutoDebit()) {
+            if(creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {
+                throw new BadRequestException("Start date and frequency is required.");
+            }
+            LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
+            frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
+            LocalDateTime nearestHour = startDate.plusHours(1).withMinute(0).withSecond(0);
+            if(frequencyType == SavingsFrequencyTypeConstant.DAILY) {
+                nextSavingsDate = nearestHour;
+            }else if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
+                nextSavingsDate = nearestHour.plusWeeks(1);
+            }else {
+                nextSavingsDate = nearestHour.plusMonths(1);
+            }
+            statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
         }
-
-        SavingsGoalStatusConstant statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
                 .mintAccount(mintAccount)
@@ -88,8 +93,8 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 .targetAmount(targetAmount)
                 .accruedInterest(BigDecimal.ZERO)
                 .savingsBalance(BigDecimal.ZERO)
-                .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
-                .autoSave(true)
+                .savingsFrequency(frequencyType)
+                .autoSave(creationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
                 .savingsPlanTenor(planTenor)
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
