@@ -30,7 +30,6 @@ public class EmergencySavingsCreationRequestJSON {
     private double targetAmount;
 
     @NotNull
-    @NotEmpty
     @ApiModelProperty(notes = "Start Date for the savings.", required = true)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
     private LocalDate startDate;
