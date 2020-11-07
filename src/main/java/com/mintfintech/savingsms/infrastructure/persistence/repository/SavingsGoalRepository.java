@@ -73,16 +73,17 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     long countEligibleInterestSavingsGoal();
 
-   /* @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+    @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
             "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS or " +
             "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS) " +
             " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
-    Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);*/
-
-    @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
-            " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);
+
+
+   /* @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable); */
 
     @Query(value = "select s from SavingsGoalEntity s where s.goalStatus = :status and s.autoSave = true and" +
             " s.nextAutoSaveDate is not null and to_char(s.nextAutoSaveDate, 'YYYY-MM-DD HH24') =:dateWithHour24 and " +

@@ -28,8 +28,8 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
     public BigDecimal getAvailableAmount(SavingsGoalEntity savingsGoalEntity) {
 
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
-            long days = savingsGoalEntity.getSavingsStartDate().until(LocalDate.now(), ChronoUnit.DAYS);
-            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+           // long days = savingsGoalEntity.getSavingsStartDate().until(LocalDate.now(), ChronoUnit.DAYS);
+            /*if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
                 if(days < 30) {
                     return savingsGoalEntity.getSavingsBalance();
                 }
@@ -37,7 +37,7 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                 if(days < 5) {
                     return savingsGoalEntity.getSavingsBalance();
                 }
-            }
+            }*/
             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
         }
         boolean matured = isMaturedSavingsGoal(savingsGoalEntity);

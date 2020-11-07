@@ -175,6 +175,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .bankAccount(debitAccount)
                 .transactionType(TransactionTypeConstant.CREDIT)
                 .transactionStatus(TransactionStatusConstant.PENDING)
+                .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
                 .savingsGoal(savingsGoal)
                 .performedBy(appUserEntity)
                 .currentBalance(savingsGoal.getSavingsBalance())

@@ -149,6 +149,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                  .savingsGoal(goalEntity)
                  .transactionType(TransactionTypeConstant.CREDIT)
                  .transactionStatus(TransactionStatusConstant.PENDING)
+                 .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
                  .transactionAmount(amount)
                  .bankAccount(debitAccount)
                  .currentBalance(goalEntity.getSavingsBalance())

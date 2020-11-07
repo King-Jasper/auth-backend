@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.features.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.PaymentGatewayTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.GeneratedReferenceCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingReferenceRequestCBS;
@@ -153,6 +150,7 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
                     .transactionResponseCode("00")
                     .transactionResponseMessage("Success")
                     .transactionStatus(TransactionStatusConstant.SUCCESSFUL)
+                    .fundingSource(FundingSourceTypeConstant.CARD)
                     .transactionType(TransactionTypeConstant.CREDIT)
                     .savingsGoal(savingsGoalEntity)
                     .bankAccount(bankAccountEntity)

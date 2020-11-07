@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -20,6 +17,7 @@ import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -180,7 +178,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public List<SavingsGoalModel> getSavingsGoalList(MintAccountEntity mintAccountEntity) {
         List<SavingsGoalModel> savingsGoalList = savingsGoalEntityDao.getAccountSavingGoals(mintAccountEntity)
                 .stream()
-                .filter(savingsGoalEntity -> savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.MINT)
+                .filter(savingsGoalEntity -> (savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.MINT && savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.EMERGENCY_SAVINGS))
                 .map(this::fromSavingsGoalEntityToModel)
                 .collect(Collectors.toList());
         return savingsGoalList;
@@ -211,8 +209,13 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         List<MintSavingsGoalModel> mintGoalsList = new ArrayList<>();
         List<SavingsGoalModel> savingsGoalList = new ArrayList<>();
         List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getAccountSavingGoals(accountEntity);
+
+        EmergencySavingModel emergencySaving = EmergencySavingModel.builder().exist(false).build();
         for(SavingsGoalEntity savingsGoalEntity : savingsGoalEntityList) {
-            if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+                emergencySaving.setExist(true);
+                emergencySaving.setSavingsGoal(fromSavingsGoalEntityToModel(savingsGoalEntity));
+            }else if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                  savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
             }else {
                mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
@@ -221,6 +224,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         return AccountSavingsGoalResponse.builder()
                 .customerGoals(savingsGoalList)
                 .mintGoals(mintGoalsList)
+                .emergencySaving(emergencySaving)
                 .build();
     }
 
@@ -289,6 +293,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     }
 
     private SavingsTransactionModel fromSavingTransactionToModel(SavingsGoalTransactionEntity transactionEntity) {
+        FundingSourceTypeConstant fundingSource = FundingSourceTypeConstant.MINT_ACCOUNT;
+        if(transactionEntity.getFundingSource() != null) {
+            fundingSource = transactionEntity.getFundingSource();
+        }
         return SavingsTransactionModel.builder()
                 .amount(transactionEntity.getTransactionAmount())
                 .transactionDate(transactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
@@ -296,6 +304,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingsBalance(transactionEntity.getNewBalance())
                 .transactionStatus(transactionEntity.getTransactionStatus().name())
                 .transactionType(transactionEntity.getTransactionType().name())
+                .fundingSource(fundingSource.name())
                 .build();
     }
 }

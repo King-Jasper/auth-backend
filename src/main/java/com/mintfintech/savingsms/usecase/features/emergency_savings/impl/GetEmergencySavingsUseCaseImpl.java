@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 
@@ -29,14 +30,17 @@ public class GetEmergencySavingsUseCaseImpl implements GetEmergencySavingsUseCas
     private final SavingsGoalEntityDao savingsGoalEntityDao;
 
     @Override
-    public SavingsGoalModel getAccountEmergencySavings(AuthenticatedUser authenticatedUser) {
+    public EmergencySavingModel getAccountEmergencySavings(AuthenticatedUser authenticatedUser) {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
         Optional<SavingsGoalEntity> emergencySavingOpt = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
         if(!emergencySavingOpt.isPresent()) {
-            throw new NotFoundException("No emergency savings created for account.");
+            return EmergencySavingModel.builder().exist(false).build();
         }
         SavingsGoalEntity emergencySaving = emergencySavingOpt.get();
-        return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(emergencySaving);
+        return EmergencySavingModel.builder()
+                .exist(true)
+                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(emergencySaving))
+                .build();
     }
 }

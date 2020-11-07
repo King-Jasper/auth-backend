@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.RoundUpSavingResponse;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -41,18 +42,18 @@ public class EmergencySavingsController {
 
     @ApiOperation(value = "Creates a new emergency savings goal.")
     @PostMapping(value = v2BaseUrl +"/emergency-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createEmergencySavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
-        SavingsGoalModel response = createEmergencySavingsUseCase.createSavingsGoal(authenticatedUser, creationRequestJSON.toRequest());
-        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoal(authenticatedUser, creationRequestJSON.toRequest());
+        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Get account emergency savings.")
     @GetMapping(value = v2BaseUrl+ "/emergency-savings", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        SavingsGoalModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
-        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        EmergencySavingModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
+        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

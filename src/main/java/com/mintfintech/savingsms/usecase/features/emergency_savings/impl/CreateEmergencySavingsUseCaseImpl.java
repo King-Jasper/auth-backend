@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.data.request.EmergencySavingsCreationRe
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
@@ -39,7 +40,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
 
 
     @Override
-    public SavingsGoalModel createSavingsGoal(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
+    public EmergencySavingModel createSavingsGoal(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
 
         String emergencyCategoryCode = "10";
         int minimumDurationForInterest = 30;
@@ -71,14 +72,14 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             }
             LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
             frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
-            LocalDateTime nearestHour = startDate.plusHours(1).withMinute(0).withSecond(0);
-            if(frequencyType == SavingsFrequencyTypeConstant.DAILY) {
+            nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
+           /* if(frequencyType == SavingsFrequencyTypeConstant.DAILY) {
                 nextSavingsDate = nearestHour;
             }else if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
                 nextSavingsDate = nearestHour.plusWeeks(1);
             }else {
                 nextSavingsDate = nearestHour.plusMonths(1);
-            }
+            }*/
             statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
         }
 
@@ -108,6 +109,9 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
-        return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
+        return EmergencySavingModel.builder()
+                .exist(true)
+                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity))
+                .build();
     }
 }

@@ -18,4 +18,5 @@ public class SavingsTransactionModel {
     private String reference;
     private String transactionStatus;
     private String transactionDate;
+    private String fundingSource;
 }

@@ -1,9 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import lombok.*;
 import javax.persistence.*;
 import java.math.BigDecimal;
