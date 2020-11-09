@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.models;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
@@ -7,6 +8,8 @@ import lombok.Data;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Pattern;
+import java.time.LocalDate;
 
 /**
  * Created by jnwanya on
@@ -45,6 +48,7 @@ public class SavingsGoalCreationRequestJSON {
     private int durationInDays;
 
     private boolean lockedSavings;
+
 
     public SavingsGoalCreationRequest toRequest() {
         return SavingsGoalCreationRequest.builder()

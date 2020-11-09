@@ -120,7 +120,8 @@ public class SavingsGoalController {
     @ApiOperation(value = "Returns a list of transactions on savings.")
     @GetMapping(value = v2BaseUrl + "/{goalId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>>> getSavingsTransactions(@PathVariable String goalId,
-                                                                                                              @RequestParam("size") int size, @RequestParam("page") int page) {
+                                                                                                              @RequestParam(value = "size", defaultValue = "20", required = false) int size,
+                                                                                                              @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
         PagedDataResponse<SavingsTransactionModel> response = getSavingsGoalUseCase.getSavingsTransactions(goalId, size, page);
         ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
@@ -128,7 +129,8 @@ public class SavingsGoalController {
 
     @ApiOperation(value = "Returns a list of accrued interest on savings.")
     @GetMapping(value = v2BaseUrl + "/{goalId}/accrued-interest", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsInterestModel>>> getSavingsInterest(@PathVariable String goalId, @RequestParam("size") int size, @RequestParam("page") int page) {
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsInterestModel>>> getSavingsInterest(@PathVariable String goalId, @RequestParam(value = "size", defaultValue = "20", required = false) int size,
+                                                                                                       @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
         PagedDataResponse<SavingsInterestModel> response = getSavingsGoalUseCase.getSavingsInterest(goalId, size, page);
         ApiResponseJSON<PagedDataResponse<SavingsInterestModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
