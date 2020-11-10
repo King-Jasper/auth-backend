@@ -4,8 +4,10 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmergencySavingsCreationRequest;
+import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
@@ -16,6 +18,7 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import javax.inject.Named;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -37,8 +40,11 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
     private final SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
     private final SavingsGoalEntityDao savingsGoalEntityDao;
     private final GetSavingsGoalUseCase getSavingsGoalUseCase;
+    private final MintBankAccountEntityDao bankAccountEntityDao;
+    private final FundSavingsGoalUseCase fundSavingsGoalUseCase;
 
 
+    @Transactional
     @Override
     public EmergencySavingModel createSavingsGoal(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
 
@@ -46,6 +52,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         int minimumDurationForInterest = 30;
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+        MintBankAccountEntity debitAccount = bankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
 
         Optional<SavingsGoalEntity> emergencyGoalOpt = savingsGoalEntityDao.findFirstSavingsByType(mintAccount, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
         if(emergencyGoalOpt.isPresent()) {
@@ -73,14 +80,16 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
             frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
             nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
-           /* if(frequencyType == SavingsFrequencyTypeConstant.DAILY) {
-                nextSavingsDate = nearestHour;
-            }else if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
-                nextSavingsDate = nearestHour.plusWeeks(1);
-            }else {
-                nextSavingsDate = nearestHour.plusMonths(1);
-            }*/
-            statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
+            //statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
+            statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        }else {
+
+            if(debitAccount.getAvailableBalance().compareTo(fundingAmount) < 0) {
+                throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
+            }
+            if(fundingAmount.compareTo(targetAmount) > 0) {
+                throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
+            }
         }
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
@@ -108,6 +117,13 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
 
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
+
+        if(!creationRequest.isAutoDebit()) {
+            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
+            if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+            }
+        }
 
         return EmergencySavingModel.builder()
                 .exist(true)

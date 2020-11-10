@@ -208,7 +208,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
     }
 
-    private void  validateAmount(MintBankAccountEntity debitAccount, BigDecimal targetAmount, BigDecimal fundAmount, SavingsPlanEntity savingsPlanEntity) {
+    private void validateAmount(MintBankAccountEntity debitAccount, BigDecimal targetAmount, BigDecimal fundAmount, SavingsPlanEntity savingsPlanEntity) {
         if(debitAccount.getAvailableBalance().compareTo(fundAmount) < 0) {
             throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
         }
@@ -217,10 +217,10 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
         /*if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
             throw new BadRequestException("Target amount cannot be greater than the savings plan maximum balance.");
-        }*/
+        }
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
             throw new BadRequestException("Amount to fund cannot be less than the savings plan minimum balance.");
-        }
+        }*/
 
     }
 
