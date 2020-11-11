@@ -3,9 +3,7 @@ package com.mintfintech.savingsms.infrastructure.web.models;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
 import io.swagger.annotations.ApiModelProperty;
-import lombok.Builder;
 import lombok.Data;
-
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
@@ -58,7 +56,6 @@ public class SavingsGoalCreationRequestJSON {
     @Pattern(regexp = "(DAILY|WEEKLY|MONTHLY)", message = "Invalid frequency type.")
     private String frequency;
 
-    @Builder.Default
     @ApiModelProperty(notes = "Indicate if savings funding is automated", required = false)
     private boolean autoDebit = false;
 
