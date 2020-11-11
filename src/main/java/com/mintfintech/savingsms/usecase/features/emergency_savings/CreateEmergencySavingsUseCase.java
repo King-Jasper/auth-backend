@@ -3,7 +3,6 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.EmergencySavingsCreationRequest;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
-import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 
 /**
  * Created by jnwanya on

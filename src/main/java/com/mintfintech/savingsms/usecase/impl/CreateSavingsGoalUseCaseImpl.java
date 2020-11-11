@@ -24,6 +24,7 @@ import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
 /**
@@ -160,24 +161,37 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
         BigDecimal targetAmount = BigDecimal.valueOf(goalCreationRequest.getTargetAmount());
         BigDecimal fundingAmount = BigDecimal.valueOf(goalCreationRequest.getFundingAmount());
-        validateAmount(debitAccount, targetAmount, fundingAmount, savingsPlan);
         validateTier(debitAccount, savingsPlan);
 
         LocalDateTime maturityDate = LocalDateTime.now().plusDays(selectedDuration);
+        LocalDateTime nextSavingsDate = null;
+        SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.NONE;
+        SavingsGoalStatusConstant statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        if(goalCreationRequest.isAutoDebit()) {
+            if(goalCreationRequest.getStartDate() == null || StringUtils.isEmpty(goalCreationRequest.getFrequency())) {
+                throw new BadRequestException("Start date and frequency is required.");
+            }
+            LocalDateTime startDate = goalCreationRequest.getStartDate().atTime(LocalTime.now());
+            frequencyType = SavingsFrequencyTypeConstant.valueOf(goalCreationRequest.getFrequency());
+            nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
+            statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        }else {
+            validateAmount(debitAccount, targetAmount, fundingAmount, savingsPlan);
+        }
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
                 .mintAccount(mintAccount)
                 .creator(appUser)
                 .goalCategory(savingsGoalCategory)
                 .savingsGoalType(SavingsGoalTypeConstant.CUSTOMER_SAVINGS)
-                .goalStatus(SavingsGoalStatusConstant.ACTIVE)
+                .goalStatus(statusConstant)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(fundingAmount)
                 .targetAmount(targetAmount)
                 .accruedInterest(BigDecimal.ZERO)
                 .savingsBalance(BigDecimal.ZERO)
-                .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
-                .autoSave(false)
+                .savingsFrequency(frequencyType)
+                .autoSave(goalCreationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
                 .savingsPlanTenor(planTenor)
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
@@ -185,17 +199,19 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .maturityDate(maturityDate)
                 .lockedSavings(lockedSavings)
                 .selectedDuration(selectedDuration)
+                .nextAutoSaveDate(nextSavingsDate)
+                .savingsStartDate(goalCreationRequest.getStartDate())
                 .build();
 
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
-        SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
-        if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
-            throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+        if(!goalCreationRequest.isAutoDebit()) {
+            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
+            if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+            }
         }
-
-
        /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .accountId(mintAccount.getAccountId())
