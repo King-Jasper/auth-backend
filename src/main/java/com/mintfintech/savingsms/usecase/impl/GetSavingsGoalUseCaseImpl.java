@@ -92,6 +92,9 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
         goalModel.setLockedSavings(savingsGoalEntity.isLockedSavings());
         // goalModel.setChosenSavingsDurationInDays(savingsGoalEntity.getSelectedDuration());
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+            goalModel.setInterestRate(0.0);
+        }
         return goalModel;
     }
 

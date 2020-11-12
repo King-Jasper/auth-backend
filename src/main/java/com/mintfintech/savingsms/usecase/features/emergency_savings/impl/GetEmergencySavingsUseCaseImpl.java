@@ -38,9 +38,11 @@ public class GetEmergencySavingsUseCaseImpl implements GetEmergencySavingsUseCas
             return EmergencySavingModel.builder().exist(false).build();
         }
         SavingsGoalEntity emergencySaving = emergencySavingOpt.get();
+        SavingsGoalModel goalModel = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(emergencySaving);
+        //goalModel.setInterestRate(0.0);
         return EmergencySavingModel.builder()
                 .exist(true)
-                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(emergencySaving))
+                .savingsGoal(goalModel)
                 .build();
     }
 }
