@@ -122,7 +122,7 @@ public class SavingsGoalController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>>> getSavingsTransactions(@PathVariable String goalId,
                                                                                                               @RequestParam(value = "size", defaultValue = "20", required = false) int size,
                                                                                                               @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
-        PagedDataResponse<SavingsTransactionModel> response = getSavingsGoalUseCase.getSavingsTransactions(goalId, size, page);
+        PagedDataResponse<SavingsTransactionModel> response = getSavingsGoalUseCase.getSavingsTransactions(goalId, page, size);
         ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -131,7 +131,7 @@ public class SavingsGoalController {
     @GetMapping(value = v2BaseUrl + "/{goalId}/accrued-interest", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsInterestModel>>> getSavingsInterest(@PathVariable String goalId, @RequestParam(value = "size", defaultValue = "20", required = false) int size,
                                                                                                        @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
-        PagedDataResponse<SavingsInterestModel> response = getSavingsGoalUseCase.getSavingsInterest(goalId, size, page);
+        PagedDataResponse<SavingsInterestModel> response = getSavingsGoalUseCase.getSavingsInterest(goalId, page, size);
         ApiResponseJSON<PagedDataResponse<SavingsInterestModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
