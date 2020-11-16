@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.web.models;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 import javax.validation.constraints.Min;
@@ -53,7 +54,7 @@ public class SavingsGoalCreationRequestJSON {
     private LocalDate startDate;
 
     @ApiModelProperty(notes = "Frequency Types: DAILY | WEEKLY | MONTHLY", required = false)
-    @Pattern(regexp = "(DAILY|WEEKLY|MONTHLY)", message = "Invalid frequency type.")
+   // @Pattern(regexp = "(DAILY|WEEKLY|MONTHLY)", message = "Invalid frequency type.")
     private String frequency;
 
     @ApiModelProperty(notes = "Indicate if savings funding is automated", required = false)
@@ -61,6 +62,13 @@ public class SavingsGoalCreationRequestJSON {
 
 
     public SavingsGoalCreationRequest toRequest() {
+
+        if(autoDebit) {
+            if(!(frequency.equalsIgnoreCase("DAILY") || frequency.equalsIgnoreCase("WEEKLY") || frequency.equalsIgnoreCase("MONTHLY"))) {
+                throw new BadRequestException("Invalid frequency type.");
+            }
+        }
+
         return SavingsGoalCreationRequest.builder()
                 .debitAccountId(debitAccountId)
                 .durationInDays(durationInDays)

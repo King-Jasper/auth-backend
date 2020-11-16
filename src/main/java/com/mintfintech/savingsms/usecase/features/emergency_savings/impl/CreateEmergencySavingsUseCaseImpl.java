@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -42,6 +43,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
     private final GetSavingsGoalUseCase getSavingsGoalUseCase;
     private final MintBankAccountEntityDao bankAccountEntityDao;
     private final FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private final ApplicationProperty applicationProperty;
 
 
     @Transactional
@@ -119,9 +121,11 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
         if(!creationRequest.isAutoDebit()) {
-            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
-            if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
-                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+            if(applicationProperty.isStagingEnvironment() || applicationProperty.isProductionEnvironment()) {
+                SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
+                if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                    throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+                }
             }
         }
 
