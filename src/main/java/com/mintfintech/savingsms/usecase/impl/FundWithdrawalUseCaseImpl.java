@@ -86,7 +86,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BadRequestException("Invalid credit account Id.");
             }
         }
-        if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
+        if(savingsGoal.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
             return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
