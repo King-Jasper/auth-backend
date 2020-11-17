@@ -94,6 +94,9 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         // goalModel.setChosenSavingsDurationInDays(savingsGoalEntity.getSelectedDuration());
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
             goalModel.setInterestRate(0.0);
+            if(savingsGoalEntity.getGoalStatus() == SavingsGoalStatusConstant.ACTIVE && savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0) {
+               goalModel.setCurrentStatus(SavingsGoalStatusConstant.MATURED.name());
+            }
         }
         return goalModel;
     }
