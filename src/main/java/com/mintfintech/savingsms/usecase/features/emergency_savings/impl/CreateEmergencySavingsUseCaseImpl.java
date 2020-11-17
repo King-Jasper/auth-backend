@@ -121,11 +121,9 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
         if(!creationRequest.isAutoDebit()) {
-            if(applicationProperty.isStagingEnvironment() || applicationProperty.isProductionEnvironment()) {
-                SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
-                if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
-                    throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
-                }
+            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
+            if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
             }
         }
 
