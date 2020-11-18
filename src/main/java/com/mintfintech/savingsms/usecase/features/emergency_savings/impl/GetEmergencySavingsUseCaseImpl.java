@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -32,12 +33,14 @@ public class GetEmergencySavingsUseCaseImpl implements GetEmergencySavingsUseCas
     @Override
     public EmergencySavingModel getAccountEmergencySavings(AuthenticatedUser authenticatedUser) {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
-
         Optional<SavingsGoalEntity> emergencySavingOpt = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
         if(!emergencySavingOpt.isPresent()) {
             return EmergencySavingModel.builder().exist(false).build();
         }
         SavingsGoalEntity emergencySaving = emergencySavingOpt.get();
+        if(emergencySaving.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED || emergencySaving.getGoalStatus() == SavingsGoalStatusConstant.WITHDRAWN) {
+            return EmergencySavingModel.builder().exist(false).build();
+        }
         SavingsGoalModel goalModel = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(emergencySaving);
         //goalModel.setInterestRate(0.0);
         return EmergencySavingModel.builder()
