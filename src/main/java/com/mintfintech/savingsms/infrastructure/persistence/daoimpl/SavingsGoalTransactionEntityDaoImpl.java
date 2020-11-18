@@ -58,7 +58,7 @@ public class SavingsGoalTransactionEntityDaoImpl implements SavingsGoalTransacti
 
     @Override
     public Page<SavingsGoalTransactionEntity> getTransactions(SavingsGoalEntity goalEntity, int page, int size) {
-        Pageable pageable = PageRequest.of(0, size);
+        Pageable pageable = PageRequest.of(page, size);
         return repository.getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE, goalEntity, pageable);
     }
 
