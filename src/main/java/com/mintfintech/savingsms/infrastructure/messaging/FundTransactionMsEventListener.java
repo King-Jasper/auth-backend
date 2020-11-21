@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -23,11 +24,14 @@ public class FundTransactionMsEventListener {
     }
     private final String INTEREST_NIP_TRANSACTION = "com.mintfintech.savings-service.events.interest-nip-transaction";
 
+
     @KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
     public void listenForInterestEligibleNipTransaction(String payload) {
         log.info("mint account creation: {}", payload);
         NipTransactionInterestEvent nipTransactionInterestEvent = gson.fromJson(payload, NipTransactionInterestEvent.class);
         applyNipTransactionInterestUseCase.processNipInterest(nipTransactionInterestEvent);
     }
+
+
 
 }
