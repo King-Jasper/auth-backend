@@ -87,7 +87,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             }
         }
         if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
-            return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
+            return processMintSavingsWithdrawal(savingsGoal, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
             throw new BusinessLogicConflictException("Sorry, savings withdrawal not currently supported.");
@@ -95,7 +95,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         return processCustomerSavingWithdrawal(savingsGoal, appUserEntity);
     }
 
-    private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser) {
+    private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser) {
         if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
             throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
         }
@@ -512,4 +512,21 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
        return narration;
     }
 
+    @Override
+    public void savingsFromTransferWithdrawal() {
+        int size = 20;
+        List<SavingsGoalEntity> savingsWithBalance = savingsGoalEntityDao.getDefaultSavingsWithBalance(size);
+        for(SavingsGoalEntity savingsGoalEntity: savingsWithBalance) {
+            BigDecimal savedAmount = savingsGoalEntity.getSavingsBalance();
+            if(savedAmount.compareTo(BigDecimal.ZERO) <= 0) {
+                continue;
+            }
+            AppUserEntity owner = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
+            try {
+                processMintSavingsWithdrawal(savingsGoalEntity, owner);
+            }catch (Exception ex) {
+                log.error("savings withdrawal error - {}", ex.getLocalizedMessage());
+            }
+        }
+    }
 }

@@ -31,4 +31,7 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
 
     Page<SavingsGoalEntity> searchSavingsGoal(SavingsSearchDTO savingsSearchDTO, int pageIndex, int recordSize);
     List<SavingsMaturityStat> savingsMaturityStatisticsList(LocalDateTime startDate, LocalDateTime endDate);
+
+    List<SavingsGoalEntity> getDefaultSavingsWithBalance(int size);
+
 }
