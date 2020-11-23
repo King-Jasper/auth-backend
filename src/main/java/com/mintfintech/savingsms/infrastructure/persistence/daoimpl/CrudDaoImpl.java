@@ -28,6 +28,6 @@ public class CrudDaoImpl<T, ID> implements CrudDao<T, ID> {
 
     @Override
     public T saveRecord(T record) {
-        return repository.save(record);
+        return repository.saveAndFlush(record);
     }
 }

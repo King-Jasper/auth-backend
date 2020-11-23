@@ -9,7 +9,6 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalTransactionRepository;
-import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -24,11 +23,17 @@ import java.util.Optional;
  * Created by jnwanya on
  * Tue, 31 Mar, 2020
  */
-@AllArgsConstructor
 @Named
-public class SavingsGoalTransactionEntityDaoImpl implements SavingsGoalTransactionEntityDao {
-    private SavingsGoalTransactionRepository repository;
-    private AppSequenceEntityDao appSequenceEntityDao;
+public class SavingsGoalTransactionEntityDaoImpl extends CrudDaoImpl<SavingsGoalTransactionEntity, Long> implements SavingsGoalTransactionEntityDao {
+    private final SavingsGoalTransactionRepository repository;
+    private final AppSequenceEntityDao appSequenceEntityDao;
+
+    public SavingsGoalTransactionEntityDaoImpl(SavingsGoalTransactionRepository repository, AppSequenceEntityDao appSequenceEntityDao) {
+        super(repository);
+        this.repository = repository;
+        this.appSequenceEntityDao = appSequenceEntityDao;
+    }
+
 
     @Override
     public Optional<SavingsGoalTransactionEntity> findTransactionByReference(String transactionReference) {
