@@ -76,15 +76,6 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .goalCategory(goalCategoryEntity)
                 .build();
 
-       /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
-                .goalId(savingsGoalEntity.getGoalId())
-                .accountId(mintAccountEntity.getAccountId())
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
-                .name("Savings From Transfers")
-                .withdrawalAccountNumber("")
-                .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
-         */
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
 
