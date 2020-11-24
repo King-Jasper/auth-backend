@@ -6,5 +6,7 @@ package com.mintfintech.savingsms.domain.entities.enums;
  */
 public enum SavingsGoalTypeConstant {
     MINT_DEFAULT_SAVINGS,
-    CUSTOMER_SAVINGS
+    ROUND_UP_SAVINGS,
+    CUSTOMER_SAVINGS,
+    EMERGENCY_SAVINGS
 }

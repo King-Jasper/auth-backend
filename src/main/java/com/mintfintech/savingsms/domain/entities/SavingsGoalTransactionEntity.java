@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.entities;
 
 
+import com.mintfintech.savingsms.domain.entities.enums.FundingSourceTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import lombok.*;
@@ -44,6 +45,9 @@ public class SavingsGoalTransactionEntity extends AbstractBaseEntity<Long> {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionStatusConstant transactionStatus;
+
+    @Enumerated(EnumType.STRING)
+    private FundingSourceTypeConstant fundingSource;
 
     @Column(nullable = false, unique = true)
     private String transactionReference;

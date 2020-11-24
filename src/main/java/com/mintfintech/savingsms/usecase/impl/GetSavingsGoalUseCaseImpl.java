@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsPlanTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -20,9 +17,11 @@ import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
@@ -49,6 +48,8 @@ import java.util.stream.Collectors;
 public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
+    private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
+    private SavingsInterestEntityDao savingsInterestEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
@@ -91,6 +92,12 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
         goalModel.setLockedSavings(savingsGoalEntity.isLockedSavings());
         // goalModel.setChosenSavingsDurationInDays(savingsGoalEntity.getSelectedDuration());
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+            goalModel.setInterestRate(0.0);
+            if(savingsGoalEntity.getGoalStatus() == SavingsGoalStatusConstant.ACTIVE && savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0) {
+               goalModel.setCurrentStatus(SavingsGoalStatusConstant.MATURED.name());
+            }
+        }
         return goalModel;
     }
 
@@ -119,16 +126,24 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         }
         long remainingDays = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal() - savingsDuration;
         return "Sorry, your savings goal will be available for withdrawal in "+remainingDays+" day(s) time";
-
     }
-
 
 
    private String getMintGoalNoWithdrawalErrorMessage(SavingsGoalEntity savingsGoalEntity, boolean matured) {
         if(matured){
             return  "";
         }
-        return "Sorry, the minimum amount for withdrawal is N1000.";
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            long remainingDays = LocalDateTime.now().until(savingsGoalEntity.getMaturityDate(), ChronoUnit.DAYS);
+            return "Sorry, your savings will be matured in "+remainingDays+" day(s) time";
+        }else {
+            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                return "Sorry, the minimum amount for withdrawal is N1000.";
+            }else {
+                return "Sorry, the minimum amount for withdrawal is N20.";
+            }
+        }
+
    }
 
     public MintSavingsGoalModel fromSavingsGoalEntityToMintGoalModel(SavingsGoalEntity savingsGoalEntity) {
@@ -141,6 +156,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsBalance.compareTo(BigDecimal.ZERO) > 0) {
             savingsBalance = savingsBalance.setScale(2, BigDecimal.ROUND_HALF_EVEN);
         }
+        String maturityDate = "";
+        if(savingsGoalEntity.getMaturityDate() != null) {
+            maturityDate = savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME);
+        }
         BigDecimal availableBalance = matured ? savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest()) : BigDecimal.valueOf(0.00);
         return MintSavingsGoalModel.builder()
                 .goalId(savingsGoalEntity.getGoalId())
@@ -148,6 +167,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingsBalance(savingsBalance)
                 .accruedInterest(accruedInterest)
                 .availableBalance(availableBalance)
+                .maturityDate(maturityDate)
                 .noWithdrawalErrorMessage(getMintGoalNoWithdrawalErrorMessage(savingsGoalEntity, matured))
                 .matured(matured).build();
     }
@@ -164,7 +184,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public List<SavingsGoalModel> getSavingsGoalList(MintAccountEntity mintAccountEntity) {
         List<SavingsGoalModel> savingsGoalList = savingsGoalEntityDao.getAccountSavingGoals(mintAccountEntity)
                 .stream()
-                .filter(savingsGoalEntity -> savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS)
+                .filter(savingsGoalEntity -> (savingsGoalEntity.getCreationSource() != SavingsGoalCreationSourceConstant.MINT && savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.EMERGENCY_SAVINGS))
                 .map(this::fromSavingsGoalEntityToModel)
                 .collect(Collectors.toList());
         return savingsGoalList;
@@ -195,16 +215,24 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         List<MintSavingsGoalModel> mintGoalsList = new ArrayList<>();
         List<SavingsGoalModel> savingsGoalList = new ArrayList<>();
         List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getAccountSavingGoals(accountEntity);
+
+        EmergencySavingModel emergencySaving = EmergencySavingModel.builder().exist(false).build();
         for(SavingsGoalEntity savingsGoalEntity : savingsGoalEntityList) {
-            if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+                emergencySaving.setExist(true);
+                emergencySaving.setSavingsGoal(fromSavingsGoalEntityToModel(savingsGoalEntity));
+            }else if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                  savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
             }else {
-               mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
+                if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+                    mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
+                }
             }
         }
         return AccountSavingsGoalResponse.builder()
                 .customerGoals(savingsGoalList)
                 .mintGoals(mintGoalsList)
+                .emergencySaving(emergencySaving)
                 .build();
     }
 
@@ -219,7 +247,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     public PagedDataResponse<PortalSavingsGoalResponse> getPagedSavingsGoals(SavingsSearchRequest searchRequest, int page, int size) {
         MintAccountEntity accountEntity = null;
         if(!StringUtils.isEmpty(searchRequest.getAccountId())) {
-            accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElse(null);
+            accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElseThrow(()->new BadRequestException("Invalid account Id"));
         }
         SavingsPlanEntity savingsPlan = null;
         if(!StringUtils.isEmpty(searchRequest.getSavingsTier()) && !searchRequest.getSavingsTier().equalsIgnoreCase("ALL")) {
@@ -244,5 +272,47 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         return new PagedDataResponse<>(goalEntityPage.getTotalElements(), goalEntityPage.getTotalPages(),
                 goalEntityPage.get().map(this::fromSavingsGoalEntityToPortalSavingsGoalResponse)
                         .collect(Collectors.toList()));
+    }
+
+
+    @Override
+    public PagedDataResponse<SavingsTransactionModel> getSavingsTransactions(String goalId, int page, int size) {
+        SavingsGoalEntity goalEntity = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new NotFoundException("Invalid savings goal Id."));
+        Page<SavingsGoalTransactionEntity> transactionEntityPage = savingsGoalTransactionEntityDao.getTransactions(goalEntity, page, size);
+        return new PagedDataResponse<>(transactionEntityPage.getTotalElements(), transactionEntityPage.getTotalElements(),
+                transactionEntityPage.get().map(this::fromSavingTransactionToModel)
+        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public PagedDataResponse<SavingsInterestModel> getSavingsInterest(String goalId, int page, int size) {
+        SavingsGoalEntity goalEntity = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new NotFoundException("Invalid savings goal Id."));
+        Page<SavingsInterestEntity> interestPage = savingsInterestEntityDao.getAccruedInterestOnGoal(goalEntity, page, size);
+        return new PagedDataResponse<>(interestPage.getTotalElements(), interestPage.getTotalPages(),
+                interestPage.get().map(interestEntity -> SavingsInterestModel.builder()
+                        .interestAmount(interestEntity.getInterest())
+                        .rate(interestEntity.getRate())
+                        .savingsBalance(interestEntity.getSavingsBalance())
+                        .interestDate(interestEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
+                        .build())
+                .collect(Collectors.toList()));
+    }
+
+    private SavingsTransactionModel fromSavingTransactionToModel(SavingsGoalTransactionEntity transactionEntity) {
+        FundingSourceTypeConstant fundingSource = FundingSourceTypeConstant.MINT_ACCOUNT;
+        if(transactionEntity.getFundingSource() != null) {
+            fundingSource = transactionEntity.getFundingSource();
+        }
+        return SavingsTransactionModel.builder()
+                .amount(transactionEntity.getTransactionAmount())
+                .transactionDate(transactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
+                .reference(transactionEntity.getTransactionReference())
+                .savingsBalance(transactionEntity.getNewBalance())
+                .transactionStatus(transactionEntity.getTransactionStatus().name())
+                .transactionType(transactionEntity.getTransactionType().name())
+                .fundingSource(fundingSource.name())
+                .build();
     }
 }

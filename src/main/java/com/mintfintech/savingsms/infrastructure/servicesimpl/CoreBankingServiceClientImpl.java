@@ -84,6 +84,43 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
         }
     }
 
+    @Override
+    public MsClientResponse<GeneratedReferenceCBS> generateSavingsFundingReference(SavingsFundingReferenceRequestCBS requestCBS) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/savings-transaction/generate-funding-payment-reference", baseUrl);
+        String requestBody = gson.toJson(requestCBS);
+        try{
+            ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);
+            System.out.println(clientResponse.toString());
+            MsClientResponse<GeneratedReferenceCBS> response;
+            Type collectionType = new TypeToken<MsClientResponse<GeneratedReferenceCBS>>(){}.getType();
+            response = gson.fromJson(clientResponse.getResponseBody(), collectionType);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            System.out.println(response.toString());
+            return response;
+        }catch (Exception ex){
+            return MsClientResponse.<GeneratedReferenceCBS>builder().success(false).build();
+        }
+    }
+
+    @Override
+    public MsClientResponse<SavingsFundingVerificationResponseCBS> verifySavingsFundingRequest(String transactionReference) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/savings-transaction/funding-request/%s/verify", baseUrl, transactionReference);
+        try{
+            ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, "");
+            MsClientResponse<SavingsFundingVerificationResponseCBS> response;
+            Type collectionType = new TypeToken<MsClientResponse<SavingsFundingVerificationResponseCBS>>(){}.getType();
+            response = gson.fromJson(clientResponse.getResponseBody(), collectionType);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            return response;
+        }catch (Exception ex){
+            return MsClientResponse.<SavingsFundingVerificationResponseCBS>builder().success(false).build();
+        }
+    }
+
     private MsClientResponse<FundTransferResponseCBS> processTransferRequest(String serviceUrl, String requestBody) {
         try{
             ClientResponse clientResponse = msRestClientService.postRequest(serviceUrl, requestBody);

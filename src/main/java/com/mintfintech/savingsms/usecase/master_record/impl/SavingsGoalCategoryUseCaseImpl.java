@@ -5,6 +5,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalCategoryEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalCategoryEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalCategoryModel;
 import io.micrometer.core.instrument.util.IOUtils;
@@ -47,6 +48,9 @@ public class SavingsGoalCategoryUseCaseImpl implements SavingsGoalCategoryUseCas
                                 .code(savingsGoalCategoryModel.getCode())
                                 .name(savingsGoalCategoryModel.getName())
                                 .build();
+                        if("10".equalsIgnoreCase(savingsGoalCategoryModel.getCode())) {
+                            categoryEntity.setRecordStatus(RecordStatusConstant.INACTIVE);
+                        }
                         savingsGoalCategoryEntityDao.saveRecord(categoryEntity);
                     }
                 });

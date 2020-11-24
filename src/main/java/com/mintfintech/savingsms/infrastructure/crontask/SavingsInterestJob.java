@@ -24,9 +24,9 @@ public class SavingsInterestJob {
     @Scheduled(cron = "0 30 23 ? * *") // runs by 11:30PM every day 23
     @SchedulerLock(name = "SavingsInterestJob_processInterestApplication")
     public void processInterestApplication() {
-         if(applicationProperty.isStagingEnvironment()){
+         if(!applicationProperty.isProductionEnvironment()){
              return;
          }
-        applySavingsInterestUseCase.processInterestAndUpdateGoals();
+         applySavingsInterestUseCase.processInterestAndUpdateGoals();
     }
 }

@@ -1,2 +1,5 @@
 savings-goal:
   minimum-days-for-withdrawal: 30
+mint:
+  email:
+    system-admin: devops@bankwithmint.com

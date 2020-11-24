@@ -3,7 +3,11 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.SavingsInterestEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsInterestRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -40,6 +44,12 @@ public class SavingsInterestEntityDaoImpl implements SavingsInterestEntityDao {
     @Override
     public Optional<SavingsInterestEntity> findLastInterestApplied(SavingsGoalEntity savingsGoalEntity) {
         return repository.findFirstBySavingsGoalOrderByDateCreatedDesc(savingsGoalEntity);
+    }
+
+    @Override
+    public Page<SavingsInterestEntity> getAccruedInterestOnGoal(SavingsGoalEntity goalEntity, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return repository.getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE, goalEntity, pageable);
     }
 
     @Override

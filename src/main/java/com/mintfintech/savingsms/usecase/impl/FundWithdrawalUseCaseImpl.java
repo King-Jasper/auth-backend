@@ -86,25 +86,27 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BadRequestException("Invalid credit account Id.");
             }
         }
-        if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
+        if(savingsGoal.getCreationSource() != SavingsGoalCreationSourceConstant.CUSTOMER) {
             return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
+            if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED) {
+                throw new BusinessLogicConflictException("Processing fund withdrawal. Please be patient.");
+            }
             throw new BusinessLogicConflictException("Sorry, savings withdrawal not currently supported.");
         }
         return processCustomerSavingWithdrawal(savingsGoal, appUserEntity);
     }
 
     private String processMintSavingsWithdrawal(SavingsGoalEntity savingsGoal, MintBankAccountEntity creditAccount, AppUserEntity currentUser) {
-        if(savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+        if(savingsGoal.getCreationSource() != SavingsGoalCreationSourceConstant.MINT){
             throw new BusinessLogicConflictException("Sorry, fund withdrawal not yet activated");
         }
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal savingsBalance = savingsGoal.getSavingsBalance();
-        BigDecimal minimumWithdrawalBalance = (applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) ? BigDecimal.valueOf(1000.00) : BigDecimal.valueOf(20.00);
-        boolean matured = minimumWithdrawalBalance.compareTo(savingsBalance) <= 0;
+        boolean matured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal);
         if(!matured) {
-            throw new BusinessLogicConflictException("Sorry, can you only withdraw when your balance is up to N"+MoneyFormatterUtil.priceWithDecimal(minimumWithdrawalBalance));
+            throw new BusinessLogicConflictException("Sorry, your savings is not yet matured for withdrawal");
         }
         BigDecimal amountForWithdrawal = savingsBalance.add(accruedInterest);
         /*if(amountRequested.compareTo(totalAvailableAmount) > 0) {
@@ -137,13 +139,20 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 .requestedBy(currentUser)
                 .build();
         savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
+
+        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+            savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+        }
+
         return "Request queued successfully. Your account will be funded very soon.";
     }
 
     @Transactional
     public String processCustomerSavingWithdrawal(SavingsGoalEntity savingsGoal, AppUserEntity currentUser) {
         LocalDateTime now = LocalDateTime.now();
-        boolean isMatured = DateUtil.sameDay(now, savingsGoal.getMaturityDate()) || savingsGoal.getMaturityDate().isBefore(now);
+        boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal);
         if(!isMatured) {
             if(savingsGoal.isLockedSavings()) {
                 throw new BusinessLogicConflictException("Your savings goal is not yet matured for withdrawal.");
@@ -154,23 +163,6 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BusinessLogicConflictException("Sorry, you have "+(minimumDaysForWithdrawal - numberOfDaysSaved)+" days left before you can withdraw your savings.");
             }
         }
-
-       /*
-        final BigDecimal totalAvailableBalance;
-        if(isMatured) {
-            log.info("MATURED GOAL: {}", savingsGoal.getGoalId());
-            totalAvailableBalance = savingsGoal.getSavingsBalance().add(savingsGoal.getAccruedInterest());
-        }else {
-            SavingsPlanEntity planEntity = savingsPlanEntityDao.getRecordById(savingsGoal.getSavingsPlan().getId());
-            totalAvailableBalance = savingsGoal.getSavingsBalance().subtract(planEntity.getMinimumBalance());
-        }
-        System.out.println("Available amount: "+totalAvailableBalance+" amount requested: "+amountRequested);
-        if(amountRequested.compareTo(totalAvailableBalance) > 0) {
-            throw new BusinessLogicConflictException("Sorry, maximum amount that can be withdrawn is N"+ MoneyFormatterUtil.priceWithDecimal(totalAvailableBalance));
-        }
-        if(isMatured){
-            amountRequested = totalAvailableBalance;
-        }*/
         createWithdrawalRequest(savingsGoal, isMatured, currentUser);
         if(isMatured) {
             return "Request queued successfully. Your account will be funded shortly.";
@@ -268,15 +260,14 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                      return;
                  }
              }
-
              withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSING_INTEREST_CREDIT);
              savingsWithdrawalRequestEntityDao.saveAndFlush(withdrawalRequestEntity);
-             if(!withdrawalRequestEntity.isMaturedGoal()) {
+             /*if(!withdrawalRequestEntity.isMaturedGoal()) {
                    log.info("no interest will be withdrawn. Goal is not matured. {}", withdrawalRequestEntity.getId());
                    withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
                    savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                    continue;
-             }
+             }*/
              if(withdrawalRequestEntity.getInterestWithdrawal().compareTo(BigDecimal.ZERO) == 0) {
                  log.info("Interest Withdrawal value is zero. No interest withdrawal. {}", withdrawalRequestEntity.getId());
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
@@ -309,19 +300,28 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.INTEREST_CREDITING_FAILED);
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                 systemIssueLogService.logIssue("Interest To Suspense Withdrawal failed", message);
+                 systemIssueLogService.logIssue("Interest Withdrawal Failed", "Interest To Suspense Withdrawal failed", message);
                  continue;
              }
              FundTransferResponseCBS responseCBS = msClientResponse.getData();
              withdrawalRequestEntity.setInterestCreditResponseCode(responseCBS.getResponseCode());
              if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
-                savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                 String savingsCreditCode = withdrawalRequestEntity.getSavingsCreditResponseCode();
+                 if(StringUtils.isEmpty(savingsCreditCode) || !"00".equalsIgnoreCase(savingsCreditCode)) {
+                     withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
+                     savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                 }else {
+                     withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED_INTEREST_CREDIT);
+                     savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
+                     String message = String.format("Goal Id: %s; withdrawal Id: %s ; Unable to resolve next status of withdrawal: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), withdrawalRequestEntity.getWithdrawalRequestStatus());
+                     systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
+                 }
+
              }else {
                  withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.INTEREST_CREDITING_FAILED);
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; response code: %s;  response message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), responseCBS.getResponseCode(), responseCBS.getResponseMessage());
-                 systemIssueLogService.logIssue("Interest To Suspense Withdrawal failed", message);
+                 systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
              }
          }
     }
@@ -362,7 +362,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.SAVINGS_CREDITING_FAILED);
                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Savings To Suspense Withdrawal failed", message);
+                systemIssueLogService.logIssue("Savings Withdrawal Failed", "Savings To Suspense Withdrawal failed", message);
                 continue;
             }
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -374,7 +374,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.SAVINGS_CREDITING_FAILED);
                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; response code: %s;  response message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), responseCBS.getResponseCode(), responseCBS.getResponseMessage());
-                systemIssueLogService.logIssue("Savings To Suspense Withdrawal failed", message);
+                systemIssueLogService.logIssue("Savings Withdrawal Failed", "Savings To Suspense Withdrawal failed", message);
             }
         }
 
@@ -431,7 +431,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingsWithdrawal(withdrawalRequestCBS);
             if(!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Suspense To Customer funding failed", message);
+                systemIssueLogService.logIssue("Suspense Withdrawal Failed", "Suspense To Customer funding failed", message);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
                 savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.FUND_DISBURSEMENT_FAILED);
@@ -447,6 +447,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 withdrawalRequestEntity.setWithdrawalRequestStatus(WithdrawalRequestStatusConstant.PROCESSED);
                 transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
                 transactionEntity.setNewBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal().subtract(withdrawalRequestEntity.getAmount()));
+                SavingsGoalEntity goalEntity = savingsGoalEntityDao.getRecordById(withdrawalRequestEntity.getSavingsGoal().getId());
+                if(goalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
+                    goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    savingsGoalEntityDao.saveRecord(goalEntity);
+                }
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
                 if(appUserEntity.isEmailNotificationEnabled()) {
                     SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
@@ -489,6 +494,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
             if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
                 updateAccountBalanceUseCase.processBalanceUpdate(creditAccount);
+            }else {
+                String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Fund disbursement Failed", "savings disbursement failed", message);
             }
         }
     }

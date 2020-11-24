@@ -61,33 +61,38 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
 
     Optional<SavingsGoalEntity> findFirstByGoalIdAndRecordStatus(String goalId, RecordStatusConstant status);
 
-    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsGoalTypeAndRecordStatus(MintAccountEntity mintAccountEntity,
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsGoalTypeAndRecordStatusOrderByDateCreatedDesc(MintAccountEntity mintAccountEntity,
                                                                                         SavingsGoalTypeConstant goalTypeConstant,
                                                                                         RecordStatusConstant status);
 
     @Query("select count(s) from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
-            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) and " +
+            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS or " +
+            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS) and " +
             " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     long countEligibleInterestSavingsGoal();
 
     @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
-            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) " +
+            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS or " +
+            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS) " +
             " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);
 
 
+   /* @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable); */
 
     @Query(value = "select s from SavingsGoalEntity s where s.goalStatus = :status and s.autoSave = true and" +
             " s.nextAutoSaveDate is not null and to_char(s.nextAutoSaveDate, 'YYYY-MM-DD HH24') =:dateWithHour24 and " +
             "s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE")
-    List<SavingsGoalEntity> getSavingsGoalWithMatchingSavingHour(@Param("status") SavingsGoalStatusConstant status,
-                                                                                    @Param("dateWithHour24") String dateWithHour24);
+    List<SavingsGoalEntity> getSavingsGoalWithMatchingSavingHour(@Param("status") SavingsGoalStatusConstant status, @Param("dateWithHour24") String dateWithHour24);
 
 
     @Query(value = "select s from SavingsGoalEntity s where s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE" +
-            " and s.maturityDate is not null and s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER " +
+            " and s.maturityDate is not null and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
+            " s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS)" +
             "and s.goalStatus  =:status and s.maturityDate between :fromTime and :toTime")
     Page<SavingsGoalEntity> getSavingsGoalWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
                                                              @Param("fromTime") LocalDateTime fromTime,
@@ -100,5 +105,11 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "group by DAY(s.maturityDate), MONTH(s.maturityDate)")
     List<SavingsMaturityStat> getSavingsMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+
+    @Query("select s from SavingsGoalEntity s where s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
+            "s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
+            "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    List<SavingsGoalEntity> getSavings();
 
 }

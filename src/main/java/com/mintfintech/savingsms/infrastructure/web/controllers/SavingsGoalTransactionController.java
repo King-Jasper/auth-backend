@@ -1,25 +1,26 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
-import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
-import com.mintfintech.savingsms.infrastructure.web.models.SavingFundingRequestJSON;
-import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSON;
-import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSONV1;
+import com.mintfintech.savingsms.infrastructure.web.models.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
+import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
+import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
+import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
+import com.mintfintech.savingsms.usecase.features.OnlineFundingUseCase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.annotation.Secured;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+import java.math.BigDecimal;
 
 /**
  * Created by jnwanya on
@@ -37,9 +38,11 @@ public class SavingsGoalTransactionController {
 
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private FundWithdrawalUseCase fundWithdrawalUseCase;
-    public SavingsGoalTransactionController(FundSavingsGoalUseCase fundSavingsGoalUseCase, FundWithdrawalUseCase fundWithdrawalUseCase) {
+    private OnlineFundingUseCase onlineFundingUseCase;
+    public SavingsGoalTransactionController(FundSavingsGoalUseCase fundSavingsGoalUseCase, FundWithdrawalUseCase fundWithdrawalUseCase, OnlineFundingUseCase onlineFundingUseCase) {
         this.fundSavingsGoalUseCase = fundSavingsGoalUseCase;
         this.fundWithdrawalUseCase = fundWithdrawalUseCase;
+        this.onlineFundingUseCase = onlineFundingUseCase;
     }
 
     @ApiOperation(value = "Fund a savings goal.", notes = "Please note that the response code in the return object " +
@@ -70,6 +73,29 @@ public class SavingsGoalTransactionController {
                                                                         @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Generate transaction reference for funding savings via the specified payment gateway", notes = "Returns amount in kobo eg N100 is N10000")
+    @PostMapping(value = v2BaseUrl +"/transaction/{goalId}/funding-reference", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<ReferenceGenerationResponse>> generateTransactionReference(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                     @PathVariable("goalId") String goalId,
+                                                                                                     @RequestBody @Valid OnlineFundingRequestJSON request) {
+        OnlineFundingRequest fundingRequest = OnlineFundingRequest.builder()
+                .gaolId(goalId).amount(request.getAmount())
+                .paymentGateway(request.getPaymentGateway()).build();
+        ReferenceGenerationResponse response = onlineFundingUseCase.createFundingRequest(authenticatedUser, fundingRequest);
+        response.setAmount(response.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, BigDecimal.ROUND_DOWN));
+        ApiResponseJSON<ReferenceGenerationResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns the transaction status of an savings funding request.")
+    @GetMapping(value =  v2BaseUrl +"/transaction/reference/{reference}/verify", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<OnlineFundingResponse>> verifyTransactionReference(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                             @PathVariable("reference") String reference) {
+        OnlineFundingResponse fundingResponse = onlineFundingUseCase.verifyFundingRequest(authenticatedUser, reference);
+        ApiResponseJSON<OnlineFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", fundingResponse);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }
