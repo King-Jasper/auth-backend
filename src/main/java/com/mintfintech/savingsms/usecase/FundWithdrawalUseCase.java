@@ -12,5 +12,4 @@ public interface FundWithdrawalUseCase {
     void processInterestWithdrawalToSuspenseAccount();
     void processSavingsWithdrawalToSuspenseAccount();
     void processSuspenseFundDisbursementToCustomer();
-    void savingsFromTransferWithdrawal();
 }

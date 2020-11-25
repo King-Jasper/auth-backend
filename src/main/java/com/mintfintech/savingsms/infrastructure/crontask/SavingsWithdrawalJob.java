@@ -31,10 +31,4 @@ public class SavingsWithdrawalJob {
             fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();
         }catch (Exception ignored) { }
     }
-
-    /*@Scheduled(cron = "0 0/20 * ? * *") // runs by every 20 minutes
-    @SchedulerLock(name = "SavingsWithdrawalJob_processWithdrawalOfSavingsFromTransfer", lockAtMostForString = "PT15M")
-    public void processWithdrawalOfSavingsFromTransfer() {
-         fundWithdrawalUseCase.savingsFromTransferWithdrawal();
-    }*/
 }

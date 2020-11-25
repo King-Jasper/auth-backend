@@ -508,22 +508,4 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
        }
        return narration;
     }
-
-    @Override
-    public void savingsFromTransferWithdrawal() {
-        int size = 20;
-        List<SavingsGoalEntity> savingsWithBalance = savingsGoalEntityDao.getDefaultSavingsWithBalance(size);
-        for(SavingsGoalEntity savingsGoalEntity: savingsWithBalance) {
-            BigDecimal savedAmount = savingsGoalEntity.getSavingsBalance();
-            if(savedAmount.compareTo(BigDecimal.ZERO) <= 0) {
-                continue;
-            }
-            AppUserEntity owner = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
-            try {
-                processMintSavingsWithdrawal(savingsGoalEntity, owner);
-            }catch (Exception ex) {
-                log.error("savings withdrawal error - {}", ex.getLocalizedMessage());
-            }
-        }
-    }
 }
