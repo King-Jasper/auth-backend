@@ -34,4 +34,5 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
 
     List<SavingsGoalEntity> getDefaultSavingsWithBalance(int size);
 
+    void deleteSavings(SavingsGoalEntity savingsGoalEntity);
 }

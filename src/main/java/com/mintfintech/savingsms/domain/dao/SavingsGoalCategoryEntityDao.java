@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public interface SavingsGoalCategoryEntityDao extends CrudDao<SavingsGoalCategoryEntity, Long> {
     Optional<SavingsGoalCategoryEntity> findCategoryByCode(String code);
+    SavingsGoalCategoryEntity getCategoryByCode(String code);
     List<SavingsGoalCategoryEntity> getSavingsGoalCategoryList();
     long countSavingsGoalCategory();
 }

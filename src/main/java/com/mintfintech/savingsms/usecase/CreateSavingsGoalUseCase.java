@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.usecase;
 
-import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;

@@ -2,6 +2,9 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -23,4 +26,7 @@ public interface SavingsInterestRepository extends JpaRepository<SavingsInterest
     long countAllBySavingsGoal(SavingsGoalEntity savingsGoalEntity);
 
     long countAllBySavingsGoalAndDateCreatedBetween(SavingsGoalEntity savingsGoalEntity, LocalDateTime fromTime, LocalDateTime toTime);
+
+    Page<SavingsInterestEntity> getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant status, SavingsGoalEntity savingsGoalEntity, Pageable pageable);
+
 }

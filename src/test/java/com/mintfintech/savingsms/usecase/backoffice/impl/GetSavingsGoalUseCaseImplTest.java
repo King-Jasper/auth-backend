@@ -47,6 +47,8 @@ public class GetSavingsGoalUseCaseImplTest {
     @Mock private ApplicationProperty applicationProperty;
     @Mock private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     @Mock private ApplicationEventService applicationEventService;
+    @Mock private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
+    @Mock private SavingsInterestEntityDao savingsInterestEntityDao;
 
     private AppSequenceEntityDao appSequenceEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
@@ -77,7 +79,8 @@ public class GetSavingsGoalUseCaseImplTest {
         savingsPlanTenorEntityDao = new SavingsPlanTenorEntityDaoImpl(savingsPlanTenorRepository);
         savingsPlanEntityDao = new SavingsPlanEntityDaoImpl(savingsPlanRepository,appSequenceEntityDao);
         savingsGoalEntityDao = new SavingsGoalEntityDaoImpl(savingsGoalRepository,appSequenceEntityDao);
-        getSavingsGoalUseCase = new GetSavingsGoalUseCaseImpl(savingsPlanTenorEntityDao,savingsPlanEntityDao,savingsGoalEntityDao,mintAccountEntityDao,
+        getSavingsGoalUseCase = new GetSavingsGoalUseCaseImpl(savingsPlanTenorEntityDao, savingsGoalTransactionEntityDao,
+                savingsInterestEntityDao, savingsPlanEntityDao,savingsGoalEntityDao,mintAccountEntityDao,
                 appUserEntityDao,applicationProperty,computeAvailableAmountUseCase,applicationEventService);
 
 

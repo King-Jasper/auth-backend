@@ -63,8 +63,8 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
             appUserEntityDao.saveRecord(appUserEntity);
             log.info("User created successfully: {}", appUserEntity.getUserId());
             if(mintAccountEntity.getAccountType() == AccountTypeConstant.INDIVIDUAL) {
-                SavingsGoalEntity  savingsGoalEntity = createSavingsGoalUseCase.createDefaultSavingsGoal(mintAccountEntity, appUserEntity);
-                log.info("Customer Default saving goal created by Id: {}", savingsGoalEntity.getId());
+                //SavingsGoalEntity  savingsGoalEntity = createSavingsGoalUseCase.createDefaultSavingsGoal(mintAccountEntity, appUserEntity);
+                //log.info("Customer Default saving goal created by Id: {}", savingsGoalEntity.getId());
             }
         }
     }

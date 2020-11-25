@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.data.response;
 
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.Builder;
@@ -16,4 +17,5 @@ import java.util.List;
 public class AccountSavingsGoalResponse {
     private List<SavingsGoalModel> customerGoals;
     private List<MintSavingsGoalModel> mintGoals;
+    private EmergencySavingModel emergencySaving;
 }

@@ -25,6 +25,7 @@ import javax.inject.Named;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
+import javax.transaction.Transactional;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -60,7 +61,7 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
 
     @Override
     public Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType) {
-        return repository.findFirstByMintAccountAndSavingsGoalTypeAndRecordStatus(accountEntity, savingsGoalType, RecordStatusConstant.ACTIVE);
+        return repository.findFirstByMintAccountAndSavingsGoalTypeAndRecordStatusOrderByDateCreatedDesc(accountEntity, savingsGoalType, RecordStatusConstant.ACTIVE);
     }
 
     @Override
@@ -189,5 +190,11 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
 
     private static Specification<SavingsGoalEntity> withAutoSaveStatus(boolean autoSaveStatus) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("autoSave"), autoSaveStatus));
+    }
+
+    @Transactional
+    @Override
+    public void deleteSavings(SavingsGoalEntity savingsGoalEntity) {
+        repository.delete(savingsGoalEntity);
     }
 }

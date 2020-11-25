@@ -1,13 +1,10 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import lombok.*;
-
 import javax.persistence.*;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 /**
@@ -80,6 +77,8 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     private LocalDateTime maturityDate;
 
     private LocalDateTime lastInterestApplicationDate;
+
+    private LocalDate savingsStartDate;
 
     @Builder.Default
     private int selectedDuration = 0;

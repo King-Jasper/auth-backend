@@ -5,5 +5,10 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Wed, 01 Apr, 2020
  */
 public enum SavingsGoalStatusConstant {
-   INACTIVE, ACTIVE, CANCELLED, MATURED, COMPLETED
+   INACTIVE,
+   ACTIVE,
+   CANCELLED,
+   MATURED,
+   COMPLETED,
+   WITHDRAWN
 }

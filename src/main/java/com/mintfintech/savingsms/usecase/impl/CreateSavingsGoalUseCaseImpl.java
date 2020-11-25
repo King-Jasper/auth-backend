@@ -3,15 +3,12 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
-import com.mintfintech.savingsms.domain.models.EventModel;
-import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
-import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalCreationEvent;
+import com.mintfintech.savingsms.usecase.data.request.EmergencySavingsCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -27,6 +24,7 @@ import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.Optional;
 
 /**
@@ -49,7 +47,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
-    private ApplicationProperty applicationProperty;
+   // private ApplicationProperty applicationProperty;
+
    // private ApplicationEventService applicationEventService;
    // private AuditTrailService auditTrailService;
 
@@ -77,17 +76,9 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .goalCategory(goalCategoryEntity)
                 .build();
 
-       /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
-                .goalId(savingsGoalEntity.getGoalId())
-                .accountId(mintAccountEntity.getAccountId())
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
-                .name("Savings From Transfers")
-                .withdrawalAccountNumber("")
-                .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
-         */
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
     }
+
 
     private SavingsPlanTenorEntity getSavingsPlanTenor(SavingsGoalCreationRequest goalCreationRequest) {
         SavingsPlanTenorEntity planTenor;
@@ -161,24 +152,37 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
         BigDecimal targetAmount = BigDecimal.valueOf(goalCreationRequest.getTargetAmount());
         BigDecimal fundingAmount = BigDecimal.valueOf(goalCreationRequest.getFundingAmount());
-        validateAmount(debitAccount, targetAmount, fundingAmount, savingsPlan);
         validateTier(debitAccount, savingsPlan);
 
         LocalDateTime maturityDate = LocalDateTime.now().plusDays(selectedDuration);
+        LocalDateTime nextSavingsDate = null;
+        SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.NONE;
+        SavingsGoalStatusConstant statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        if(goalCreationRequest.isAutoDebit()) {
+            if(goalCreationRequest.getStartDate() == null || StringUtils.isEmpty(goalCreationRequest.getFrequency())) {
+                throw new BadRequestException("Start date and frequency is required.");
+            }
+            LocalDateTime startDate = goalCreationRequest.getStartDate().atTime(LocalTime.now());
+            frequencyType = SavingsFrequencyTypeConstant.valueOf(goalCreationRequest.getFrequency());
+            nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
+            statusConstant = SavingsGoalStatusConstant.ACTIVE;
+        }else {
+            validateAmount(debitAccount, targetAmount, fundingAmount, savingsPlan);
+        }
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
                 .mintAccount(mintAccount)
                 .creator(appUser)
                 .goalCategory(savingsGoalCategory)
                 .savingsGoalType(SavingsGoalTypeConstant.CUSTOMER_SAVINGS)
-                .goalStatus(SavingsGoalStatusConstant.ACTIVE)
+                .goalStatus(statusConstant)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(fundingAmount)
                 .targetAmount(targetAmount)
                 .accruedInterest(BigDecimal.ZERO)
                 .savingsBalance(BigDecimal.ZERO)
-                .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
-                .autoSave(false)
+                .savingsFrequency(frequencyType)
+                .autoSave(goalCreationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
                 .savingsPlanTenor(planTenor)
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
@@ -186,17 +190,19 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .maturityDate(maturityDate)
                 .lockedSavings(lockedSavings)
                 .selectedDuration(selectedDuration)
+                .nextAutoSaveDate(nextSavingsDate)
+                .savingsStartDate(goalCreationRequest.getStartDate())
                 .build();
 
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         log.info("Savings goal {} created with id: {}", goalName, savingsGoalEntity.getGoalId());
 
-        SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
-        if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
-            throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+        if(!goalCreationRequest.isAutoDebit()) {
+            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser,  savingsGoalEntity, fundingAmount);
+            if(!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+            }
         }
-
-
        /* SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
                 .accountId(mintAccount.getAccountId())
@@ -209,7 +215,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
     }
 
-    private void  validateAmount(MintBankAccountEntity debitAccount, BigDecimal targetAmount, BigDecimal fundAmount, SavingsPlanEntity savingsPlanEntity) {
+    private void validateAmount(MintBankAccountEntity debitAccount, BigDecimal targetAmount, BigDecimal fundAmount, SavingsPlanEntity savingsPlanEntity) {
         if(debitAccount.getAvailableBalance().compareTo(fundAmount) < 0) {
             throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
         }
@@ -218,10 +224,10 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
         /*if(targetAmount.compareTo(savingsPlanEntity.getMaximumBalance()) > 0 && savingsPlanEntity.getMaximumBalance().doubleValue() > 0) {
             throw new BadRequestException("Target amount cannot be greater than the savings plan maximum balance.");
-        }*/
+        }
         if(fundAmount.compareTo(savingsPlanEntity.getMinimumBalance()) < 0) {
             throw new BadRequestException("Amount to fund cannot be less than the savings plan minimum balance.");
-        }
+        }*/
 
     }
 
@@ -240,4 +246,6 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             }
         }
     }
+
+
 }

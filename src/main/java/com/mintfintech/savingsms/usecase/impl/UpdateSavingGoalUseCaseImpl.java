@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsFrequencyTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -51,6 +48,10 @@ public class UpdateSavingGoalUseCaseImpl implements UpdateSavingGoalUseCase {
 
         if(savingsGoal.getCreationSource() == SavingsGoalCreationSourceConstant.MINT){
             throw new BusinessLogicConflictException("Sorry, this goal cannot be updated because it's created by the system.");
+        }
+
+        if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED){
+            throw new BusinessLogicConflictException("Sorry, this goal cannot be updated.");
         }
 
         BigDecimal savingsAmount = BigDecimal.valueOf(autoSaveRequest.getAmount());

@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
 
@@ -25,6 +26,20 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
 
     @Override
     public BigDecimal getAvailableAmount(SavingsGoalEntity savingsGoalEntity) {
+
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+           // long days = savingsGoalEntity.getSavingsStartDate().until(LocalDate.now(), ChronoUnit.DAYS);
+            /*if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
+                if(days < 30) {
+                    return savingsGoalEntity.getSavingsBalance();
+                }
+            }else {
+                if(days < 5) {
+                    return savingsGoalEntity.getSavingsBalance();
+                }
+            }*/
+            return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
+        }
         boolean matured = isMaturedSavingsGoal(savingsGoalEntity);
         if(matured) {
             return savingsGoalEntity.getSavingsBalance().add(savingsGoalEntity.getAccruedInterest());
@@ -53,6 +68,9 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
 
     private boolean isMaturedCustomerGoal(SavingsGoalEntity savingsGoalEntity) {
         if(savingsGoalEntity.getMaturityDate() == null) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.EMERGENCY_SAVINGS) {
+                return savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
+            }
             return false;
         }
         LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
@@ -69,6 +87,19 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                 matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
                 matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+            }
+        }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+            boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
+            if(!applicationProperty.isProductionEnvironment() && !applicationProperty.isStagingEnvironment()) {
+                 long daysPassed = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+                 matured = daysPassed > 4 && hasFund;
+            }else {
+                LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
+                if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
+                    matured = hasFund;
+                }else {
+                    matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
+                }
             }
         }
         return matured;
