@@ -224,9 +224,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             }else if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                  savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
             }else {
-                if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+                mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
+                /*if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
                     mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
-                }
+                }*/
             }
         }
         return AccountSavingsGoalResponse.builder()
