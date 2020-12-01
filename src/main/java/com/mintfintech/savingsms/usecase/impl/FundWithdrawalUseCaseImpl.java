@@ -508,5 +508,4 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
        }
        return narration;
     }
-
 }

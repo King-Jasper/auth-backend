@@ -156,6 +156,12 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
          return repository.getSavingsMaturityStatistics(startDate, endDate);
     }
 
+    @Override
+    public List<SavingsGoalEntity> getDefaultSavingsWithBalance(int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getDefaultSavingsWithBalance(pageable);
+    }
+
     private static Specification<SavingsGoalEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE),

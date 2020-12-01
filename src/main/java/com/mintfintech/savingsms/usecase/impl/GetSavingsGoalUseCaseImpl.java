@@ -88,6 +88,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setSavingsAmount(savingsGoalEntity.getSavingsAmount());
         goalModel.setSavingsBalance(savingsGoalEntity.getSavingsBalance());
         goalModel.setSavingPlanName(savingsPlanEntity.getPlanName().getName());
+        goalModel.setSavingsType(savingsGoalEntity.getSavingsGoalType().name().replace("_", " "));
         goalModel.setSavingFrequency(savingsGoalEntity.getSavingsFrequency() != null ? savingsGoalEntity.getSavingsFrequency().name() : "");
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
         goalModel.setLockedSavings(savingsGoalEntity.isLockedSavings());
@@ -224,9 +225,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             }else if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                  savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
             }else {
-                if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+                mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
+                /*if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
                     mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
-                }
+                }*/
             }
         }
         return AccountSavingsGoalResponse.builder()

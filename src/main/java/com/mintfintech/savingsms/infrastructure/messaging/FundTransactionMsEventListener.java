@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class FundTransactionMsEventListener {
     }
     private final String INTEREST_NIP_TRANSACTION = "com.mintfintech.savings-service.events.interest-nip-transaction";
     private final String TRANSACTION_LOG_TOPIC = "com.mintfintech.fund-transaction-service.events.transaction-log";
+
 
     @KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
     public void listenForInterestEligibleNipTransaction(String payload) {

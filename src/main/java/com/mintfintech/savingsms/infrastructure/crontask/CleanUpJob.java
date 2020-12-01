@@ -16,7 +16,6 @@ import javax.inject.Named;
 public class CleanUpJob {
 
     private final UpdateRoundUpSavingsUseCase updateRoundUpSavingsUseCase;
-
     @SchedulerLock(name = "CleanUpJob_roundUpSavingsCleanUp", lockAtMostForString = "PT5M")
     @Scheduled(fixedDelay = 1000 * 60 * 60, initialDelay = 1000 * 60 * 10)
     public void roundUpSavingsCleanUp() {
