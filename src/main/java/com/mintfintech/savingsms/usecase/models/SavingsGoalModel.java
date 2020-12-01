@@ -19,6 +19,7 @@ public class SavingsGoalModel extends PortalSavingsGoalResponse {
    private String name;
    private boolean autoSaveEnabled;
    private String savingPlanName;
+   private String savingsType;
    private double interestRate;
    private String currentStatus;
    private BigDecimal savingsBalance;

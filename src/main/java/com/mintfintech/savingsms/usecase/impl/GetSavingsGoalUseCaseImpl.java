@@ -88,6 +88,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setSavingsAmount(savingsGoalEntity.getSavingsAmount());
         goalModel.setSavingsBalance(savingsGoalEntity.getSavingsBalance());
         goalModel.setSavingPlanName(savingsPlanEntity.getPlanName().getName());
+        goalModel.setSavingsType(savingsGoalEntity.getSavingsGoalType().name().replace("_", " "));
         goalModel.setSavingFrequency(savingsGoalEntity.getSavingsFrequency() != null ? savingsGoalEntity.getSavingsFrequency().name() : "");
         goalModel.setNoWithdrawalErrorMessage(getCustomerSavingsNoWithdrawalErrorMessage(savingsGoalEntity, isMatured));
         goalModel.setLockedSavings(savingsGoalEntity.isLockedSavings());
