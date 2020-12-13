@@ -116,9 +116,9 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         if(searchDTO.getGoalStatus() != null) {
             specification = specification.and(withGoalStatus(searchDTO.getGoalStatus()));
         }
-        if(searchDTO.getSavingsPlan() != null) {
+       /* if(searchDTO.getSavingsPlan() != null) {
             specification = specification.and(withPlan(searchDTO.getSavingsPlan()));
-        }
+        }*/
         if(searchDTO.getAutoSaveStatus() != null) {
             boolean autoSave = searchDTO.getAutoSaveStatus() == SavingsSearchDTO.AutoSaveStatus.ENABLED;
             specification = specification.and(withAutoSaveStatus(autoSave));
@@ -162,10 +162,14 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         return repository.getDefaultSavingsWithBalance(pageable);
     }
 
-    private static Specification<SavingsGoalEntity> withActiveStatus() {
+    /*private static Specification<SavingsGoalEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE),
                 criteriaBuilder.equal(root.get("creationSource"), SavingsGoalCreationSourceConstant.CUSTOMER)));
+    }*/
+
+    private static Specification<SavingsGoalEntity> withActiveStatus() {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE));
     }
 
     private static Specification<SavingsGoalEntity> withGoalStatus(SavingsGoalStatusConstant goalStatus) {

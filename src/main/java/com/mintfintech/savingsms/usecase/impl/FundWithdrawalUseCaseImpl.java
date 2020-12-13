@@ -281,10 +281,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
              withdrawalRequestEntity.setInterestCreditReference(reference);
              savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
 
-             String savingsType = "MINT";
-             if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS){
-                 savingsType = "CUSTOMER";
-             }
+             String savingsType = getSavingsWithdrawalType(savingsGoalEntity);
+
              SavingsWithdrawalRequestCBS withdrawalRequestCBS = SavingsWithdrawalRequestCBS.builder()
                      .accountNumber(creditAccount.getAccountNumber())
                      .amount(withdrawalRequestEntity.getInterestWithdrawal())
@@ -326,6 +324,14 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
          }
     }
 
+    private String getSavingsWithdrawalType(SavingsGoalEntity savingsGoalEntity) {
+        String savingsType = "CUSTOMER";
+        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+            savingsType = "MINT";
+        }
+        return savingsType;
+    }
+
     @Override
     public void processSavingsWithdrawalToSuspenseAccount() {
         List<SavingsWithdrawalRequestEntity> withdrawalRequestEntityList = savingsWithdrawalRequestEntityDao.getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT);
@@ -343,10 +349,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             String reference = savingsWithdrawalRequestEntityDao.generateTransactionReference();
             withdrawalRequestEntity.setSavingsCreditReference(reference);
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
-            String savingsType = "MINT";
-            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS){
-                savingsType = "CUSTOMER";
-            }
+            String savingsType = getSavingsWithdrawalType(savingsGoalEntity);
             SavingsWithdrawalRequestCBS withdrawalRequestCBS = SavingsWithdrawalRequestCBS.builder()
                     .accountNumber(creditAccount.getAccountNumber())
                     .amount(withdrawalRequestEntity.getSavingsBalanceWithdrawal())
@@ -412,11 +415,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
 
             String narration = constructWithdrawalNarration(savingsGoalEntity);
-
-            String savingsType = "MINT";
-            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS){
-                savingsType = "CUSTOMER";
-            }
+            String savingsType = getSavingsWithdrawalType(savingsGoalEntity);
             SavingsWithdrawalRequestCBS withdrawalRequestCBS = SavingsWithdrawalRequestCBS.builder()
                     .accountNumber(creditAccount.getAccountNumber())
                     .amount(amountRequest)
