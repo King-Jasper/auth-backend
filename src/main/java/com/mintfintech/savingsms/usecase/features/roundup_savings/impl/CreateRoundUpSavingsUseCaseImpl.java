@@ -82,7 +82,6 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
         settingEntity.setDateActivated(LocalDateTime.now());
         settingEntity = roundUpSavingsSettingEntityDao.saveRecord(settingEntity);
 
-
         LocalDateTime maturityDate = LocalDateTime.now().plusDays(selectedDuration);
 
         SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08").get();
