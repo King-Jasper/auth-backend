@@ -282,7 +282,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         SavingsGoalEntity goalEntity = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
                 .orElseThrow(() -> new NotFoundException("Invalid savings goal Id."));
         Page<SavingsGoalTransactionEntity> transactionEntityPage = savingsGoalTransactionEntityDao.getTransactions(goalEntity, page, size);
-        return new PagedDataResponse<>(transactionEntityPage.getTotalElements(), transactionEntityPage.getTotalElements(),
+        return new PagedDataResponse<>(transactionEntityPage.getTotalElements(), transactionEntityPage.getTotalPages(),
                 transactionEntityPage.get().map(this::fromSavingTransactionToModel)
         .collect(Collectors.toList()));
     }
