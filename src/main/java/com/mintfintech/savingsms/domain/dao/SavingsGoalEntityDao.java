@@ -18,6 +18,7 @@ import java.util.Optional;
 public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     String generateSavingGoalId();
     Optional<SavingsGoalEntity> findFirstSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType);
+    Optional<SavingsGoalEntity> findFirstSavingsByTypeIgnoreStatus(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType);
     List<SavingsGoalEntity>  getAccountSavingGoals(MintAccountEntity accountEntity);
     Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalId(MintAccountEntity accountEntity, String goalId);
     Optional<SavingsGoalEntity> findSavingGoalByGoalId(String goalId);

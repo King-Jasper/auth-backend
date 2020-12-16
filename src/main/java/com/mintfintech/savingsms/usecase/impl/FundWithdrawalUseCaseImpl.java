@@ -146,7 +146,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
             savingsGoalEntityDao.saveRecord(savingsGoal);
         }
-
+        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+            savingsGoal.setRecordStatus(RecordStatusConstant.INACTIVE);
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+        }
         return "Request queued successfully. Your account will be funded very soon.";
     }
 

@@ -74,8 +74,13 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 
-        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByType(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
+        if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+            referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+            referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+            savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
+        }
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
         SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
@@ -108,13 +113,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return;
         }
         CustomerReferralEntity referralEntity = referralEntityOpt.get();
-        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByType(referredAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referredAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         Optional<AppUserEntity> referredUserOpt = appUserEntityDao.findAccountOwner(referredAccount);
         if(!referredUserOpt.isPresent()) {
             return;
         }
         AppUserEntity referredUser = referredUserOpt.get();
         SavingsGoalEntity referredSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referredAccount, referredUser));
+        if(referredSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+            referredSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+            referredSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+            savingsGoalEntityDao.saveRecord(referredSavingsGoalEntity);
+        }
         long referredRewardAmount = applicationProperty.getReferredRewardAmount();
         SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundReferralSavingsGoal(referredSavingsGoalEntity, BigDecimal.valueOf(referredRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
