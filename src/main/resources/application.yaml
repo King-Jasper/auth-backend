@@ -34,7 +34,7 @@ mint:
   email:
     system-admin: justin.nwanya@bankwithmint.com
   referral-reward-amount: 200
-  referred-reward-amount: 100
+  referred-reward-amount: 200
 
 transaction:
   status-update:

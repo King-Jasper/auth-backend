@@ -9,5 +9,5 @@ public enum SavingsGoalTypeConstant {
     ROUND_UP_SAVINGS,
     CUSTOMER_SAVINGS,
     EMERGENCY_SAVINGS,
-    REFERRAL_EARNINGS
+    MINT_REFERRAL_EARNINGS
 }
