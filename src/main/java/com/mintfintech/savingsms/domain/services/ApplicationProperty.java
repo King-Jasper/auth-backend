@@ -48,6 +48,13 @@ public class ApplicationProperty {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
     }
 
+    public long getReferralRewardAmount() {
+        return Long.parseLong(environmentService.getVariable("mint.referral-reward-amount", "200"));
+    }
+    public long getReferredRewardAmount() {
+        return Long.parseLong(environmentService.getVariable("mint.referred-reward-amount", "0.0"));
+    }
+
     public String getSystemAdminEmail() {
         return environmentService.getVariable("mint.email.system-admin");
     }

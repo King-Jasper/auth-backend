@@ -51,6 +51,14 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
     }
 
     @Override
+    public MsClientResponse<FundTransferResponseCBS> processSavingReferralFunding(ReferralSavingsFundingRequestCBS fundingRequestCBS) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/savings-transaction/fund-savings/referral", baseUrl);
+        String requestBody = gson.toJson(fundingRequestCBS);
+        return processTransferRequest(serviceUrl, requestBody);
+    }
+
+    @Override
     public MsClientResponse<FundTransferResponseCBS> updateAccruedInterest(InterestAccruedUpdateRequestCBS updateRequest) {
         String baseUrl = getServiceBaseUrl();
         String serviceUrl = String.format("%s/api/v1/savings-transaction/interest-accrual", baseUrl);

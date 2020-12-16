@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
+import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 
@@ -18,10 +19,12 @@ import javax.inject.Named;
 public class AccountMSEventListener {
     private final Gson gson;
     private final AccountSetupUseCases accountSetupUseCases;
+    private final CreateReferralRewardUseCase createReferralRewardUseCase;
 
-    public AccountMSEventListener(Gson gson,  AccountSetupUseCases accountSetupUseCases) {
+    public AccountMSEventListener(Gson gson, AccountSetupUseCases accountSetupUseCases, CreateReferralRewardUseCase createReferralRewardUseCase) {
         this.gson = gson;
         this.accountSetupUseCases = accountSetupUseCases;
+        this.createReferralRewardUseCase = createReferralRewardUseCase;
     }
     private final String MINT_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.mint-account-creation";
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
@@ -30,6 +33,7 @@ public class AccountMSEventListener {
     private final String MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.user-notification-preference-update";
     private final String CUSTOMER_DEVICE_CHANGE_EVENT = "com.mintfintech.accounts-service.events.user.device-change";
     private final String GCM_NOTIFICATION_DETAIL_EVENT = "com.mintfintech.accounts-service.events.user-gcm-detail-broadcast";
+    private final String CUSTOMER_REFERRAL_EVENT = "com.mintfintech.accounts-service.events.customer-referral-info";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
@@ -72,6 +76,12 @@ public class AccountMSEventListener {
         log.info("customer push notification detail: {}", payload);
         CustomerDeviceChangeEvent deviceChangeEvent = gson.fromJson(payload, CustomerDeviceChangeEvent.class);
         accountSetupUseCases.updateUserDeviceNotificationId(deviceChangeEvent.getCustomerId(), deviceChangeEvent.getDeviceNotificationId());
+    }
+
+    @KafkaListener(topics = {CUSTOMER_REFERRAL_EVENT})
+    public void listenForCustomerReferral(String payload) {
+        CustomerReferralEvent event = gson.fromJson(payload, CustomerReferralEvent.class);
+        createReferralRewardUseCase.processCustomerReferralReward(event);
     }
 
 }

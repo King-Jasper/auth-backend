@@ -14,6 +14,7 @@ import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingRespons
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -47,6 +48,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private CreateReferralRewardUseCase createReferralRewardUseCase;
    // private ApplicationProperty applicationProperty;
 
    // private ApplicationEventService applicationEventService;
@@ -211,8 +213,11 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .withdrawalAccountNumber(debitAccount.getAccountNumber())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent)); */
+        SavingsGoalModel goalModel = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
+        createReferralRewardUseCase.processReferredCustomerReward(mintAccount);
+        return goalModel;
 
-        return getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
+
     }
 
     private void validateAmount(MintBankAccountEntity debitAccount, BigDecimal targetAmount, BigDecimal fundAmount, SavingsPlanEntity savingsPlanEntity) {

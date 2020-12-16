@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.ReferralSavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -165,6 +166,60 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             }
         }
         return true;
+    }
+
+
+    @Override
+    public SavingsGoalFundingResponse fundReferralSavingsGoal(SavingsGoalEntity savingsGoal, BigDecimal amount) {
+        SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
+                .transactionAmount(amount)
+                .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
+                .bankAccount(mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT))
+                .transactionType(TransactionTypeConstant.DEBIT)
+                .transactionStatus(TransactionStatusConstant.PENDING)
+                .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
+                .savingsGoal(savingsGoal)
+                .currentBalance(savingsGoal.getSavingsBalance())
+                .build();
+        transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
+        transactionEntity.setRecordStatus(RecordStatusConstant.INACTIVE);
+
+        String narration = constructFundingNarration(savingsGoal);
+        ReferralSavingsFundingRequestCBS fundingRequestCBS = ReferralSavingsFundingRequestCBS.builder()
+                .amount(amount)
+                .goalId(savingsGoal.getGoalId())
+                .goalName(savingsGoal.getName())
+                .reference(transactionEntity.getTransactionReference())
+                .narration(narration)
+                .build();
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingReferralFunding(fundingRequestCBS);
+        transactionEntity = processFundingTransactionResponse(transactionEntity, msClientResponse);
+
+        SavingsGoalFundingResponse fundingResponse = SavingsGoalFundingResponse.builder()
+                .responseCode(transactionEntity.getTransactionResponseCode())
+                .responseMessage(transactionEntity.getTransactionResponseMessage())
+                .transactionReference(transactionEntity.getTransactionReference())
+                .build();
+
+        if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
+            savingsGoal.setSavingsBalance(savingsGoal.getSavingsBalance().add(amount));
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+            if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.INACTIVE) {
+                savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+                savingsGoalEntityDao.saveRecord(savingsGoal);
+            }
+            transactionEntity.setNewBalance(savingsGoal.getSavingsBalance());
+            savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
+           // publishTransactionNotificationUseCase.sendSavingsFundingSuccessNotification(transactionEntity);
+            fundingResponse.setResponseCode("00");
+        }else if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING) {
+            fundingResponse.setResponseCode("01");
+            fundingResponse.setResponseMessage("Transaction status pending. Please check your balance before trying again.");
+        }else {
+            fundingResponse.setResponseCode("02");
+        }
+        fundingResponse.setSavingsBalance(savingsGoal.getSavingsBalance());
+        return fundingResponse;
     }
 
     @Override

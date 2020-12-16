@@ -83,4 +83,7 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     @Builder.Default
     private int selectedDuration = 0;
 
+    @Builder.Default
+    private BigDecimal totalAmountWithdrawn = BigDecimal.ZERO;
+
 }
