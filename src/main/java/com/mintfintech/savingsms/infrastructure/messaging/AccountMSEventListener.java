@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
+import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 
@@ -18,10 +19,12 @@ import javax.inject.Named;
 public class AccountMSEventListener {
     private final Gson gson;
     private final AccountSetupUseCases accountSetupUseCases;
+    private final CreateReferralRewardUseCase createReferralRewardUseCase;
 
-    public AccountMSEventListener(Gson gson,  AccountSetupUseCases accountSetupUseCases) {
+    public AccountMSEventListener(Gson gson, AccountSetupUseCases accountSetupUseCases, CreateReferralRewardUseCase createReferralRewardUseCase) {
         this.gson = gson;
         this.accountSetupUseCases = accountSetupUseCases;
+        this.createReferralRewardUseCase = createReferralRewardUseCase;
     }
     private final String MINT_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.mint-account-creation";
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
@@ -78,6 +81,7 @@ public class AccountMSEventListener {
     @KafkaListener(topics = {CUSTOMER_REFERRAL_EVENT})
     public void listenForCustomerReferral(String payload) {
         CustomerReferralEvent event = gson.fromJson(payload, CustomerReferralEvent.class);
+        createReferralRewardUseCase.processCustomerReferralReward(event);
     }
 
 }

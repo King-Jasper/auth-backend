@@ -15,5 +15,6 @@ public interface AppUserRepository extends JpaRepository<AppUserEntity, Long> {
     Optional<AppUserEntity> findFirstByUserIdAndRecordStatus(String userId, RecordStatusConstant statusConstant);
     Optional<AppUserEntity> findFirstByPhoneNumber(String phoneNumber);
     Optional<AppUserEntity> findFirstByUserId(String userId);
-    AppUserEntity getFirstByPrimaryAccount(MintAccountEntity account);
+    Optional<AppUserEntity> findFirstByPrimaryAccount(MintAccountEntity account);
+
 }
