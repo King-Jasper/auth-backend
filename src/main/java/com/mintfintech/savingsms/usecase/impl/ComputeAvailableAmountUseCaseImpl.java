@@ -86,7 +86,7 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
             if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
                 matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
-                matured = BigDecimal.valueOf(400.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
@@ -105,7 +105,7 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
             if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
                 matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
-                matured = BigDecimal.valueOf(20.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
         }
         return matured;
