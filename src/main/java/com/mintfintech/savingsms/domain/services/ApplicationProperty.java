@@ -52,7 +52,7 @@ public class ApplicationProperty {
         return Long.parseLong(environmentService.getVariable("mint.referral-reward-amount", "200"));
     }
     public long getReferredRewardAmount() {
-        return Long.parseLong(environmentService.getVariable("mint.referred-reward-amount", "0.0"));
+        return Long.parseLong(environmentService.getVariable("mint.referred-reward-amount", "200"));
     }
 
     public String getSystemAdminEmail() {
