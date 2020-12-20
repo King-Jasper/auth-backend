@@ -49,12 +49,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private CreateReferralRewardUseCase createReferralRewardUseCase;
-   // private ApplicationProperty applicationProperty;
 
-   // private ApplicationEventService applicationEventService;
-   // private AuditTrailService auditTrailService;
-
-    @Override
+    /*@Override
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
         SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08").get();
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
@@ -79,7 +75,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .build();
 
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
-    }
+    }*/
 
 
     private SavingsPlanTenorEntity getSavingsPlanTenor(SavingsGoalCreationRequest goalCreationRequest) {

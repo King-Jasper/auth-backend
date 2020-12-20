@@ -87,7 +87,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             }
         }
         SavingsGoalTypeConstant goalType = savingsGoal.getSavingsGoalType();
-        if(goalType == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS || goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS ) {
+        if(goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
             return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
@@ -332,7 +332,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private String getSavingsWithdrawalType(SavingsGoalEntity savingsGoalEntity) {
         String savingsType = "CUSTOMER";
         SavingsGoalTypeConstant goalType = savingsGoalEntity.getSavingsGoalType();
-        if(goalType == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS || goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS){
+        if(goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS){
             savingsType = "MINT";
         }
         return savingsType;

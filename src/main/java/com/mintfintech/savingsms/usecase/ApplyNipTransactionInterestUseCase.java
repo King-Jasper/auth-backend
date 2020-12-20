@@ -8,5 +8,4 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInte
  */
 public interface ApplyNipTransactionInterestUseCase {
     void processNipInterest(NipTransactionInterestEvent nipTransactionInterestEvent);
-
 }
