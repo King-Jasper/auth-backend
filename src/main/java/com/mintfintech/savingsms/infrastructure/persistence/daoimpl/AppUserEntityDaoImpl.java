@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 
 import javax.inject.Named;
@@ -12,10 +13,11 @@ import java.util.Optional;
  * Fri, 14 Feb, 2020
  */
 @Named
-public class AppUserEntityDaoImpl implements AppUserEntityDao {
+public class AppUserEntityDaoImpl extends CrudDaoImpl<AppUserEntity, Long> implements AppUserEntityDao {
 
-    private AppUserRepository repository;
+    private final AppUserRepository repository;
     public AppUserEntityDaoImpl(AppUserRepository repository) {
+        super(repository);
         this.repository = repository;
     }
 
@@ -30,17 +32,8 @@ public class AppUserEntityDaoImpl implements AppUserEntityDao {
     }
 
     @Override
-    public Optional<AppUserEntity> findById(Long aLong) {
-        return repository.findById(aLong);
+    public Optional<AppUserEntity> findAccountOwner(MintAccountEntity mintAccountEntity) {
+        return repository.findFirstByPrimaryAccount(mintAccountEntity);
     }
 
-    @Override
-    public AppUserEntity getRecordById(Long aLong) throws RuntimeException {
-        return findById(aLong).orElseThrow(() -> new RuntimeException("Not found. AppUser with id: "+aLong));
-    }
-
-    @Override
-    public AppUserEntity saveRecord(AppUserEntity record) {
-        return repository.save(record);
-    }
 }

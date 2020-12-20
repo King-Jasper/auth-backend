@@ -86,7 +86,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 throw new BadRequestException("Invalid credit account Id.");
             }
         }
-        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
+        SavingsGoalTypeConstant goalType = savingsGoal.getSavingsGoalType();
+        if(goalType == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS || goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS ) {
             return processMintSavingsWithdrawal(savingsGoal, creditAccount, appUserEntity);
         }
         if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE && savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.MATURED) {
@@ -145,7 +146,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
             savingsGoalEntityDao.saveRecord(savingsGoal);
         }
-
+        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+            savingsGoal.setRecordStatus(RecordStatusConstant.INACTIVE);
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+        }
         return "Request queued successfully. Your account will be funded very soon.";
     }
 
@@ -326,7 +331,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
 
     private String getSavingsWithdrawalType(SavingsGoalEntity savingsGoalEntity) {
         String savingsType = "CUSTOMER";
-        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
+        SavingsGoalTypeConstant goalType = savingsGoalEntity.getSavingsGoalType();
+        if(goalType == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS || goalType == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS){
             savingsType = "MINT";
         }
         return savingsType;

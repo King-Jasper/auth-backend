@@ -65,6 +65,11 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
     }
 
     @Override
+    public Optional<SavingsGoalEntity> findFirstSavingsByTypeIgnoreStatus(MintAccountEntity accountEntity, SavingsGoalTypeConstant savingsGoalType) {
+        return repository.findFirstByMintAccountAndSavingsGoalTypeOrderByDateCreatedDesc(accountEntity, savingsGoalType);
+    }
+
+    @Override
     public long countEligibleInterestSavingsGoal() {
         return repository.countEligibleInterestSavingsGoal();
     }
