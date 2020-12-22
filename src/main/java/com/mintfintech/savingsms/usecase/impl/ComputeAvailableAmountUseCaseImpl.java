@@ -101,13 +101,14 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                     matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
                 }
             }
-        }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
+        }
+        /*else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
             if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
                 matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
                 matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
-        }
+        }*/
         return matured;
     }
 }

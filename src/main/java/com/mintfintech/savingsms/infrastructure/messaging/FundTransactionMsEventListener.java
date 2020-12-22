@@ -31,12 +31,12 @@ public class FundTransactionMsEventListener {
     private final String TRANSACTION_LOG_TOPIC = "com.mintfintech.fund-transaction-service.events.transaction-log";
 
 
-    @KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
+    /*@KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
     public void listenForInterestEligibleNipTransaction(String payload) {
         log.info("mint account creation: {}", payload);
         NipTransactionInterestEvent nipTransactionInterestEvent = gson.fromJson(payload, NipTransactionInterestEvent.class);
         applyNipTransactionInterestUseCase.processNipInterest(nipTransactionInterestEvent);
-    }
+    }*/
 
     @KafkaListener(topics = {TRANSACTION_LOG_TOPIC})
     public void listenerForTransactionLog(String payload) {

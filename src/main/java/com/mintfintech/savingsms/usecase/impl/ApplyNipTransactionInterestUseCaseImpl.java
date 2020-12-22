@@ -36,6 +36,7 @@ public class ApplyNipTransactionInterestUseCaseImpl implements ApplyNipTransacti
     @Override
     public void processNipInterest(NipTransactionInterestEvent nipTransactionInterestEvent) {
 
+        /*
         if(nipTransactionInterestEvent.getAmount().compareTo(BigDecimal.valueOf(50001)) < 0) {
             log.info("Nip transaction {} is below nip interest amount: 50000", nipTransactionInterestEvent.getAmount());
             return;
@@ -70,5 +71,6 @@ public class ApplyNipTransactionInterestUseCaseImpl implements ApplyNipTransacti
         defaultGoal.setSavingsBalance(newBalance);
         savingsGoalEntityDao.saveRecord(defaultGoal);
         log.info("Nip interest applied successfully.");
+        */
     }
 }

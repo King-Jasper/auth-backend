@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Builder
 public class SavingsSearchRequest {
     private String accountId;
-    private String savingsTier;
+    private String savingsType;
     private String goalId;
     private String savingsStatus;
     private String autoSavedStatus;

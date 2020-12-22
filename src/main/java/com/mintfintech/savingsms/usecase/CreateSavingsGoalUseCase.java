@@ -12,6 +12,6 @@ import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
  * Thu, 02 Apr, 2020
  */
 public interface CreateSavingsGoalUseCase {
-    SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity);
+    //SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity);
     SavingsGoalModel  createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest);
 }

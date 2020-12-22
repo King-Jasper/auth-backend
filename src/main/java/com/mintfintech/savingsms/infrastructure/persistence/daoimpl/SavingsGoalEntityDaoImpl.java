@@ -121,9 +121,9 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         if(searchDTO.getGoalStatus() != null) {
             specification = specification.and(withGoalStatus(searchDTO.getGoalStatus()));
         }
-       /* if(searchDTO.getSavingsPlan() != null) {
-            specification = specification.and(withPlan(searchDTO.getSavingsPlan()));
-        }*/
+        if(searchDTO.getGoalType() != null) {
+            specification = specification.and(equals("savingsGoalType", searchDTO.getGoalType()));
+        }
         if(searchDTO.getAutoSaveStatus() != null) {
             boolean autoSave = searchDTO.getAutoSaveStatus() == SavingsSearchDTO.AutoSaveStatus.ENABLED;
             specification = specification.and(withAutoSaveStatus(autoSave));
@@ -161,12 +161,6 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
          return repository.getSavingsMaturityStatistics(startDate, endDate);
     }
 
-    @Override
-    public List<SavingsGoalEntity> getDefaultSavingsWithBalance(int size) {
-        Pageable pageable = PageRequest.of(0, size);
-        return repository.getDefaultSavingsWithBalance(pageable);
-    }
-
     /*private static Specification<SavingsGoalEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE),
@@ -179,6 +173,10 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
 
     private static Specification<SavingsGoalEntity> withGoalStatus(SavingsGoalStatusConstant goalStatus) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("goalStatus"), goalStatus));
+    }
+
+    private static Specification<SavingsGoalEntity> equals(String fieldName, Object fieldValue) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get(fieldName), fieldValue));
     }
 
     private static Specification<SavingsGoalEntity> withDateRange(LocalDateTime startDate, LocalDateTime endDate) {
