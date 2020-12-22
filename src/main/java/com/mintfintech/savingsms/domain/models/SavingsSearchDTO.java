@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.models;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -20,7 +21,7 @@ public class SavingsSearchDTO {
     private SavingsGoalStatusConstant goalStatus;
     private String goalId;
     private MintAccountEntity account;
-    private SavingsPlanEntity savingsPlan;
+    private SavingsGoalTypeConstant goalType;
    // private String customerEmail;
    // private String customerPhoneNumber;
    // private boolean autoSavedEnabled;

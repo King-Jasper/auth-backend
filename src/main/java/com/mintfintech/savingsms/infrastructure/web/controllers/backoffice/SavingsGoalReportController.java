@@ -51,7 +51,7 @@ public class SavingsGoalReportController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "goalId", required = false) String goalId,
                                                                                              @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
                                                                                              @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
-                                                                                             @NotBlank @Pattern(regexp = "(ALL|SAVINGS_TIER_ONE|SAVINGS_TIER_TWO|SAVINGS_TIER_THREE)") @RequestParam("planType") String planType,
+                                                                                             @NotBlank @Pattern(regexp = "(ALL|ROUND_UP_SAVINGS|CUSTOMER_SAVINGS|EMERGENCY_SAVINGS|MINT_REFERRAL_EARNINGS)") @RequestParam("savingsType") String savingsType,
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                              @RequestParam("size") int size, @RequestParam("page") int page) {
@@ -60,7 +60,8 @@ public class SavingsGoalReportController {
         }
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
                 .goalId(goalId).savingsStatus(goalStatus)
-                .accountId(accountId).savingsTier(planType)
+                .accountId(accountId)
+                .savingsType(savingsType)
                 .fromDate(fromDate).toDate(toDate)
                 .autoSavedStatus(autoSaveStatus)
                 .build();
