@@ -18,4 +18,6 @@ public class AuditLogEvent {
     private String accountId;
     private String oldRecordPayload;
     private String newRecordPayload;
+    private String entityName;
+    private Long entityId;
 }

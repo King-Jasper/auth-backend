@@ -66,8 +66,7 @@ public class AuditTrailServiceImpl implements AuditTrailService {
     }
 
     private <T extends AbstractBaseEntity<Long>> void createLog(AuthenticatedUser currentUser, AuditType auditType, String description, T newRecord, T oldRecord) {
-        //AuthenticatedUser currentUser = getCurrentUser();
-        //log.info("authenticated user: {}", currentUser != null ? currentUser.toString() :  "Not found");
+
         String payload = gson.toJson(newRecord);
         AuditLogEvent auditLogEvent = AuditLogEvent.builder()
                 .auditType(auditType.name())
@@ -76,6 +75,8 @@ public class AuditTrailServiceImpl implements AuditTrailService {
                 .actorName(currentUser != null ? currentUser.getName() : "")
                 .description(description)
                 .newRecordPayload(payload)
+                .entityId(newRecord.getId())
+                .entityName(newRecord.getClass().getSimpleName())
                 .oldRecordPayload(oldRecord != null ? gson.toJson(oldRecord) : "")
                 .systemName(systemName)
                 .build();
