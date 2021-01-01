@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEvent;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
@@ -35,6 +36,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ApplicationProperty applicationProperty;
     private final FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private final SettingsEntityDao settingsEntityDao;
+    private final SystemIssueLogService systemIssueLogService;
 
     @Async
     @Override
@@ -53,6 +55,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(referralEvent.getReferredByUserId());
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(userEntity.getPrimaryAccount().getId());
+        long accountReferred = customerReferralEntityDao.totalReferralRecordsForAccount(referralAccount);
+        if(accountReferred >= 3) {
+            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral",
+                    "AccountId - "+referralAccount.getAccountId()+" code - "+referralEvent.getReferredByUserId()+" count - "+accountReferred);
+        }
+        if(accountReferred >= 5) {
+            return;
+        }
 
         Optional<MintAccountEntity> referredOpt = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
         if(!referredOpt.isPresent()) {

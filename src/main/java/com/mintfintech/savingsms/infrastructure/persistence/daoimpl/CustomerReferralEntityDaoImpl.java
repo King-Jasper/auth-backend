@@ -29,4 +29,9 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     public Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred) {
         return repository.findFirstByReferredAndReferredRewardedFalse(referred);
     }
+
+    @Override
+    public long totalReferralRecordsForAccount(MintAccountEntity referral) {
+        return repository.countAllByReferrer(referral);
+    }
 }

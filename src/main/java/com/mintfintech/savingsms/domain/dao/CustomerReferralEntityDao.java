@@ -12,4 +12,5 @@ import java.util.Optional;
 public interface CustomerReferralEntityDao extends CrudDao<CustomerReferralEntity, Long> {
     boolean recordExistForAccounts(MintAccountEntity referral, MintAccountEntity referred);
     Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred);
+    long totalReferralRecordsForAccount(MintAccountEntity referral);
 }
