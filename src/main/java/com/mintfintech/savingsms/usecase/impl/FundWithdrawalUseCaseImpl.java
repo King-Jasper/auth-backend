@@ -457,8 +457,8 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 goalEntity.setTotalAmountWithdrawn(totalAmountWithdrawn);
                 if(goalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                     goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
-                    savingsGoalEntityDao.saveRecord(goalEntity);
                 }
+                savingsGoalEntityDao.saveRecord(goalEntity);
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());
                 if(appUserEntity.isEmailNotificationEnabled()) {
                     SavingsGoalWithdrawalSuccessEvent withdrawalSuccessEvent = SavingsGoalWithdrawalSuccessEvent.builder()
