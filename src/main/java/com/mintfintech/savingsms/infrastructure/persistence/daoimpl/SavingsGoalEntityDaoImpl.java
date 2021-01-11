@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
@@ -127,6 +128,18 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         if(searchDTO.getAutoSaveStatus() != null) {
             boolean autoSave = searchDTO.getAutoSaveStatus() == SavingsSearchDTO.AutoSaveStatus.ENABLED;
             specification = specification.and(withAutoSaveStatus(autoSave));
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getGoalName())) {
+            String name = searchDTO.getGoalName().toLowerCase();
+            specification = specification.and((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.like(criteriaBuilder.lower(root.get("name")), name+"%"));
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+            String name = searchDTO.getCustomerName().toLowerCase();
+            Specification<SavingsGoalEntity> nameSpec = (root, criteriaQuery, criteriaBuilder) -> {
+                Join<SavingsGoalEntity, AppUserEntity> owner = root.join("creator");
+                return criteriaBuilder.like(criteriaBuilder.lower(owner.get("name")), "%"+name+"%");
+            };
+            specification = specification.and(nameSpec);
         }
         return repository.findAll(specification, pageable);
     }

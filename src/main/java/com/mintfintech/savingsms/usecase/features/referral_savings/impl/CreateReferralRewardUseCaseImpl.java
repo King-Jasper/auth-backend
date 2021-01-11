@@ -60,10 +60,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral",
                     "AccountId - "+referralAccount.getAccountId()+" code - "+referralEvent.getReferredByUserId()+" count - "+accountReferred);
         }
-        if(accountReferred >= 5) {
+        /* if(accountReferred >= 5) {
             return;
-        }
-
+        }*/
         Optional<MintAccountEntity> referredOpt = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
         if(!referredOpt.isPresent()) {
             log.info("referred detail not found - {}", referralEvent.toString());
