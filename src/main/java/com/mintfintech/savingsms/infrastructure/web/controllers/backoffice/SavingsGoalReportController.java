@@ -7,7 +7,6 @@ import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummary;
-import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -48,7 +47,8 @@ public class SavingsGoalReportController {
     @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
     @ApiOperation(value = "Returns paginated list of savings goal.")
     @GetMapping(value = "savings-goals", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "goalId", required = false) String goalId,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "customerName", required = false) String customerName,
+                                                                                                        @RequestParam(value = "goalName", required = false) String goalName,
                                                                                              @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
                                                                                              @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
                                                                                              @Pattern(regexp = "(ALL|ROUND_UP_SAVINGS|CUSTOMER_SAVINGS|EMERGENCY_SAVINGS|MINT_REFERRAL_EARNINGS)") @RequestParam(value = "savingsType", required = false, defaultValue = "ALL") String savingsType,
@@ -59,7 +59,9 @@ public class SavingsGoalReportController {
             size = 20;
         }
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
-                .goalId(goalId).savingsStatus(goalStatus)
+                .customerName(customerName)
+                .savingsStatus(goalStatus)
+                .goalName(goalName)
                 .accountId(accountId)
                 .savingsType(savingsType)
                 .fromDate(fromDate).toDate(toDate)

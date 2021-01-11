@@ -263,6 +263,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .goalId(searchRequest.getGoalId())
                 .account(accountEntity)
                 .autoSaveStatus(autoSaveStatus)
+                .customerName(searchRequest.getCustomerName())
+                .goalName(searchRequest.getGoalName())
                 .goalStatus(SavingsGoalStatusConstant.valueOf(searchRequest.getSavingsStatus()))
                 .goalType(goalType)
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
