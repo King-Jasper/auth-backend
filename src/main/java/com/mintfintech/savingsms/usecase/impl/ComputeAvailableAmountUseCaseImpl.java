@@ -83,14 +83,14 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
     private boolean isMintGoalMatured(SavingsGoalEntity savingsGoalEntity) {
         boolean matured = false;
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
-            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+            if(applicationProperty.isLiveEnvironment()) {
+                matured = BigDecimal.valueOf(500.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
-                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                matured = BigDecimal.valueOf(500.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
-            if(!applicationProperty.isProductionEnvironment() && !applicationProperty.isStagingEnvironment()) {
+            if(!applicationProperty.isLiveEnvironment()) {
                  long daysPassed = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
                  matured = daysPassed > 4 && hasFund;
             }else {
@@ -102,13 +102,6 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                 }
             }
         }
-        /*else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS) {
-            if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
-            }else {
-                matured = BigDecimal.valueOf(1000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
-            }
-        }*/
         return matured;
     }
 }

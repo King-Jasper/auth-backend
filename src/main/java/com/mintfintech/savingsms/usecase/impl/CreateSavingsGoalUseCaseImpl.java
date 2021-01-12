@@ -48,7 +48,6 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
-    private CreateReferralRewardUseCase createReferralRewardUseCase;
 
     /*@Override
     public SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity) {
@@ -210,7 +209,6 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent)); */
         SavingsGoalModel goalModel = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
-        createReferralRewardUseCase.processReferredCustomerReward(mintAccount);
         return goalModel;
 
 

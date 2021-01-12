@@ -72,6 +72,10 @@ public class ApplicationProperty {
         return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("prod"));
     }
 
+    public boolean isLiveEnvironment() {
+        return isStagingEnvironment() || isProductionEnvironment();
+    }
+
     public boolean isKubernetesEnvironment() {
         return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("kubernetes"));
     }

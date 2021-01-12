@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.usecase.features.referral_savings;
 
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEvent;
 
 /**
@@ -9,5 +10,5 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEv
  */
 public interface CreateReferralRewardUseCase {
     void processCustomerReferralReward(CustomerReferralEvent referralEvent);
-    void processReferredCustomerReward(MintAccountEntity mintAccountEntity);
+    void processReferredCustomerReward(MintAccountEntity mintAccountEntity, SavingsGoalEntity fundedSavingsGoal);
 }

@@ -20,6 +20,7 @@ import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -54,6 +55,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private SystemIssueLogService systemIssueLogService;
     private PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
+    private CreateReferralRewardUseCase createReferralRewardUseCase;
 
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest) {
@@ -271,6 +273,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             publishTransactionNotificationUseCase.createTransactionLog(transactionEntity, balanceBeforeTransaction, newBalance);
             publishTransactionNotificationUseCase.sendSavingsFundingSuccessNotification(transactionEntity);
             fundingResponse.setResponseCode("00");
+            createReferralRewardUseCase.processReferredCustomerReward(debitAccount.getMintAccount(), savingsGoal);
         }else if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING) {
             fundingResponse.setResponseCode("01");
             fundingResponse.setResponseMessage("Transaction status pending. Please check your balance before trying again.");

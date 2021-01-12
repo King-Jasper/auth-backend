@@ -33,8 +33,8 @@ mint:
   support-phonenumber: 08067507490
   email:
     system-admin: justin.nwanya@bankwithmint.com
-  referral-reward-amount: 200
-  referred-reward-amount: 200
+  referral-reward-amount: 250
+  referred-reward-amount: 250
 
 transaction:
   status-update:
