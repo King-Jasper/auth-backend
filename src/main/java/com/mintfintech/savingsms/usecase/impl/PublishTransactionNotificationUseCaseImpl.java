@@ -75,9 +75,10 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     @Async
     @Override
     public void sendSavingsFundingSuccessNotification(SavingsGoalTransactionEntity transactionEntity) {
-        if(!Hibernate.isInitialized(transactionEntity)) {
-            transactionEntity = savingsGoalTransactionEntityDao.getRecordById(transactionEntity.getId());
-        }
+        try {
+            Thread.sleep(3000);
+        }catch (Exception ignored){ }
+        transactionEntity = savingsGoalTransactionEntityDao.getRecordById(transactionEntity.getId());
         BigDecimal savingsAmount = transactionEntity.getTransactionAmount();
         SavingsGoalEntity goalEntity = savingsGoalEntityDao.getRecordById(transactionEntity.getSavingsGoal().getId());
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());
