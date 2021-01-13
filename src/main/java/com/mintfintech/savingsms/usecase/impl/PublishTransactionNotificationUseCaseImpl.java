@@ -49,6 +49,9 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
         /*if(!Hibernate.isInitialized(savingsGoalTransactionEntity)) {
             savingsGoalTransactionEntity = savingsGoalTransactionEntityDao.getRecordById(savingsGoalTransactionEntity.getId());
         }*/
+        try {
+            Thread.sleep(3000);
+        }catch (Exception ignored){ }
         savingsGoalTransactionEntity = savingsGoalTransactionEntityDao.getRecordById(savingsGoalTransactionEntity.getId());
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
