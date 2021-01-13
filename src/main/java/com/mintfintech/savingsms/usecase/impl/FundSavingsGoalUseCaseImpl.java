@@ -21,6 +21,7 @@ import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingRespons
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
+import com.mintfintech.savingsms.usecase.features.savings_funding.SavingsFundingUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -56,6 +57,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     private SystemIssueLogService systemIssueLogService;
     private PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
     private CreateReferralRewardUseCase createReferralRewardUseCase;
+    private SavingsFundingUtil savingsFundingUtil;
 
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest) {
@@ -172,59 +174,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
 
 
     @Override
-    public SavingsGoalFundingResponse fundReferralSavingsGoal(SavingsGoalEntity savingsGoal, BigDecimal amount) {
-        SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                .transactionAmount(amount)
-                .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                .bankAccount(mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT))
-                .transactionType(TransactionTypeConstant.DEBIT)
-                .transactionStatus(TransactionStatusConstant.PENDING)
-                .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
-                .savingsGoal(savingsGoal)
-                .currentBalance(savingsGoal.getSavingsBalance())
-                .build();
-        transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-        transactionEntity.setRecordStatus(RecordStatusConstant.INACTIVE);
-
-        String narration = constructFundingNarration(savingsGoal);
-        ReferralSavingsFundingRequestCBS fundingRequestCBS = ReferralSavingsFundingRequestCBS.builder()
-                .amount(amount)
-                .goalId(savingsGoal.getGoalId())
-                .goalName(savingsGoal.getName())
-                .reference(transactionEntity.getTransactionReference())
-                .narration(narration)
-                .build();
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingReferralFunding(fundingRequestCBS);
-        transactionEntity = processFundingTransactionResponse(transactionEntity, msClientResponse);
-
-        SavingsGoalFundingResponse fundingResponse = SavingsGoalFundingResponse.builder()
-                .responseCode(transactionEntity.getTransactionResponseCode())
-                .responseMessage(transactionEntity.getTransactionResponseMessage())
-                .transactionReference(transactionEntity.getTransactionReference())
-                .build();
-
-        if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
-            savingsGoal.setSavingsBalance(savingsGoal.getSavingsBalance().add(amount));
-            savingsGoalEntityDao.saveRecord(savingsGoal);
-            if(savingsGoal.getGoalStatus() == SavingsGoalStatusConstant.INACTIVE) {
-                savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
-                savingsGoalEntityDao.saveRecord(savingsGoal);
-            }
-            transactionEntity.setNewBalance(savingsGoal.getSavingsBalance());
-            savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-           // publishTransactionNotificationUseCase.sendSavingsFundingSuccessNotification(transactionEntity);
-            fundingResponse.setResponseCode("00");
-        }else if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING) {
-            fundingResponse.setResponseCode("01");
-            fundingResponse.setResponseMessage("Transaction status pending. Please check your balance before trying again.");
-        }else {
-            fundingResponse.setResponseCode("02");
-        }
-        fundingResponse.setSavingsBalance(savingsGoal.getSavingsBalance());
-        return fundingResponse;
-    }
-
-    @Override
     public SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
         SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
@@ -241,7 +190,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
-        String narration = constructFundingNarration(savingsGoal);
+        String narration = savingsFundingUtil.constructFundingNarration(savingsGoal);
 
         SavingsFundingRequestCBS fundingRequestCBS = SavingsFundingRequestCBS.builder()
                 .amount(amount)
@@ -252,7 +201,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 .reference(transactionEntity.getTransactionReference())
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingFunding(fundingRequestCBS);
-        transactionEntity = processFundingTransactionResponse(transactionEntity, msClientResponse);
+        transactionEntity = savingsFundingUtil.processFundingTransactionResponse(transactionEntity, msClientResponse);
 
         SavingsGoalFundingResponse fundingResponse = SavingsGoalFundingResponse.builder()
                 .responseCode(transactionEntity.getTransactionResponseCode())
@@ -285,45 +234,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     }
 
 
-    @Override
-    public SavingsGoalTransactionEntity processFundingTransactionResponse(SavingsGoalTransactionEntity transactionEntity, MsClientResponse<FundTransferResponseCBS> msClientResponse) {
-        if(!msClientResponse.isSuccess()){
-            if(msClientResponse.getStatusCode() == HttpStatus.BAD_REQUEST.value()  || msClientResponse.getStatusCode() == HttpStatus.CONFLICT.value()){
-                String message = "Transaction validation failed";
-                transactionEntity.setTransactionResponseCode("-1");
-                transactionEntity.setTransactionResponseMessage(message);
-                transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
-                return savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-            }
-            transactionEntity.setTransactionResponseCode("-1");
-            transactionEntity.setTransactionResponseMessage("Transaction status not yet confirmed.");
-            transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
-            return savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-        }
-        FundTransferResponseCBS responseCBS = msClientResponse.getData();
-        String code = responseCBS.getResponseCode();
-        transactionEntity.setTransactionResponseCode(code);
-        transactionEntity.setTransactionResponseMessage(responseCBS.getResponseMessage());
-        transactionEntity.setExternalReference(responseCBS.getBankOneReference());
-        savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-        /*if(code.equalsIgnoreCase("91")){
-            transactionEntity.setTransactionResponseMessage("Transaction status pending. Please check your balance before trying again.");
-        }*/
-        if("00".equalsIgnoreCase(code)) {
-            transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
-        }else {
-            transactionEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
-        }
-        return savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-    }
 
-
-    public String constructFundingNarration(SavingsGoalEntity savingsGoalEntity) {
-        String narration = String.format("SGF-%s %s", savingsGoalEntity.getGoalId(), savingsGoalEntity.getName());
-        if(narration.length() > 61) {
-            return narration.substring(0, 60);
-        }
-        return narration;
-    }
 
 }

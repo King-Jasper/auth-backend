@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEvent;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
+import com.mintfintech.savingsms.usecase.features.savings_funding.ReferralGoalFundingUseCase;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +35,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final SavingsGoalCategoryEntityDao categoryEntityDao;
     private final SavingsPlanTenorEntityDao planTenorEntityDao;
     private final ApplicationProperty applicationProperty;
-    private final FundSavingsGoalUseCase fundSavingsGoalUseCase;
+    private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
 
@@ -144,7 +145,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             savingsGoalEntityDao.saveRecord(referredSavingsGoalEntity);
         }
         long referredRewardAmount = applicationProperty.getReferredRewardAmount();
-        SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundReferralSavingsGoal(referredSavingsGoalEntity, BigDecimal.valueOf(referredRewardAmount));
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referredSavingsGoalEntity, BigDecimal.valueOf(referredRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferredRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
@@ -169,7 +170,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
 
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
-        fundingResponse = fundSavingsGoalUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
+        fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);

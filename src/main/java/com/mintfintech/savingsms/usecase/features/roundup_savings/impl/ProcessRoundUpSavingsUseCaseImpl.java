@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
 import com.mintfintech.savingsms.usecase.data.value_objects.RoundUpTransactionCategoryType;
+import com.mintfintech.savingsms.usecase.features.savings_funding.SavingsFundingUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -37,9 +38,9 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
     private MintBankAccountEntityDao mintBankAccountEntityDao;
     private CoreBankingServiceClient coreBankingServiceClient;
-    private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
+    private SavingsFundingUtil savingsFundingUtil;
 
     @Override
     public void processTransactionForRoundUpSavings(MintTransactionPayload transactionPayload) {
@@ -165,11 +166,11 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .debitAccountNumber(debitAccount.getAccountNumber())
                 .goalId(goalEntity.getGoalId())
                 .goalName(goalEntity.getName())
-                .narration(fundSavingsGoalUseCase.constructFundingNarration(goalEntity))
+                .narration(savingsFundingUtil.constructFundingNarration(goalEntity))
                 .reference(reference)
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingFunding(fundingRequestCBS);
-        transactionEntity = fundSavingsGoalUseCase.processFundingTransactionResponse(transactionEntity, msClientResponse);
+        transactionEntity = savingsFundingUtil.processFundingTransactionResponse(transactionEntity, msClientResponse);
         if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
             goalEntity = savingsGoalEntityDao.getRecordById(goalEntity.getId());
             goalEntity.setSavingsBalance(goalEntity.getSavingsBalance().add(amount));
