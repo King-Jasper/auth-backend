@@ -46,9 +46,15 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     @Async
     @Override
     public void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance) {
-        if(!Hibernate.isInitialized(savingsGoalTransactionEntity)) {
+        /*if(!Hibernate.isInitialized(savingsGoalTransactionEntity)) {
             savingsGoalTransactionEntity = savingsGoalTransactionEntityDao.getRecordById(savingsGoalTransactionEntity.getId());
-        }
+        }*/
+        try {
+            Thread.sleep(3000);
+            // allows for some time for the DB session that created this SavingsGoalTransactionEntity to be committed
+            // without this, it will throw an session that ID is not found.
+        }catch (Exception ignored){ }
+        savingsGoalTransactionEntity = savingsGoalTransactionEntityDao.getRecordById(savingsGoalTransactionEntity.getId());
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
         String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
@@ -71,9 +77,11 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     @Async
     @Override
     public void sendSavingsFundingSuccessNotification(SavingsGoalTransactionEntity transactionEntity) {
-        if(!Hibernate.isInitialized(transactionEntity)) {
-            transactionEntity = savingsGoalTransactionEntityDao.getRecordById(transactionEntity.getId());
-        }
+        try {
+            Thread.sleep(3000);
+            // allows for some time for the DB session that created this SavingsGoalTransactionEntity to be committed
+        }catch (Exception ignored){ }
+        transactionEntity = savingsGoalTransactionEntityDao.getRecordById(transactionEntity.getId());
         BigDecimal savingsAmount = transactionEntity.getTransactionAmount();
         SavingsGoalEntity goalEntity = savingsGoalEntityDao.getRecordById(transactionEntity.getSavingsGoal().getId());
         AppUserEntity appUserEntity = appUserEntityDao.getRecordById(goalEntity.getCreator().getId());

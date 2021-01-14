@@ -132,7 +132,11 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
         }
 
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(goalCreationRequest.getDebitAccountId())
-                .orElseThrow(() -> new BadRequestException("Invalid debit account Id."));
+                .orElseThrow(() -> {
+                    log.info("Bank account Id - {} not found", goalCreationRequest.getDebitAccountId());
+                    return new BadRequestException("Invalid debit account Id.");
+                });
+
         if(!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");
         }
