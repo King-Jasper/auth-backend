@@ -51,6 +51,8 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
         }*/
         try {
             Thread.sleep(3000);
+            // allows for some time for the DB session that created this SavingsGoalTransactionEntity to be committed
+            // without this, it will throw an session that ID is not found.
         }catch (Exception ignored){ }
         savingsGoalTransactionEntity = savingsGoalTransactionEntityDao.getRecordById(savingsGoalTransactionEntity.getId());
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
@@ -77,6 +79,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     public void sendSavingsFundingSuccessNotification(SavingsGoalTransactionEntity transactionEntity) {
         try {
             Thread.sleep(3000);
+            // allows for some time for the DB session that created this SavingsGoalTransactionEntity to be committed
         }catch (Exception ignored){ }
         transactionEntity = savingsGoalTransactionEntityDao.getRecordById(transactionEntity.getId());
         BigDecimal savingsAmount = transactionEntity.getTransactionAmount();
