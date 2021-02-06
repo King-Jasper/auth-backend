@@ -39,6 +39,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
 
+    private static final String REFERRAL_CODE = "SIDEHUSTLE";
+
     @Async
     @Override
     public void processCustomerReferralReward(CustomerReferralEvent referralEvent) {
@@ -52,6 +54,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }catch (Exception ignored){}
         if(StringUtils.isEmpty(referralEvent.getReferredByUserId())) {
             log.info("Referral userId not found - {}", referralEvent.toString());
+            return;
+        }
+        if(REFERRAL_CODE.equalsIgnoreCase(referralEvent.getReferralCodeUsed())) {
+            log.info("Side hustle referral code used -- abort");
             return;
         }
         AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(referralEvent.getReferredByUserId());
