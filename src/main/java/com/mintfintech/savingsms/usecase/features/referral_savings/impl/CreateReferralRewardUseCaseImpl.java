@@ -63,14 +63,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(referralEvent.getReferredByUserId());
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(userEntity.getPrimaryAccount().getId());
         long accountReferred = customerReferralEntityDao.totalReferralRecordsForAccount(referralAccount);
-        if(accountReferred >= 10) {
-            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral",
-                    "AccountId - "+referralAccount.getAccountId()+" code - "+referralEvent.getReferredByUserId()+" count - "+accountReferred);
-        }
         Optional<MintAccountEntity> referredOpt = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
         if(!referredOpt.isPresent()) {
             log.info("referred detail not found - {}", referralEvent.toString());
             return;
+        }
+        if(accountReferred >= 10) {
+            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral",
+                    "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" count - "+accountReferred);
         }
         MintAccountEntity referredAccount = referredOpt.get();
         if(customerReferralEntityDao.recordExistForAccounts(referralAccount, referredAccount)) {
