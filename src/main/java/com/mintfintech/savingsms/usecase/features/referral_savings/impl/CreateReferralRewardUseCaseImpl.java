@@ -91,12 +91,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
-        if(accountReferred >= 10) {
+
+        if(accountReferred >= 7) {
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
             String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
                     "count - "+accountReferred+" amount gotten - "+total.toPlainString();
             systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral", message);
+
+            if(total.doubleValue() >= 10000.0) {
+                log.info("referral aborted");
+                 return;
+            }
         }
 
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
