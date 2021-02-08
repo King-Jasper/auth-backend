@@ -29,6 +29,7 @@ import org.springframework.data.domain.Page;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -70,6 +71,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(savingsGoalEntity.getNextAutoSaveDate() != null) {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
+
+
 
         boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
         SavingsGoalModel goalModel = new SavingsGoalModel();
