@@ -68,10 +68,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             log.info("referred detail not found - {}", referralEvent.toString());
             return;
         }
-        if(accountReferred >= 10) {
-            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral",
-                    "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" count - "+accountReferred);
-        }
         MintAccountEntity referredAccount = referredOpt.get();
         if(customerReferralEntityDao.recordExistForAccounts(referralAccount, referredAccount)) {
             log.info("referral record is already created. {}", referralEvent.toString());
@@ -95,6 +91,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
+        if(accountReferred >= 10) {
+            BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
+            total = total.add(referralSavingsGoalEntity.getSavingsBalance());
+            String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
+                    "count - "+accountReferred+" amount gotten - "+total.toPlainString();
+            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral", message);
+        }
+
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
         SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
@@ -210,6 +214,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(BigDecimal.ZERO)
                 .goalCategory(goalCategoryEntity)
+                .totalAmountWithdrawn(BigDecimal.ZERO)
                 .lockedSavings(false)
                 .build();
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
