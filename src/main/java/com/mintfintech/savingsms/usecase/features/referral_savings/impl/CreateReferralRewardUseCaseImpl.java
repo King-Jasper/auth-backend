@@ -42,12 +42,16 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
-
     private static final String REFERRAL_CODE = "SIDEHUSTLE";
 
 
-    public void processReferralByUser() {
-        AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId("500000037742");
+    public void processReferralByUser(String userId, int size) {
+        Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        if(!appUserEntityOpt.isPresent()) {
+            log.info("User Id not found.");
+            return;
+        }
+        AppUserEntity appUserEntity = appUserEntityOpt.get();
         MintAccountEntity referral = appUserEntity.getPrimaryAccount();
 
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
@@ -56,14 +60,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         LocalDate today = LocalDate.now();
         LocalDateTime start = LocalDateTime.of(today, LocalTime.of(6, 0));
         LocalDateTime end = LocalDateTime.of(today, LocalTime.of(10, 0));
-        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end);
+        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end, size);
         for(CustomerReferralEntity record : referralList) {
            if(record.isReferrerRewarded()) {
                continue;
            }
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
-           if(total.doubleValue() > 10000.00) {
+           if(total.doubleValue() >= 10000.00) {
                continue;
            }
             long referralRewardAmount = applicationProperty.getReferralRewardAmount();
