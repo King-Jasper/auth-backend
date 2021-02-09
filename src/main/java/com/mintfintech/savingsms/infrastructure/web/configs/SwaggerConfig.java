@@ -5,6 +5,7 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.RequestMethod;
 import springfox.documentation.builders.ApiInfoBuilder;
@@ -26,6 +27,8 @@ import java.util.Optional;
  * Created by jnwanya on
  * Thu, 06 Feb, 2020
  */
+
+@Profile({"dev", "sandbox", "staging"})
 @EnableSwagger2
 @Configuration
 public class SwaggerConfig {
