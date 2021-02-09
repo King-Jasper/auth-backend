@@ -4,7 +4,12 @@ import com.mintfintech.savingsms.domain.dao.CustomerReferralEntityDao;
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CustomerReferralRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+
 import javax.inject.Named;
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -33,5 +38,11 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     @Override
     public long totalReferralRecordsForAccount(MintAccountEntity referral) {
         return repository.countAllByReferrer(referral);
+    }
+
+    @Override
+    public List<CustomerReferralEntity> getByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end) {
+        Pageable pageable = PageRequest.of(0, 15);
+        return repository.getAllByReferrerAndDateCreatedBetween(referral, start, end, pageable);
     }
 }

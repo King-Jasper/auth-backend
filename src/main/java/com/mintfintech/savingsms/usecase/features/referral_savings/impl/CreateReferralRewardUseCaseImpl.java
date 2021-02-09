@@ -16,6 +16,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.scheduling.annotation.Async;
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -40,6 +44,38 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final SystemIssueLogService systemIssueLogService;
 
     private static final String REFERRAL_CODE = "SIDEHUSTLE";
+
+
+    public void processReferralByUser() {
+        AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId("500000037742");
+        MintAccountEntity referral = appUserEntity.getPrimaryAccount();
+
+        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+        SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
+
+        LocalDate today = LocalDate.now();
+        LocalDateTime start = LocalDateTime.of(today, LocalTime.of(6, 0));
+        LocalDateTime end = LocalDateTime.of(today, LocalTime.of(10, 0));
+        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end);
+        for(CustomerReferralEntity record : referralList) {
+           if(record.isReferrerRewarded()) {
+               continue;
+           }
+            BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
+            total = total.add(referralSavingsGoalEntity.getSavingsBalance());
+           if(total.doubleValue() > 10000.00) {
+               continue;
+           }
+            long referralRewardAmount = applicationProperty.getReferralRewardAmount();
+            SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
+            if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
+                record.setReferrerRewarded(true);
+                customerReferralEntityDao.saveRecord(record);
+            }
+            referralSavingsGoalEntity = savingsGoalEntityDao.getRecordById(referralSavingsGoalEntity.getId());
+        }
+
+    }
 
     @Async
     @Override
