@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.impl.CreateReferralRewardUseCaseImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +19,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class IndexController {
 
-    private CreateReferralRewardUseCaseImpl createReferralRewardUseCase;
-    public IndexController(CreateReferralRewardUseCaseImpl createReferralRewardUseCase) {
+    private CreateReferralRewardUseCase createReferralRewardUseCase;
+    @Autowired
+    public void setCreateReferralRewardUseCase(CreateReferralRewardUseCase createReferralRewardUseCase) {
         this.createReferralRewardUseCase = createReferralRewardUseCase;
     }
-
 
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> indexPage() {

@@ -11,4 +11,5 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEv
 public interface CreateReferralRewardUseCase {
     void processCustomerReferralReward(CustomerReferralEvent referralEvent);
     void processReferredCustomerReward(MintAccountEntity mintAccountEntity, SavingsGoalEntity fundedSavingsGoal);
+    void processReferralByUser();
 }
