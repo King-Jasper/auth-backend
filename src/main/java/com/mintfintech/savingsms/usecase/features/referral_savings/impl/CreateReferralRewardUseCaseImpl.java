@@ -83,10 +83,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 
+        if(accountReferred >= 7) {
+           // BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
+           // total = total.add(referralSavingsGoalEntity.getSavingsBalance());
+            String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
+                    "count - "+accountReferred;
+            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral", message);
+        }
 
+        /*
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
-        
+
         if(accountReferred >= 7) {
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
@@ -105,12 +113,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
 
+
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
         SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
         }
+        */
         /*
         Optional<AppUserEntity> referredUserOpt = appUserEntityDao.findAccountOwner(referredAccount);
         if(!referredUserOpt.isPresent()) {
@@ -132,7 +142,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     @Override
     public void processReferredCustomerReward(MintAccountEntity referredAccount, SavingsGoalEntity fundedSavingsGoal) {
 
-        /*
         if(fundedSavingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
             log.info("Savings is not customer savings goal");
             return;
@@ -167,9 +176,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralEntity.setReferredRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
         }
-        */
 
-        /*
         if(referralEntity.isReferrerRewarded()) {
             return;
         }
@@ -193,7 +200,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
         }
-        */
 
     }
 
