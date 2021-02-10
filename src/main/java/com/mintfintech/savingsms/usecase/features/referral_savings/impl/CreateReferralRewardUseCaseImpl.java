@@ -65,11 +65,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
            if(record.isReferrerRewarded()) {
                continue;
            }
+            /*
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
-           if(total.doubleValue() >= 10000.00) {
+            if(total.doubleValue() >= 10000.00) {
                continue;
-           }
+            }*/
             long referralRewardAmount = applicationProperty.getReferralRewardAmount();
             SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
             if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
