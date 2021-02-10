@@ -48,8 +48,10 @@ public class IndexController {
                                                                   @RequestParam(value = "userId", defaultValue = "", required = false) String userId,
                                                                   @RequestParam(value = "overridePeriod", defaultValue = "false", required = false) boolean overridePeriod) {
         new Thread(() -> {
-            createReferralRewardUseCase.processReferralByUser(userId, size, overridePeriod);
+               System.out.println("user Id - "+userId);
+                createReferralRewardUseCase.processReferralByUser(userId, size, overridePeriod);
         }).start();
+
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed reward");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
