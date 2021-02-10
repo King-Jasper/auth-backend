@@ -57,7 +57,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
 
-        LocalDate today = LocalDate.now();
+        LocalDate today = LocalDate.of(2021, 2, 9);
         LocalDateTime start = LocalDateTime.of(today, LocalTime.of(6, 0));
         LocalDateTime end = LocalDateTime.of(today, LocalTime.of(10, 0));
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end, size);
@@ -123,7 +123,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 
-        if(accountReferred >= 10) {
+        /*if(accountReferred >= 10) {
            // BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
            // total = total.add(referralSavingsGoalEntity.getSavingsBalance());
             String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
@@ -131,7 +131,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral", message);
             // referralEntity.setReferrerRewarded(true);
             // customerReferralEntityDao.saveRecord(referralEntity);
-        }
+        }*/
         /*
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
