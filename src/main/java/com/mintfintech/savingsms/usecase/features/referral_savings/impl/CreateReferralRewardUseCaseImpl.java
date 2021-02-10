@@ -57,9 +57,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
 
-        LocalDate today = LocalDate.of(2021, 2, 9);
-        LocalDateTime start = LocalDateTime.of(today, LocalTime.of(6, 0));
-        LocalDateTime end = LocalDateTime.of(today, LocalTime.of(10, 0));
+        LocalDateTime start = LocalDateTime.of(LocalDate.of(2021, 2, 8), LocalTime.of(21, 45));
+        LocalDateTime end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end, size);
         for(CustomerReferralEntity record : referralList) {
            if(record.isReferrerRewarded()) {
@@ -79,7 +78,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             }
             referralSavingsGoalEntity = savingsGoalEntityDao.getRecordById(referralSavingsGoalEntity.getId());
         }
-
     }
 
     @Async
