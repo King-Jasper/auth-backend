@@ -17,6 +17,8 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
     boolean existsByReferrerAndReferred(MintAccountEntity referral, MintAccountEntity referred);
     Optional<CustomerReferralEntity> findFirstByReferredAndReferredRewardedFalse(MintAccountEntity referred);
     long countAllByReferrer(MintAccountEntity mintAccountEntity);
+    Optional<CustomerReferralEntity> findFirstByReferredAndReferralCodeIgnoreCase(MintAccountEntity referred, String referralCode);
+
 
     List<CustomerReferralEntity> getAllByReferrerAndDateCreatedBetween(MintAccountEntity referral,
                                                                        LocalDateTime start,

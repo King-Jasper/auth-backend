@@ -42,7 +42,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
-    private static final String REFERRAL_CODE = "SIDEHUSTLE";
+
+    private static final String SIDE_HUSTLE_REFERRAL_CODE = "SIDEHUSTLE";
+    private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
@@ -110,13 +112,13 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             log.info("Referral userId not found - {}", referralEvent.toString());
             return;
         }
-        if(REFERRAL_CODE.equalsIgnoreCase(referralEvent.getReferralCodeUsed())) {
-            log.info("Side hustle referral code used -- abort");
-            return;
-        }
         AppUserEntity userEntity = appUserEntityDao.getAppUserByUserId(referralEvent.getReferredByUserId());
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(userEntity.getPrimaryAccount().getId());
-        long accountReferred = customerReferralEntityDao.totalReferralRecordsForAccount(referralAccount);
+        boolean canCreateRecord = shouldProceed(referralAccount, referralEvent.getReferralCodeUsed());
+        if(!canCreateRecord){
+            return;
+        }
+        //long accountReferred = customerReferralEntityDao.totalReferralRecordsForAccount(referralAccount);
         Optional<MintAccountEntity> referredOpt = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
         if(!referredOpt.isPresent()) {
             log.info("referred detail not found - {}", referralEvent.toString());
@@ -286,5 +288,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .lockedSavings(false)
                 .build();
         return savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+    }
+
+    private boolean shouldProceed(MintAccountEntity referral, String referralCode) {
+        if(SIDE_HUSTLE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+            log.info("Side hustle referral code used -- abort");
+            return false;
+        }
+        if(VALENTINE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+            log.info("Valentine give away referral code used -- abort");
+            return false;
+        }
+        Optional<CustomerReferralEntity> valReferralRecordOpt = customerReferralEntityDao.findRecordByReferralCodeAndReferredAccount(VALENTINE_REFERRAL_CODE, referral);
+        return !valReferralRecordOpt.isPresent();
     }
 }
