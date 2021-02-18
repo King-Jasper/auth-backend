@@ -6,11 +6,13 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.Date;
 
 /**
  * Created by jnwanya on
@@ -55,6 +57,7 @@ public class MoneyFormatterUtil {
     }
 
     public static void main(String[] args) {
+
        // LocalDateTime end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
        // System.out.println(end);
         /*LocalDateTime now = LocalDateTime.now();

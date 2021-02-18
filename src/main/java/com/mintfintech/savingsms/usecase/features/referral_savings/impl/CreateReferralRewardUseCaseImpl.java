@@ -44,6 +44,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final SystemIssueLogService systemIssueLogService;
 
     private static final String SIDE_HUSTLE_REFERRAL_CODE = "SIDEHUSTLE";
+    private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
 
@@ -291,8 +292,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     }
 
     private boolean shouldProceed(MintAccountEntity referral, String referralCode) {
-        if(SIDE_HUSTLE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
-            log.info("Side hustle referral code used -- abort");
+        if(SIDE_HUSTLE_REFERRAL_CODE.equalsIgnoreCase(referralCode) || CERA_PLUG_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+            log.info("Side hustle referral code used {} -- abort ", referralCode);
             return false;
         }
         if(VALENTINE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
