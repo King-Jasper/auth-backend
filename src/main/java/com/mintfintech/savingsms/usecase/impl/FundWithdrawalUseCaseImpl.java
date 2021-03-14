@@ -306,7 +306,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
                  systemIssueLogService.logIssue("Interest Withdrawal Failed", "Interest To Suspense Withdrawal failed", message);
                  if(msClientResponse.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
-                     publishSavingsGoalRecord(savingsGoalEntity, creditAccount);
+                     publishSavingsGoalRecord(savingsGoalEntity, creditAccount, withdrawalRequestEntity);
                  }
                  continue;
              }
@@ -333,12 +333,11 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
          }
     }
 
-    private void publishSavingsGoalRecord(SavingsGoalEntity savingsGoalEntity, MintBankAccountEntity accountEntity) {
+    private void publishSavingsGoalRecord(SavingsGoalEntity savingsGoalEntity, MintBankAccountEntity accountEntity, SavingsWithdrawalRequestEntity withdrawalRequestEntity) {
         SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
                 .goalId(savingsGoalEntity.getGoalId())
-                //.accountId(mintAccount.getAccountId())
-                .accruedInterest(savingsGoalEntity.getAccruedInterest())
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
+                .accruedInterest(withdrawalRequestEntity.getInterestWithdrawal())
+                .savingsBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal())
                 .name(savingsGoalEntity.getName())
                 .withdrawalAccountNumber(accountEntity.getAccountNumber())
                 .build();
