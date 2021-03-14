@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SmsLogEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
@@ -304,6 +305,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
                  systemIssueLogService.logIssue("Interest Withdrawal Failed", "Interest To Suspense Withdrawal failed", message);
+                 if(msClientResponse.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                     publishSavingsGoalRecord(savingsGoalEntity, creditAccount);
+                 }
                  continue;
              }
              FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -327,6 +331,18 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
              }
          }
+    }
+
+    private void publishSavingsGoalRecord(SavingsGoalEntity savingsGoalEntity, MintBankAccountEntity accountEntity) {
+        SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
+                .goalId(savingsGoalEntity.getGoalId())
+                //.accountId(mintAccount.getAccountId())
+                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .savingsBalance(savingsGoalEntity.getSavingsBalance())
+                .name(savingsGoalEntity.getName())
+                .withdrawalAccountNumber(accountEntity.getAccountNumber())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
     }
 
     private String getSavingsWithdrawalType(SavingsGoalEntity savingsGoalEntity) {
