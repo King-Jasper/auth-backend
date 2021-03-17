@@ -34,6 +34,8 @@ public class AccountMSEventListener {
     private final String CUSTOMER_DEVICE_CHANGE_EVENT = "com.mintfintech.accounts-service.events.user.device-change";
     private final String GCM_NOTIFICATION_DETAIL_EVENT = "com.mintfintech.accounts-service.events.user-gcm-detail-broadcast";
     private final String CUSTOMER_REFERRAL_EVENT = "com.mintfintech.accounts-service.events.customer-referral-info";
+    private final String MINT_BANK_ACCOUNT_STATUS_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-status-update";
+    private final String USER_PROFILE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.user-profile-update";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
@@ -82,6 +84,18 @@ public class AccountMSEventListener {
     public void listenForCustomerReferral(String payload) {
         CustomerReferralEvent event = gson.fromJson(payload, CustomerReferralEvent.class);
         createReferralRewardUseCase.processCustomerReferralReward(event);
+    }
+
+    @KafkaListener(topics = {MINT_BANK_ACCOUNT_STATUS_UPDATE_EVENT})
+    public void listenForMintBankAccountStatusUpdate(String payload) {
+        BankAccountStatusUpdateEvent event = gson.fromJson(payload, BankAccountStatusUpdateEvent.class);
+        accountSetupUseCases.updateBankAccountStatus(event);
+    }
+
+    @KafkaListener(topics = {USER_PROFILE_UPDATE_EVENT})
+    public void listenForUserProfileUpdate(String payload) {
+        UserDetailUpdateEvent event = gson.fromJson(payload, UserDetailUpdateEvent.class);
+        accountSetupUseCases.updateUserProfileDetails(event);
     }
 
 }
