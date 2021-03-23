@@ -69,6 +69,39 @@ public class ApplicationProperty {
         return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("kubernetes"));
     }
 
+    public double getFileUploadMaximumSize() {
+        return Double.parseDouble(environmentService.getVariable("file-upload-maximum-size-in-mb"));
+    }
+
+    public double getPayDayMaxLoanPercentAmount() {
+        return Double.parseDouble(environmentService.getVariable("loan.pay-day.max-percent-amount"));
+    }
+
+    public double getPayDayLoanInterestRate() {
+        return Double.parseDouble(environmentService.getVariable("loan.pay-day.interest-rate"));
+    }
+
+    public long getPayDayLoanMaxTenor() {
+        return Long.parseLong(environmentService.getVariable("loan.pay-day.max-tenor-days"));
+    }
+
+    public String getAmazonS3AccessKey(){
+        return environmentService.getVariable("amazon.accessKey");
+    }
+    public String getAmazonS3SecretKey(){
+        return environmentService.getVariable("amazon.secretKey");
+    }
+
+    public String getAmazonS3BucketName(){ return environmentService.getVariable("amazon.bucketName"); }
+
+    public int getAmazonPrivateUrlExpirationTimeInMinutes(){
+        return Integer.parseInt(environmentService.getVariable("amazon.private-file.access-expiry-time-in-minutes", "10"));
+    }
+
+    public String getAmazonS3Region(){
+        return environmentService.getVariable("amazon.region");
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

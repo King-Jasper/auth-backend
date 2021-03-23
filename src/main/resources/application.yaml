@@ -52,3 +52,11 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+file-upload-maximum-size-in-mb: 2
+
+loan:
+  pay-day:
+    interest-rate: 1.88
+    max-percent-amount: 70
+    max-tenor-days: 30
