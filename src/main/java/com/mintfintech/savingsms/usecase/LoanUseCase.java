@@ -7,11 +7,11 @@ import java.math.BigDecimal;
 
 public interface LoanUseCase {
 
-    LoanModel approveLoanRequest(AuthenticatedUser authenticatedUser, String loanId);
-
-    LoanModel rejectLoanRequest(AuthenticatedUser authenticatedUser, String loanId, String reason);
+    LoanModel approveLoanRequest(AuthenticatedUser authenticatedUser, String loanId, String reason, boolean approved);
 
     BigDecimal getPendingRepaymentAmount(String loanId);
 
     LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType);
+
+    LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId);
 }

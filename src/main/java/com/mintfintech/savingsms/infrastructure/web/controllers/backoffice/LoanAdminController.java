@@ -7,8 +7,8 @@ import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
-import com.mintfintech.savingsms.usecase.models.PayDayLoanCustomerProfileModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 import java.util.List;
@@ -51,42 +52,35 @@ public class LoanAdminController {
     private final GetLoansUseCase getLoansUseCase;
     private final LoanUseCase loanUseCase;
 
-    @ApiOperation(value = "Returns list of customer profile with unverified employee information.")
-    @GetMapping(value = "customer-profile/unverified-employee-information", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<List<PayDayLoanCustomerProfileModel>>> getUnverifiedEmployeeInformation() {
-
-        List<PayDayLoanCustomerProfileModel> response = customerLoanProfileUseCase.getUnverifiedEmployeeInformation();
-        ApiResponseJSON<List<PayDayLoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
-
     @ApiOperation(value = "Verify Loan Customer Employment Information.")
     @PutMapping(value = "{customerLoanProfileId}/verify/employment-details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PayDayLoanCustomerProfileModel>> verifyEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                                       @PathVariable("customerLoanProfileId") String customerLoanProfileId) {
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> verifyEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                 @PathVariable("customerLoanProfileId") String customerLoanProfileId) {
 
-        PayDayLoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId));
-        ApiResponseJSON<PayDayLoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
-
-    @ApiOperation(value = "Returns list of customer profile with verified employee information.")
-    @GetMapping(value = "customer-profile/verified-employee-information", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<List<PayDayLoanCustomerProfileModel>>> getVerifiedEmployeeInformation() {
-
-        List<PayDayLoanCustomerProfileModel> response = customerLoanProfileUseCase.getVerifiedEmployeeInformation();
-        ApiResponseJSON<List<PayDayLoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId));
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Blacklist a customer.")
     @PutMapping(value = "{customerLoanProfileId}/blacklist", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PayDayLoanCustomerProfileModel>> blackListCustomer(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                             @PathVariable("customerLoanProfileId") String customerLoanProfileId,
-                                                                                             @RequestBody LoanRequest request) {
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> blackListCustomer(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                       @PathVariable("customerLoanProfileId") String customerLoanProfileId,
+                                                                                       @RequestBody CustomerBlacklistRequest request) {
 
-        PayDayLoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), request.getReason());
-        ApiResponseJSON<PayDayLoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), request.getReason());
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Approve/Reject Loan Request.")
+    @PostMapping(value = "{loanId}/approve", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanModel>> approveLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                  @PathVariable("loanId") String loanId,
+                                                                  @RequestBody LoanApprovalRequest request) {
+
+        LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), request.approved);
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -112,30 +106,29 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Approve Loan Request.")
-    @PostMapping(value = "{loanId}/approve", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> approveLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                  @PathVariable("loanId") String loanId) {
+    @ApiOperation(value = "Returns list of customer profile.")
+    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@NotNull @RequestParam("blacklisted") boolean blacklisted,
+                                                                                                   @NotNull @RequestParam("employee-info-verified") boolean employeeInformationVerified
+    ) {
 
-        LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId);
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
-
-    @ApiOperation(value = "Reject Loan Request.")
-    @PostMapping(value = "{loanId}/reject", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> rejectLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                 @PathVariable("loanId") String loanId,
-                                                                 @RequestBody LoanRequest request) {
-
-        LoanModel response = loanUseCase.rejectLoanRequest(authenticatedUser, loanId, request.getReason());
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        List<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getLoanCustomerProfiles(blacklisted, employeeInformationVerified);
+        ApiResponseJSON<List<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
     @Data
-    private static class LoanRequest {
+    private static class LoanApprovalRequest {
+        private String reason;
+
+        @NotNull
+        private boolean approved;
+    }
+
+    @Data
+    private static class CustomerBlacklistRequest {
         @NotEmpty
         private String reason;
+
     }
 }

@@ -12,7 +12,6 @@ import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +54,11 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     @Override
     public LoanModel toLoanModel(LoanRequestEntity loanRequestEntity) {
         LoanModel loanModel = new LoanModel();
+
+        if (loanRequestEntity == null){
+            return loanModel;
+        }
+
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
         loanModel.setLoanAmount(loanRequestEntity.getLoanAmount().toPlainString());

@@ -10,7 +10,5 @@ public interface CustomerLoanProfileEntityDao extends CrudDao<CustomerLoanProfil
 
     Optional<CustomerLoanProfileEntity> findCustomerProfileByAppUser(AppUserEntity appUserEntity);
 
-    List<CustomerLoanProfileEntity> getCustomerWithUnverifiedEmployeeInformation();
-
-    List<CustomerLoanProfileEntity> getCustomerWithVerifiedEmployeeInformation();
+    List<CustomerLoanProfileEntity> getBlackListedAndVerifiedCustomers(boolean blacklisted, boolean employeeInfoVerified);
 }

@@ -42,12 +42,8 @@ public class CustomerLoanProfileEntityDaoImpl implements CustomerLoanProfileEnti
     }
 
     @Override
-    public List<CustomerLoanProfileEntity> getCustomerWithUnverifiedEmployeeInformation() {
-        return repository.findCustomerEmployeeInformation(false);
+    public List<CustomerLoanProfileEntity> getBlackListedAndVerifiedCustomers(boolean blacklisted, boolean employeeInfoVerified) {
+        return repository.findCustomerEmployeeInformation(blacklisted, employeeInfoVerified);
     }
 
-    @Override
-    public List<CustomerLoanProfileEntity> getCustomerWithVerifiedEmployeeInformation() {
-        return repository.findCustomerEmployeeInformation(true);
-    }
 }
