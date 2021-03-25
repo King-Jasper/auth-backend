@@ -3,3 +3,10 @@ savings-goal:
 mint:
   email:
     system-admin: devops@bankwithmint.com
+sentry:
+  dsn: https://1c8358fd14504075a355a57603ea1869@o555418.ingest.sentry.io/5685343
+  attach-server-name: true
+  server-name: savings-service
+  environment: production
+  enable-tracing: true
+  traces-sample-rate: 0.3

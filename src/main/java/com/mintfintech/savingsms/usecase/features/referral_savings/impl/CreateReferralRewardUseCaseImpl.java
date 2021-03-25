@@ -47,6 +47,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
+    private static final BigDecimal referralAmount = BigDecimal.valueOf(2000.00);
+    private static final BigDecimal preReferralAmount = BigDecimal.valueOf(1000.00);
+
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
         Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
@@ -199,11 +202,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     @Override
     public void processReferredCustomerReward(MintAccountEntity referredAccount, SavingsGoalEntity fundedSavingsGoal) {
 
+        LocalDateTime newProgramDate = LocalDate.of(2021, 3, 24).atStartOfDay();
         if(fundedSavingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
             log.info("Savings is not customer savings goal");
             return;
         }
+        boolean newProgram = false;
         BigDecimal minimumFunding = BigDecimal.valueOf(1000.00);
+        if(referredAccount.getDateCreated().isAfter(newProgramDate)) {
+            minimumFunding = BigDecimal.valueOf(1500.00);
+            newProgram = true;
+        }
+
         BigDecimal goalBalance = fundedSavingsGoal.getSavingsBalance();
         if(goalBalance.compareTo(minimumFunding) < 0) {
             log.info("Savings balance {} is lower than minimum balance {}", goalBalance, minimumFunding);
@@ -252,9 +262,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
-
-        long referralRewardAmount = applicationProperty.getReferralRewardAmount();
-        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
+        BigDecimal referralRewardAmount = referralAmount;
+        if(!newProgram) {
+            referralRewardAmount = preReferralAmount;
+        }
+        //        applicationProperty.getReferralRewardAmount();
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralRewardAmount);
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
@@ -296,11 +309,13 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             log.info("Side hustle referral code used {} -- abort ", referralCode);
             return false;
         }
-        if(VALENTINE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+        /*if(VALENTINE_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
             log.info("Valentine give away referral code used -- abort");
             return false;
         }
         Optional<CustomerReferralEntity> valReferralRecordOpt = customerReferralEntityDao.findRecordByReferralCodeAndReferredAccount(VALENTINE_REFERRAL_CODE, referral);
         return !valReferralRecordOpt.isPresent();
+        */
+        return true;
     }
 }
