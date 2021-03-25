@@ -51,7 +51,7 @@ public class LoanController {
     private final GetLoansUseCase getLoansUseCase;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final LoanUseCase loanUseCase;
-
+    
     @ApiOperation(value = "Returns paginated list of loans of a user.")
     @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
