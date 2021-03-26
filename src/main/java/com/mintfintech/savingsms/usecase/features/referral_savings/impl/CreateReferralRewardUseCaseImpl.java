@@ -48,7 +48,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
     private static final BigDecimal referralAmount = BigDecimal.valueOf(2000.00);
-    private static final BigDecimal preReferralAmount = BigDecimal.valueOf(1000.00);
+   // private static final BigDecimal preReferralAmount = BigDecimal.valueOf(1000.00);
 
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
@@ -207,12 +207,13 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             log.info("Savings is not customer savings goal");
             return;
         }
-        boolean newProgram = false;
-        BigDecimal minimumFunding = BigDecimal.valueOf(1000.00);
-        if(referredAccount.getDateCreated().isAfter(newProgramDate)) {
+       // boolean newProgram = false;
+        BigDecimal minimumFunding = BigDecimal.valueOf(1500.00);
+        /*if(referredAccount.getDateCreated().isAfter(newProgramDate)) {
             minimumFunding = BigDecimal.valueOf(1500.00);
             newProgram = true;
         }
+        */
 
         BigDecimal goalBalance = fundedSavingsGoal.getSavingsBalance();
         if(goalBalance.compareTo(minimumFunding) < 0) {
@@ -262,12 +263,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
-        BigDecimal referralRewardAmount = referralAmount;
-        if(!newProgram) {
+        /*if(!newProgram) {
             referralRewardAmount = preReferralAmount;
         }
+        */
         //        applicationProperty.getReferralRewardAmount();
-        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralRewardAmount);
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralAmount);
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);

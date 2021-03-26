@@ -4,6 +4,8 @@ import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppSequenceEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppSequenceRepository;
+import org.hibernate.StaleObjectStateException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
@@ -34,7 +36,7 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
      *
      * @return The next sequence number of a specific type.
      */
-    @Retryable(value = { PessimisticLockException.class, LockTimeoutException.class }, maxAttempts = 5, backoff = @Backoff(delay = 1000))
+    @Retryable(value = {StaleObjectStateException.class, ObjectOptimisticLockingFailureException.class, PessimisticLockException.class, LockTimeoutException.class }, maxAttempts = 5, backoff = @Backoff(delay = 1000))
     @Transactional
     public Long nextId(SequenceType sequenceType){
         AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
