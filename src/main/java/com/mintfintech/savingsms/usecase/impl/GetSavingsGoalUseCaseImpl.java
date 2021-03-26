@@ -142,7 +142,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             return "Sorry, your savings will be matured in "+remainingDays+" day(s) time";
         }else {
             if(applicationProperty.isProductionEnvironment() || applicationProperty.isStagingEnvironment()) {
-                return "Sorry, the minimum amount for withdrawal is N3000.";
+                return "Sorry, the minimum amount for withdrawal is N2000.";
             }else {
                 return "Sorry, the minimum amount for withdrawal is N20.";
             }

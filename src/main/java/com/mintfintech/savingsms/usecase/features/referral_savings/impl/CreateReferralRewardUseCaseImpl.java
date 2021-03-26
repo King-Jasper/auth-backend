@@ -21,6 +21,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 
 /**
  * Created by jnwanya on
@@ -104,12 +105,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     @Async
     @Override
     public void processCustomerReferralReward(CustomerReferralEvent referralEvent) {
+
         boolean referralRewardEnabled = Boolean.parseBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.REFERRAL_REWARD_ENABLED, "true"));
         if(!referralRewardEnabled) {
             log.info("Referral reward not enabled.");
         }
         try {
-            Thread.sleep(2500);
+            int seconds = new Random().nextInt(500) + 2000;
+            Thread.sleep(seconds);
             // this allows for the new customer details published to be created completely.
         }catch (Exception ignored){}
         if(StringUtils.isEmpty(referralEvent.getReferredByUserId())) {
