@@ -14,6 +14,7 @@ import java.util.Optional;
  * Tue, 15 Dec, 2020
  */
 public interface CustomerReferralRepository extends JpaRepository<CustomerReferralEntity, Long> {
+    boolean existsByReferred(MintAccountEntity referred);
     boolean existsByReferrerAndReferred(MintAccountEntity referral, MintAccountEntity referred);
     Optional<CustomerReferralEntity> findFirstByReferredAndReferredRewardedFalse(MintAccountEntity referred);
     long countAllByReferrer(MintAccountEntity mintAccountEntity);

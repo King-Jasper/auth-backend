@@ -129,7 +129,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return;
         }
         MintAccountEntity referredAccount = referredOpt.get();
-        if(customerReferralEntityDao.recordExistForAccounts(referralAccount, referredAccount)) {
+        if(customerReferralEntityDao.recordExistForReferredAccount(referredAccount)) {
             log.info("referral record is already created. {}", referralEvent.toString());
             return;
         }

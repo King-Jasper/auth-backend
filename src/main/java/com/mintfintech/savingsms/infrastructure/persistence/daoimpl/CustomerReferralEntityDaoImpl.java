@@ -31,6 +31,11 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     }
 
     @Override
+    public boolean recordExistForReferredAccount(MintAccountEntity referred) {
+        return repository.existsByReferred(referred);
+    }
+
+    @Override
     public Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred) {
         return repository.findFirstByReferredAndReferredRewardedFalse(referred);
     }
