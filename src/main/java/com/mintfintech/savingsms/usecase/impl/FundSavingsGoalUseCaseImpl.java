@@ -88,7 +88,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             }
         }*/
         if(debitAccount.getAvailableBalance().compareTo(amount) < 0) {
-            throw new BadRequestException("Sorry, you have sufficient balance in your account for this request.");
+            throw new BadRequestException("Sorry, you do not have sufficient balance in your account for this request.");
         }
         TierLevelEntity tierLevelEntity = tierLevelEntityDao.getRecordById(debitAccount.getAccountTierLevel().getId());
         if(tierLevelEntity.getLevel() != TierLevelTypeConstant.TIER_THREE) {
