@@ -68,7 +68,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             start = LocalDateTime.of(LocalDate.of(2021, 2, 8), LocalTime.of(21, 0));
             end = LocalDateTime.now();
         }else {
-            start = LocalDateTime.of(LocalDate.of(2021, 2, 8), LocalTime.of(21, 30));
+            start = LocalDateTime.of(LocalDate.of(2021, 3, 8), LocalTime.of(21, 30));
             end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
         }
 
@@ -91,8 +91,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             if(total.doubleValue() >= 10000.00) {
                continue;
             }*/
-            long referralRewardAmount = applicationProperty.getReferralRewardAmount();
-            SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
+            //long referralRewardAmount = applicationProperty.getReferralRewardAmount();
+            SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralAmount);
             log.info("credit response code - {}", fundingResponse.getResponseCode());
             if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
                 record.setReferrerRewarded(true);
