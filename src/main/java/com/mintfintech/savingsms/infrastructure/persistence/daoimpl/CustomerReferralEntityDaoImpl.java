@@ -48,7 +48,7 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     @Override
     public List<CustomerReferralEntity> getByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size) {
         Pageable pageable = PageRequest.of(0, size);
-        return repository.getAllByReferrerAndDateCreatedBetween(referral, start, end, pageable);
+        return repository.getAllByReferrerAndDateCreatedBetweenOrderByDateCreatedDesc(referral, start, end, pageable);
     }
 
     @Override
