@@ -14,4 +14,5 @@ public class CustomerReferralEvent {
     private String userId;
     private String referredByUserId;
     private String referralCodeUsed;
+    private String registrationPlatform;
 }

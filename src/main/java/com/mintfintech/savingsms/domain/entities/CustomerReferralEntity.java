@@ -29,4 +29,6 @@ public class CustomerReferralEntity extends AbstractBaseEntity<Long>{
     private boolean referrerRewarded = false;
 
     private boolean referredRewarded = false;
+
+    private String registrationPlatform;
 }

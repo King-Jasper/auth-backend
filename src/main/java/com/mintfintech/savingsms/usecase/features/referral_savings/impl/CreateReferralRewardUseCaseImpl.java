@@ -85,6 +85,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
            if(record.isReferrerRewarded()) {
                continue;
            }
+           if(StringUtils.defaultString(record.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
+               continue;
+           }
             /*
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
@@ -143,6 +146,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .referredRewarded(false)
                 .referrerRewarded(false)
                 .referralCode(referralEvent.getReferralCodeUsed())
+                .registrationPlatform(referralEvent.getRegistrationPlatform())
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 
@@ -251,6 +255,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         */
 
         if(referralEntity.isReferrerRewarded()) {
+            return;
+        }
+        if(StringUtils.defaultString(referralEntity.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
             return;
         }
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(referralEntity.getReferrer().getId());
