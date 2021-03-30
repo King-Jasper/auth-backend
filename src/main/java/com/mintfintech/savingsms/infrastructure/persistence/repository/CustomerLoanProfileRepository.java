@@ -10,11 +10,11 @@ import java.util.Optional;
 
 public interface CustomerLoanProfileRepository extends JpaRepository<CustomerLoanProfileEntity, Long> {
 
-    Optional<CustomerLoanProfileEntity> findByUser(AppUserEntity appUserEntity);
+    Optional<CustomerLoanProfileEntity> findByAppUser(AppUserEntity appUserEntity);
 
-    @Query("select * from CustomerLoanProfileEntity s where" +
-            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.employeeInformation.verified = ?2 and" +
-            " s.blacklisted = ?1")
-    List<CustomerLoanProfileEntity> findCustomerEmployeeInformation(boolean blacklisted, boolean employeeInfoVerified);
+//    @Query("select * from CustomerLoanProfileEntity s where" +
+//            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+//            " s.employeeInformation.verified = ?2 and" +
+//            " s.blacklisted = ?1")
+//    List<CustomerLoanProfileEntity> findCustomerEmployeeInformation(boolean blacklisted, boolean employeeInfoVerified);
 }

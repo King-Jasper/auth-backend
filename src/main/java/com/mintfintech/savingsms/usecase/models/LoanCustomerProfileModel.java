@@ -2,6 +2,8 @@ package com.mintfintech.savingsms.usecase.models;
 
 import lombok.Data;
 
+import java.util.List;
+
 @Data
 public class LoanCustomerProfileModel {
 
@@ -14,4 +16,10 @@ public class LoanCustomerProfileModel {
     private String blacklistReason;
 
     private double rating;
+
+    private double maxLoanPercent;
+
+    private double interestRate;
+
+    private List<LoanModel> loans;
 }

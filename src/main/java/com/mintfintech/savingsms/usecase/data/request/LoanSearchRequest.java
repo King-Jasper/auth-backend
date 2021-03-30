@@ -13,4 +13,5 @@ public class LoanSearchRequest {
     private LocalDate fromDate;
     private LocalDate toDate;
     private String approvalStatus;
+    private String loanType;
 }

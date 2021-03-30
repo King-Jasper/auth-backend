@@ -3,9 +3,9 @@ package com.mintfintech.savingsms.utils;
 import com.google.i18n.phonenumbers.PhoneNumberUtil;
 import com.google.i18n.phonenumbers.Phonenumber;
 
-public class PhoneNumberUtil {
+public class PhoneNumberUtils {
 
-    private static com.google.i18n.phonenumbers.PhoneNumberUtil phoneNumberUtil = com.google.i18n.phonenumbers.PhoneNumberUtil.getInstance();
+    private static PhoneNumberUtil phoneNumberUtil = PhoneNumberUtil.getInstance();
 
     public static String toInternationalFormat(String phoneNumber) {
         return toInternationalPhoneNumber(phoneNumber, "NG");

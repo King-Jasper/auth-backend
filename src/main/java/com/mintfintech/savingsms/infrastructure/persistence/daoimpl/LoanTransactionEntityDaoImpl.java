@@ -3,7 +3,6 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.LoanTransactionRepository;
 
 import javax.inject.Named;
@@ -13,7 +12,11 @@ import java.util.Optional;
 @Named
 public class LoanTransactionEntityDaoImpl implements LoanTransactionEntityDao {
 
-    private LoanTransactionRepository repository;
+    private final LoanTransactionRepository repository;
+
+    public LoanTransactionEntityDaoImpl(LoanTransactionRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public Optional<LoanTransactionEntity> findById(Long aLong) {
@@ -30,9 +33,8 @@ public class LoanTransactionEntityDaoImpl implements LoanTransactionEntityDao {
         return repository.save(record);
     }
 
-
     @Override
     public List<LoanTransactionEntity> getLoanTransactions(LoanRequestEntity loanRequestEntity) {
-        return repository.getAllByRecordStatusAndLoanRequest(RecordStatusConstant.ACTIVE, loanRequestEntity);
+        return repository.getAllByRecordStatusAndLoanRequest(loanRequestEntity);
     }
 }

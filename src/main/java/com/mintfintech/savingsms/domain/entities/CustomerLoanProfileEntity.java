@@ -22,7 +22,7 @@ import javax.persistence.Table;
 public class CustomerLoanProfileEntity extends AbstractBaseEntity<Long> {
 
     @OneToOne(optional = false, fetch = FetchType.LAZY)
-    private AppUserEntity user;
+    private AppUserEntity appUser;
 
     @Builder.Default
     private boolean blacklisted = false;

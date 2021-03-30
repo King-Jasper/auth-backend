@@ -106,16 +106,16 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns list of customer profile.")
-    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<List<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@NotNull @RequestParam("blacklisted") boolean blacklisted,
-                                                                                                   @NotNull @RequestParam("employee-info-verified") boolean employeeInformationVerified
-    ) {
-
-        List<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getLoanCustomerProfiles(blacklisted, employeeInformationVerified);
-        ApiResponseJSON<List<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
+//    @ApiOperation(value = "Returns list of customer profile.")
+//    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<ApiResponseJSON<List<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@NotNull @RequestParam("blacklisted") boolean blacklisted,
+//                                                                                                   @NotNull @RequestParam("employee-info-verified") boolean employeeInformationVerified
+//    ) {
+//
+//        List<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getLoanCustomerProfiles(blacklisted, employeeInformationVerified);
+//        ApiResponseJSON<List<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+//        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+//    }
 
     @Data
     private static class LoanApprovalRequest {

@@ -38,12 +38,13 @@ public class CustomerLoanProfileEntityDaoImpl implements CustomerLoanProfileEnti
 
     @Override
     public Optional<CustomerLoanProfileEntity> findCustomerProfileByAppUser(AppUserEntity appUserEntity) {
-        return repository.findByUser(appUserEntity);
+        return repository.findByAppUser(appUserEntity);
     }
 
     @Override
     public List<CustomerLoanProfileEntity> getBlackListedAndVerifiedCustomers(boolean blacklisted, boolean employeeInfoVerified) {
-        return repository.findCustomerEmployeeInformation(blacklisted, employeeInfoVerified);
+//        return repository.findCustomerEmployeeInformation(blacklisted, employeeInfoVerified);
+        return null;
     }
 
 }

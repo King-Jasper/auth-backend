@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
@@ -42,6 +43,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 .status(searchRequest.getLoanStatus() != null ? LoanRepaymentStatusConstant.valueOf(searchRequest.getLoanStatus()) : null)
                 .approvalStatus(searchRequest.getApprovalStatus() != null ? LoanApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
+                .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
                 .build();
 
         Page<LoanRequestEntity> goalEntityPage = loanRequestEntityDao.searchLoans(searchDTO, page, size);
@@ -68,27 +70,6 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount().toPlainString());
         loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
         loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate());
-
-        List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loanRequestEntity);
-
-        List<LoanTransactionModel> transactionModels = new ArrayList<>();
-
-        for (LoanTransactionEntity entity : transactions) {
-
-            LoanTransactionModel model = new LoanTransactionModel();
-            model.setAmount(entity.getTransactionAmount().toPlainString());
-            model.setReference(entity.getTransactionReference());
-            model.setExternalReference(entity.getExternalReference());
-            model.setResponseCode(entity.getResponseCode());
-            model.setStatus(entity.getTransactionStatus().name());
-            model.setResponseMessage(entity.getResponseMessage());
-            model.setType(entity.getTransactionType().name());
-            model.setPaymentDate(entity.getDateCreated());
-
-            transactionModels.add(model);
-        }
-
-        loanModel.setTransactions(transactionModels);
 
         return loanModel;
     }

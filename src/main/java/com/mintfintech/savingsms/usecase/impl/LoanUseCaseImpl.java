@@ -19,17 +19,19 @@ import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +41,6 @@ public class LoanUseCaseImpl implements LoanUseCase {
     private final LoanTransactionEntityDao loanTransactionEntityDao;
     private final ApplicationProperty applicationProperty;
     private final GetLoansUseCase getLoansUseCase;
-    private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
@@ -87,15 +88,6 @@ public class LoanUseCaseImpl implements LoanUseCase {
     }
 
     @Override
-    public BigDecimal getPendingRepaymentAmount(String loanId) {
-
-        LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
-                .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
-
-        return loanRequestEntity.getRepaymentAmount().subtract(loanRequestEntity.getAmountPaid());
-    }
-
-    @Override
     public LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType) {
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
@@ -110,7 +102,9 @@ public class LoanUseCaseImpl implements LoanUseCase {
             throw new BadRequestException("This user is blacklisted");
         }
 
-        BigDecimal maxLoanAmount = customerLoanProfileUseCase.getLoanMaxAmount(currentUser, loanType);
+        LoanTypeConstant loanTypeConstant = LoanTypeConstant.valueOf(loanType);
+
+        BigDecimal maxLoanAmount = getLoanMaxAmount(appUser, customerLoanProfileEntity, loanTypeConstant);
 
         BigDecimal loanAmount = BigDecimal.valueOf(amount);
 
@@ -124,8 +118,8 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         LoanRequestEntity loanRequestEntity = null;
 
-        if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
-            loanRequestEntity = payDayLoanRequest(customerLoanProfileEntity, loanAmount, mintAccount, appUser);
+        if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
+            loanRequestEntity = payDayLoanRequest(loanAmount, mintAccount, appUser);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
@@ -133,6 +127,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
     }
 
     @Override
+    @Transactional
     public LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId) {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
 
@@ -143,9 +138,9 @@ public class LoanUseCaseImpl implements LoanUseCase {
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
         BigDecimal repaymentAmount = BigDecimal.valueOf(amount);
-        BigDecimal amountPending = getPendingRepaymentAmount(loanId);
+        BigDecimal amountPending = loanRequestEntity.getRepaymentAmount().subtract(loanRequestEntity.getAmountPaid());
 
-        if (repaymentAmount.compareTo(amountPending) > 0){
+        if (repaymentAmount.compareTo(amountPending) > 0) {
             repaymentAmount = amountPending;
         }
 
@@ -169,27 +164,84 @@ public class LoanUseCaseImpl implements LoanUseCase {
                 .transactionType(TransactionTypeConstant.DEBIT)
                 .build();
 
-        loanTransactionEntityDao.saveRecord(entity);
+        entity = loanTransactionEntityDao.saveRecord(entity);
 
-        return getLoansUseCase.toLoanModel(loanRequestEntity);
+        updateCustomerRating(appUser);
+
+        return repaymentResponse(entity, loanRequestEntity);
     }
 
-    private void updateCustomerRating(){
+    private LoanModel repaymentResponse(LoanTransactionEntity entity, LoanRequestEntity loanRequestEntity){
+        LoanTransactionModel loanTransactionModel = new LoanTransactionModel();
+        loanTransactionModel.setPaymentDate(entity.getDateCreated());
+        loanTransactionModel.setType(entity.getTransactionType().name());
+        loanTransactionModel.setStatus(entity.getTransactionStatus().name());
+        loanTransactionModel.setReference(entity.getTransactionReference());
+        loanTransactionModel.setResponseCode(entity.getResponseCode());
+        loanTransactionModel.setAmount(entity.getTransactionAmount().toPlainString());
+        loanTransactionModel.setResponseMessage(entity.getResponseMessage());
+        loanTransactionModel.setExternalReference(entity.getExternalReference());
 
+        LoanModel loanModel = getLoansUseCase.toLoanModel(loanRequestEntity);
+        List<LoanTransactionModel> loanTransactionModels = new ArrayList<>();
+        loanTransactionModels.add(loanTransactionModel);
+        loanModel.setTransactions(loanTransactionModels);
+
+        return loanModel;
+    }
+
+    @Override
+    public LoanModel getLoanTransactions(String loanId) {
+        LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
+                .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
+
+        LoanModel loanModel = getLoansUseCase.toLoanModel(loanRequestEntity);
+
+        List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loanRequestEntity);
+
+        List<LoanTransactionModel> transactionModels = new ArrayList<>();
+
+        for (LoanTransactionEntity entity : transactions) {
+
+            LoanTransactionModel model = new LoanTransactionModel();
+            model.setAmount(entity.getTransactionAmount().toPlainString());
+            model.setReference(entity.getTransactionReference());
+            model.setExternalReference(entity.getExternalReference());
+            model.setResponseCode(entity.getResponseCode());
+            model.setStatus(entity.getTransactionStatus().name());
+            model.setResponseMessage(entity.getResponseMessage());
+            model.setType(entity.getTransactionType().name());
+            model.setPaymentDate(entity.getDateCreated());
+
+            transactionModels.add(model);
+        }
+
+        loanModel.setTransactions(transactionModels);
+        return loanModel;
+    }
+
+    @Override
+    public void updateCustomerRating(AppUserEntity currentUser) {
+
+        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(currentUser)
+                .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
+
+
+        double totalLoanCount = loanRequestEntityDao.countTotalLoans(currentUser);
+        double totalRepaymentFailed = loanRequestEntityDao.countTotalLoansPastRepaymentDueDate(currentUser);
+
+        double rating = ((totalLoanCount - totalRepaymentFailed)/totalLoanCount) * 5.0;
+
+        customerLoanProfileEntity.setRating(rating);
+
+        customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
     }
 
     private LoanRequestEntity payDayLoanRequest(
-            CustomerLoanProfileEntity customerLoanProfileEntity,
             BigDecimal loanAmount,
             MintBankAccountEntity mintAccount,
             AppUserEntity appUser
     ) {
-
-        EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-
-        if (!employeeInformationEntity.isVerified()) {
-            throw new BadRequestException("This user employee information has not be verified");
-        }
 
         LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
                 .bankAccount(mintAccount)
@@ -202,6 +254,25 @@ public class LoanUseCaseImpl implements LoanUseCase {
                 .build();
 
         return loanRequestEntityDao.saveRecord(loanRequestEntity);
+    }
+
+    private BigDecimal getLoanMaxAmount(AppUserEntity appUser, CustomerLoanProfileEntity customerLoanProfileEntity, LoanTypeConstant loanTypeConstant) {
+
+        BigDecimal maxAmount = BigDecimal.ZERO;
+
+        if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
+
+            if (customerLoanProfileEntity.getEmployeeInformation() == null) {
+                throw new BadRequestException("An Employee Information does not exist for this user.");
+            }
+
+            EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
+
+            maxAmount = employeeInformationEntity.getMonthlyIncome().multiply(BigDecimal.valueOf(applicationProperty.getPayDayMaxLoanPercentAmount() / 100.0));
+
+        }
+
+        return maxAmount;
     }
 
 }
