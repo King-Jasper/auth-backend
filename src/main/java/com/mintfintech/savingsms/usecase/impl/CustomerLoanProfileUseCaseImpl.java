@@ -10,7 +10,9 @@ import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.ResourceFileEntity;
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.models.CustomerLoanProfileSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -18,18 +20,21 @@ import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
+import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
+import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
+import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -85,9 +90,11 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         loanUseCase.loanRequest(currentUser, request.getLoanAmount(), "PAYDAY");
 
-        List<LoanRequestEntity> loanRequestEntities = loanRequestEntityDao.getLoansByAppUser(appUser, "PAYDAY");
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        loanCustomerProfileModel.setLoanHistory(addLoanHistoryToCustomerLoanProfile(appUser, "PAYDAY"));
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
 
-        return buildLoanCustomerProfileModel(customerLoanProfileEntity, LoanTypeConstant.valueOf("PAYDAY"), loanRequestEntities);
+        return loanCustomerProfileModel;
     }
 
     @Override
@@ -99,39 +106,75 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 () -> new BadRequestException("No Customer Loan Profile exists for this")
         );
 
-        List<LoanRequestEntity> loanRequestEntities = loanRequestEntityDao.getLoansByAppUser(appUser, loanListType);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
 
-        return buildLoanCustomerProfileModel(customerLoanProfileEntity, LoanTypeConstant.valueOf(loanType), loanRequestEntities);
+        loanCustomerProfileModel.setLoanHistory(addLoanHistoryToCustomerLoanProfile(appUser, loanListType));
+
+        if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
+            loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
+            loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
+
+            loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        }
+
+        return loanCustomerProfileModel;
+    }
+
+    @Override
+    public PagedDataResponse<LoanCustomerProfileModel> getPagedLoanCustomerProfiles(CustomerProfileSearchRequest searchRequest, int page, int size) {
+
+        CustomerLoanProfileSearchDTO searchDTO = CustomerLoanProfileSearchDTO.builder()
+                .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
+                .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
+                .verificationStatus(searchRequest.getVerificationStatus() != null ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
+                .build();
+
+        Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
+
+        return new PagedDataResponse<>(loanProfileEntityPage.getTotalElements(), loanProfileEntityPage.getTotalPages(),
+                loanProfileEntityPage.get().map(this::toLoanCustomerProfileModel)
+                        .collect(Collectors.toList()));
+    }
+
+    @Override
+    public LoanCustomerProfileModel getCustomerEmployerInfo(long customerLoanProfileId) {
+
+        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findById(customerLoanProfileId).orElseThrow(
+                () -> new BadRequestException("No Customer Loan Profile exists for this")
+        );
+
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        return loanCustomerProfileModel;
     }
 
 
     @Override
-    public LoanCustomerProfileModel verifyEmploymentInformation(AuthenticatedUser currentUser, long customerLoanProfileId) {
+    public LoanCustomerProfileModel verifyEmploymentInformation(AuthenticatedUser currentUser, long customerLoanProfileId, boolean isApproved, String reason) {
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao
                 .findById(customerLoanProfileId)
                 .orElseThrow(() -> new BadRequestException("The Customer Loan Profile was not found for this id " + customerLoanProfileId));
 
-        if (customerLoanProfileEntity.getEmployeeInformation() == null) {
-            throw new BadRequestException("No Employee Information exist for this customer loan profile id " + customerLoanProfileId);
-        }
-
-        CustomerLoanProfileEntity oldState = new CustomerLoanProfileEntity();
-        BeanUtils.copyProperties(customerLoanProfileEntity, oldState);
-
         EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-        employeeInformationEntity.setVerified(true);
 
+        EmployeeInformationEntity oldState = new EmployeeInformationEntity();
+        BeanUtils.copyProperties(employeeInformationEntity, oldState);
+
+        employeeInformationEntity.setVerificationStatus(isApproved ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.REJECTED);
+        employeeInformationEntity.setRejectionReason(isApproved ? null : reason);
         employeeInformationEntityDao.saveRecord(employeeInformationEntity);
 
         String description = String.format("Verified the Employment information for this loan customer: %s", oldState.getId());
         auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);
 
-        return buildLoanCustomerProfileModel(customerLoanProfileEntity, LoanTypeConstant.valueOf("PAYDAY"), Collections.emptyList());
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        return loanCustomerProfileModel;
     }
 
     @Override
-    public LoanCustomerProfileModel blackListCustomer(AuthenticatedUser currentUser, long customerLoanProfileId, String reason) {
+    public LoanCustomerProfileModel blackListCustomer(AuthenticatedUser currentUser, long customerLoanProfileId, boolean blacklist, String reason) {
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao
                 .findById(customerLoanProfileId)
@@ -140,15 +183,15 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         CustomerLoanProfileEntity oldState = new CustomerLoanProfileEntity();
         BeanUtils.copyProperties(customerLoanProfileEntity, oldState);
 
-        customerLoanProfileEntity.setBlacklisted(true);
-        customerLoanProfileEntity.setBlacklistReason(reason);
+        customerLoanProfileEntity.setBlacklisted(blacklist);
+        customerLoanProfileEntity.setBlacklistReason(blacklist ? reason : null);
 
         customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
 
         String description = String.format("Blacklisted this customer loan profile: %s", oldState.getId());
         auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);
 
-        return buildLoanCustomerProfileModel(customerLoanProfileEntity, LoanTypeConstant.valueOf("PAYDAY"), Collections.emptyList());
+        return toLoanCustomerProfileModel(customerLoanProfileEntity);
     }
 
     private EmployeeInformationEntity createEmploymentInformation(EmploymentDetailCreationRequest request) {
@@ -175,44 +218,51 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         }
     }
 
-    private LoanCustomerProfileModel buildLoanCustomerProfileModel(
-            CustomerLoanProfileEntity customerLoanProfileEntity,
-            LoanTypeConstant loanType,
-            List<LoanRequestEntity> loanRequestEntities
-    ){
+    @Override
+    public LoanCustomerProfileModel toLoanCustomerProfileModel(CustomerLoanProfileEntity customerLoanProfileEntity) {
+
+        AppUserEntity appUser = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
+
         LoanCustomerProfileModel loanCustomerProfileModel = new LoanCustomerProfileModel();
-        loanCustomerProfileModel.setBlacklisted(customerLoanProfileEntity.isBlacklisted());
+        loanCustomerProfileModel.setCustomerName(appUser.getName());
+        loanCustomerProfileModel.setEmail(appUser.getEmail());
         loanCustomerProfileModel.setBlacklistReason(customerLoanProfileEntity.getBlacklistReason());
+        loanCustomerProfileModel.setBlacklistStatus(customerLoanProfileEntity.isBlacklisted());
         loanCustomerProfileModel.setId(customerLoanProfileEntity.getId());
+        loanCustomerProfileModel.setPhoneNumber(appUser.getPhoneNumber());
         loanCustomerProfileModel.setRating(customerLoanProfileEntity.getRating());
-        loanCustomerProfileModel.setLoans(loanRequestEntities.stream().map(getLoansUseCase::toLoanModel).collect(Collectors.toList()));
-
-        if (loanType.equals(LoanTypeConstant.PAYDAY)){
-            loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
-            loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
-
-            if (customerLoanProfileEntity.getEmployeeInformation() != null) {
-                EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-                EmploymentInformationModel employmentInformationModel = new EmploymentInformationModel();
-
-                ResourceFileEntity resourceFileEntity = resourceFileEntityDao.getRecordById(employeeInformationEntity.getEmploymentLetter().getId());
-
-                employmentInformationModel.setEmployerEmail(employeeInformationEntity.getEmployerEmail());
-                employmentInformationModel.setEmploymentLetterUrl(resourceFileEntity.getUrl());
-                employmentInformationModel.setEmployerAddress(employeeInformationEntity.getEmployerAddress());
-                employmentInformationModel.setEmployerPhoneNo(PhoneNumberUtils.toNationalFormat(employeeInformationEntity.getEmployerPhoneNo()));
-                employmentInformationModel.setMonthlyIncome(employeeInformationEntity.getMonthlyIncome().doubleValue());
-                employmentInformationModel.setVerified(employeeInformationEntity.isVerified());
-                employmentInformationModel.setOrganizationName(employeeInformationEntity.getOrganizationName());
-                employmentInformationModel.setOrganizationUrl(employeeInformationEntity.getOrganizationUrl());
-                employmentInformationModel.setWorkEmail(employeeInformationEntity.getWorkEmail());
-
-                loanCustomerProfileModel.setEmploymentInformation(employmentInformationModel);
-            }
-        }
 
         return loanCustomerProfileModel;
+
     }
 
+    private List<LoanModel> addLoanHistoryToCustomerLoanProfile(AppUserEntity appUser, String loanListType) {
+        List<LoanRequestEntity> loanRequestEntities = loanRequestEntityDao.getLoansByAppUser(appUser, loanListType);
+        return loanRequestEntities.stream().map(getLoansUseCase::toLoanModel).collect(Collectors.toList());
+    }
 
+    private EmploymentInformationModel addEmployeeInformationToCustomerLoanProfile(CustomerLoanProfileEntity customerLoanProfileEntity) {
+
+        EmploymentInformationModel employmentInformationModel = null;
+
+        if (customerLoanProfileEntity.getEmployeeInformation() != null) {
+            EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
+            employmentInformationModel = new EmploymentInformationModel();
+
+            ResourceFileEntity resourceFileEntity = resourceFileEntityDao.getRecordById(employeeInformationEntity.getEmploymentLetter().getId());
+
+            employmentInformationModel.setEmployerEmail(employeeInformationEntity.getEmployerEmail());
+            employmentInformationModel.setEmploymentLetterUrl(resourceFileEntity.getUrl());
+            employmentInformationModel.setEmployerAddress(employeeInformationEntity.getEmployerAddress());
+            employmentInformationModel.setEmployerPhoneNo(PhoneNumberUtils.toNationalFormat(employeeInformationEntity.getEmployerPhoneNo()));
+            employmentInformationModel.setMonthlyIncome(employeeInformationEntity.getMonthlyIncome().doubleValue());
+            employmentInformationModel.setVerified(employeeInformationEntity.getVerificationStatus().name());
+            employmentInformationModel.setOrganizationName(employeeInformationEntity.getOrganizationName());
+            employmentInformationModel.setOrganizationUrl(employeeInformationEntity.getOrganizationUrl());
+            employmentInformationModel.setWorkEmail(employeeInformationEntity.getWorkEmail());
+            employmentInformationModel.setRejectionReason(employeeInformationEntity.getRejectionReason());
+        }
+
+        return employmentInformationModel;
+    }
 }

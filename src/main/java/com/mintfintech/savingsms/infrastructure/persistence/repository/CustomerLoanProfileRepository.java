@@ -3,12 +3,11 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
-import java.util.List;
 import java.util.Optional;
 
-public interface CustomerLoanProfileRepository extends JpaRepository<CustomerLoanProfileEntity, Long> {
+public interface CustomerLoanProfileRepository extends JpaRepository<CustomerLoanProfileEntity, Long>, JpaSpecificationExecutor<CustomerLoanProfileEntity> {
 
     Optional<CustomerLoanProfileEntity> findByAppUser(AppUserEntity appUserEntity);
 

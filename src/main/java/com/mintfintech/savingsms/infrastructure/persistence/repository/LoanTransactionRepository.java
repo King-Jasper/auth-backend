@@ -11,6 +11,6 @@ public interface LoanTransactionRepository extends JpaRepository<LoanTransaction
 
     @Query("select s from LoanTransactionEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.loanRequest = ?1")
+            " s.loanRequest = ?1 ORDER BY s.dateCreated DESC ")
     List<LoanTransactionEntity> getAllByRecordStatusAndLoanRequest(LoanRequestEntity loanRequestEntity);
 }

@@ -5,7 +5,7 @@ import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.LoanApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
@@ -55,7 +55,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus));
     }
 
-    private static Specification<LoanRequestEntity> withApprovalStatus(LoanApprovalStatusConstant approvalStatus) {
+    private static Specification<LoanRequestEntity> withApprovalStatus(ApprovalStatusConstant approvalStatus) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("approvalStatus"), approvalStatus));
     }
 

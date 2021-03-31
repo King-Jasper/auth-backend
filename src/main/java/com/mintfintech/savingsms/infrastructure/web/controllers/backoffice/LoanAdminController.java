@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
+import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
@@ -37,7 +38,6 @@ import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
-import java.util.List;
 
 @Secured("ADMIN_PORTAL")
 @Validated
@@ -55,9 +55,10 @@ public class LoanAdminController {
     @ApiOperation(value = "Verify Loan Customer Employment Information.")
     @PutMapping(value = "{customerLoanProfileId}/verify/employment-details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> verifyEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                                 @PathVariable("customerLoanProfileId") String customerLoanProfileId) {
+                                                                                                 @PathVariable("customerLoanProfileId") String customerLoanProfileId,
+                                                                                                 @RequestBody ApprovalRequest request) {
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId));
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isApproved(), request.getReason());
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -66,9 +67,9 @@ public class LoanAdminController {
     @PutMapping(value = "{customerLoanProfileId}/blacklist", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> blackListCustomer(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                        @PathVariable("customerLoanProfileId") String customerLoanProfileId,
-                                                                                       @RequestBody CustomerBlacklistRequest request) {
+                                                                                       @RequestBody BlacklistRequest request) {
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), request.getReason());
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isBlacklist(), request.getReason());
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -77,7 +78,7 @@ public class LoanAdminController {
     @PostMapping(value = "{loanId}/approve", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> approveLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                   @PathVariable("loanId") String loanId,
-                                                                  @RequestBody LoanApprovalRequest request) {
+                                                                  @RequestBody ApprovalRequest request) {
 
         LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), request.approved);
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
@@ -106,19 +107,37 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-//    @ApiOperation(value = "Returns list of customer profile.")
-//    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
-//    public ResponseEntity<ApiResponseJSON<List<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@NotNull @RequestParam("blacklisted") boolean blacklisted,
-//                                                                                                   @NotNull @RequestParam("employee-info-verified") boolean employeeInformationVerified
-//    ) {
-//
-//        List<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getLoanCustomerProfiles(blacklisted, employeeInformationVerified);
-//        ApiResponseJSON<List<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-//        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-//    }
+    @ApiOperation(value = "Returns paginated list of loan customers.")
+    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@Pattern(regexp = "(APPROVED|REJECTED|PENDING)") String verificationStatus,
+                                                                                                                @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+                                                                                                                @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
+                                                                                                                @NotNull @RequestParam("size") int size,
+                                                                                                                @NotNull @RequestParam("page") int page
+    ) {
+
+        CustomerProfileSearchRequest searchRequest = CustomerProfileSearchRequest.builder()
+                .verificationStatus(verificationStatus)
+                .fromDate(fromDate)
+                .toDate(toDate)
+                .build();
+
+        PagedDataResponse<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getPagedLoanCustomerProfiles(searchRequest, page, size);
+        ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns Employer Info of Customer Loan Profile.")
+    @GetMapping(value = "customer-profile/{profileId}/employee-info", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getLoanCustomerEmployerInfo(@PathVariable("profileId") String profileId) {
+
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.getCustomerEmployerInfo(Long.parseLong(profileId));
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
 
     @Data
-    private static class LoanApprovalRequest {
+    private static class ApprovalRequest {
         private String reason;
 
         @NotNull
@@ -126,9 +145,12 @@ public class LoanAdminController {
     }
 
     @Data
-    private static class CustomerBlacklistRequest {
-        @NotEmpty
+    private static class BlacklistRequest {
         private String reason;
 
+        @NotNull
+        private boolean blacklist;
+
     }
+
 }

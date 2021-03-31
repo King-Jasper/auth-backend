@@ -1,6 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.LoanApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import lombok.AllArgsConstructor;
@@ -55,7 +55,7 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
 
     @Enumerated(EnumType.STRING)
     @Builder.Default
-    private LoanApprovalStatusConstant approvalStatus = LoanApprovalStatusConstant.PENDING;
+    private ApprovalStatusConstant approvalStatus = ApprovalStatusConstant.PENDING;
 
     private String approveByName;
 

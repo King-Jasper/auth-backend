@@ -26,5 +26,7 @@ public class LoanModel {
 
     private String loanType;
 
+    private LoanCustomerProfileModel owner;
+
     private List<LoanTransactionModel> transactions;
 }

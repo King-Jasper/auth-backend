@@ -12,7 +12,7 @@ import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.LoanApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
@@ -53,7 +53,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
         if (approved) {
-            loanRequestEntity.setApprovalStatus(LoanApprovalStatusConstant.APPROVED);
+            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequestEntity.setApprovedDate(LocalDateTime.now());
             loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
             loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
@@ -77,7 +77,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
             loanTransactionEntityDao.saveRecord(entity);
         } else {
-            loanRequestEntity.setApprovalStatus(LoanApprovalStatusConstant.REJECTED);
+            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.REJECTED);
             loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
             loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
 
@@ -104,7 +104,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         LoanTypeConstant loanTypeConstant = LoanTypeConstant.valueOf(loanType);
 
-        BigDecimal maxLoanAmount = getLoanMaxAmount(appUser, customerLoanProfileEntity, loanTypeConstant);
+        BigDecimal maxLoanAmount = getLoanMaxAmount(customerLoanProfileEntity, loanTypeConstant);
 
         BigDecimal loanAmount = BigDecimal.valueOf(amount);
 
@@ -168,26 +168,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         updateCustomerRating(appUser);
 
-        return repaymentResponse(entity, loanRequestEntity);
-    }
-
-    private LoanModel repaymentResponse(LoanTransactionEntity entity, LoanRequestEntity loanRequestEntity){
-        LoanTransactionModel loanTransactionModel = new LoanTransactionModel();
-        loanTransactionModel.setPaymentDate(entity.getDateCreated());
-        loanTransactionModel.setType(entity.getTransactionType().name());
-        loanTransactionModel.setStatus(entity.getTransactionStatus().name());
-        loanTransactionModel.setReference(entity.getTransactionReference());
-        loanTransactionModel.setResponseCode(entity.getResponseCode());
-        loanTransactionModel.setAmount(entity.getTransactionAmount().toPlainString());
-        loanTransactionModel.setResponseMessage(entity.getResponseMessage());
-        loanTransactionModel.setExternalReference(entity.getExternalReference());
-
-        LoanModel loanModel = getLoansUseCase.toLoanModel(loanRequestEntity);
-        List<LoanTransactionModel> loanTransactionModels = new ArrayList<>();
-        loanTransactionModels.add(loanTransactionModel);
-        loanModel.setTransactions(loanTransactionModels);
-
-        return loanModel;
+        return getLoansUseCase.toLoanModel(loanRequestEntity);
     }
 
     @Override
@@ -256,7 +237,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
         return loanRequestEntityDao.saveRecord(loanRequestEntity);
     }
 
-    private BigDecimal getLoanMaxAmount(AppUserEntity appUser, CustomerLoanProfileEntity customerLoanProfileEntity, LoanTypeConstant loanTypeConstant) {
+    private BigDecimal getLoanMaxAmount(CustomerLoanProfileEntity customerLoanProfileEntity, LoanTypeConstant loanTypeConstant) {
 
         BigDecimal maxAmount = BigDecimal.ZERO;
 
