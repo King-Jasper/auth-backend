@@ -21,7 +21,8 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
     Optional<CustomerReferralEntity> findFirstByReferredAndReferralCodeIgnoreCase(MintAccountEntity referred, String referralCode);
 
 
-    List<CustomerReferralEntity> getAllByReferrerAndDateCreatedBetweenOrderByDateCreatedDesc(MintAccountEntity referral,
+    List<CustomerReferralEntity> getAllByReferrerAndReferrerRewardedAndDateCreatedBetweenOrderByDateCreatedDesc(MintAccountEntity referral,
+                                                                       boolean rewarded,
                                                                        LocalDateTime start,
                                                                        LocalDateTime end,
                                                                        Pageable pageable);

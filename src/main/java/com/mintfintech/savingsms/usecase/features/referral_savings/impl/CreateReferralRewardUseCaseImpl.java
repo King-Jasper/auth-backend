@@ -49,7 +49,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
     private static final BigDecimal referralAmount = BigDecimal.valueOf(2000.00);
-   // private static final BigDecimal preReferralAmount = BigDecimal.valueOf(1000.00);
+    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(1500.00);
 
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
@@ -72,7 +72,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
         }
 
-        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getByReferral(referral, start, end, size);
+        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(referral, start, end, size);
         log.info("LIST PULLED - {}, start - {}, end - {}", referralList.size(), start, end);
         if(!referralList.isEmpty()) {
             if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
@@ -88,6 +88,18 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
            if(StringUtils.defaultString(record.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
                continue;
            }
+
+          Optional<SavingsGoalEntity> tempOpt = savingsGoalEntityDao.findFirstSavingsByType(record.getReferred(), SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
+           if(!tempOpt.isPresent()) {
+               log.info("no savings goal found for account - {}", record.getReferred().getId());
+               continue;
+           }
+            SavingsGoalEntity temp = tempOpt.get();
+            BigDecimal goalBalance = temp.getSavingsBalance();
+            if(goalBalance.compareTo(minimumFundAmount) < 0) {
+                log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minimumFundAmount);
+                return;
+            }
             /*
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
@@ -215,7 +227,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return;
         }
        // boolean newProgram = false;
-        BigDecimal minimumFunding = BigDecimal.valueOf(1500.00);
+       // BigDecimal minimumFunding = BigDecimal.valueOf(1500.00);
         /*if(referredAccount.getDateCreated().isAfter(newProgramDate)) {
             minimumFunding = BigDecimal.valueOf(1500.00);
             newProgram = true;
@@ -223,8 +235,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         */
 
         BigDecimal goalBalance = fundedSavingsGoal.getSavingsBalance();
-        if(goalBalance.compareTo(minimumFunding) < 0) {
-            log.info("Savings balance {} is lower than minimum balance {}", goalBalance, minimumFunding);
+        if(goalBalance.compareTo(minimumFundAmount) < 0) {
+            log.info("Savings balance {} is lower than minimum balance {}", goalBalance, minimumFundAmount);
             return;
         }
 
