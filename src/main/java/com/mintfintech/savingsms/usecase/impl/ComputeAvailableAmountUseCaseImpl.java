@@ -84,9 +84,9 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
         boolean matured = false;
         if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
             if(applicationProperty.isLiveEnvironment()) {
-                matured = BigDecimal.valueOf(2000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                matured = BigDecimal.valueOf(3000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }else {
-                matured = BigDecimal.valueOf(2000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
+                matured = BigDecimal.valueOf(3000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
