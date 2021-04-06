@@ -13,15 +13,17 @@ import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
+import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +47,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
+    private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
 
     @Transactional
     @Override
@@ -127,48 +130,14 @@ public class LoanUseCaseImpl implements LoanUseCase {
     }
 
     @Override
-    @Transactional
-    public LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId) {
-        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+    public LoanModel paydayLoanRequest(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
 
-        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.findByAccountId(currentUser.getAccountId())
-                .orElseThrow(() -> new BadRequestException("No Bank Account for this user"));
+        LoanCustomerProfileModel loanCustomerProfileModel = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(currentUser, request);
 
-        LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
-                .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
+        LoanModel loanModel = loanRequest(currentUser, request.getLoanAmount(), "PAYDAY");
+        loanModel.setOwner(loanCustomerProfileModel);
 
-        BigDecimal repaymentAmount = BigDecimal.valueOf(amount);
-        BigDecimal amountPending = loanRequestEntity.getRepaymentAmount().subtract(loanRequestEntity.getAmountPaid());
-
-        if (repaymentAmount.compareTo(amountPending) > 0) {
-            repaymentAmount = amountPending;
-        }
-
-        // Call Core banking
-
-        BigDecimal amountPaid = loanRequestEntity.getAmountPaid().add(repaymentAmount);
-        loanRequestEntity.setAmountPaid(amountPaid);
-        loanRequestEntity.setRepaymentStatus(amountPaid.compareTo(loanRequestEntity.getRepaymentAmount()) < 0 ? LoanRepaymentStatusConstant.PARTIALLY_PAID : LoanRepaymentStatusConstant.PAID);
-
-        loanRequestEntity = loanRequestEntityDao.saveRecord(loanRequestEntity);
-
-        LoanTransactionEntity entity = LoanTransactionEntity.builder()
-                .loanRequest(loanRequestEntity)
-                .autoDebit(false)
-                .externalReference("")
-                .responseCode("")
-                .responseMessage("")
-                .transactionAmount(repaymentAmount)
-                .transactionReference(loanRequestEntityDao.generateLoanTransactionRef())
-                .transactionStatus(TransactionStatusConstant.SUCCESSFUL)
-                .transactionType(TransactionTypeConstant.DEBIT)
-                .build();
-
-        entity = loanTransactionEntityDao.saveRecord(entity);
-
-        updateCustomerRating(appUser);
-
-        return getLoansUseCase.toLoanModel(loanRequestEntity);
+        return loanModel;
     }
 
     @Override
@@ -199,23 +168,6 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         loanModel.setTransactions(transactionModels);
         return loanModel;
-    }
-
-    @Override
-    public void updateCustomerRating(AppUserEntity currentUser) {
-
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(currentUser)
-                .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
-
-
-        double totalLoanCount = loanRequestEntityDao.countTotalLoans(currentUser);
-        double totalRepaymentFailed = loanRequestEntityDao.countTotalLoansPastRepaymentDueDate(currentUser);
-
-        double rating = ((totalLoanCount - totalRepaymentFailed)/totalLoanCount) * 5.0;
-
-        customerLoanProfileEntity.setRating(rating);
-
-        customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
     }
 
     private LoanRequestEntity payDayLoanRequest(
