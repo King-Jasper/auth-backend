@@ -49,7 +49,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
     private static final BigDecimal referralAmount = BigDecimal.valueOf(1000.00);
-    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(1000.00);
+    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(500.00);
 
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
