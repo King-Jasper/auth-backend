@@ -34,6 +34,12 @@ mint:
   email:
     system-admin: justin.nwanya@bankwithmint.com
 
+amazon:
+  secretKey: qd5COuY5C7qw61d8xl1in+0U6IXK51xGZbEXZK3a
+  accessKey: AKIA2YMWC5SVGVXOPB6C
+  bucketName: mint-dev-bucket
+  region: eu-west-2
+
 transaction:
   status-update:
     start-after-minutes: 15
@@ -52,3 +58,11 @@ management:
   metrics:
     tags:
       application: ${spring.application.name}
+
+file-upload-maximum-size-in-mb: 2
+
+loan:
+  pay-day:
+    interest-rate: 1.88
+    max-percent-amount: 70
+    max-tenor-days: 30
