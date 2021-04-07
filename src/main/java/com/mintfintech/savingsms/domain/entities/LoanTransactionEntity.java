@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
+import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import lombok.AllArgsConstructor;
@@ -23,7 +24,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "loan_repayment_transaction")
+@Table(name = "loan_transaction")
 public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -34,11 +35,15 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private TransactionStatusConstant transactionStatus;
+    private TransactionStatusConstant status;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionTypeConstant transactionType;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private LoanTransactionStatusConstant transactionStatus;
 
     private boolean autoDebit;
 

@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
@@ -48,6 +49,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
+    private final CoreBankingServiceClient coreBankingServiceClient;
 
     @Transactional
     @Override
@@ -74,7 +76,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
                     .responseMessage("")
                     .transactionAmount(loanRequestEntity.getLoanAmount())
                     .transactionReference(loanRequestEntityDao.generateLoanTransactionRef())
-                    .transactionStatus(TransactionStatusConstant.SUCCESSFUL)
+                    .status(TransactionStatusConstant.SUCCESSFUL)
                     .transactionType(TransactionTypeConstant.CREDIT)
                     .build();
 
