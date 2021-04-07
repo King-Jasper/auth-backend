@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
+import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
@@ -55,9 +56,9 @@ public class LoanAdminController {
     @PutMapping(value = "{customerLoanProfileId}/verify/employment-details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> verifyEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                  @PathVariable("customerLoanProfileId") String customerLoanProfileId,
-                                                                                                 @RequestBody ApprovalRequest request) {
+                                                                                                 @RequestBody ProfileVerificationRequest request) {
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isApproved(), request.getReason());
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isVerified(), request.getReason());
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -77,7 +78,7 @@ public class LoanAdminController {
     @PostMapping(value = "{loanId}/approve", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> approveLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                   @PathVariable("loanId") String loanId,
-                                                                  @RequestBody ApprovalRequest request) {
+                                                                  @RequestBody @Valid LoanApprovalRequest request) {
 
         LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), request.approved);
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
@@ -108,7 +109,7 @@ public class LoanAdminController {
 
     @ApiOperation(value = "Returns paginated list of loan customers.")
     @GetMapping(value = "customers-profile", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@Pattern(regexp = "(APPROVED|REJECTED|PENDING)") String verificationStatus,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@Pattern(regexp = "(APPROVED|REJECTED|PENDING)") @RequestParam("verificationStatus") String verificationStatus,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                                                 @NotNull @RequestParam("size") int size,
@@ -126,9 +127,9 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns Employer Info of Customer Loan Profile.")
-    @GetMapping(value = "customer-profile/{profileId}/employee-info", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getLoanCustomerEmployerInfo(@PathVariable("profileId") String profileId) {
+    @ApiOperation(value = "Returns Employment Details of Customer Loan Profile.")
+    @GetMapping(value = "customer-profile/{customerLoanProfileId}/employment-detail", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getLoanCustomerEmployerInfo(@PathVariable("customerLoanProfileId") String profileId) {
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.getCustomerEmployerInfo(Long.parseLong(profileId));
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
@@ -136,11 +137,19 @@ public class LoanAdminController {
     }
 
     @Data
-    private static class ApprovalRequest {
+    private static class LoanApprovalRequest {
         private String reason;
 
         @NotNull
         private boolean approved;
+    }
+
+    @Data
+    private static class ProfileVerificationRequest {
+        private String reason;
+
+        @NotNull
+        private boolean verified;
     }
 
     @Data
