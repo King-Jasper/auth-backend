@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.dao.ResourceFileEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
+import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.ResourceFileEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
@@ -32,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -138,7 +140,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     @Override
-    public LoanCustomerProfileModel verifyEmploymentInformation(AuthenticatedUser currentUser, long customerLoanProfileId, boolean isApproved, String reason) {
+    @Transactional
+    public LoanCustomerProfileModel verifyEmploymentInformation(AuthenticatedUser currentUser, long customerLoanProfileId, boolean isVerified, String reason) {
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao
                 .findById(customerLoanProfileId)
@@ -149,9 +152,23 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         EmployeeInformationEntity oldState = new EmployeeInformationEntity();
         BeanUtils.copyProperties(employeeInformationEntity, oldState);
 
-        employeeInformationEntity.setVerificationStatus(isApproved ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.REJECTED);
-        employeeInformationEntity.setRejectionReason(isApproved ? null : reason);
+        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.REJECTED);
+        employeeInformationEntity.setRejectionReason(isVerified ? null : reason);
         employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+
+        if (!isVerified){
+            AppUserEntity appUserEntity = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
+            List<LoanRequestEntity> loans = loanRequestEntityDao.getLoansByAppUser(appUserEntity, LoanTypeConstant.PAYDAY.name());
+
+            for (LoanRequestEntity loanRequestEntity : loans){
+                if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING){
+                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.REJECTED);
+                    loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
+
+                    loanRequestEntityDao.saveRecord(loanRequestEntity);
+                }
+            }
+        }
 
         String description = String.format("Verified the Employment information for this loan customer: %s", oldState.getId());
         auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);

@@ -5,14 +5,17 @@ import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
@@ -46,6 +49,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
 
@@ -95,8 +99,9 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
 
-        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.findByAccountId(currentUser.getAccountId())
-                .orElseThrow(() -> new BadRequestException("No Bank Account for this user"));
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+
+        MintBankAccountEntity mintBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.SAVING);
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
@@ -122,7 +127,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
         LoanRequestEntity loanRequestEntity = null;
 
         if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
-            loanRequestEntity = payDayLoanRequest(loanAmount, mintAccount, appUser);
+            loanRequestEntity = payDayLoanRequest(loanAmount, mintBankAccount, appUser);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
@@ -130,6 +135,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
     }
 
     @Override
+    @Transactional
     public LoanModel paydayLoanRequest(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
 
         LoanCustomerProfileModel loanCustomerProfileModel = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(currentUser, request);

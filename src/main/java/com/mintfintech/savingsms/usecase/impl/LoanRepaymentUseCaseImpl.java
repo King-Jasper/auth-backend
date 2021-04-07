@@ -83,9 +83,6 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     public LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId) {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
 
-        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.findByAccountId(currentUser.getAccountId())
-                .orElseThrow(() -> new BadRequestException("No Bank Account for this user"));
-
         LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
