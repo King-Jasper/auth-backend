@@ -21,6 +21,8 @@ public class EmploymentInformationModel {
 
     private String employmentLetterUrl;
 
-    private boolean verified;
+    private String verified;
+
+    private String rejectionReason;
 
 }

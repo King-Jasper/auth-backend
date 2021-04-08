@@ -7,11 +7,9 @@ import java.time.LocalDate;
 
 @Data
 @Builder
-public class LoanSearchRequest {
-    private String accountId;
-    private String loanStatus;
+public class CustomerProfileSearchRequest {
+
     private LocalDate fromDate;
     private LocalDate toDate;
-    private String approvalStatus;
-    private String loanType;
+    private String verificationStatus;
 }

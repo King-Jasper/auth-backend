@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.LoanUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -46,16 +48,29 @@ import java.time.LocalDate;
 @RestController
 @RequestMapping(value = "/api/v1/loan/", headers = {"x-request-client-key", "Authorization"})
 @RequiredArgsConstructor
+@Validated
 public class LoanController {
 
     private final GetLoansUseCase getLoansUseCase;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final LoanUseCase loanUseCase;
-    
+    private final LoanRepaymentUseCase loanRepaymentUseCase;
+
+    @ApiOperation(value = "Returns customer loan profile.")
+    @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getCustomerLoanProfile(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                            @Pattern(regexp = "(PAYDAY)") @NotEmpty @RequestParam("loanType") String loanType) {
+
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.getLoanCustomerProfile(authenticatedUser, loanType);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
     @ApiOperation(value = "Returns paginated list of loans of a user.")
-    @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "loan-history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                   @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED)") @RequestParam("loanStatus") String loanStatus,
+                                                                                  @Pattern(regexp = "(PAYDAY)") @RequestParam("loanType") String loanType,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                   @RequestParam("size") int size,
@@ -65,6 +80,7 @@ public class LoanController {
         LoanSearchRequest searchRequest = LoanSearchRequest.builder()
                 .accountId(authenticatedUser.getAccountId())
                 .loanStatus(loanStatus)
+                .loanType(loanType)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .build();
@@ -74,18 +90,9 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Fetch Pending Repayment Loan Amount.")
-    @GetMapping(value = "{loanId}/pending-repayment-amount", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<String>> getPendingRepaymentAmount(@PathVariable("loanId") String loanId) {
-
-        BigDecimal response = loanUseCase.getPendingRepaymentAmount(loanId);
-        ApiResponseJSON<String> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response.toPlainString());
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
-
-    @ApiOperation(value = "Add Employee Information to Customer Loan Profile.")
-    @PostMapping(value = "customer-profile/employee-information", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> createEmployeeInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    @ApiOperation(value = "Add Employee Information to Customer Loan Profile And Request for Loan.")
+    @PostMapping(value = "loan-request/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanModel>> createEmployeeInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
                                                                                                @NotEmpty @RequestParam("organizationName") String organizationName,
                                                                                                @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
@@ -93,7 +100,8 @@ public class LoanController {
                                                                                                @NotEmpty @RequestParam("employerAddress") String employerAddress,
                                                                                                @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                                @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                               @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
+                                                                                               @Email @NotEmpty @RequestParam("workEmail") String workEmail,
+                                                                                               @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
@@ -104,20 +112,11 @@ public class LoanController {
                 .organizationName(StringUtils.trim(organizationName))
                 .organizationUrl(StringUtils.trim(organizationUrl))
                 .workEmail(StringUtils.trim(workEmail))
+                .loanAmount(loanAmount)
                 .build();
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.addCustomerEmploymentInformation(authenticatedUser, request);
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
-
-    @ApiOperation(value = "Fetch Maximum Loan Amount.")
-    @GetMapping(value = "max-loan-amount", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<String>> getMaxLoanAmount(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                    @Pattern(regexp = "(PAYDAY)") @NotEmpty String loanType) {
-
-        BigDecimal response = customerLoanProfileUseCase.getLoanMaxAmount(authenticatedUser, loanType);
-        ApiResponseJSON<String> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response.toPlainString());
+        LoanModel response = loanUseCase.paydayLoanRequest(authenticatedUser, request);
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -134,9 +133,18 @@ public class LoanController {
     @ApiOperation(value = "Pay back loan Loan.")
     @PostMapping(value = "repayment", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> repayment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                              @RequestBody @Valid LoanPayBackRequest request) {
+                                                                @RequestBody @Valid LoanPayBackRequest request) {
 
-        LoanModel response = loanUseCase.repayment(authenticatedUser, request.getAmount(), request.getLoanId());
+        LoanModel response = loanRepaymentUseCase.repayment(authenticatedUser, request.getAmount(), request.getLoanId());
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns list of loan transactions.")
+    @GetMapping(value = "{loanId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanModel>> getLoanTransactions(@PathVariable("loanId") String loanId) {
+
+        LoanModel response = loanUseCase.getLoanTransactions(loanId);
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }

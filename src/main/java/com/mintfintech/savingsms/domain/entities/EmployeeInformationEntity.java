@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -8,6 +9,8 @@ import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.FetchType;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
@@ -46,7 +49,11 @@ public class EmployeeInformationEntity extends AbstractBaseEntity<Long>{
     @OneToOne(optional = false, fetch = FetchType.LAZY)
     private ResourceFileEntity employmentLetter;
 
+    @Enumerated(EnumType.STRING)
     @Builder.Default
-    private boolean verified = false;
+    private ApprovalStatusConstant verificationStatus = ApprovalStatusConstant.PENDING;
+
+    @Column(columnDefinition = "TEXT")
+    private String rejectionReason;
 
 }
