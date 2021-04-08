@@ -5,12 +5,11 @@ import lombok.Data;
 
 /**
  * Created by jnwanya on
- * Sat, 31 Oct, 2020
+ * Thu, 08 Apr, 2021
  */
 @Builder
 @Data
-public class RoundUpSavingSetUpRequest {
-    private int duration;
+public class RoundUpTypeUpdateRequest {
     private String fundTransferRoundUpType;
     private String billPaymentRoundUpType;
 }

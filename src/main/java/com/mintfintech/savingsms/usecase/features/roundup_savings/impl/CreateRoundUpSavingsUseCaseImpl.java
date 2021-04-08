@@ -46,11 +46,12 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
             throw new BusinessLogicConflictException("Sorry, this feature is for individual account.");
         }
         AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
-        RoundUpSavingsTypeConstant roundUpSavingsType = RoundUpSavingsTypeConstant.valueOf(request.getRoundUpType());
+        RoundUpSavingsTypeConstant fundTransferRPSavingsType = RoundUpSavingsTypeConstant.valueOf(request.getFundTransferRoundUpType());
+        RoundUpSavingsTypeConstant billPaymentRPSavingsType = RoundUpSavingsTypeConstant.valueOf(request.getBillPaymentRoundUpType());
 
         int selectedDuration = request.getDuration();
-        if(selectedDuration < 90) {
-            throw new BadRequestException("Minimum of 90 days required for RoundUp savings setup");
+        if(selectedDuration < 30) {
+            throw new BadRequestException("Minimum of 30 days required for RoundUp savings setup");
         }
 
         Optional<SavingsGoalEntity> roundUpSavingsOpt = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.ROUND_UP_SAVINGS);
@@ -75,9 +76,9 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
         }else {
             settingEntity = settingEntityOpt.get();
         }
-        settingEntity.setFundTransferRoundUpType(roundUpSavingsType);
-        settingEntity.setBillPaymentRoundUpType(roundUpSavingsType);
-        settingEntity.setCardPaymentRoundUpType(roundUpSavingsType);
+        settingEntity.setFundTransferRoundUpType(fundTransferRPSavingsType);
+        settingEntity.setBillPaymentRoundUpType(billPaymentRPSavingsType);
+        settingEntity.setCardPaymentRoundUpType(RoundUpSavingsTypeConstant.NONE);
         settingEntity.setEnabled(true);
         settingEntity.setDateActivated(LocalDateTime.now());
         settingEntity = roundUpSavingsSettingEntityDao.saveRecord(settingEntity);
@@ -119,7 +120,9 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
                 .exist(true)
                 .id(settingEntity.getId())
                 .isActive(true)
-                .roundUpType(roundUpSavingsType.getName())
+                .roundUpType(fundTransferRPSavingsType.getName())
+                .billPaymentRoundUpType(billPaymentRPSavingsType.getName())
+                .fundTransferRoundUpType(fundTransferRPSavingsType.getName())
                 .savingsGoal(savingsGoalModel)
                 .build();
     }
