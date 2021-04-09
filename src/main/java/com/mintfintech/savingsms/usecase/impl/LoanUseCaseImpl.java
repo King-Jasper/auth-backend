@@ -101,7 +101,9 @@ public class LoanUseCaseImpl implements LoanUseCase {
 
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
-        MintBankAccountEntity mintBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.SAVING);
+        List<MintBankAccountEntity> mintBankAccounts = mintBankAccountEntityDao.getAccountsByMintAccount(mintAccount);
+
+        MintBankAccountEntity mintBankAccount = mintBankAccounts.get(0);
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
