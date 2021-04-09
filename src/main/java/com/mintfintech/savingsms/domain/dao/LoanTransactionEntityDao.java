@@ -11,4 +11,6 @@ public interface LoanTransactionEntityDao extends CrudDao<LoanTransactionEntity,
     List<LoanTransactionEntity> getLoanTransactions(LoanRequestEntity loanRequestEntity);
 
     List<LoanTransactionEntity> getLoansPendingDisbursement(LoanTransactionTypeConstant loanTransactionType);
+
+    List<LoanTransactionEntity> getLoansPendingRepayment(LoanTransactionTypeConstant loanTransactionType);
 }

@@ -1,7 +1,5 @@
 package com.mintfintech.savingsms.usecase;
 
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 
@@ -17,9 +15,9 @@ public interface LoanRepaymentUseCase {
 
     LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId);
 
-    void moveFundFromLoanRecoverySuspenseAccountToMintLoanAccount(LoanRequestEntity loan, LoanTransactionEntity transaction);
+    void processRecoverySuspenseAccountToLoanAccount();
 
-    void moveFundFromLoanRecoverySuspenseAccountToInterestReceivableAccount(LoanRequestEntity loan, LoanTransactionEntity transaction);
+    void processLoanRecoverySuspenseAccountToInterestReceivableAccount();
 
-    void moveFundFromInterestIncomeSuspenseAccountToInterestIncomeAccount(LoanRequestEntity loan, LoanTransactionEntity transaction);
+    void processInterestIncomeSuspenseAccountToInterestIncomeAccount();
 }

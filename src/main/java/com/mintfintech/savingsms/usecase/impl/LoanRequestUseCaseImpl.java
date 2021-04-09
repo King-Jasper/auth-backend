@@ -4,11 +4,13 @@ import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -18,6 +20,7 @@ import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
@@ -37,14 +40,20 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
+    private final MintAccountEntityDao mintAccountEntityDao;
 
     @Override
-    public LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType) {
+    public LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType, String creditAccountId) {
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
-        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.findByAccountId(currentUser.getAccountId())
-                .orElseThrow(() -> new BadRequestException("No Bank Account for this user"));
+        MintBankAccountEntity loanAccount = mintBankAccountEntityDao.findByAccountId(creditAccountId)
+                .orElseThrow(() -> new BadRequestException("Invalid loan account Id."));
+
+        if (!mintAccount.getId().equals(loanAccount.getMintAccount().getId())) {
+            throw new UnauthorisedException("Request denied.");
+        }
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
@@ -70,7 +79,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         LoanRequestEntity loanRequestEntity = null;
 
         if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
-            loanRequestEntity = payDayLoanRequest(loanAmount, mintAccount, appUser);
+            loanRequestEntity = payDayLoanRequest(loanAmount, loanAccount, appUser);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
@@ -82,7 +91,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
 
         LoanCustomerProfileModel loanCustomerProfileModel = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(currentUser, request);
 
-        LoanModel loanModel = loanRequest(currentUser, request.getLoanAmount(), "PAYDAY");
+        LoanModel loanModel = loanRequest(currentUser, request.getLoanAmount(), "PAYDAY", request.getCreditAccountId());
         loanModel.setOwner(loanCustomerProfileModel);
 
         return loanModel;

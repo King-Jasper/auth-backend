@@ -23,4 +23,11 @@ public interface LoanTransactionRepository extends JpaRepository<LoanTransaction
             " s.loanTransactionType = ?1 ORDER BY s.dateCreated DESC")
     List<LoanTransactionEntity> getAllLoansPendingDisbursement(LoanTransactionTypeConstant loanTransactionType);
 
+    @Query("select s from LoanTransactionEntity s where" +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.status = com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant.PENDING and " +
+            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant.DEBIT and " +
+            " s.loanTransactionType = ?1 ORDER BY s.dateCreated DESC")
+    List<LoanTransactionEntity> getAllLoansPendingRepayment(LoanTransactionTypeConstant loanTransactionType);
+
 }

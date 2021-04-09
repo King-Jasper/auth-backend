@@ -12,6 +12,7 @@ import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.Data;
@@ -93,15 +94,16 @@ public class LoanController {
     @ApiOperation(value = "Add Employee Information to Customer Loan Profile And Request for Loan.")
     @PostMapping(value = "loan-request/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> createEmployeeInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                               @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
-                                                                                               @NotEmpty @RequestParam("organizationName") String organizationName,
-                                                                                               @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
-                                                                                               @NotEmpty @RequestParam("organizationUrl") String organizationUrl,
-                                                                                               @NotEmpty @RequestParam("employerAddress") String employerAddress,
-                                                                                               @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
-                                                                                               @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                               @Email @NotEmpty @RequestParam("workEmail") String workEmail,
-                                                                                               @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount) {
+                                                                                @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
+                                                                                @NotEmpty @RequestParam("organizationName") String organizationName,
+                                                                                @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
+                                                                                @NotEmpty @RequestParam("organizationUrl") String organizationUrl,
+                                                                                @NotEmpty @RequestParam("employerAddress") String employerAddress,
+                                                                                @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
+                                                                                @Email @NotEmpty @RequestParam("workEmail") String workEmail,
+                                                                                @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount,
+                                                                                @NotEmpty @RequestParam("creditAccountId") String creditAccountId) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
@@ -113,6 +115,7 @@ public class LoanController {
                 .organizationUrl(StringUtils.trim(organizationUrl))
                 .workEmail(StringUtils.trim(workEmail))
                 .loanAmount(loanAmount)
+                .creditAccountId(creditAccountId)
                 .build();
 
         LoanModel response = loanRequestUseCase.paydayLoanRequest(authenticatedUser, request);
@@ -125,7 +128,7 @@ public class LoanController {
     public ResponseEntity<ApiResponseJSON<LoanModel>> loanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                   @RequestBody @Valid LoanRequest request) {
 
-        LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType());
+        LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType(), request.getCreditAccountId());
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -151,24 +154,31 @@ public class LoanController {
 
     @Data
     private static class LoanRequest {
+        @ApiModelProperty(notes = "The amount to be funded. N1000 minimum", required = true)
         @Min(value = 1000, message = "Minimum of N1000")
         @NotNull
         private double amount;
 
+        @ApiModelProperty("This is the type of loan request. PAYDAY ")
         @Pattern(regexp = "(PAYDAY)")
         @NotEmpty
         private String loanType;
+
+        @ApiModelProperty(notes = "The bank accountId to be credited", required = true)
+        @NotEmpty
+        private String creditAccountId;
     }
 
     @Data
     private static class LoanPayBackRequest {
+        @ApiModelProperty(notes = "The amount to be repayed. N1000 minimum", required = true)
         @Min(value = 1000, message = "Minimum of N1000")
         @NotNull
         private double amount;
 
+        @ApiModelProperty(notes = "Id of the loan being repaid", required = true)
         @NotEmpty
         private String loanId;
-
     }
 
 }

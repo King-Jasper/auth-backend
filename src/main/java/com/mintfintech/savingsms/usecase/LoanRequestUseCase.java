@@ -6,7 +6,7 @@ import com.mintfintech.savingsms.usecase.models.LoanModel;
 
 public interface LoanRequestUseCase {
 
-    LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType);
+    LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType, String creditAccountId);
 
     LoanModel paydayLoanRequest(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request);
 

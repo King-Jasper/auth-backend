@@ -53,4 +53,18 @@ public class LoanJob {
         }
     }
 
+    @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
+    @SchedulerLock(name = "LoanJob_runPendingApprovedRepayment", lockAtMostForString = "PT6M")
+    public void runPendingApprovedRepayment() {
+        try {
+            loanRepaymentUseCase.processRecoverySuspenseAccountToLoanAccount();
+            Thread.sleep(500);
+            loanRepaymentUseCase.processLoanRecoverySuspenseAccountToInterestReceivableAccount();
+            Thread.sleep(500);
+            loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
+        } catch (Exception ignored) {
+        }
+    }
+
+
 }

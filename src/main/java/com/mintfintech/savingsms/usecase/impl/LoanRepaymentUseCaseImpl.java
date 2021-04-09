@@ -105,8 +105,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         BigDecimal amountToPay = BigDecimal.valueOf(amount);
         BigDecimal amountPending = loan.getRepaymentAmount().subtract(loan.getAmountPaid());
 
-        if(debitAccount.getAvailableBalance().compareTo(amountToPay) < 0) {
-            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment: "+ loan.getLoanId());
+        if (debitAccount.getAvailableBalance().compareTo(amountToPay) < 0) {
+            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment: " + loan.getLoanId());
         }
 
         if (amountToPay.compareTo(amountPending) > 0) {
@@ -130,6 +130,36 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         }
 
         return getLoansUseCase.toLoanModel(loan);
+    }
+
+    @Override
+    public void processRecoverySuspenseAccountToLoanAccount() {
+        List<LoanTransactionEntity> loanTransactions = loanTransactionEntityDao.getLoansPendingRepayment(LoanTransactionTypeConstant.RECOVERY_TO_MINT);
+
+        for (LoanTransactionEntity transaction : loanTransactions) {
+            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(transaction.getLoanRequest().getId());
+            moveFundFromLoanRecoverySuspenseAccountToMintLoanAccount(loan, transaction);
+        }
+    }
+
+    @Override
+    public void processLoanRecoverySuspenseAccountToInterestReceivableAccount() {
+        List<LoanTransactionEntity> loanTransactions = loanTransactionEntityDao.getLoansPendingRepayment(LoanTransactionTypeConstant.RECOVERY_TO_INTEREST);
+
+        for (LoanTransactionEntity transaction : loanTransactions) {
+            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(transaction.getLoanRequest().getId());
+            moveFundFromLoanRecoverySuspenseAccountToInterestReceivableAccount(loan, transaction);
+        }
+    }
+
+    @Override
+    public void processInterestIncomeSuspenseAccountToInterestIncomeAccount() {
+        List<LoanTransactionEntity> loanTransactions = loanTransactionEntityDao.getLoansPendingRepayment(LoanTransactionTypeConstant.SUSPENSE_TO_INCOME);
+
+        for (LoanTransactionEntity transaction : loanTransactions) {
+            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(transaction.getLoanRequest().getId());
+            moveFundFromInterestIncomeSuspenseAccountToInterestIncomeAccount(loan, transaction);
+        }
     }
 
     private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, BigDecimal amountToPay, String accountNumber) {
@@ -213,8 +243,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         loanTransactionEntityDao.saveRecord(creditIncomeAccount);
     }
 
-    @Override
-    public void moveFundFromLoanRecoverySuspenseAccountToMintLoanAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
+    private void moveFundFromLoanRecoverySuspenseAccountToMintLoanAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
 
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
@@ -242,8 +271,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         }
     }
 
-    @Override
-    public void moveFundFromLoanRecoverySuspenseAccountToInterestReceivableAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
+    private void moveFundFromLoanRecoverySuspenseAccountToInterestReceivableAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
 
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
@@ -271,8 +299,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         }
     }
 
-    @Override
-    public void moveFundFromInterestIncomeSuspenseAccountToInterestIncomeAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
+    private void moveFundFromInterestIncomeSuspenseAccountToInterestIncomeAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
 
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())

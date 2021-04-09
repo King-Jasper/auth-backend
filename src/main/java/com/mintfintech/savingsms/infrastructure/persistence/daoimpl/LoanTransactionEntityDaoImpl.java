@@ -43,4 +43,9 @@ public class LoanTransactionEntityDaoImpl implements LoanTransactionEntityDao {
     public List<LoanTransactionEntity> getLoansPendingDisbursement(LoanTransactionTypeConstant loanTransactionType) {
         return repository.getAllLoansPendingDisbursement(loanTransactionType);
     }
+
+    @Override
+    public List<LoanTransactionEntity> getLoansPendingRepayment(LoanTransactionTypeConstant loanTransactionType) {
+        return repository.getAllLoansPendingRepayment(loanTransactionType);
+    }
 }
