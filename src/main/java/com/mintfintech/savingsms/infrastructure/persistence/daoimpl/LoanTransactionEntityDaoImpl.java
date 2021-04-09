@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.LoanTransactionRepository;
 
 import javax.inject.Named;
@@ -36,5 +37,10 @@ public class LoanTransactionEntityDaoImpl implements LoanTransactionEntityDao {
     @Override
     public List<LoanTransactionEntity> getLoanTransactions(LoanRequestEntity loanRequestEntity) {
         return repository.getAllByRecordStatusAndLoanRequest(loanRequestEntity);
+    }
+
+    @Override
+    public List<LoanTransactionEntity> getLoansPendingDisbursement(LoanTransactionTypeConstant loanTransactionType) {
+        return repository.getAllLoansPendingDisbursement(loanTransactionType);
     }
 }

@@ -1,6 +1,6 @@
 package com.mintfintech.savingsms.domain.entities.enums;
 
-public enum LoanTransactionStatusConstant {
+public enum LoanTransactionTypeConstant {
 
     MINT_TO_SUSPENSE,
     INTEREST_TO_SUSPENSE,
