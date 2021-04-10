@@ -52,6 +52,25 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(500.00);
 
 
+    @Async
+    public void processReferralBackLog(LocalDateTime start, LocalDateTime end, int size) {
+        List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(start, end, size, minimumFundAmount);
+        for(CustomerReferralEntity record: referralList) {
+
+            Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(record.getReferrer(), SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+            AppUserEntity appUserEntity = appUserEntityDao.findAccountOwner(record.getReferrer()).orElse(null);
+            SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(record.getReferrer(), appUserEntity));
+
+            boolean processed = processReferralPayment(record, referralSavingsGoalEntity);
+
+            if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+                referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+                referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+                savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
+            }
+        }
+    }
+
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
         Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
         if(!appUserEntityOpt.isPresent()) {
@@ -74,49 +93,47 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
 
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(referral, start, end, size);
         log.info("LIST PULLED - {}, start - {}, end - {}", referralList.size(), start, end);
-        if(!referralList.isEmpty()) {
-            if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
-                referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
-                referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
-                savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
-            }
-        }
         for(CustomerReferralEntity record : referralList) {
-           if(record.isReferrerRewarded()) {
-               log.info("referrer rewarded for record - {}", record.getId());
-               continue;
-           }
-           if(StringUtils.defaultString(record.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
-               log.info("is web referral for record - {}", record.getId());
-               continue;
-           }
 
-          Optional<SavingsGoalEntity> tempOpt = savingsGoalEntityDao.findFirstSavingsByType(record.getReferred(), SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
-           if(!tempOpt.isPresent()) {
-               log.info("no savings goal found for account - {}", record.getReferred().getId());
-               continue;
+           boolean processed =  processReferralPayment(record, referralSavingsGoalEntity);
+
+           if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+               referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+               referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+               savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
            }
-            SavingsGoalEntity temp = tempOpt.get();
-            BigDecimal goalBalance = temp.getSavingsBalance();
-            if(goalBalance.compareTo(minimumFundAmount) < 0) {
-                log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minimumFundAmount);
-                continue;
-            }
-            /*
-            BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
-            total = total.add(referralSavingsGoalEntity.getSavingsBalance());
-            if(total.doubleValue() >= 10000.00) {
-               continue;
-            }*/
-            //long referralRewardAmount = applicationProperty.getReferralRewardAmount();
-            SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralAmount);
-            log.info("credit response code - {}", fundingResponse.getResponseCode());
-            if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
-                record.setReferrerRewarded(true);
-                customerReferralEntityDao.saveRecord(record);
-            }
-           // referralSavingsGoalEntity = savingsGoalEntityDao.getRecordById(referralSavingsGoalEntity.getId());
         }
+    }
+
+    private boolean processReferralPayment(CustomerReferralEntity record, SavingsGoalEntity referralSavingsGoalEntity) {
+        if(record.isReferrerRewarded()) {
+            log.info("referrer rewarded for record - {}", record.getId());
+            return false;
+        }
+        if(StringUtils.defaultString(record.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
+            log.info("is web referral for record - {}", record.getId());
+            return false;
+        }
+
+        Optional<SavingsGoalEntity> tempOpt = savingsGoalEntityDao.findFirstSavingsByType(record.getReferred(), SavingsGoalTypeConstant.CUSTOMER_SAVINGS);
+        if(!tempOpt.isPresent()) {
+            log.info("no savings goal found for account - {}", record.getReferred().getId());
+            return false;
+        }
+        SavingsGoalEntity temp = tempOpt.get();
+        BigDecimal goalBalance = temp.getSavingsBalance();
+        if(goalBalance.compareTo(minimumFundAmount) < 0) {
+            log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minimumFundAmount);
+            return false;
+        }
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralAmount);
+        log.info("credit response code - {}", fundingResponse.getResponseCode());
+        if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
+            record.setReferrerRewarded(true);
+            customerReferralEntityDao.saveRecord(record);
+            return true;
+        }
+        return false;
     }
 
     @Async

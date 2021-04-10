@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.dao;
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -17,5 +18,6 @@ public interface CustomerReferralEntityDao extends CrudDao<CustomerReferralEntit
     Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred);
     long totalReferralRecordsForAccount(MintAccountEntity referral);
     List<CustomerReferralEntity> getUnprocessedRecordByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size);
+    List<CustomerReferralEntity> getUnprocessedRecordByReferral(LocalDateTime start, LocalDateTime end, int size, BigDecimal savingsMinimumBalance);
     Optional<CustomerReferralEntity> findRecordByReferralCodeAndReferredAccount(String code, MintAccountEntity referredAccount);
 }

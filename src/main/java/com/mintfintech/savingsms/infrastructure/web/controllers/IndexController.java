@@ -3,13 +3,18 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.impl.CreateReferralRewardUseCaseImpl;
+import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 /**
  * Created by jnwanya on
@@ -52,6 +57,15 @@ public class IndexController {
                 createReferralRewardUseCase.processReferralByUser(userId, size, overridePeriod);
         }).start();
 
+        ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed reward");
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/referral-backlog-reward", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
+                                                                  @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy HH:mm") @RequestParam(value = "fromDate", required = false) LocalDateTime fromDate,
+                                                                  @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy HH:mm") @RequestParam(value = "toDate", required = false) LocalDateTime toDate) {
+        createReferralRewardUseCase.processReferralBackLog(fromDate, toDate, size);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed reward");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }

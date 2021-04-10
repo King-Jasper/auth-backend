@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -49,6 +50,12 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     public List<CustomerReferralEntity> getUnprocessedRecordByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size) {
         Pageable pageable = PageRequest.of(0, size);
         return repository.getAllByReferrerAndReferrerRewardedAndDateCreatedBetweenOrderByDateCreatedDesc(referral, false, start, end, pageable);
+    }
+
+    @Override
+    public List<CustomerReferralEntity> getUnprocessedRecordByReferral(LocalDateTime start, LocalDateTime end, int size, BigDecimal savingsMinimumBalance) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getUnprocessedReferrals(start, end, savingsMinimumBalance, pageable);
     }
 
     @Override
