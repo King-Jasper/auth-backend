@@ -83,9 +83,11 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         for(CustomerReferralEntity record : referralList) {
            if(record.isReferrerRewarded()) {
+               log.info("referrer rewarded for record - {}", record.getId());
                continue;
            }
            if(StringUtils.defaultString(record.getRegistrationPlatform()).equalsIgnoreCase("WEB")) {
+               log.info("is web referral for record - {}", record.getId());
                continue;
            }
 

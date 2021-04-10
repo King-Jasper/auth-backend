@@ -8,5 +8,5 @@ sentry:
   attach-server-name: true
   server-name: savings-service
   environment: production
-  enable-tracing: true
+  enable-tracing: false
   traces-sample-rate: 0.3
