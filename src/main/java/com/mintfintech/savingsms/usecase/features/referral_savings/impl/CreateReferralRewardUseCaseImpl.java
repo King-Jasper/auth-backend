@@ -100,7 +100,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             BigDecimal goalBalance = temp.getSavingsBalance();
             if(goalBalance.compareTo(minimumFundAmount) < 0) {
                 log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minimumFundAmount);
-                return;
+                continue;
             }
             /*
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
