@@ -54,7 +54,7 @@ public class AccountMSEventListener {
 
     @KafkaListener(topics = {MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT})
     public void listenForUserNotificationPreferenceUpdate(String payload) {
-        log.info("notification preference update: {}", payload);
+        //log.info("notification preference update: {}", payload);
         NotificationPreferenceUpdateEvent event = gson.fromJson(payload, NotificationPreferenceUpdateEvent.class);
         accountSetupUseCases.updateNotificationPreference(event);
     }
@@ -68,14 +68,14 @@ public class AccountMSEventListener {
 
     @KafkaListener(topics = {MINT_BANK_ACCOUNT_TIER_UPDATE_EVENT})
     public void listenForMintBankAccountTierUpdate(String payload) {
-        log.info("account limit update : {}", payload);
+        //log.info("account limit update : {}", payload);
         BankAccountTierUpgradeEvent event = gson.fromJson(payload, BankAccountTierUpgradeEvent.class);
         accountSetupUseCases.updateBankAccountTierLevel(event);
     }
 
     @KafkaListener(topics = {CUSTOMER_DEVICE_CHANGE_EVENT, GCM_NOTIFICATION_DETAIL_EVENT})
     public void listenForCustomerDeviceChange(String payload) {
-        log.info("customer push notification detail: {}", payload);
+        //log.info("customer push notification detail: {}", payload);
         CustomerDeviceChangeEvent deviceChangeEvent = gson.fromJson(payload, CustomerDeviceChangeEvent.class);
         accountSetupUseCases.updateUserDeviceNotificationId(deviceChangeEvent.getCustomerId(), deviceChangeEvent.getDeviceNotificationId());
     }
