@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.QueryHints;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.LockModeType;
 import javax.persistence.QueryHint;
@@ -17,6 +18,7 @@ import java.util.Optional;
 public interface AppSequenceRepository extends JpaRepository<AppSequenceEntity, Long> {
 
     //@Lock(LockModeType.OPTIMISTIC)
+    @Transactional
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "500")})
     Optional<AppSequenceEntity> findFirstBySequenceType(SequenceType sequenceType);
 }
