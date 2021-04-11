@@ -24,6 +24,7 @@ import org.springframework.boot.jdbc.EmbeddedDatabaseConnection;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
+import javax.persistence.EntityManager;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -60,6 +61,7 @@ public class GetSavingsGoalUseCaseImplTest {
     @Autowired private SavingsPlanTenorRepository savingsPlanTenorRepository;
     @Autowired private SavingsGoalCategoryRepository savingsGoalCategoryRepository;
     @Autowired private SavingsGoalRepository savingsGoalRepository;
+    @Autowired private EntityManager entityManager;
 
 
 

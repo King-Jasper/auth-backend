@@ -28,11 +28,12 @@ public class AppSequenceEntity {
     @Id
     @Enumerated(EnumType.STRING)
     private SequenceType sequenceType;
-    private long value;
+    public SequenceType getSequenceType() {
+        return sequenceType;
+    }
 
     @Version
     private long version; // for optimistic locking
-
     public long getVersion() {
         return version;
     }
@@ -41,6 +42,7 @@ public class AppSequenceEntity {
      *
      * @return The current sequence value.
      */
+    private long value;
     public Long getValue() {
         return ++value;
     }

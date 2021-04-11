@@ -1,29 +1,18 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
 import com.google.gson.Gson;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
-import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
-import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
-import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
-import com.mintfintech.savingsms.usecase.master_record.*;
+import com.mintfintech.savingsms.usecase.master_record.CurrencyDataUseCases;
+import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
+import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
+import com.mintfintech.savingsms.usecase.master_record.TierLevelDataUseCase;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Created by jnwanya on
