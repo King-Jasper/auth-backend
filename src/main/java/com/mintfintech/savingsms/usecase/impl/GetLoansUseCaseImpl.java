@@ -99,7 +99,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             model.setReference(entity.getTransactionReference());
             model.setExternalReference(entity.getExternalReference());
             model.setResponseCode(entity.getResponseCode());
-            model.setStatus(entity.getTransactionStatus().name());
+            model.setStatus(entity.getStatus().name());
             model.setResponseMessage(entity.getResponseMessage());
             model.setType(entity.getTransactionType().name());
             model.setPaymentDate(entity.getDateCreated());
