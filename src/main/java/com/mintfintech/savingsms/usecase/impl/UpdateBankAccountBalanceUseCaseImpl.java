@@ -46,7 +46,7 @@ public class UpdateBankAccountBalanceUseCaseImpl implements UpdateBankAccountBal
         bankAccountEntity.setLedgerBalance(balanceUpdateEvent.getLedgerBalance());
         bankAccountEntity.setBalanceUpdateTime(LocalDateTime.now());
         mintBankAccountEntityDao.saveRecord(bankAccountEntity);
-        log.info("account balance updated: {},{}", bankAccountEntity.getAccountId(), balanceUpdateEvent.getAvailableBalance());
+        //log.info("account balance updated: {},{}", bankAccountEntity.getAccountId(), balanceUpdateEvent.getAvailableBalance());
     }
 
     @Override

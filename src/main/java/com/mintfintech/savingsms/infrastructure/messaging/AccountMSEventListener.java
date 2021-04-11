@@ -40,14 +40,14 @@ public class AccountMSEventListener {
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
     public void listenForAccountCreation(String payload) {
-        log.info("mint account creation: {}", payload);
+       // log.info("mint account creation: {}", payload);
         MintAccountCreationEvent mintAccountCreationEvent = gson.fromJson(payload, MintAccountCreationEvent.class);
         accountSetupUseCases.createMintAccount(mintAccountCreationEvent);
     }
 
     @KafkaListener(topics = {MINT_BANK_ACCOUNT_CREATION_EVENT, MINT_BANK_ACCOUNT_CREATION_EVENT+".savings-service"})
     public void listenForMintBankCreation(String payload) {
-        log.info("bank account creation: {}", payload);
+       // log.info("bank account creation: {}", payload);
         MintBankAccountCreationEvent event = gson.fromJson(payload, MintBankAccountCreationEvent.class);
         accountSetupUseCases.createIndividualBankAccount(event);
     }
