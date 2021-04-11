@@ -46,8 +46,7 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         this.repository = repository;
         this.appSequenceEntityDao = appSequenceEntityDao;
     }
-
-    @Retryable
+    
     @Override
     public String generateSavingGoalId() {
         return String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),

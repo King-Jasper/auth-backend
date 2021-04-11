@@ -18,7 +18,6 @@ import java.util.Optional;
 public interface AppSequenceRepository extends JpaRepository<AppSequenceEntity, Long> {
 
     //@Lock(LockModeType.OPTIMISTIC)
-    @Transactional
     @QueryHints({@QueryHint(name = "javax.persistence.lock.timeout", value = "500")})
     Optional<AppSequenceEntity> findFirstBySequenceType(SequenceType sequenceType);
 }

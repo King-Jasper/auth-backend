@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
 import com.google.gson.Gson;
+import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
+import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.master_record.CurrencyDataUseCases;
@@ -31,6 +33,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private SavingsGoalRepository repository;
     private Gson gson;
+    private AppSequenceEntityDao appSequenceEntityDao;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -51,6 +54,19 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
+       /* new Thread(() -> {
+            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            System.out.println("First thread id - "+id);
+        }).start();
+        new Thread(() -> {
+            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            System.out.println("2nd thread id - "+id);
+        }).start();
+        new Thread(() -> {
+            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            System.out.println("3rd thread id - "+id);
+        }).start();
+        */
        //applySavingsInterestUseCase.updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal.valueOf(0.04));
        //issueFix();
         /*long amount = 50000;

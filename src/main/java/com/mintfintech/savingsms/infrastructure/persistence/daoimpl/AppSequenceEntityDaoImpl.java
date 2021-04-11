@@ -26,11 +26,14 @@ import java.util.Random;
 @Named
 public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
 
+
     private final AppSequenceRepository repository;
     public AppSequenceEntityDaoImpl(AppSequenceRepository repository) {
         this.repository = repository;
     }
 
+
+    //@Transactional
     @Override
     public Long getNextSequenceId(SequenceType sequenceType) {
         return nextId(sequenceType);
@@ -42,27 +45,42 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
      * @return The next sequence number of a specific type.
      */
     //@Retryable(value = {StaleObjectStateException.class, ObjectOptimisticLockingFailureException.class, PessimisticLockException.class, LockTimeoutException.class }, maxAttempts = 5, backoff = @Backoff(delay = 1000))
-    @Transactional(value = Transactional.TxType.REQUIRES_NEW)
+    // @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public Long nextId(SequenceType sequenceType){
+        /*Random random = new Random();
+        int delay = random.nextInt(10) * 500;
+        System.out.println("delay - "+delay);
+        */
         boolean success = false;
         int retries = 0;
         long id = 0;
         long versionValue = 0;
+        AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
         while(!success && retries < 5) {
             try {
-                AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
+                /*AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
                         .orElseGet(() -> new AppSequenceEntity(sequenceType));
+                */
                 id = appSequenceEntity.getValue();
                 versionValue = appSequenceEntity.getVersion();
+               // System.out.println(delay +" - version after refresh - "+versionValue);
                 repository.saveAndFlush(appSequenceEntity);
                 success = true;
             }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | LockTimeoutException ex){
-                log.info("exception caught - {}, message - {} - id - {} retries - {} - version - {}", ex.getClass().getSimpleName(), ex.getLocalizedMessage(), id, retries, versionValue);
+                log.info("exception caught - {},  id - {}, retries - {} version - {}", ex.getClass().getSimpleName(), id, retries, versionValue);
                 retries++;
                 success = false;
                 try {Thread.sleep(500);}catch (Exception ignored){};
+               // log.info("delay {} - after exception - version {}", delay, versionValue);
+                appSequenceEntity = getSequenceRecord(sequenceType);
+                log.info("After exception version - {}", appSequenceEntity.getVersion());
             }
         }
         return id;
+    }
+
+    @Transactional(value = Transactional.TxType.REQUIRES_NEW)
+    public AppSequenceEntity getSequenceRecord(SequenceType sequenceType) {
+        return repository.findFirstBySequenceType(sequenceType).orElseGet(() -> new AppSequenceEntity(sequenceType));
     }
 }
