@@ -35,6 +35,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
@@ -58,7 +59,7 @@ public class LoanAdminController {
                                                                                                  @PathVariable("customerLoanProfileId") String customerLoanProfileId,
                                                                                                  @RequestBody ProfileVerificationRequest request) {
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isVerified(), request.getReason());
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), Boolean.parseBoolean(request.getVerified()), request.getReason());
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -69,7 +70,7 @@ public class LoanAdminController {
                                                                                        @PathVariable("customerLoanProfileId") String customerLoanProfileId,
                                                                                        @RequestBody BlacklistRequest request) {
 
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), request.isBlacklist(), request.getReason());
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), Boolean.parseBoolean(request.getBlacklist()), request.getReason());
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -80,7 +81,7 @@ public class LoanAdminController {
                                                                   @PathVariable("loanId") String loanId,
                                                                   @RequestBody @Valid LoanApprovalRequest request) {
 
-        LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), request.approved);
+        LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), Boolean.parseBoolean(request.getApproved()));
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -140,24 +141,27 @@ public class LoanAdminController {
     private static class LoanApprovalRequest {
         private String reason;
 
-        @NotNull
-        private boolean approved;
+        @NotEmpty
+        @Pattern(regexp = "(true|True|false|False|TRUE|FALSE)")
+        private String approved;
     }
 
     @Data
     private static class ProfileVerificationRequest {
         private String reason;
 
-        @NotNull
-        private boolean verified;
+        @NotEmpty
+        @Pattern(regexp = "(true|True|false|False|TRUE|FALSE)")
+        private String verified;
     }
 
     @Data
     private static class BlacklistRequest {
         private String reason;
 
-        @NotNull
-        private boolean blacklist;
+        @NotEmpty
+        @Pattern(regexp = "(true|True|false|False|TRUE|FALSE)")
+        private String blacklist;
 
     }
 
