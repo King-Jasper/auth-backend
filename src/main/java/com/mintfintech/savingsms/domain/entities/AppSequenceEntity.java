@@ -13,9 +13,6 @@ import javax.persistence.*;
  * Tue, 18 Feb, 2020
  */
 @Entity
-@Getter
-@Setter
-@Builder
 @AllArgsConstructor
 @Table(name = "app_sequence")
 public class AppSequenceEntity {
@@ -36,6 +33,9 @@ public class AppSequenceEntity {
     @Version
     private long version; // for optimistic locking
 
+    public long getVersion() {
+        return version;
+    }
     /**
      * Gets the current sequence value.
      *

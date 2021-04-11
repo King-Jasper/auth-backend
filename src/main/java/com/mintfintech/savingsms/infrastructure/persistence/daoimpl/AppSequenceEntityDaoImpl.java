@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppSequenceEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppSequenceRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.StaleObjectStateException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Backoff;
@@ -18,6 +19,7 @@ import javax.transaction.Transactional;
  * Created by jnwanya on
  * Tue, 18 Feb, 2020
  */
+@Slf4j
 @Named
 public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
 
@@ -36,13 +38,26 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
      *
      * @return The next sequence number of a specific type.
      */
-    @Retryable(value = {StaleObjectStateException.class, ObjectOptimisticLockingFailureException.class, PessimisticLockException.class, LockTimeoutException.class }, maxAttempts = 5, backoff = @Backoff(delay = 1000))
+    //@Retryable(value = {StaleObjectStateException.class, ObjectOptimisticLockingFailureException.class, PessimisticLockException.class, LockTimeoutException.class }, maxAttempts = 5, backoff = @Backoff(delay = 1000))
     @Transactional
     public Long nextId(SequenceType sequenceType){
-        AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
-                .orElseGet(() -> new AppSequenceEntity(sequenceType));
-        Long id = appSequenceEntity.getValue();
-        repository.saveAndFlush(appSequenceEntity);
+        boolean success = false;
+        int retries = 0;
+        long id = 0;
+        while(!success && retries < 5) {
+            try {
+                AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
+                        .orElseGet(() -> new AppSequenceEntity(sequenceType));
+                id = appSequenceEntity.getValue();
+                repository.saveAndFlush(appSequenceEntity);
+                success = true;
+            }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | LockTimeoutException | PessimisticLockException ex){
+                log.info("exception caught - {}, message - {} - id - {} retries - {}",ex.getClass().getName(), ex.getLocalizedMessage(), id, retries);
+                retries++;
+                success = false;
+                try {Thread.sleep(500);}catch (Exception ignored){};
+            }
+        }
         return id;
     }
 }
