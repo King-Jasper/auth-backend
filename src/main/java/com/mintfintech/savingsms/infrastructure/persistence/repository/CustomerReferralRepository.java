@@ -32,6 +32,7 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
 
     @Query("select c from CustomerReferralEntity c where c.dateCreated between ?1 and ?2 and c.referrerRewarded = false and " +
             "c.registrationPlatform <> 'WEB' and c.referred in (select s.mintAccount from SavingsGoalEntity s where " +
-            "s.savingsBalance >= ?3 and s.mintAccount = c.referred) order by c.dateCreated asc")
+            "s.savingsBalance >= ?3 and s.mintAccount = c.referred and " +
+            "s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER) order by c.dateCreated asc")
     List<CustomerReferralEntity> getUnprocessedReferrals(LocalDateTime startDate, LocalDateTime endDate, BigDecimal savingsMinBalance, Pageable pageable);
 }
