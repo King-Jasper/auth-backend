@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -32,6 +33,7 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     }
 
     @Override
+    @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public boolean recordExistForReferredAccount(MintAccountEntity referred) {
         return repository.existsByReferred(referred);
     }
