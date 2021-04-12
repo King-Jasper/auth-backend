@@ -168,7 +168,6 @@ public class LoanController {
 
         @NotEmpty
         private String loanId;
-
     }
 
 }

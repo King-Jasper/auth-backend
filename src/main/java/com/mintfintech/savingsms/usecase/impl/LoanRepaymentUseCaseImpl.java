@@ -63,8 +63,6 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             //call core banking
         });
-
-
     }
 
     @Override
