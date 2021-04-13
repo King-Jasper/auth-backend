@@ -65,13 +65,16 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
                        RandomStringUtils.randomNumeric(1));
                success = true;
             }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex){
-                log.info("savings-exception caught - {},  id - {}, retries - {}", ex.getClass().getSimpleName(), goalId, retries);
+                log.info("savings-exception caught - {},  goalId - {}, retries - {}", ex.getClass().getSimpleName(), goalId, retries);
                 retries++;
                 success = false;
             }
             if(retries > 0 && success) {
                  log.info("Successful retrieval of unique goal Id - {}", goalId);
             }
+        }
+        if(retries >= 5) {
+            goalId = RandomStringUtils.random(8);
         }
         /*
         return String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),

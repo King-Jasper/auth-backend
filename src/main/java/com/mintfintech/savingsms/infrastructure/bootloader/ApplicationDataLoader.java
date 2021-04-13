@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.bootloader;
 
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
@@ -34,6 +35,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private SavingsGoalRepository repository;
     private Gson gson;
     private AppSequenceEntityDao appSequenceEntityDao;
+    private SavingsGoalEntityDao savingsGoalEntityDao;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -54,18 +56,23 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
+
         /*
         new Thread(() -> {
-            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
-            System.out.println("First thread id - "+id);
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("First thread goalId - "+goalId);
         }).start();
         new Thread(() -> {
-            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
-            System.out.println("2nd thread id - "+id);
+            //long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            //System.out.println("2nd thread id - "+id);
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("2nd thread goalId - "+goalId);
         }).start();
         new Thread(() -> {
-            long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
-            System.out.println("3rd thread id - "+id);
+            //long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            //System.out.println("3rd thread id - "+id);
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("3rd thread goalId - "+goalId);
         }).start();
         */
 
