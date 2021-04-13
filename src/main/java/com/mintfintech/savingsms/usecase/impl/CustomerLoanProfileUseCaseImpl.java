@@ -18,11 +18,11 @@ import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
-import com.mintfintech.savingsms.usecase.LoanUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
@@ -66,7 +66,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             customerLoanProfileEntity = optionalCustomerLoanProfileEntity.get();
 
             if (customerLoanProfileEntity.getEmployeeInformation() != null) {
-                throw new BadRequestException("An Employee Information already exists for this user.");
+                throw new BadRequestException("An Employment Information already exists for this user.");
             }
 
             EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
@@ -83,6 +83,32 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                     .build();
             customerLoanProfileEntity = customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
         }
+
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+
+        return loanCustomerProfileModel;
+    }
+
+    @Override
+    public LoanCustomerProfileModel updateCustomerEmploymentInformation(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
+
+        if (request.getEmploymentLetter() != null){
+            validateEmploymentLetter(request.getEmploymentLetter());
+        }
+
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+
+        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
+                .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
+
+        if (customerLoanProfileEntity.getEmployeeInformation() == null) {
+            throw new NotFoundException("An Employment Information does not exists for this user.");
+        }
+
+        EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
+
+        updateEmploymentInformation(request, employeeInfo);
 
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
@@ -215,6 +241,25 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         customerLoanProfileEntity.setRating(rating);
 
         customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
+    }
+
+    private void updateEmploymentInformation(EmploymentDetailCreationRequest request, EmployeeInformationEntity info){
+
+        if (request.getEmploymentLetter() != null){
+            ResourceFileEntity employmentLetter = imageResourceUseCase.createImage("employment-letters", request.getEmploymentLetter());
+            info.setEmploymentLetter(employmentLetter);
+        }
+
+        info.setVerificationStatus(ApprovalStatusConstant.PENDING);
+        info.setEmployerEmail(request.getEmployerEmail());
+        info.setEmployerAddress(request.getEmployerAddress());
+        info.setEmployerPhoneNo(request.getEmployerPhoneNo());
+        info.setMonthlyIncome(request.getMonthlyIncome());
+        info.setOrganizationName(request.getOrganizationName());
+        info.setWorkEmail(request.getWorkEmail());
+        info.setOrganizationUrl(request.getOrganizationUrl());
+
+        employeeInformationEntityDao.saveRecord(info);
     }
 
     private EmployeeInformationEntity createEmploymentInformation(EmploymentDetailCreationRequest request) {

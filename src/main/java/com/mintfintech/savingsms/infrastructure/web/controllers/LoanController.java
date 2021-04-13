@@ -28,6 +28,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -92,9 +93,9 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Add Employee Information to Customer Loan Profile And Request for Loan.")
+    @ApiOperation(value = "Add Employment Information to Customer Loan Profile And Request for Loan.")
     @PostMapping(value = "loan-request/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> createEmployeeInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<LoanModel>> createEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @ApiParam(value = "Upload Employment Letter", required = true) @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
                                                                                 @ApiParam(value = "Organization Name", required = true) @NotEmpty @RequestParam("organizationName") String organizationName,
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
@@ -121,6 +122,35 @@ public class LoanController {
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "Update Customer Employment Information.")
+    @PutMapping(value = "customer-profile/employment-info", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> updateEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                @ApiParam(value = "Upload Employment Letter") @RequestParam(value = "employmentLetter", required = false) MultipartFile employmentLetter,
+                                                                                @ApiParam(value = "Organization Name", required = true) @NotEmpty @RequestParam("organizationName") String organizationName,
+                                                                                @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
+                                                                                @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
+                                                                                @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
+                                                                                @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
+                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
+
+        EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
+                .employmentLetter(employmentLetter)
+                .employerAddress(employerAddress)
+                .employerEmail(StringUtils.trim(employerEmail))
+                .employerPhoneNo(StringUtils.trim(employerPhoneNo))
+                .monthlyIncome(BigDecimal.valueOf(monthlyIncome))
+                .organizationName(StringUtils.trim(organizationName))
+                .organizationUrl(StringUtils.trim(organizationUrl))
+                .workEmail(StringUtils.trim(workEmail))
+                .build();
+
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.updateCustomerEmploymentInformation(authenticatedUser, request);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
 
     @ApiOperation(value = "Request for Loan.")
     @PostMapping(value = "loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
