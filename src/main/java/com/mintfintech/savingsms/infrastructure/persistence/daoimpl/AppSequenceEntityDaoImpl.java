@@ -12,10 +12,7 @@ import org.springframework.retry.annotation.Backoff;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
-import javax.persistence.EntityManager;
-import javax.persistence.LockTimeoutException;
-import javax.persistence.PessimisticLockException;
-import javax.persistence.TypedQuery;
+import javax.persistence.*;
 import javax.transaction.Transactional;
 import java.util.Random;
 
@@ -74,7 +71,7 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
                // System.out.println(delay +" - version after refresh - "+versionValue);
                 repository.saveAndFlush(appSequenceEntity);
                 success = true;
-            }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | LockTimeoutException ex){
+            }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex){
                 log.info("exception caught - {},  id - {}, retries - {} version - {}", ex.getClass().getSimpleName(), id, retries, versionValue);
                 retries++;
                 success = false;
