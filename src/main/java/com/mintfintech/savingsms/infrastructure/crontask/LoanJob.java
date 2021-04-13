@@ -60,8 +60,6 @@ public class LoanJob {
             loanRepaymentUseCase.processLoanRecoverySuspenseAccountToMintLoanAccount();
             Thread.sleep(500);
             loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
-            Thread.sleep(500);
-            loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
         } catch (Exception ignored) {
         }
     }

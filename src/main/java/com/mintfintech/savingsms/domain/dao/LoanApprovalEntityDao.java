@@ -6,10 +6,12 @@ import java.util.List;
 
 public interface LoanApprovalEntityDao extends CrudDao<LoanApprovalEntity, Long> {
 
-    List<LoanApprovalEntity> getPendingMintToSuspenseTransaction(String responseCode);
+    List<LoanApprovalEntity> getPendingMintToSuspenseTransaction();
 
-    List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction(String responseCode);
+    List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction();
 
     List<LoanApprovalEntity> getPendingSuspenseToCustomerTransaction();
+
+    LoanApprovalEntity saveAndFlush(LoanApprovalEntity loanApprovalEntity);
 
 }

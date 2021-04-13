@@ -133,7 +133,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
     @Override
     public void processLoanRecoverySuspenseAccountToMintLoanAccount() {
-        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingRecoveryToMintTransaction("00");
+        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingRecoveryToMintTransaction();
 
         for (LoanRepaymentEntity repayment : repayments) {
             LoanRequestEntity loan = loanRequestEntityDao.getRecordById(repayment.getLoanRequest().getId());
@@ -143,7 +143,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
     @Override
     public void processInterestIncomeSuspenseAccountToInterestIncomeAccount() {
-        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingSuspenseToIncomeTransaction("00");
+        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingSuspenseToIncomeTransaction();
 
         for (LoanRepaymentEntity repayment : repayments) {
             LoanRequestEntity loan = loanRequestEntityDao.getRecordById(repayment.getLoanRequest().getId());
@@ -184,12 +184,20 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             transaction = loanTransactionEntityDao.saveRecord(transaction);
         }
 
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
             systemIssueLogService.logIssue("Customer To Loan Recovery Suspense funding failed", message);
             transaction.setStatus(TransactionStatusConstant.FAILED);
         } else {
-            transaction.setStatus(TransactionStatusConstant.SUCCESSFUL);
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                transaction.setStatus(TransactionStatusConstant.SUCCESSFUL);
+            } else {
+                transaction.setStatus(TransactionStatusConstant.FAILED);
+                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Customer To Loan Recovery Suspense funding failed", message);
+            }
+
         }
         return loanTransactionEntityDao.saveRecord(transaction);
     }
@@ -198,7 +206,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         LoanRepaymentEntity loanRepayment = LoanRepaymentEntity.builder()
                 .loanRequest(loan)
-                .loanTransactionType(LoanTransactionTypeConstant.RECOVERY_TO_MINT)
+                .loanTransactionType(LoanTransactionTypeConstant.PENDING_RECOVERY_TO_MINT)
                 .build();
 
         repaymentEntityDao.saveRecord(loanRepayment);
@@ -208,10 +216,14 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         String ref = loanRequestEntityDao.generateLoanId();
 
+        repayment.setLoanRecoveryCreditReference(ref);
+        repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_RECOVERY_TO_MINT);
+        repaymentEntityDao.saveAndFlush(repayment);
+
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
                 .amount(loan.getLoanAmount())
-                .loanTransactionType(repayment.getLoanTransactionType().name())
+                .loanTransactionType(LoanTransactionTypeConstant.RECOVERY_TO_MINT.name())
                 .narration(constructLoanRepaymentNarration(loan, ref))
                 .fee(loan.getRepaymentAmount().subtract(loan.getLoanAmount()))
                 .reference(ref)
@@ -219,45 +231,60 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
 
-        if (msClientResponse.getData() != null) {
-            repayment.setLoanRecoveryCreditCode(msClientResponse.getData().getResponseCode());
-            repayment.setLoanRecoveryCreditReference(ref);
-            repayment = repaymentEntityDao.saveRecord(repayment);
-        }
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
             systemIssueLogService.logIssue("Loan Recovery Suspense To Mint funding failed", message);
+            repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
         } else {
-            repayment.setLoanTransactionType(LoanTransactionTypeConstant.SUSPENSE_TO_INCOME);
-            repaymentEntityDao.saveRecord(repayment);
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            repayment.setLoanRecoveryCreditCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                repayment.setLoanTransactionType(LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_INCOME);
+            } else {
+                repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
+                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Loan Recovery Suspense To Mint funding failed", message);
+            }
         }
+        repaymentEntityDao.saveRecord(repayment);
     }
 
     private void creditLoanInterestIncomeAccount(LoanRequestEntity loan, LoanRepaymentEntity repayment) {
 
         String ref = loanRequestEntityDao.generateLoanId();
 
+        repayment.setLoanIncomeCreditReference(ref);
+        repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_SUSPENSE_TO_INCOME);
+        repaymentEntityDao.saveAndFlush(repayment);
+
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
                 .amount(loan.getRepaymentAmount().subtract(loan.getLoanAmount()))
-                .loanTransactionType(repayment.getLoanTransactionType().name())
+                .loanTransactionType(LoanTransactionTypeConstant.SUSPENSE_TO_INCOME.name())
                 .narration(constructLoanRepaymentNarration(loan, ref))
                 .reference(ref)
                 .build();
 
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
 
-        if (msClientResponse.getData() != null) {
-            repayment.setLoanRecoveryCreditCode(msClientResponse.getData().getResponseCode());
-            repayment.setLoanRecoveryCreditReference(ref);
-            repaymentEntityDao.saveRecord(repayment);
-        }
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
             systemIssueLogService.logIssue("Interest Income Suspense To Interest Income funding failed", message);
+            repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
+        } else {
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            repayment.setLoanIncomeCreditCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSED);
+            } else {
+                repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
+                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Interest Income Suspense To Interest Income funding failed", message);
+            }
         }
+        repaymentEntityDao.saveRecord(repayment);
     }
 
     private String constructLoanRepaymentNarration(LoanRequestEntity loanRequestEntity, String reference) {

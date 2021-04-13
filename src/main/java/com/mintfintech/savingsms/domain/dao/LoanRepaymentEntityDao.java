@@ -6,7 +6,9 @@ import java.util.List;
 
 public interface LoanRepaymentEntityDao extends CrudDao<LoanRepaymentEntity, Long>{
 
-    List<LoanRepaymentEntity> getPendingRecoveryToMintTransaction(String responseCode);
+    List<LoanRepaymentEntity> getPendingRecoveryToMintTransaction();
 
-    List<LoanRepaymentEntity> getPendingSuspenseToIncomeTransaction(String responseCode);
+    List<LoanRepaymentEntity> getPendingSuspenseToIncomeTransaction();
+
+    LoanRepaymentEntity saveAndFlush(LoanRepaymentEntity loanRepaymentEntity);
 }

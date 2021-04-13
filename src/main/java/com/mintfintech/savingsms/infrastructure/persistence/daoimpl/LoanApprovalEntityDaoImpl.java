@@ -33,17 +33,22 @@ public class LoanApprovalEntityDaoImpl implements LoanApprovalEntityDao {
     }
 
     @Override
-    public List<LoanApprovalEntity> getPendingMintToSuspenseTransaction(String responseCode) {
-        return repository.getPendingMintToSuspenseTransaction(responseCode);
+    public List<LoanApprovalEntity> getPendingMintToSuspenseTransaction() {
+        return repository.getPendingMintToSuspenseTransaction();
     }
 
     @Override
-    public List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction(String responseCode) {
-        return repository.getPendingInterestToSuspenseTransaction(responseCode);
+    public List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction() {
+        return repository.getPendingInterestToSuspenseTransaction();
     }
 
     @Override
     public List<LoanApprovalEntity> getPendingSuspenseToCustomerTransaction() {
         return repository.getPendingSuspenseToCustomerTransaction();
+    }
+
+    @Override
+    public LoanApprovalEntity saveAndFlush(LoanApprovalEntity loanApprovalEntity) {
+        return repository.saveAndFlush(loanApprovalEntity);
     }
 }

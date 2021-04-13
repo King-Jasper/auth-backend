@@ -10,22 +10,19 @@ public interface LoanApprovalRepository extends JpaRepository<LoanApprovalEntity
 
     @Query("select s from LoanApprovalEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.loanSuspenseCreditResponseCode != ?1 and" +
-            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.MINT_TO_SUSPENSE" +
+            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_MINT_TO_SUSPENSE" +
             " ORDER BY s.dateCreated DESC")
-    List<LoanApprovalEntity> getPendingMintToSuspenseTransaction(String responseCode);
+    List<LoanApprovalEntity> getPendingMintToSuspenseTransaction();
 
     @Query("select s from LoanApprovalEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.loanIncomeSuspenseCreditCode != ?1 and" +
-            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.INTEREST_TO_SUSPENSE" +
+            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_INTEREST_TO_SUSPENSE" +
             " ORDER BY s.dateCreated DESC")
-    List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction(String responseCode);
+    List<LoanApprovalEntity> getPendingInterestToSuspenseTransaction();
 
     @Query("select s from LoanApprovalEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.disbursementTransaction.status = com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant.PENDING" +
-            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.SUSPENSE_TO_CUSTOMER" +
+            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_CUSTOMER" +
             " ORDER BY s.dateCreated DESC")
     List<LoanApprovalEntity> getPendingSuspenseToCustomerTransaction();
 }
