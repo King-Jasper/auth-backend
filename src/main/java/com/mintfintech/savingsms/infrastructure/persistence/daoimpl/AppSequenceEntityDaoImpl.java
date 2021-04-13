@@ -15,6 +15,7 @@ import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.LockTimeoutException;
 import javax.persistence.PessimisticLockException;
+import javax.persistence.TypedQuery;
 import javax.transaction.Transactional;
 import java.util.Random;
 
@@ -32,6 +33,12 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
         this.repository = repository;
     }
 
+
+    private EntityManager entityManager;
+    @Autowired
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+    }
 
     //@Transactional
     @Override
@@ -61,6 +68,7 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
                 /*AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
                         .orElseGet(() -> new AppSequenceEntity(sequenceType));
                 */
+               // AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
                 id = appSequenceEntity.getValue();
                 versionValue = appSequenceEntity.getVersion();
                // System.out.println(delay +" - version after refresh - "+versionValue);
@@ -81,6 +89,12 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
 
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public AppSequenceEntity getSequenceRecord(SequenceType sequenceType) {
-        return repository.findFirstBySequenceType(sequenceType).orElseGet(() -> new AppSequenceEntity(sequenceType));
+        //entityManager.clear();
+       // return repository.findSequenceRecord(sequenceType).orElseGet(() -> new AppSequenceEntity(sequenceType));
+
+        TypedQuery<AppSequenceEntity> query = entityManager.createQuery(
+                "SELECT a FROM AppSequenceEntity a WHERE a.sequenceType = :sequence" , AppSequenceEntity.class);
+        AppSequenceEntity sequenceEntity = query.setParameter("sequence", sequenceType).getSingleResult();
+        return sequenceEntity == null ? new AppSequenceEntity(sequenceType) : sequenceEntity;
     }
 }

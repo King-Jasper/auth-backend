@@ -54,7 +54,8 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
-       /* new Thread(() -> {
+        /*
+        new Thread(() -> {
             long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
             System.out.println("First thread id - "+id);
         }).start();
@@ -67,6 +68,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             System.out.println("3rd thread id - "+id);
         }).start();
         */
+
        //applySavingsInterestUseCase.updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal.valueOf(0.04));
        //issueFix();
         /*long amount = 50000;
