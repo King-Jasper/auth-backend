@@ -62,13 +62,13 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
         int retries = 0;
         long id = 0;
         long versionValue = 0;
-        AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
+       // AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
         while(!success && retries < 5) {
             try {
                 /*AppSequenceEntity appSequenceEntity = repository.findFirstBySequenceType(sequenceType)
                         .orElseGet(() -> new AppSequenceEntity(sequenceType));
                 */
-               // AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
+                AppSequenceEntity appSequenceEntity = getSequenceRecord(sequenceType);
                 id = appSequenceEntity.getValue();
                 versionValue = appSequenceEntity.getVersion();
                // System.out.println(delay +" - version after refresh - "+versionValue);
@@ -80,8 +80,8 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
                 success = false;
                 try {Thread.sleep(500);}catch (Exception ignored){};
                // log.info("delay {} - after exception - version {}", delay, versionValue);
-                appSequenceEntity = getSequenceRecord(sequenceType);
-                log.info("After exception version - {}", appSequenceEntity.getVersion());
+               // appSequenceEntity = getSequenceRecord(sequenceType);
+               // log.info("After exception version - {}", appSequenceEntity.getVersion());
             }
         }
         return id;
