@@ -122,7 +122,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         SavingsGoalEntity temp = tempOpt.get();
 
-        LocalDateTime newProgramDate = LocalDate.of(2021, 4, 14).atStartOfDay();
+        LocalDateTime newProgramDate = LocalDate.of(2021, 4, 13).atTime(23, 0);
         boolean newProgram = true;
         Optional<SavingsGoalTransactionEntity> transactionOpt = savingsGoalTransactionEntityDao.findFirstTransactionForSavings(temp);
         if(transactionOpt.isPresent()) {
