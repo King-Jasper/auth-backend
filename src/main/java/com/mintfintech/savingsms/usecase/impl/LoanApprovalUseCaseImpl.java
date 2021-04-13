@@ -81,7 +81,6 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .loanRequest(loan)
                 .loanTransactionType(LoanTransactionTypeConstant.PENDING_MINT_TO_SUSPENSE)
                 .build();
-
         loanApprovalEntityDao.saveRecord(loanApprovalEntity);
     }
 
@@ -225,7 +224,6 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     @Override
     public void processMintToSuspenseAccount() {
         List<LoanApprovalEntity> loanApprovals = loanApprovalEntityDao.getPendingMintToSuspenseTransaction();
-
         for (LoanApprovalEntity approval : loanApprovals) {
             LoanRequestEntity loan = loanRequestEntityDao.getRecordById(approval.getLoanRequest().getId());
             creditLoanSuspenseAccount(loan, approval);
