@@ -1,6 +1,5 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import lombok.AllArgsConstructor;
@@ -40,10 +39,6 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private TransactionTypeConstant transactionType;
-
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private LoanTransactionTypeConstant loanTransactionType;
 
     private boolean autoDebit;
 

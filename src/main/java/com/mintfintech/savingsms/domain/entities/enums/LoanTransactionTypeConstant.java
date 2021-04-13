@@ -7,6 +7,5 @@ public enum LoanTransactionTypeConstant {
     SUSPENSE_TO_CUSTOMER,
     CUSTOMER_TO_RECOVERY,
     RECOVERY_TO_MINT,
-    RECOVERY_TO_INTEREST,
     SUSPENSE_TO_INCOME
 }

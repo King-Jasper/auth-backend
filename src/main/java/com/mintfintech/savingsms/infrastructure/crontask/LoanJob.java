@@ -57,9 +57,9 @@ public class LoanJob {
     @SchedulerLock(name = "LoanJob_runPendingApprovedRepayment", lockAtMostForString = "PT6M")
     public void runPendingApprovedRepayment() {
         try {
-            loanRepaymentUseCase.processRecoverySuspenseAccountToLoanAccount();
+            loanRepaymentUseCase.processLoanRecoverySuspenseAccountToMintLoanAccount();
             Thread.sleep(500);
-            loanRepaymentUseCase.processLoanRecoverySuspenseAccountToInterestReceivableAccount();
+            loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
             Thread.sleep(500);
             loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
         } catch (Exception ignored) {

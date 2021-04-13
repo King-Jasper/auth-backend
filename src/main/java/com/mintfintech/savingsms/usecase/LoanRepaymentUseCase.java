@@ -15,9 +15,8 @@ public interface LoanRepaymentUseCase {
 
     LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId);
 
-    void processRecoverySuspenseAccountToLoanAccount();
-
-    void processLoanRecoverySuspenseAccountToInterestReceivableAccount();
+    void processLoanRecoverySuspenseAccountToMintLoanAccount();
 
     void processInterestIncomeSuspenseAccountToInterestIncomeAccount();
+
 }

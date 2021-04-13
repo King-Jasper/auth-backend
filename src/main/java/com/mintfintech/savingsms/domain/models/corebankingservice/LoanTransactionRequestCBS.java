@@ -15,4 +15,5 @@ public class LoanTransactionRequestCBS {
     private String narration;
     private String accountNumber;
     private String loanTransactionType;
+    private BigDecimal fee;
 }
