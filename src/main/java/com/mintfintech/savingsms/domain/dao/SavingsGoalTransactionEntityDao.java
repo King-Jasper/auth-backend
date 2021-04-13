@@ -19,4 +19,5 @@ public interface SavingsGoalTransactionEntityDao extends CrudDao<SavingsGoalTran
     Optional<SavingsGoalTransactionEntity> findTransactionByReference(String transactionReference);
     List<SavingsGoalTransactionEntity> getTransactionByTypeAndStatusBeforeTime(TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus, LocalDateTime beforeTime, int size);
     Page<SavingsGoalTransactionEntity> getTransactions(SavingsGoalEntity goalEntity, int page, int size);
+    Optional<SavingsGoalTransactionEntity> findFirstTransactionForSavings(SavingsGoalEntity goalEntity);
 }

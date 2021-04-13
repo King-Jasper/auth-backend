@@ -60,7 +60,8 @@ public class SavingsGoalTransactionEntityDaoImpl extends CrudDaoImpl<SavingsGoal
         String reference = RandomStringUtils.random(8);
         while(!success && retries < 5) {
             try {
-                reference = String.format("MS%09d%s", appSequenceEntityDao.getNextSequenceIdTemp(SequenceType.SAVING_GOAL_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
+                reference = String.format("MS%09d%s", appSequenceEntityDao.getNextSequenceIdTemp(SequenceType.SAVING_GOAL_REFERENCE_SEQ),
+                        RandomStringUtils.randomNumeric(1));
                 success = true;
             }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex){
                 log.info("savings-exception caught - {},  reference - {}, retries - {}", ex.getClass().getSimpleName(), reference, retries);
@@ -102,5 +103,10 @@ public class SavingsGoalTransactionEntityDaoImpl extends CrudDaoImpl<SavingsGoal
     @Override
     public SavingsGoalTransactionEntity saveRecord(SavingsGoalTransactionEntity record) {
         return repository.save(record);
+    }
+
+    @Override
+    public Optional<SavingsGoalTransactionEntity> findFirstTransactionForSavings(SavingsGoalEntity goalEntity) {
+        return repository.findFirstBySavingsGoalAndTransactionStatusOrderByDateCreatedAsc(goalEntity, TransactionStatusConstant.SUCCESSFUL);
     }
 }

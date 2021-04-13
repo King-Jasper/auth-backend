@@ -43,17 +43,19 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
+    private final SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
 
     private static final String SIDE_HUSTLE_REFERRAL_CODE = "SIDEHUSTLE";
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
-    private static final BigDecimal referralAmount = BigDecimal.valueOf(1000.00);
-    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal referralAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(250.00);
 
 
     @Async
     public void processReferralBackLog(LocalDateTime start, LocalDateTime end, int size) {
+
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(start, end, size, minimumFundAmount);
         for(CustomerReferralEntity record: referralList) {
 
@@ -61,8 +63,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             AppUserEntity appUserEntity = appUserEntityDao.findAccountOwner(record.getReferrer()).orElse(null);
             SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(record.getReferrer(), appUserEntity));
 
-            boolean processed = processReferralPayment(record, referralSavingsGoalEntity);
 
+            boolean processed = processReferralPayment(record, referralSavingsGoalEntity);
             if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
                 referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
                 referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
@@ -72,6 +74,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     }
 
     public void processReferralByUser(String userId, int size, boolean overrideTime) {
+
+        LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
+        LocalDateTime end = LocalDateTime.now();
+
         Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
         if(!appUserEntityOpt.isPresent()) {
             log.info("User Id not found.");
@@ -82,14 +88,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
 
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
-        LocalDateTime start, end;
-        if(overrideTime) {
-            start = LocalDateTime.of(LocalDate.of(2021, 2, 8), LocalTime.of(21, 0));
-            end = LocalDateTime.now();
-        }else {
-            start = LocalDateTime.of(LocalDate.of(2021, 3, 8), LocalTime.of(21, 30));
-            end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
-        }
+
 
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(referral, start, end, size);
         log.info("LIST PULLED - {}, start - {}, end - {}", referralList.size(), start, end);
@@ -106,6 +105,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     }
 
     private boolean processReferralPayment(CustomerReferralEntity record, SavingsGoalEntity referralSavingsGoalEntity) {
+
         if(record.isReferrerRewarded()) {
             log.info("referrer rewarded for record - {}", record.getId());
             return false;
@@ -121,12 +121,31 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return false;
         }
         SavingsGoalEntity temp = tempOpt.get();
+
+        LocalDateTime newProgramDate = LocalDate.of(2021, 4, 14).atStartOfDay();
+        boolean newProgram = true;
+        Optional<SavingsGoalTransactionEntity> transactionOpt = savingsGoalTransactionEntityDao.findFirstTransactionForSavings(temp);
+        if(transactionOpt.isPresent()) {
+            SavingsGoalTransactionEntity transactionEntity = transactionOpt.get();
+            if(transactionEntity.getDateCreated().isBefore(newProgramDate)) {
+                newProgram = false;
+            }
+        }
+
+        BigDecimal minAmount = minimumFundAmount;
+        BigDecimal payoutAmount = referralAmount;
+
+        if(!newProgram) {
+            minAmount = BigDecimal.valueOf(500.00);
+            payoutAmount = BigDecimal.valueOf(1000.00);
+        }
+
         BigDecimal goalBalance = temp.getSavingsBalance();
-        if(goalBalance.compareTo(minimumFundAmount) < 0) {
-            log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minimumFundAmount);
+        if(goalBalance.compareTo(minAmount) < 0) {
+            log.info("Savings {} balance {} is lower than minimum balance {}", temp.getGoalId(), goalBalance, minAmount);
             return false;
         }
-        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, referralAmount);
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, payoutAmount);
         log.info("credit response code - {}", fundingResponse.getResponseCode());
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             record.setReferrerRewarded(true);
