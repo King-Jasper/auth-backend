@@ -136,7 +136,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         return false;
     }
 
-    @Async
+    //@Async
     @Override
     public void processCustomerReferralReward(CustomerReferralEvent referralEvent) {
 
