@@ -15,7 +15,7 @@ public class LoanSearchDTO {
 
     private LocalDateTime fromDate;
     private LocalDateTime toDate;
-    private LoanRepaymentStatusConstant status;
+    private LoanRepaymentStatusConstant repaymentStatus;
     private ApprovalStatusConstant approvalStatus;
     private MintBankAccountEntity account;
     private LoanTypeConstant loanType;

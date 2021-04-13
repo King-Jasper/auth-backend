@@ -123,7 +123,7 @@ public class LoanUseCaseImpl implements LoanUseCase {
         }
 
         if (loanRequestEntityDao.countActiveLoan(appUser) > 0) {
-            throw new BadRequestException("User has active loan");
+            throw new BadRequestException("There is an active loan for this user");
         }
 
         LoanRequestEntity loanRequestEntity = null;

@@ -9,7 +9,7 @@ import java.time.LocalDate;
 @Builder
 public class LoanSearchRequest {
     private String accountId;
-    private String loanStatus;
+    private String repaymentStatus;
     private LocalDate fromDate;
     private LocalDate toDate;
     private String approvalStatus;

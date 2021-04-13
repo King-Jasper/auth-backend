@@ -196,7 +196,9 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         String description = String.format("Blacklisted this customer loan profile: %s", oldState.getId());
         auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);
 
-        return toLoanCustomerProfileModel(customerLoanProfileEntity);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        return loanCustomerProfileModel;
     }
 
     @Override

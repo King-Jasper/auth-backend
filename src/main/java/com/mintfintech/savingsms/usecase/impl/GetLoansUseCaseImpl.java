@@ -40,7 +40,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         LoanSearchDTO searchDTO = LoanSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
-                .status(searchRequest.getLoanStatus() != null ? LoanRepaymentStatusConstant.valueOf(searchRequest.getLoanStatus()) : null)
+                .repaymentStatus(searchRequest.getRepaymentStatus() != null ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
                 .approvalStatus(searchRequest.getApprovalStatus() != null ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
