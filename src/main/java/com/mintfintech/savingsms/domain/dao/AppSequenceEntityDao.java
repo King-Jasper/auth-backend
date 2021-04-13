@@ -9,4 +9,5 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
  */
 public interface AppSequenceEntityDao {
     Long getNextSequenceId(SequenceType sequenceType);
+    Long getNextSequenceIdTemp(SequenceType sequenceType);
 }
