@@ -104,6 +104,7 @@ public class LoanController {
                                                                                 @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
                                                                                 @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail,
+                                                                                  @NotEmpty @RequestParam("creditAccountId") String creditAccountId,
                                                                                 @ApiParam(value = "Loan Request Amount. Min:1000", required = true) @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()

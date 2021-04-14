@@ -10,13 +10,13 @@ public interface LoanRepaymentRepository extends JpaRepository<LoanRepaymentEnti
 
     @Query("select s from LoanRepaymentEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_RECOVERY_TO_MINT" +
+            " s.loanTransactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_RECOVERY_TO_MINT" +
             " ORDER BY s.dateCreated DESC")
     List<LoanRepaymentEntity> getPendingRecoveryToMintTransaction();
 
     @Query("select s from LoanRepaymentEntity s where" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.transactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_INCOME" +
+            " s.loanTransactionType = com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_INCOME" +
             " ORDER BY s.dateCreated DESC")
     List<LoanRepaymentEntity> getPendingSuspenseToIncomeTransaction();
 }
