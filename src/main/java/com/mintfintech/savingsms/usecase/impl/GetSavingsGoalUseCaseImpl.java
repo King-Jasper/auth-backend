@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
@@ -58,6 +59,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private ApplicationProperty applicationProperty;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     private ApplicationEventService applicationEventService;
+    private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
 
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
@@ -234,10 +236,12 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 }*/
             }
         }
+
         return AccountSavingsGoalResponse.builder()
                 .customerGoals(savingsGoalList)
                 .mintGoals(mintGoalsList)
                 .emergencySaving(emergencySaving)
+                .roundUpSaving(getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser))
                 .build();
     }
 
