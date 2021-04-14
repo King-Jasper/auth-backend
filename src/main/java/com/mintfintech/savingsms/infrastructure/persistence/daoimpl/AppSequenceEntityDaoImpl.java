@@ -95,11 +95,9 @@ public class AppSequenceEntityDaoImpl implements AppSequenceEntityDao {
 
     @Transactional(value = Transactional.TxType.REQUIRES_NEW)
     public AppSequenceEntity getSequenceRecord(SequenceType sequenceType) {
-        //entityManager.clear();
-       // return repository.findSequenceRecord(sequenceType).orElseGet(() -> new AppSequenceEntity(sequenceType));
         TypedQuery<AppSequenceEntity> query = entityManager.createQuery(
                 "SELECT a FROM AppSequenceEntity a WHERE a.sequenceType = :sequence" , AppSequenceEntity.class);
-        AppSequenceEntity sequenceEntity = query.setParameter("sequence", sequenceType).getSingleResult();
-        return sequenceEntity == null ? new AppSequenceEntity(sequenceType) : sequenceEntity;
+        return query.setParameter("sequence", sequenceType)
+                .getResultList().stream().findFirst().orElseGet(() -> new AppSequenceEntity(sequenceType));
     }
 }
