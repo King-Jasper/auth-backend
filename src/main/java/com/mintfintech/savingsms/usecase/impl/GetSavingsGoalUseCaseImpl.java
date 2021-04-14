@@ -59,7 +59,6 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private ApplicationProperty applicationProperty;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     private ApplicationEventService applicationEventService;
-    private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
 
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
@@ -236,12 +235,10 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 }*/
             }
         }
-
         return AccountSavingsGoalResponse.builder()
                 .customerGoals(savingsGoalList)
                 .mintGoals(mintGoalsList)
                 .emergencySaving(emergencySaving)
-                .roundUpSaving(getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser))
                 .build();
     }
 

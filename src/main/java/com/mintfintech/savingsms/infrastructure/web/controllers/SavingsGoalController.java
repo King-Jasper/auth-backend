@@ -6,16 +6,14 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.request.RoundUpSavingSetUpRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.models.RoundUpSettingModel;
+import com.mintfintech.savingsms.usecase.data.response.RoundUpSavingResponse;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
-import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,10 +23,6 @@ import org.springframework.web.bind.annotation.*;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.util.List;
 
 /**
@@ -47,10 +41,12 @@ public class SavingsGoalController {
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private UpdateSavingGoalUseCase updateSavingGoalUseCase;
-    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase) {
+    private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
+    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase, GetRoundUpSavingsUseCase getRoundUpSavingsUseCase) {
         this.createSavingsGoalUseCase = createSavingsGoalUseCase;
         this.getSavingsGoalUseCase = getSavingsGoalUseCase;
         this.updateSavingGoalUseCase = updateSavingGoalUseCase;
+        this.getRoundUpSavingsUseCase = getRoundUpSavingsUseCase;
     }
 
     @Deprecated
@@ -78,7 +74,11 @@ public class SavingsGoalController {
     @ApiOperation(value = "Returns a comprehension list of account savings goal(mint and customer created goals).")
     @GetMapping(value = v1BaseUrl + "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<AccountSavingsGoalResponse>> getAllSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser));
+
+        AccountSavingsGoalResponse response = getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser);
+        RoundUpSavingResponse roundUpSavingResponse = getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser);
+        response.setRoundUpSaving(roundUpSavingResponse);
+        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

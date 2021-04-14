@@ -53,7 +53,6 @@ public class GetSavingsGoalUseCaseImplTest {
 
     private AppSequenceEntityDao appSequenceEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
-    private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
 
     @Autowired AppSequenceRepository appSequenceRepository;
     @Autowired private MintAccountRepository mintAccountRepository;
@@ -83,7 +82,7 @@ public class GetSavingsGoalUseCaseImplTest {
         savingsGoalEntityDao = new SavingsGoalEntityDaoImpl(savingsGoalRepository,appSequenceEntityDao);
         getSavingsGoalUseCase = new GetSavingsGoalUseCaseImpl(savingsPlanTenorEntityDao, savingsGoalTransactionEntityDao,
                 savingsInterestEntityDao, savingsPlanEntityDao,savingsGoalEntityDao,mintAccountEntityDao,
-                appUserEntityDao,applicationProperty,computeAvailableAmountUseCase,applicationEventService, getRoundUpSavingsUseCase);
+                appUserEntityDao,applicationProperty,computeAvailableAmountUseCase,applicationEventService);
 
 
         mintAccountEntity = getMintAccount(1);
