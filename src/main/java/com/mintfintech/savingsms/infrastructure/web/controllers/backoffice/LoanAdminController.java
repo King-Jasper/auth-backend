@@ -5,7 +5,6 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanApprovalUseCase;
-import com.mintfintech.savingsms.usecase.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
@@ -40,7 +39,6 @@ import javax.validation.Valid;
 import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 

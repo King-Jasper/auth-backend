@@ -5,10 +5,6 @@ import lombok.Data;
 
 import java.math.BigDecimal;
 
-/**
- * Created by jnwanya on
- * Sat, 21 Nov, 2020
- */
 @Builder
 @Data
 public class AccountCreditEvent {
