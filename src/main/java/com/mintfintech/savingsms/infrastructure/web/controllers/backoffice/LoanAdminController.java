@@ -85,7 +85,7 @@ public class LoanAdminController {
                                                                   @PathVariable(value = "loanId") String loanId,
                                                                   @RequestBody @Valid LoanApprovalRequest request) {
 
-        LoanModel response = loanUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), Boolean.parseBoolean(request.getApproved()));
+        LoanModel response = loanApprovalUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), Boolean.parseBoolean(request.getApproved()));
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }

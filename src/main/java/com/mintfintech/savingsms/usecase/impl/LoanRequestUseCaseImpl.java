@@ -30,6 +30,7 @@ import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.math.BigDecimal;
 
 @Service
@@ -45,7 +46,6 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
     private final MintAccountEntityDao mintAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
-    private final MintAccountEntityDao mintAccountEntityDao;
 
     @Override
     public LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType, String creditAccountId) {
@@ -53,11 +53,8 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
-        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
-
-        List<MintBankAccountEntity> mintBankAccounts = mintBankAccountEntityDao.getAccountsByMintAccount(mintAccount);
-
-        MintBankAccountEntity mintBankAccount = mintBankAccounts.get(0);
+        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, mintAccount)
+                .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
@@ -83,7 +80,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         LoanRequestEntity loanRequestEntity = null;
 
         if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
-            loanRequestEntity = payDayLoanRequest(loanAmount, mintBankAccount, appUser);
+            loanRequestEntity = payDayLoanRequest(loanAmount, creditAccount, appUser);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
