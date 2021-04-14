@@ -186,7 +186,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Customer To Loan Recovery Suspense funding failed", message);
+            systemIssueLogService.logIssue("Loan Repayment Issue", "Customer To Loan Recovery Suspense funding failed", message);
             transaction.setStatus(TransactionStatusConstant.FAILED);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -195,7 +195,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             } else {
                 transaction.setStatus(TransactionStatusConstant.FAILED);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Customer To Loan Recovery Suspense funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue","Customer To Loan Recovery Suspense funding failed", message);
             }
 
         }
@@ -233,7 +233,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Recovery Suspense To Mint funding failed", message);
+            systemIssueLogService.logIssue("Loan Repayment Issue","Loan Recovery Suspense To Mint funding failed", message);
             repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -244,7 +244,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             } else {
                 repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Recovery Suspense To Mint funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue","Loan Recovery Suspense To Mint funding failed", message);
             }
         }
         repaymentEntityDao.saveRecord(repayment);
@@ -270,7 +270,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Interest Income Suspense To Interest Income funding failed", message);
+            systemIssueLogService.logIssue("Loan Repayment Issue","Interest Income Suspense To Interest Income funding failed", message);
             repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -281,7 +281,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             } else {
                 repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Interest Income Suspense To Interest Income funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue","Interest Income Suspense To Interest Income funding failed", message);
             }
         }
         repaymentEntityDao.saveRecord(repayment);
