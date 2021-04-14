@@ -51,7 +51,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("bankAccount"), account.getId()));
     }
 
-    private static Specification<LoanRequestEntity> withLoanStatus(LoanRepaymentStatusConstant loanStatus) {
+    private static Specification<LoanRequestEntity> withRepaymentStatus(LoanRepaymentStatusConstant loanStatus) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus));
     }
 
@@ -123,8 +123,8 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         if (searchDTO.getAccount() != null) {
             specification = specification.and(withMintBankAccount(searchDTO.getAccount()));
         }
-        if (searchDTO.getStatus() != null) {
-            specification = specification.and(withLoanStatus(searchDTO.getStatus()));
+        if (searchDTO.getRepaymentStatus() != null) {
+            specification = specification.and(withRepaymentStatus(searchDTO.getRepaymentStatus()));
         }
         if (searchDTO.getApprovalStatus() != null) {
             specification = specification.and(withApprovalStatus(searchDTO.getApprovalStatus()));

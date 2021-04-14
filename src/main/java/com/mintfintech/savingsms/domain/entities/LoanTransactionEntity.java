@@ -23,7 +23,7 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "loan_repayment_transaction")
+@Table(name = "loan_transaction")
 public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
@@ -34,7 +34,7 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private TransactionStatusConstant transactionStatus;
+    private TransactionStatusConstant status;
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)

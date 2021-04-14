@@ -31,4 +31,5 @@ public interface LoanRequestEntityDao extends CrudDao<LoanRequestEntity, Long> {
     List<LoanRequestEntity> getLoanRepaymentDueToday();
 
     List<LoanRequestEntity> getDefaultedUnpaidLoanRepayment();
+
 }
