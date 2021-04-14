@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import org.springframework.data.domain.Page;
 
@@ -30,6 +31,6 @@ public interface LoanRequestEntityDao extends CrudDao<LoanRequestEntity, Long> {
 
     List<LoanRequestEntity> getLoanRepaymentDueToday();
 
-    List<LoanRequestEntity> getDefaultedUnpaidLoanRepayment();
+    List<LoanRequestEntity> getOverdueLoanRepayment(MintBankAccountEntity bankAccount);
 
 }

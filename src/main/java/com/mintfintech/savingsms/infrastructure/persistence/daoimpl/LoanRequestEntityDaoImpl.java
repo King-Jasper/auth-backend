@@ -166,7 +166,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     @Override
-    public List<LoanRequestEntity> getDefaultedUnpaidLoanRepayment() {
-        return repository.getDefaultedUnpaidLoanRepayment();
+    public List<LoanRequestEntity> getOverdueLoanRepayment(MintBankAccountEntity mintBankAccountEntity) {
+        return repository.getOverdueLoanRepayment(mintBankAccountEntity);
     }
 }

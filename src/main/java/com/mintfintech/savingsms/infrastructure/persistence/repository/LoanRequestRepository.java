@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -52,7 +53,8 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
             "r.repaymentStatus = com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.FAILED and " +
+            "r.bankAccount = ?1 and " +
             "r.amountPaid < r.repaymentAmount")
-    List<LoanRequestEntity> getDefaultedUnpaidLoanRepayment();
+    List<LoanRequestEntity> getOverdueLoanRepayment(MintBankAccountEntity mintBankAccountEntity);
 
 }

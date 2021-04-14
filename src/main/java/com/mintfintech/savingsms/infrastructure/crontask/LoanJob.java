@@ -28,17 +28,11 @@ public class LoanJob {
         loanRepaymentUseCase.dispatchEmailNotificationRepaymentOnDueDay();
     }
 
-//    @SchedulerLock(name = "LoanJob_runRepaymentPlanProcessingService", lockAtMostForString = "PT45M")
-//    @Scheduled(cron = "0 0 0/1 1/1 * ?") // runs every one hour.
-//    public void runRepaymentPlanProcessingService() {
-//        loanRepaymentUseCase.processPaymentOfDueRepayment();
-//    }
-//
-//    @SchedulerLock(name = "LoanJob_runCheckDefaultedLoanPaymentService", lockAtMostForString = "PT45M")
-//    @Scheduled(cron = "0 50 23 1/1 * ?") // runs every day at 11:50pm.
-//    public void runCheckDefaultedLoanPaymentService() {
-//        loanRepaymentUseCase.checkDefaultedRepayment();
-//    }
+    @SchedulerLock(name = "LoanJob_runCheckDefaultedLoanPaymentService", lockAtMostForString = "PT45M")
+    @Scheduled(cron = "0 50 23 1/1 * ?") // runs every day at 11:50pm.
+    public void runCheckDefaultedLoanPaymentService() {
+        loanRepaymentUseCase.checkDefaultedRepayment();
+    }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
     @SchedulerLock(name = "LoanJob_runApprovedLoanPendingDisbursement", lockAtMostForString = "PT6M")

@@ -24,6 +24,7 @@ import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
@@ -34,6 +35,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -73,18 +75,47 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             AppUserEntity loanOwner = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
 
             customerLoanProfileUseCase.updateCustomerRating(loanOwner);
-
-            //call core banking
         });
     }
 
     @Override
-    public void processPaymentOfDueRepayment() {
+    public void processPaymentOfOverDueRepayment(AccountCreditEvent accountCredit) {
+        Optional<MintBankAccountEntity> bankAccountEntityOptional = mintBankAccountEntityDao.findByAccountNumber(accountCredit.getAccountNumber());
+        if (!bankAccountEntityOptional.isPresent()) {
+            return;
+        }
 
-        List<LoanRequestEntity> defaultedRepayments = loanRequestEntityDao.getDefaultedUnpaidLoanRepayment();
+        List<LoanRequestEntity> overDueLoanRepayments = loanRequestEntityDao.getOverdueLoanRepayment(bankAccountEntityOptional.get());
 
-        for (LoanRequestEntity loanRequestEntity : defaultedRepayments) {
-            //call core banking
+        if (overDueLoanRepayments.isEmpty()){
+            return;
+        }
+
+        for (LoanRequestEntity loan : overDueLoanRepayments) {
+
+            BigDecimal amountToPay = loan.getRepaymentAmount().subtract(loan.getAmountPaid());
+
+            MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
+            debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+
+            BigDecimal availableBalance = debitAccount.getAvailableBalance();
+
+            if (availableBalance.compareTo(amountToPay) < 0){
+                amountToPay = availableBalance;
+            }
+
+            LoanTransactionEntity transaction = debitCustomerAccount(loan, true, amountToPay, debitAccount.getAccountNumber());
+
+            if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL){
+                loan.setAmountPaid(loan.getAmountPaid().add(amountToPay));
+                loan = loanRequestEntityDao.saveRecord(loan);
+
+                if (loan.getRepaymentAmount().compareTo(loan.getAmountPaid()) == 0){
+                    moveFundsForFullyPaidLoans(loan);
+                }
+
+            }
+
         }
 
     }
@@ -112,7 +143,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             amountToPay = amountPending;
         }
 
-        LoanTransactionEntity transaction = debitCustomerAccount(loan, amountToPay, debitAccount.getAccountNumber());
+        LoanTransactionEntity transaction = debitCustomerAccount(loan, false, amountToPay, debitAccount.getAccountNumber());
 
         if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL) {
             BigDecimal amountPaid = loan.getAmountPaid().add(amountToPay);
@@ -151,13 +182,13 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         }
     }
 
-    private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, BigDecimal amountToPay, String accountNumber) {
+    private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, Boolean isAutoDebit, BigDecimal amountToPay, String debitAccountNumber){
 
         String ref = loanRequestEntityDao.generateLoanTransactionRef();
 
         LoanTransactionEntity transaction = LoanTransactionEntity.builder()
                 .loanRequest(loan)
-                .autoDebit(false)
+                .autoDebit(isAutoDebit)
                 .transactionAmount(amountToPay)
                 .transactionReference(ref)
                 .status(TransactionStatusConstant.PENDING)
@@ -172,17 +203,10 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 .loanTransactionType(LoanTransactionTypeConstant.CUSTOMER_TO_RECOVERY.name())
                 .narration(constructLoanRepaymentNarration(loan, ref))
                 .reference(ref)
-                .accountNumber(accountNumber)
+                .accountNumber(debitAccountNumber)
                 .build();
 
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
-
-        if (msClientResponse.getData() != null) {
-            transaction.setResponseCode(msClientResponse.getData().getResponseCode());
-            transaction.setResponseMessage(msClientResponse.getData().getResponseMessage());
-            transaction.setExternalReference(msClientResponse.getData().getBankOneReference());
-            transaction = loanTransactionEntityDao.saveRecord(transaction);
-        }
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
@@ -190,16 +214,20 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             transaction.setStatus(TransactionStatusConstant.FAILED);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            transaction.setResponseCode(responseCBS.getResponseCode());
+            transaction.setResponseMessage(responseCBS.getResponseMessage());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
+
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 transaction.setStatus(TransactionStatusConstant.SUCCESSFUL);
             } else {
                 transaction.setStatus(TransactionStatusConstant.FAILED);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue","Customer To Loan Recovery Suspense funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue", "Customer To Loan Recovery Suspense funding failed", message);
             }
 
         }
-        return loanTransactionEntityDao.saveRecord(transaction);
+       return loanTransactionEntityDao.saveRecord(transaction);
     }
 
     private void moveFundsForFullyPaidLoans(LoanRequestEntity loan) {
@@ -233,7 +261,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Repayment Issue","Loan Recovery Suspense To Mint funding failed", message);
+            systemIssueLogService.logIssue("Loan Repayment Issue", "Loan Recovery Suspense To Mint funding failed", message);
             repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -244,7 +272,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             } else {
                 repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue","Loan Recovery Suspense To Mint funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue", "Loan Recovery Suspense To Mint funding failed", message);
             }
         }
         repaymentEntityDao.saveRecord(repayment);
@@ -270,7 +298,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Repayment Issue","Interest Income Suspense To Interest Income funding failed", message);
+            systemIssueLogService.logIssue("Loan Repayment Issue", "Interest Income Suspense To Interest Income funding failed", message);
             repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -281,7 +309,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             } else {
                 repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue","Interest Income Suspense To Interest Income funding failed", message);
+                systemIssueLogService.logIssue("Loan Repayment Issue", "Interest Income Suspense To Interest Income funding failed", message);
             }
         }
         repaymentEntityDao.saveRecord(repayment);
