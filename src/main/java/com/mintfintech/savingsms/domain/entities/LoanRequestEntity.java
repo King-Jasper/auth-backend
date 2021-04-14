@@ -41,6 +41,9 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     private BigDecimal loanAmount;
 
     @Builder.Default
+    private BigDecimal loanInterest = BigDecimal.ZERO;
+
+    @Builder.Default
     private BigDecimal repaymentAmount = BigDecimal.ZERO;
 
     @Builder.Default

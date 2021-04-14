@@ -4,7 +4,8 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
-import com.mintfintech.savingsms.usecase.LoanUseCase;
+import com.mintfintech.savingsms.usecase.LoanApprovalUseCase;
+import com.mintfintech.savingsms.usecase.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
@@ -54,7 +55,7 @@ public class LoanAdminController {
 
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final GetLoansUseCase getLoansUseCase;
-    private final LoanUseCase loanUseCase;
+    private final LoanApprovalUseCase loanApprovalUseCase;
 
     @ApiOperation(value = "Verify Loan Customer Employment Information.")
     @PutMapping(value = "{customerLoanProfileId}/verify/employment-details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

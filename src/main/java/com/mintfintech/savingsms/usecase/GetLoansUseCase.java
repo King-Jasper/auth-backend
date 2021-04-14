@@ -11,4 +11,6 @@ public interface GetLoansUseCase {
 
     LoanModel toLoanModel(LoanRequestEntity loanRequestEntity);
 
+    LoanModel getLoanTransactions(String loanId);
+
 }
