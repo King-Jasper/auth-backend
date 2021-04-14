@@ -103,13 +103,16 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             AppUserEntity appUser
     ) {
 
+        BigDecimal loanInterest = loanAmount.multiply(BigDecimal.valueOf(applicationProperty.getPayDayLoanInterestRate() / 100.0));
+
         LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
                 .bankAccount(mintAccount)
                 .loanId(loanRequestEntityDao.generateLoanId())
                 .interestRate(applicationProperty.getPayDayLoanInterestRate())
                 .loanAmount(loanAmount)
-                .repaymentAmount(loanAmount.add(loanAmount.multiply(BigDecimal.valueOf(applicationProperty.getPayDayLoanInterestRate() / 100.0))))
+                .repaymentAmount(loanAmount.add(loanInterest))
                 .requestedBy(appUser)
+                .loanInterest(loanInterest)
                 .loanType(LoanTypeConstant.PAYDAY)
                 .build();
 

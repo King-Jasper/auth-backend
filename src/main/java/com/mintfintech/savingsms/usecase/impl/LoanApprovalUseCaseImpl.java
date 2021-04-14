@@ -133,7 +133,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
-                .amount(loan.getRepaymentAmount().subtract(loan.getLoanAmount()))
+                .amount(loan.getLoanInterest())
                 .loanTransactionType(LoanTransactionTypeConstant.INTEREST_TO_SUSPENSE.name())
                 .narration(constructLoanApprovalNarration(loan, ref))
                 .reference(ref)
@@ -194,6 +194,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
             systemIssueLogService.logIssue("Suspense To Customer funding failed", message);
+            transaction.setStatus(TransactionStatusConstant.FAILED);
             approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_CUSTOMER);
         } else {
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -215,9 +216,8 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
                 systemIssueLogService.logIssue("Suspense To Customer funding failed", message);
             }
-
-            loanTransactionEntityDao.saveRecord(transaction);
         }
+        loanTransactionEntityDao.saveRecord(transaction);
         loanApprovalEntityDao.saveRecord(approval);
     }
 

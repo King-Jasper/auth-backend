@@ -154,12 +154,9 @@ public class LoanController {
 
     @Data
     private static class LoanRequest {
-        @ApiModelProperty(notes = "The amount to be funded. N1000 minimum", required = true)
-        @Min(value = 1000, message = "Minimum of N1000")
         @NotNull
         private double amount;
 
-        @ApiModelProperty("This is the type of loan request. PAYDAY ")
         @Pattern(regexp = "(PAYDAY)")
         @NotEmpty
         private String loanType;
@@ -171,12 +168,9 @@ public class LoanController {
 
     @Data
     private static class LoanPayBackRequest {
-        @ApiModelProperty(notes = "The amount to be repayed. N1000 minimum", required = true)
-        @Min(value = 1000, message = "Minimum of N1000")
         @NotNull
         private double amount;
 
-        @ApiModelProperty(notes = "Id of the loan being repaid", required = true)
         @NotEmpty
         private String loanId;
     }

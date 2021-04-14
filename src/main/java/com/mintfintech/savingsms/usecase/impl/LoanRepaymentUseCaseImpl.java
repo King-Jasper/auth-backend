@@ -225,7 +225,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 .amount(loan.getLoanAmount())
                 .loanTransactionType(LoanTransactionTypeConstant.RECOVERY_TO_MINT.name())
                 .narration(constructLoanRepaymentNarration(loan, ref))
-                .fee(loan.getRepaymentAmount().subtract(loan.getLoanAmount()))
+                .fee(loan.getLoanInterest())
                 .reference(ref)
                 .build();
 
@@ -260,7 +260,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
                 .loanId(loan.getLoanId())
-                .amount(loan.getRepaymentAmount().subtract(loan.getLoanAmount()))
+                .amount(loan.getLoanInterest())
                 .loanTransactionType(LoanTransactionTypeConstant.SUSPENSE_TO_INCOME.name())
                 .narration(constructLoanRepaymentNarration(loan, ref))
                 .reference(ref)
