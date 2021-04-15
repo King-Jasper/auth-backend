@@ -13,6 +13,8 @@ public interface LoanRequestEntityDao extends CrudDao<LoanRequestEntity, Long> {
 
     long countActiveLoan(AppUserEntity appUserEntity);
 
+    long countActivePayDayLoan(AppUserEntity appUserEntity);
+
     long countTotalLoans(AppUserEntity appUserEntity);
 
     long countTotalLoansPastRepaymentDueDate(AppUserEntity appUserEntity);

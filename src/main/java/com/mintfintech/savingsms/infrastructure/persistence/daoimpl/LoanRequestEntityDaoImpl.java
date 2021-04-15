@@ -85,6 +85,11 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     @Override
+    public long countActivePayDayLoan(AppUserEntity appUserEntity) {
+        return repository.countActiveCustomerPayDayLoan(appUserEntity);
+    }
+
+    @Override
     public long countTotalLoans(AppUserEntity appUserEntity) {
         return repository.countTotalLoans(appUserEntity);
     }

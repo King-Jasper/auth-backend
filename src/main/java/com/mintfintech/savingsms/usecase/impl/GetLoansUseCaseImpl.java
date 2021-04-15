@@ -82,11 +82,9 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     }
 
     @Override
-    public LoanModel getLoanTransactions(String loanId) {
+    public List<LoanTransactionModel> getLoanTransactions(String loanId) {
         LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
-
-        LoanModel loanModel = toLoanModel(loanRequestEntity);
 
         List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loanRequestEntity);
 
@@ -107,7 +105,6 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             transactionModels.add(model);
         }
 
-        loanModel.setTransactions(transactionModels);
-        return loanModel;
+        return transactionModels;
     }
 }

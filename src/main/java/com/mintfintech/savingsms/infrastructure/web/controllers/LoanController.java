@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -45,6 +46,7 @@ import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Loan Transaction Management Endpoints")
@@ -176,10 +178,10 @@ public class LoanController {
 
     @ApiOperation(value = "Returns list of loan transactions.")
     @GetMapping(value = "{loanId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
+    public ResponseEntity<ApiResponseJSON<List<LoanTransactionModel>>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
 
-        LoanModel response = getLoansUseCase.getLoanTransactions(loanId);
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        List<LoanTransactionModel> response = getLoansUseCase.getLoanTransactions(loanId);
+        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
