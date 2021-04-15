@@ -130,6 +130,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
             loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
             loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
+            loanCustomerProfileModel.setActiveLoans((loanRequestEntityDao.countActiveLoan(appUser)));
 
             loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         }

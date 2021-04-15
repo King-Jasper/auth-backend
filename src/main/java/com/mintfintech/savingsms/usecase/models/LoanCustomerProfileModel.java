@@ -27,5 +27,7 @@ public class LoanCustomerProfileModel {
 
     private double interestRate;
 
+    private long activeLoans;
+
     private List<LoanModel> loanHistory;
 }
