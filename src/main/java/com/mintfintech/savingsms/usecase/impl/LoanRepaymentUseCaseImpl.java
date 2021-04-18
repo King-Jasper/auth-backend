@@ -136,7 +136,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         BigDecimal amountPending = loan.getRepaymentAmount().subtract(loan.getAmountPaid());
 
         if (debitAccount.getAvailableBalance().compareTo(amountToPay) < 0) {
-            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment: " + loan.getLoanId());
+            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment: " + debitAccount.getAvailableBalance());
         }
 
         if (amountToPay.compareTo(amountPending) > 0) {

@@ -73,7 +73,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             throw new BadRequestException("Loan amount is higher than the maximum allowed for this user");
         }
 
-        if (loanRequestEntityDao.countActiveLoan(appUser) > 0) {
+        if (loanRequestEntityDao.countActivePayDayLoan(appUser) > 0) {
             throw new BadRequestException("There is an active loan for this user");
         }
 

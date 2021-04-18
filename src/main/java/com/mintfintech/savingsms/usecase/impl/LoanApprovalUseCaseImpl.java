@@ -1,15 +1,22 @@
 package com.mintfintech.savingsms.usecase.impl;
 
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
+import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
+import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanApprovalEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
+import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanApprovalEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
@@ -22,6 +29,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -43,6 +51,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final SystemIssueLogService systemIssueLogService;
     private final LoanApprovalEntityDao loanApprovalEntityDao;
+    private final EmployeeInformationEntityDao employeeInformationEntityDao;
+    private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
+    private final AppUserEntityDao appUserEntityDao;
 
     @Transactional
     @Override
@@ -52,6 +63,16 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
         if (approved) {
+            AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
+            CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
+                    .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
+
+            if (loanRequestEntity.getLoanType() == LoanTypeConstant.PAYDAY){
+                EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
+                if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED){
+                    throw new BadRequestException("Employment Information have not been verified for this user");
+                }
+            }
 
             loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequestEntity.setApprovedDate(LocalDateTime.now());
