@@ -90,8 +90,8 @@ public class LoanAdminController {
 
     @ApiOperation(value = "Returns paginated loan list.")
     @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: PAID,PARTIALLY_PAID,PENDING,FAILED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED)") @RequestParam("repaymentStatus") String repaymentStatus,
-                                                                                     @ApiParam(value = "Approval Status: APPROVED,REJECTED,PENDING,CANCELLED") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING|CANCELLED)") @RequestParam("approvalStatus") String approvalStatus,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: PAID,PARTIALLY_PAID,PENDING,FAILED,CANCELLED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam("repaymentStatus") String repaymentStatus,
+                                                                                     @ApiParam(value = "Approval Status: APPROVED,REJECTED,PENDING,CANCELLED,DISBURSED") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING|CANCELLED|DISBURSED)") @RequestParam("approvalStatus") String approvalStatus,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                      @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
