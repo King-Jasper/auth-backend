@@ -21,6 +21,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
+import javax.persistence.criteria.Join;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -126,7 +127,12 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
             specification = specification.and(withDateRange(searchDTO.getFromDate(), searchDTO.getToDate()));
         }
         if (searchDTO.getAccount() != null) {
-            specification = specification.and(withMintBankAccount(searchDTO.getAccount()));
+            Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<LoanRequestEntity, MintBankAccountEntity> bankAccountJoin = root.join("bankAccount");
+                return criteriaBuilder.equal(bankAccountJoin.get("mintAccount"), searchDTO.getAccount().getId());
+            };
+            specification = specification.and(temp);
+
         }
         if (searchDTO.getRepaymentStatus() != null) {
             specification = specification.and(withRepaymentStatus(searchDTO.getRepaymentStatus()));

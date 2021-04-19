@@ -1,13 +1,7 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
@@ -34,6 +28,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
     private final LoanRequestEntityDao loanRequestEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final LoanTransactionEntityDao loanTransactionEntityDao;
@@ -41,7 +36,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     @Override
     public PagedDataResponse<LoanModel> getPagedLoans(LoanSearchRequest searchRequest, int page, int size) {
 
-        Optional<MintBankAccountEntity> mintAccount = mintBankAccountEntityDao.findByAccountId(searchRequest.getAccountId());
+        Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
 
         LoanSearchDTO searchDTO = LoanSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
