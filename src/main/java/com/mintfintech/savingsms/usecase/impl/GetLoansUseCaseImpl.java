@@ -17,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -27,7 +28,6 @@ import java.util.stream.Collectors;
 public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
     private final LoanRequestEntityDao loanRequestEntityDao;
-    private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
@@ -70,7 +70,9 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
         loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount().toPlainString());
         loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
-        loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate());
+        loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
+        loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setOwner(customerLoanProfileUseCase.toLoanCustomerProfileModel(customerLoanProfileEntity));
 
         return loanModel;

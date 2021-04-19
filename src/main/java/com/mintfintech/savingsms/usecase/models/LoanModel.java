@@ -18,13 +18,17 @@ public class LoanModel {
 
     private double interestRate;
 
-    private LocalDateTime repaymentDueDate;
+    private String repaymentDueDate;
 
     private String repaymentStatus;
 
     private String approvalStatus;
 
     private String loanType;
+
+    private String createdDate;
+
+    private String approvedDate;
 
     private LoanCustomerProfileModel owner;
 
