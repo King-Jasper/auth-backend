@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
@@ -86,6 +87,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
         } else {
             loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.REJECTED);
+            loanRequestEntity.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
             loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
             loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
             loanRequestEntity.setRejectionReason(reason);
