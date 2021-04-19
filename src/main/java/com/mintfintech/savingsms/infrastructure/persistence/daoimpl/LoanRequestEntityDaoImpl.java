@@ -48,7 +48,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     private static Specification<LoanRequestEntity> withMintBankAccount(MintBankAccountEntity account) {
-        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("bankAccount"), account.getId()));
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("bankAccount"), account));
     }
 
     private static Specification<LoanRequestEntity> withRepaymentStatus(LoanRepaymentStatusConstant loanStatus) {
