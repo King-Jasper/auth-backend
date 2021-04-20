@@ -71,7 +71,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
             EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
             customerLoanProfileEntity.setEmployeeInformation(employeeInformationEntity);
-            customerLoanProfileEntity = customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
+            customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
 
         } else {
 
@@ -81,13 +81,10 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                     .appUser(appUser)
                     .employeeInformation(employeeInformationEntity)
                     .build();
-            customerLoanProfileEntity = customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
+            customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
         }
 
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
-        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
-
-        return loanCustomerProfileModel;
+        return getLoanCustomerProfile(currentUser, "PAYDAY");
     }
 
     @Override

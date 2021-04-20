@@ -82,18 +82,6 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
 
     }
 
-    @Override
-    @Transactional
-    public LoanModel paydayLoanRequest(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
-
-        LoanCustomerProfileModel loanCustomerProfileModel = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(currentUser, request);
-
-        LoanModel loanModel = loanRequest(currentUser, request.getLoanAmount(), "PAYDAY", request.getCreditAccountId());
-        loanModel.setOwner(loanCustomerProfileModel);
-
-        return loanModel;
-    }
-
     private LoanRequestEntity payDayLoanRequest(
             BigDecimal loanAmount,
             MintBankAccountEntity mintAccount,

@@ -25,8 +25,4 @@ public class EmploymentDetailCreationRequest {
     private String workEmail;
 
     private MultipartFile employmentLetter;
-
-    private double loanAmount;
-
-    private String creditAccountId;
 }

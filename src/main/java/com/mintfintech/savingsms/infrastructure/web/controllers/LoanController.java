@@ -95,9 +95,9 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Add Employment Information to Customer Loan Profile And Request for Loan.")
-    @PostMapping(value = "loan-request/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> createEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    @ApiOperation(value = "Create Customer Loan Profile for Pay Day Loan.")
+    @PostMapping(value = "customer-profile/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> createEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @ApiParam(value = "Upload Employment Letter", required = true) @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
                                                                                 @ApiParam(value = "Organization Name", required = true) @NotEmpty @RequestParam("organizationName") String organizationName,
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
@@ -105,9 +105,7 @@ public class LoanController {
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
                                                                                 @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail,
-                                                                                @ApiParam(value = "Credit Account Id", required = true) @NotEmpty @RequestParam("creditAccountId") String creditAccountId,
-                                                                                @ApiParam(value = "Loan Request Amount. Min:1000", required = true) @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
@@ -118,12 +116,10 @@ public class LoanController {
                 .organizationName(StringUtils.trim(organizationName))
                 .organizationUrl(StringUtils.trim(organizationUrl))
                 .workEmail(StringUtils.trim(workEmail))
-                .loanAmount(loanAmount)
-                .creditAccountId(creditAccountId)
                 .build();
 
-        LoanModel response = loanRequestUseCase.paydayLoanRequest(authenticatedUser, request);
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(authenticatedUser, request);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
