@@ -2,7 +2,7 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
-import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;

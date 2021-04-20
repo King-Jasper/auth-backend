@@ -1,7 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.crontask;
 
-import com.mintfintech.savingsms.usecase.LoanApprovalUseCase;
-import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import lombok.extern.slf4j.Slf4j;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
