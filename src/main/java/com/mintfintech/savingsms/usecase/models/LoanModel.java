@@ -2,9 +2,6 @@ package com.mintfintech.savingsms.usecase.models;
 
 import lombok.Data;
 
-import java.time.LocalDateTime;
-import java.util.List;
-
 @Data
 public class LoanModel {
 
@@ -32,5 +29,4 @@ public class LoanModel {
 
     private LoanCustomerProfileModel owner;
 
-    private List<LoanTransactionModel> transactions;
 }

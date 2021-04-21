@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -41,6 +42,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
+import java.util.List;
 
 @Secured("ADMIN_PORTAL")
 @Validated
@@ -88,10 +90,19 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @ApiOperation(value = "Returns list of loan transactions.")
+    @GetMapping(value = "{loanId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<LoanTransactionModel>>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
+
+        List<LoanTransactionModel> response = getLoansUseCase.getLoanTransactions(loanId);
+        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
     @ApiOperation(value = "Returns paginated loan list.")
     @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: PAID,PARTIALLY_PAID,PENDING,FAILED,CANCELLED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam("repaymentStatus") String repaymentStatus,
-                                                                                     @ApiParam(value = "Approval Status: APPROVED,REJECTED,PENDING,CANCELLED,DISBURSED") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING|CANCELLED|DISBURSED)") @RequestParam("approvalStatus") String approvalStatus,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: PAID, PARTIALLY_PAID, PENDING, FAILED, CANCELLED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam("repaymentStatus") String repaymentStatus,
+                                                                                     @ApiParam(value = "Approval Status: APPROVED, REJECTED, PENDING, CANCELLED, DISBURSED") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING|CANCELLED|DISBURSED)") @RequestParam("approvalStatus") String approvalStatus,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                      @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
@@ -112,7 +123,7 @@ public class LoanAdminController {
 
     @ApiOperation(value = "Returns paginated list of loan customers.")
     @GetMapping(value = "customers-profile", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@ApiParam(value = "Verification Status: APPROVED,REJECTED,PENDING") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING)") @RequestParam("verificationStatus") String verificationStatus,
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@ApiParam(value = "Verification Status: APPROVED, REJECTED, PENDING") @Valid @Pattern(regexp = "(APPROVED|REJECTED|PENDING)") @RequestParam("verificationStatus") String verificationStatus,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                                                 @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,

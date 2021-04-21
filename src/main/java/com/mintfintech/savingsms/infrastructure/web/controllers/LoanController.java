@@ -74,7 +74,7 @@ public class LoanController {
     @ApiOperation(value = "Returns paginated list of loans of a user.")
     @GetMapping(value = "loan-history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                  @ApiParam(value = "Repayment Status: PAID,PARTIALLY_PAID,PENDING,FAILED,CANCELLED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam("repaymentStatus") String repaymentStatus,
+                                                                                  @ApiParam(value = "Repayment Status: PAID, PARTIALLY_PAID, PENDING, FAILED, CANCELLED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam("repaymentStatus") String repaymentStatus,
                                                                                   @ApiParam(value = "Loan Type: PAYDAY") @Pattern(regexp = "(PAYDAY)") @NotEmpty @Pattern(regexp = "(PAYDAY)") @RequestParam("loanType") String loanType,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
