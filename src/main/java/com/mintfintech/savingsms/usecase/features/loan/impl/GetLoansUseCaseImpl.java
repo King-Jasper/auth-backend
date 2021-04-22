@@ -64,11 +64,11 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
-        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount().toPlainString());
-        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid().toPlainString());
+        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
+        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid());
         loanModel.setApprovalStatus(loanRequestEntity.getApprovalStatus().name());
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
-        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount().toPlainString());
+        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount());
         loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
         loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
