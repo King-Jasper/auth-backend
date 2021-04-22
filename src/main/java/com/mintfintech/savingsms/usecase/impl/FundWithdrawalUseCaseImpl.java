@@ -41,6 +41,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -66,6 +67,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private ApplicationEventService applicationEventService;
     private TierLevelEntityDao tierLevelEntityDao;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
+    private RoundUpSavingsSettingEntityDao roundUpSavingsSettingEntityDao;
 
 
     @Override
@@ -146,6 +148,13 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
             savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
             savingsGoalEntityDao.saveRecord(savingsGoal);
+
+            Optional<RoundUpSavingsSettingEntity> settingOpt = roundUpSavingsSettingEntityDao.findRoundUpSavingsByAccount(savingsGoal.getMintAccount());
+            if(settingOpt.isPresent()) {
+                RoundUpSavingsSettingEntity settingEntity = settingOpt.get();
+                settingEntity.setRecordStatus(RecordStatusConstant.DELETED);
+                roundUpSavingsSettingEntityDao.saveRecord(settingEntity);
+            }
         }
         if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);

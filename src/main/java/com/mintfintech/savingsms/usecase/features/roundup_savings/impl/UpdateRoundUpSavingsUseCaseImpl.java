@@ -116,8 +116,8 @@ public class UpdateRoundUpSavingsUseCaseImpl implements UpdateRoundUpSavingsUseC
     @Override
     public void deleteDeactivatedRoundUpSavingsWithZeroBalance() {
         int size = 50;
-        LocalDateTime deactivated30MinutesAgo = LocalDateTime.now().minusMinutes(30);
-        List<RoundUpSavingsSettingEntity> settingEntityList = roundUpSavingsSettingEntityDao.getDeactivateSavingsWithZeroBalance(deactivated30MinutesAgo, size);
+        LocalDateTime deactivated7DaysAgo = LocalDateTime.now().minusDays(7);
+        List<RoundUpSavingsSettingEntity> settingEntityList = roundUpSavingsSettingEntityDao.getDeactivateSavingsWithZeroBalance(deactivated7DaysAgo, size);
 
         for(RoundUpSavingsSettingEntity savingsSettingEntity : settingEntityList) {
             if(savingsSettingEntity.isEnabled()) {
@@ -131,9 +131,11 @@ public class UpdateRoundUpSavingsUseCaseImpl implements UpdateRoundUpSavingsUseC
             if(!zeroBalance) {
                 continue;
             }
+            savingsGoalEntity.setRecordStatus(RecordStatusConstant.DELETED);
             savingsSettingEntity.setRoundUpSavings(null);
             roundUpSavingsSettingEntityDao.saveRecord(savingsSettingEntity);
             savingsGoalEntityDao.deleteSavings(savingsGoalEntity);
+            roundUpSavingsSettingEntityDao.deleteRecord(savingsSettingEntity);
         }
     }
 }
