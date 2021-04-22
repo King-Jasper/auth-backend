@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;

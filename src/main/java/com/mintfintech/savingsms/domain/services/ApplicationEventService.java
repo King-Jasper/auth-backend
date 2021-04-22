@@ -22,6 +22,8 @@ public interface ApplicationEventService {
         PUSH_NOTIFICATION_TOKEN("com.mintfintech.services.events.notification.gcm.token"),
         SMS_NOTIFICATION("com.mintfintech.services.events.accounts-service.sms"),
         MISSING_ACCOUNT_RECORD("com.mintfintech.accounts-service.events.missing-account-records"),
+        EMPLOYMENT_INFORMATION_UPDATE("com.mintfintech.savings-service.events.employment-info-update"),
+        MISSING_BANK_ACCOUNT_RECORD("com.mintfintech.accounts-service.events.missing-account-records.bank-account-id"),
         APPLICATION_AUDIT_TRAIL("com.mintfintech.report-service.events.audit-trail");
         private final String topic;
 

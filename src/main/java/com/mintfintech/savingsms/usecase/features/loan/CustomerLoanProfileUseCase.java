@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 
 public interface CustomerLoanProfileUseCase {
