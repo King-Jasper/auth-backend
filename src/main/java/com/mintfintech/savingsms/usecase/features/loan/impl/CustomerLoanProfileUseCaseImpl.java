@@ -140,7 +140,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         CustomerLoanProfileSearchDTO searchDTO = CustomerLoanProfileSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
-                .verificationStatus(searchRequest.getVerificationStatus() != null ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
+                .verificationStatus(!searchRequest.getVerificationStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
                 .build();
 
         Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
