@@ -17,4 +17,5 @@ public interface RoundUpSavingsSettingEntityDao extends CrudDao<RoundUpSavingsSe
     Optional<RoundUpSavingsSettingEntity> findRoundUpSavingsByAccount(MintAccountEntity mintAccount);
     Optional<RoundUpSavingsSettingEntity> findActiveRoundUpSavingsByUser(AppUserEntity user);
     List<RoundUpSavingsSettingEntity> getDeactivateSavingsWithZeroBalance(LocalDateTime deactivatedBeforeTime, int size);
+    void deleteRecord(RoundUpSavingsSettingEntity savingsSettingEntity);
 }

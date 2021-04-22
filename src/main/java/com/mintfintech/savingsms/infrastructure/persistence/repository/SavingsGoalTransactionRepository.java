@@ -27,4 +27,6 @@ public interface SavingsGoalTransactionRepository extends JpaRepository<SavingsG
 
     Page<SavingsGoalTransactionEntity> getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant statusConstant, SavingsGoalEntity goalEntity, Pageable pageable);
 
+    Optional<SavingsGoalTransactionEntity> findFirstBySavingsGoalAndTransactionStatusOrderByDateCreatedAsc(SavingsGoalEntity goalEntity, TransactionStatusConstant statusConstant);
+
 }

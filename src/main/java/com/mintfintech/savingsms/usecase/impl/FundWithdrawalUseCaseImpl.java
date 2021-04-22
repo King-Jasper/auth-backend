@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SmsLogEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
@@ -40,6 +41,7 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -65,6 +67,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private ApplicationEventService applicationEventService;
     private TierLevelEntityDao tierLevelEntityDao;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
+    private RoundUpSavingsSettingEntityDao roundUpSavingsSettingEntityDao;
 
 
     @Override
@@ -145,6 +148,13 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
             savingsGoal.setRecordStatus(RecordStatusConstant.DELETED);
             savingsGoalEntityDao.saveRecord(savingsGoal);
+
+            Optional<RoundUpSavingsSettingEntity> settingOpt = roundUpSavingsSettingEntityDao.findRoundUpSavingsByAccount(savingsGoal.getMintAccount());
+            if(settingOpt.isPresent()) {
+                RoundUpSavingsSettingEntity settingEntity = settingOpt.get();
+                settingEntity.setRecordStatus(RecordStatusConstant.DELETED);
+                roundUpSavingsSettingEntityDao.saveRecord(settingEntity);
+            }
         }
         if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS) {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
@@ -304,6 +314,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                  String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
                  systemIssueLogService.logIssue("Interest Withdrawal Failed", "Interest To Suspense Withdrawal failed", message);
+                 if(msClientResponse.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                     publishSavingsGoalRecord(savingsGoalEntity, creditAccount, withdrawalRequestEntity);
+                 }
                  continue;
              }
              FundTransferResponseCBS responseCBS = msClientResponse.getData();
@@ -327,6 +340,17 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                  systemIssueLogService.logIssue("Interest Withdrawal Failed","Interest To Suspense Withdrawal failed", message);
              }
          }
+    }
+
+    private void publishSavingsGoalRecord(SavingsGoalEntity savingsGoalEntity, MintBankAccountEntity accountEntity, SavingsWithdrawalRequestEntity withdrawalRequestEntity) {
+        SavingsGoalCreationEvent goalCreationEvent = SavingsGoalCreationEvent.builder()
+                .goalId(savingsGoalEntity.getGoalId())
+                .accruedInterest(withdrawalRequestEntity.getInterestWithdrawal())
+                .savingsBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal())
+                .name(savingsGoalEntity.getName())
+                .withdrawalAccountNumber(accountEntity.getAccountNumber())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_CREATION, new EventModel<>(goalCreationEvent));
     }
 
     private String getSavingsWithdrawalType(SavingsGoalEntity savingsGoalEntity) {

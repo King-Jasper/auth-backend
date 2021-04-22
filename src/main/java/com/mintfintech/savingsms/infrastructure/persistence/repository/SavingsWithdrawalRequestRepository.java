@@ -18,7 +18,7 @@ import java.util.List;
 public interface SavingsWithdrawalRequestRepository extends JpaRepository<SavingsWithdrawalRequestEntity, Long> {
     long countAllBySavingsGoalAndDateCreatedBetween(SavingsGoalEntity savingsGoalEntity, LocalDateTime fromTime, LocalDateTime toTime);
     @Query("select sw from SavingsWithdrawalRequestEntity sw where sw.recordStatus =?1 and sw.withdrawalRequestStatus = ?2 and (sw.dateForWithdrawal is null " +
-            "or sw.dateForWithdrawal <= ?3) order by sw.dateModified asc")
+            "or sw.dateForWithdrawal <= ?3) order by sw.dateModified desc")
     List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant statusConstant, WithdrawalRequestStatusConstant requestStatusConstant,
                                                                                                               LocalDate dateForWithdrawal);
 
