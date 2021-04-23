@@ -29,6 +29,8 @@ public class LoanModel {
 
     private String approvedDate;
 
+    private String rejectionReason;
+
     private LoanCustomerProfileModel owner;
 
 }
