@@ -1,25 +1,15 @@
 package com.mintfintech.savingsms.usecase.features.loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRepaymentEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRepaymentEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanTransactionRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
@@ -52,6 +42,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     private final SystemIssueLogService systemIssueLogService;
     private final UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private final LoanRepaymentEntityDao repaymentEntityDao;
+    private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
+    private final EmployeeInformationEntityDao employeeInformationEntityDao;
 
 
     @Override
@@ -129,6 +121,9 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         LoanRequestEntity loan = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
+        if(loan.getApprovalStatus() != ApprovalStatusConstant.DISBURSED) {
+            throw new BadRequestException("Hmmm... you can't pay for a loan that isn't disbursed yet.");
+        }
         if (loan.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
             throw new BadRequestException("This loan has been repaid in full already");
         }
