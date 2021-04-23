@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
@@ -68,6 +69,15 @@ public class LoanController {
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.getLoanCustomerProfile(authenticatedUser, loanType);
         ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns customer employment information.")
+    @GetMapping(value = "customer-profile/employment-info", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<EmploymentInformationModel>> getEmploymentInfo(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
+
+        EmploymentInformationModel response = customerLoanProfileUseCase.getEmploymentInfo(authenticatedUser);
+        ApiResponseJSON<EmploymentInformationModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

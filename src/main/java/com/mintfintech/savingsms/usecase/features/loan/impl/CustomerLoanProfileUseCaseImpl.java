@@ -240,6 +240,11 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
     }
 
+    @Override
+    public EmploymentInformationModel getEmploymentInfo(AuthenticatedUser currentUser) {
+        return null;
+    }
+
     private void updateEmploymentInformation(EmploymentDetailCreationRequest request, EmployeeInformationEntity info){
 
         if (request.getEmploymentLetter() != null){
