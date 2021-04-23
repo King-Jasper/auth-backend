@@ -128,19 +128,19 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser).orElseThrow(
-                () -> new BadRequestException("No Customer Loan Profile exists for this")
-        );
+        Optional<CustomerLoanProfileEntity> profileEntityOpt = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
+        if(!profileEntityOpt.isPresent()) {
+            return null;
+        }
+        CustomerLoanProfileEntity customerLoanProfileEntity = profileEntityOpt.get();
 
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
-
         if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
             loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
             loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
             loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
             loanCustomerProfileModel.setHasActivePayDayLoan(loanRequestEntityDao.countActivePayDayLoan(appUser) > 0);
         }
-
         return loanCustomerProfileModel;
     }
 
