@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase;
+package com.mintfintech.savingsms.usecase.features.loan;
 
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;

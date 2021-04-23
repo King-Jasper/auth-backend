@@ -2,13 +2,14 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
-import com.mintfintech.savingsms.usecase.GetLoansUseCase;
-import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
-import com.mintfintech.savingsms.usecase.LoanRequestUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
@@ -71,10 +72,20 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+//    @ApiOperation(value = "Returns customer employment information.")
+//    @GetMapping(value = "customer-profile/employment-info", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<ApiResponseJSON<EmploymentInformationModel>> getEmploymentInfo(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
+//
+//        EmploymentInformationModel response = customerLoanProfileUseCase.getEmploymentInfo(authenticatedUser);
+//        ApiResponseJSON<EmploymentInformationModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+//        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+//    }
+
     @ApiOperation(value = "Returns paginated list of loans of a user.")
     @GetMapping(value = "loan-history", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                  @ApiParam(value = "Repayment Status: PAID,PARTIALLY_PAID,PENDING,FAILED") @Valid @Pattern(regexp = "(PAID|PARTIALLY_PAID|PENDING|FAILED)") @RequestParam("repaymentStatus") String repaymentStatus,
+                                                                                  @ApiParam(value = "Repayment Status: ALL, PAID, PARTIALLY_PAID, PENDING, FAILED, CANCELLED") @Valid @Pattern(regexp = "(ALL|PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam(value = "repaymentStatus", defaultValue = "ALL") String repaymentStatus,
+                                                                                  @ApiParam(value = "Approval Status: ALL, APPROVED, REJECTED, PENDING, CANCELLED, DISBURSED") @Valid @Pattern(regexp = "(ALL|APPROVED|REJECTED|PENDING|CANCELLED|DISBURSED)") @RequestParam(value = "approvalStatus", defaultValue = "ALL") String approvalStatus,
                                                                                   @ApiParam(value = "Loan Type: PAYDAY") @Pattern(regexp = "(PAYDAY)") @NotEmpty @Pattern(regexp = "(PAYDAY)") @RequestParam("loanType") String loanType,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                   @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
@@ -85,6 +96,7 @@ public class LoanController {
         LoanSearchRequest searchRequest = LoanSearchRequest.builder()
                 .accountId(authenticatedUser.getAccountId())
                 .repaymentStatus(repaymentStatus)
+                .approvalStatus(approvalStatus)
                 .loanType(loanType)
                 .fromDate(fromDate)
                 .toDate(toDate)
@@ -95,9 +107,9 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Add Employment Information to Customer Loan Profile And Request for Loan.")
-    @PostMapping(value = "loan-request/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanModel>> createEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    @ApiOperation(value = "Create Customer Loan Profile for Pay Day Loan.")
+    @PostMapping(value = "customer-profile/payday", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> createEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @ApiParam(value = "Upload Employment Letter", required = true) @NotNull @RequestParam("employmentLetter") MultipartFile employmentLetter,
                                                                                 @ApiParam(value = "Organization Name", required = true) @NotEmpty @RequestParam("organizationName") String organizationName,
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
@@ -105,9 +117,7 @@ public class LoanController {
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
                                                                                 @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail,
-                                                                                @ApiParam(value = "Credit Account Id", required = true) @NotEmpty @RequestParam("creditAccountId") String creditAccountId,
-                                                                                @ApiParam(value = "Loan Request Amount. Min:1000", required = true) @Min(value = 1000, message = "Minimum of N1000") @NotNull @RequestParam("loanAmount") double loanAmount) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
@@ -118,12 +128,10 @@ public class LoanController {
                 .organizationName(StringUtils.trim(organizationName))
                 .organizationUrl(StringUtils.trim(organizationUrl))
                 .workEmail(StringUtils.trim(workEmail))
-                .loanAmount(loanAmount)
-                .creditAccountId(creditAccountId)
                 .build();
 
-        LoanModel response = loanRequestUseCase.paydayLoanRequest(authenticatedUser, request);
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        LoanCustomerProfileModel response = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(authenticatedUser, request);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

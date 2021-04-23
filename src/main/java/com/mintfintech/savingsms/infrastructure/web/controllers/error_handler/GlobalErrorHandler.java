@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import io.sentry.Sentry;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
@@ -30,21 +31,21 @@ public class GlobalErrorHandler {
 
     @ExceptionHandler(value = {RuntimeException.class, Exception.class})
     public ResponseEntity<ApiResponseJSON<String>> handleException(Exception exception) {
-        log.info("Exception: {}", ExceptionUtils.getStackTrace(exception));
+        Sentry.captureException(exception);
         ApiResponseJSON<String> apiResponse = new ApiResponseJSON<>("Sorry, currently unable to process request at the moment.");
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     @ExceptionHandler(value = {MissingServletRequestParameterException.class, ConstraintViolationException.class})
     public ResponseEntity<ApiResponseJSON<String>> handleMissingServletRequestParameterException(Exception exception) {
-        log.info("Exception: {}", exception.getLocalizedMessage());
+        Sentry.captureException(exception);
         ApiResponseJSON<String> apiResponse = new ApiResponseJSON<>(exception.getLocalizedMessage());
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(value = {MissingServletRequestPartException.class})
     public ResponseEntity<ApiResponseJSON<String>> handleMissingServletRequestPartException(Exception exception) {
-        log.info("error message: {}", exception.getMessage());
+        Sentry.captureException(exception);
         ApiResponseJSON<String> apiResponse = new ApiResponseJSON<>("Request validation failure. Please check your request data.");
         return new ResponseEntity<>(apiResponse, HttpStatus.BAD_REQUEST);
     }

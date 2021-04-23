@@ -8,6 +8,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
+import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,12 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     }
 
     @Override
+    @Transactional(value = Transactional.TxType.REQUIRES_NEW)
+    public boolean recordExistForReferredAccount(MintAccountEntity referred) {
+        return repository.existsByReferred(referred);
+    }
+
+    @Override
     public Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred) {
         return repository.findFirstByReferredAndReferredRewardedFalse(referred);
     }
@@ -41,9 +49,15 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     }
 
     @Override
-    public List<CustomerReferralEntity> getByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size) {
+    public List<CustomerReferralEntity> getUnprocessedRecordByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size) {
         Pageable pageable = PageRequest.of(0, size);
-        return repository.getAllByReferrerAndDateCreatedBetween(referral, start, end, pageable);
+        return repository.getAllByReferrerAndReferrerRewardedAndDateCreatedBetweenOrderByDateCreatedDesc(referral, false, start, end, pageable);
+    }
+
+    @Override
+    public List<CustomerReferralEntity> getUnprocessedRecordByReferral(LocalDateTime start, LocalDateTime end, int size, BigDecimal savingsMinimumBalance) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getUnprocessedReferrals(start, end, savingsMinimumBalance, pageable);
     }
 
     @Override

@@ -13,8 +13,9 @@ import java.math.BigDecimal;
 @Builder
 public class SavingsGoalCreationEvent {
     private String goalId;
-    private String accountId;
+    //private String accountId;
     private String name;
     private String withdrawalAccountNumber;
     private BigDecimal savingsBalance;
+    private BigDecimal accruedInterest;
 }

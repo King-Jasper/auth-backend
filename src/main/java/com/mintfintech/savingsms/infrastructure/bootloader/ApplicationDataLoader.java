@@ -1,29 +1,21 @@
 package com.mintfintech.savingsms.infrastructure.bootloader;
 
 import com.google.gson.Gson;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
-import com.mintfintech.savingsms.infrastructure.persistence.repository.MintAccountRepository;
+import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
+import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
-import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalWithdrawalSuccessEvent;
-import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
-import com.mintfintech.savingsms.usecase.master_record.*;
+import com.mintfintech.savingsms.usecase.master_record.CurrencyDataUseCases;
+import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
+import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
+import com.mintfintech.savingsms.usecase.master_record.TierLevelDataUseCase;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
 import org.springframework.context.event.ContextRefreshedEvent;
 import org.springframework.stereotype.Component;
-
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
 
 /**
  * Created by jnwanya on
@@ -42,6 +34,8 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private SavingsGoalRepository repository;
     private Gson gson;
+    private AppSequenceEntityDao appSequenceEntityDao;
+    private SavingsGoalEntityDao savingsGoalEntityDao;
    // private MintAccountRepository mintAccountRepository;
    // private CreateSavingsGoalUseCase createSavingsGoalUseCase;
    // private AppUserRepository appUserRepository;
@@ -62,6 +56,26 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
         } ).start();
         log.info("Application started");
+
+        /*
+        new Thread(() -> {
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("First thread goalId - "+goalId);
+        }).start();
+        new Thread(() -> {
+            //long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            //System.out.println("2nd thread id - "+id);
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("2nd thread goalId - "+goalId);
+        }).start();
+        new Thread(() -> {
+            //long id = appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ);
+            //System.out.println("3rd thread id - "+id);
+            String goalId  = savingsGoalEntityDao.generateSavingGoalId();
+            System.out.println("3rd thread goalId - "+goalId);
+        }).start();
+        */
+
        //applySavingsInterestUseCase.updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal.valueOf(0.04));
        //issueFix();
         /*long amount = 50000;

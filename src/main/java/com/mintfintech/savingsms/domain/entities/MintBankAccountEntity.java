@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountGroupConstant;
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import lombok.*;
 
@@ -56,4 +57,8 @@ public class MintBankAccountEntity extends AbstractBaseEntity<Long> {
     private CurrencyEntity currency;
 
     private LocalDateTime balanceUpdateTime;
+
+    @Builder.Default
+    @Enumerated(EnumType.STRING)
+    private BankAccountStatusConstant accountStatus = BankAccountStatusConstant.ACTIVE;
 }

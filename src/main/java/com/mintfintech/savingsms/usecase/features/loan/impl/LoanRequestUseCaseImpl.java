@@ -1,30 +1,25 @@
-package com.mintfintech.savingsms.usecase.impl;
+package com.mintfintech.savingsms.usecase.features.loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
-import com.mintfintech.savingsms.usecase.GetLoansUseCase;
-import com.mintfintech.savingsms.usecase.LoanRequestUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
-import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
@@ -73,7 +68,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             throw new BadRequestException("Loan amount is higher than the maximum allowed for this user");
         }
 
-        if (loanRequestEntityDao.countActiveLoan(appUser) > 0) {
+        if (loanRequestEntityDao.countActivePayDayLoan(appUser) > 0) {
             throw new BadRequestException("There is an active loan for this user");
         }
 
@@ -85,18 +80,6 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
 
-    }
-
-    @Override
-    @Transactional
-    public LoanModel paydayLoanRequest(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
-
-        LoanCustomerProfileModel loanCustomerProfileModel = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(currentUser, request);
-
-        LoanModel loanModel = loanRequest(currentUser, request.getLoanAmount(), "PAYDAY", request.getCreditAccountId());
-        loanModel.setOwner(loanCustomerProfileModel);
-
-        return loanModel;
     }
 
     private LoanRequestEntity payDayLoanRequest(

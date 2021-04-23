@@ -27,7 +27,7 @@ pipeline {
                 sh 'cp target/savings-service.jar docker'
                 script {
                     if ("${env.BRANCH_NAME}".equalsIgnoreCase("production")) {
-                        sh 'cp target/newrelic/newrelic.jar docker'
+                       // sh 'cp target/newrelic/newrelic.jar docker'
                         sh "cd docker && docker image build -f Dockerfile_prod -t ${dockerImageName}:${imageTag} ."
                     } else {
                         sh "cd docker && docker image build -t ${dockerImageName}:${imageTag} ."

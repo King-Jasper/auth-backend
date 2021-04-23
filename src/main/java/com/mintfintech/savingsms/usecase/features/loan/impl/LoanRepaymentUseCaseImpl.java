@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase.impl;
+package com.mintfintech.savingsms.usecase.features.loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRepaymentEntityDao;
@@ -20,9 +20,9 @@ import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
-import com.mintfintech.savingsms.usecase.GetLoansUseCase;
-import com.mintfintech.savingsms.usecase.LoanRepaymentUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -87,7 +87,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         List<LoanRequestEntity> overDueLoanRepayments = loanRequestEntityDao.getOverdueLoanRepayment(bankAccountEntityOptional.get());
 
-        if (overDueLoanRepayments.isEmpty()){
+        if (overDueLoanRepayments.isEmpty()) {
             return;
         }
 
@@ -100,17 +100,17 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             BigDecimal availableBalance = debitAccount.getAvailableBalance();
 
-            if (availableBalance.compareTo(amountToPay) < 0){
+            if (availableBalance.compareTo(amountToPay) < 0) {
                 amountToPay = availableBalance;
             }
 
             LoanTransactionEntity transaction = debitCustomerAccount(loan, true, amountToPay, debitAccount.getAccountNumber());
 
-            if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL){
+            if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL) {
                 loan.setAmountPaid(loan.getAmountPaid().add(amountToPay));
                 loan = loanRequestEntityDao.saveRecord(loan);
 
-                if (loan.getRepaymentAmount().compareTo(loan.getAmountPaid()) == 0){
+                if (loan.getRepaymentAmount().compareTo(loan.getAmountPaid()) == 0) {
                     moveFundsForFullyPaidLoans(loan);
                 }
 
@@ -129,6 +129,10 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         LoanRequestEntity loan = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
+        if (loan.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
+            throw new BadRequestException("This loan has been repaid in full already");
+        }
+
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
 
@@ -136,7 +140,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         BigDecimal amountPending = loan.getRepaymentAmount().subtract(loan.getAmountPaid());
 
         if (debitAccount.getAvailableBalance().compareTo(amountToPay) < 0) {
-            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment: " + loan.getLoanId());
+            throw new BusinessLogicConflictException("Insufficient balance to make this loan repayment. " +
+                    "Loan Repayment Amount: " + amount + ". Available Balance: " + debitAccount.getAvailableBalance());
         }
 
         if (amountToPay.compareTo(amountPending) > 0) {
@@ -182,7 +187,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         }
     }
 
-    private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, Boolean isAutoDebit, BigDecimal amountToPay, String debitAccountNumber){
+    private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, Boolean isAutoDebit, BigDecimal amountToPay, String debitAccountNumber) {
 
         String ref = loanRequestEntityDao.generateLoanTransactionRef();
 
@@ -227,7 +232,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             }
 
         }
-       return loanTransactionEntityDao.saveRecord(transaction);
+        return loanTransactionEntityDao.saveRecord(transaction);
     }
 
     private void moveFundsForFullyPaidLoans(LoanRequestEntity loan) {

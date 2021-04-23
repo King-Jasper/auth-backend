@@ -1,19 +1,13 @@
-package com.mintfintech.savingsms.usecase.impl;
+package com.mintfintech.savingsms.usecase.features.loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
-import com.mintfintech.savingsms.usecase.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -23,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +28,7 @@ import java.util.stream.Collectors;
 public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
     private final LoanRequestEntityDao loanRequestEntityDao;
-    private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final LoanTransactionEntityDao loanTransactionEntityDao;
@@ -41,13 +36,13 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     @Override
     public PagedDataResponse<LoanModel> getPagedLoans(LoanSearchRequest searchRequest, int page, int size) {
 
-        Optional<MintBankAccountEntity> mintAccount = mintBankAccountEntityDao.findByAccountId(searchRequest.getAccountId());
+        Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
 
         LoanSearchDTO searchDTO = LoanSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
-                .repaymentStatus(searchRequest.getRepaymentStatus() != null ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
-                .approvalStatus(searchRequest.getApprovalStatus() != null ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
+                .repaymentStatus(!searchRequest.getRepaymentStatus().equals("ALL") ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
+                .approvalStatus(!searchRequest.getApprovalStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
                 .build();
@@ -69,13 +64,15 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
-        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount().toPlainString());
-        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid().toPlainString());
+        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
+        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid());
         loanModel.setApprovalStatus(loanRequestEntity.getApprovalStatus().name());
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
-        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount().toPlainString());
+        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount());
         loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
-        loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate());
+        loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
+        loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setOwner(customerLoanProfileUseCase.toLoanCustomerProfileModel(customerLoanProfileEntity));
 
         return loanModel;

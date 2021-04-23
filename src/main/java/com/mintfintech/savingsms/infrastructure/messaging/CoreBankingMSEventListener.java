@@ -32,14 +32,14 @@ public class CoreBankingMSEventListener {
 
     @KafkaListener(topics = {FUNDING_PAYMENT_UPDATE_EVENT})
     public void listenForAccountFundingPaymentUpdate(String payload) {
-        log.info("event:{} ; {}", FUNDING_PAYMENT_UPDATE_EVENT, payload);
+        //log.info("event:{} ; {}", FUNDING_PAYMENT_UPDATE_EVENT, payload);
         OnlinePaymentStatusUpdateEvent fundingPaymentUpdateEvent = gson.fromJson(payload, OnlinePaymentStatusUpdateEvent.class);
         onlineFundingUseCase.updateFundingPaymentStatus(fundingPaymentUpdateEvent);
     }
 
     @KafkaListener(topics = {ACCOUNT_BALANCE_UPDATE_EVENT})
     public void listenForAccountBalanceUpdate(String payload) {
-        log.info("event:{} ; {}", ACCOUNT_BALANCE_UPDATE_EVENT, payload);
+        //log.info("event:{} ; {}", ACCOUNT_BALANCE_UPDATE_EVENT, payload);
         AccountBalanceUpdateEvent event = gson.fromJson(payload, AccountBalanceUpdateEvent.class);
         updateBankAccountBalanceUseCase.processBalanceUpdate(event);
     }

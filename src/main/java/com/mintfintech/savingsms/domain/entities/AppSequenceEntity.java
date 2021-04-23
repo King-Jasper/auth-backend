@@ -13,9 +13,6 @@ import javax.persistence.*;
  * Tue, 18 Feb, 2020
  */
 @Entity
-@Getter
-@Setter
-@Builder
 @AllArgsConstructor
 @Table(name = "app_sequence")
 public class AppSequenceEntity {
@@ -31,16 +28,21 @@ public class AppSequenceEntity {
     @Id
     @Enumerated(EnumType.STRING)
     private SequenceType sequenceType;
-    private long value;
+    public SequenceType getSequenceType() {
+        return sequenceType;
+    }
 
     @Version
     private long version; // for optimistic locking
-
+    public long getVersion() {
+        return version;
+    }
     /**
      * Gets the current sequence value.
      *
      * @return The current sequence value.
      */
+    private long value;
     public Long getValue() {
         return ++value;
     }

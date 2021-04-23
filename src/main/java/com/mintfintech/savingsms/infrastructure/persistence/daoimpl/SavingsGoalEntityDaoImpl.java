@@ -11,8 +11,10 @@ import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.StaleObjectStateException;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -20,9 +22,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.repository.query.Param;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
+import javax.persistence.LockTimeoutException;
+import javax.persistence.OptimisticLockException;
 import javax.persistence.criteria.Expression;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
@@ -36,6 +41,7 @@ import java.util.Optional;
  * Created by jnwanya on
  * Tue, 18 Feb, 2020
  */
+@Slf4j
 @Named
 public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Long> implements SavingsGoalEntityDao {
 
@@ -46,13 +52,36 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         this.repository = repository;
         this.appSequenceEntityDao = appSequenceEntityDao;
     }
-
-    @Retryable
+    
     @Override
     public String generateSavingGoalId() {
+        int retries = 0;
+        boolean success = false;
+        String goalId = RandomStringUtils.random(8);
+        while(!success && retries < 5) {
+            try {
+               goalId = String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),
+                       appSequenceEntityDao.getNextSequenceIdTemp(SequenceType.SAVINGS_GOAL_SEQ),
+                       RandomStringUtils.randomNumeric(1));
+               success = true;
+            }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex){
+                log.info("savings-exception caught - {},  goalId - {}, retries - {}", ex.getClass().getSimpleName(), goalId, retries);
+                retries++;
+                success = false;
+            }
+            if(retries > 0 && success) {
+                 log.info("Successful retrieval of unique goal Id - {}", goalId);
+            }
+        }
+        if(retries >= 5) {
+            goalId = RandomStringUtils.random(8);
+        }
+        /*
         return String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),
                 appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ),
                 RandomStringUtils.randomNumeric(1));
+        */
+        return goalId;
     }
 
     @Override

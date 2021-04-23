@@ -10,8 +10,10 @@ import java.math.BigDecimal;
  */
 @Data
 public class AccountBalanceUpdateEvent {
-    private String accountId;
     private String accountNumber;
+    private String accountId;
     private BigDecimal availableBalance;
     private BigDecimal ledgerBalance;
+    private BigDecimal lienAmount;
+    private BigDecimal balanceAfterLien;
 }

@@ -1,4 +1,4 @@
-package com.mintfintech.savingsms.usecase.impl;
+package com.mintfintech.savingsms.usecase.features.loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
@@ -13,10 +13,13 @@ import com.mintfintech.savingsms.domain.entities.ResourceFileEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.CustomerLoanProfileSearchDTO;
+import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.CustomerLoanProfileUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
+import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
@@ -27,6 +30,7 @@ import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -49,6 +53,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final ResourceFileEntityDao resourceFileEntityDao;
     private final AuditTrailService auditTrailService;
     private final LoanRequestEntityDao loanRequestEntityDao;
+    private final ApplicationEventService applicationEventService;
 
     @Override
     @Transactional
@@ -62,6 +67,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         Optional<CustomerLoanProfileEntity> optionalCustomerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
 
+        EmployeeInformationEntity employeeInformationEntity;
         if (optionalCustomerLoanProfileEntity.isPresent()) {
             customerLoanProfileEntity = optionalCustomerLoanProfileEntity.get();
 
@@ -69,25 +75,24 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 throw new BadRequestException("An Employment Information already exists for this user.");
             }
 
-            EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
+            employeeInformationEntity = createEmploymentInformation(request);
             customerLoanProfileEntity.setEmployeeInformation(employeeInformationEntity);
-            customerLoanProfileEntity = customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
+            customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
 
         } else {
 
-            EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
+            employeeInformationEntity = createEmploymentInformation(request);
 
             CustomerLoanProfileEntity newCustomerLoanProfile = CustomerLoanProfileEntity.builder()
                     .appUser(appUser)
                     .employeeInformation(employeeInformationEntity)
                     .build();
-            customerLoanProfileEntity = customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
+            customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
         }
 
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
-        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        publishEmploymentDetails(appUser, employeeInformationEntity);
 
-        return loanCustomerProfileModel;
+        return getLoanCustomerProfile(currentUser, "PAYDAY");
     }
 
     @Override
@@ -113,6 +118,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
 
+        publishEmploymentDetails(appUser, employeeInfo);
+
         return loanCustomerProfileModel;
     }
 
@@ -121,19 +128,19 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser).orElseThrow(
-                () -> new BadRequestException("No Customer Loan Profile exists for this")
-        );
+        Optional<CustomerLoanProfileEntity> profileEntityOpt = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
+        if(!profileEntityOpt.isPresent()) {
+            return null;
+        }
+        CustomerLoanProfileEntity customerLoanProfileEntity = profileEntityOpt.get();
 
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
-
         if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
             loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
             loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
             loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
             loanCustomerProfileModel.setHasActivePayDayLoan(loanRequestEntityDao.countActivePayDayLoan(appUser) > 0);
         }
-
         return loanCustomerProfileModel;
     }
 
@@ -143,7 +150,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         CustomerLoanProfileSearchDTO searchDTO = CustomerLoanProfileSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
-                .verificationStatus(searchRequest.getVerificationStatus() != null ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
+                .verificationStatus(!searchRequest.getVerificationStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
                 .build();
 
         Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
@@ -243,6 +250,18 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
     }
 
+    @Override
+    public EmploymentInformationModel getEmploymentInfo(AuthenticatedUser currentUser) {
+
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+
+        CustomerLoanProfileEntity customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser).orElseThrow(
+                () -> new BadRequestException("No Customer Loan Profile exists for this")
+        );
+
+        return addEmployeeInformationToCustomerLoanProfile(customerLoanProfile);
+    }
+
     private void updateEmploymentInformation(EmploymentDetailCreationRequest request, EmployeeInformationEntity info){
 
         if (request.getEmploymentLetter() != null){
@@ -277,6 +296,28 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .build();
 
         return employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+    }
+
+    private void publishEmploymentDetails(AppUserEntity userEntity, EmployeeInformationEntity employeeInformationEntity) {
+        ResourceFileEntity letter = employeeInformationEntity.getEmploymentLetter();
+        if(!Hibernate.isInitialized(letter)) {
+            letter = resourceFileEntityDao.getRecordById(letter.getId());
+        }
+        EmploymentInfoUpdateEvent event = EmploymentInfoUpdateEvent.builder()
+                .employerEmail(employeeInformationEntity.getEmployerEmail())
+                .workEmail(employeeInformationEntity.getWorkEmail())
+                .employerAddress(employeeInformationEntity.getEmployerAddress())
+                .monthlySalary(employeeInformationEntity.getMonthlyIncome())
+                .employerPhoneNumber(employeeInformationEntity.getEmployerPhoneNo())
+                .userId(userEntity.getUserId())
+                .organizationUrl(employeeInformationEntity.getOrganizationUrl())
+                .organizationName(employeeInformationEntity.getOrganizationName())
+                .employmentLetterFileName(letter.getFileName())
+                .employmentLetterFileUrl(letter.getUrl())
+                .employmentLetterFileSize(letter.getFileSizeInKB())
+                .employmentLetterFileId(letter.getFileId())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMPLOYMENT_INFORMATION_UPDATE, new EventModel<>(event));
     }
 
     private void validateEmploymentLetter(MultipartFile employmentLetter) {

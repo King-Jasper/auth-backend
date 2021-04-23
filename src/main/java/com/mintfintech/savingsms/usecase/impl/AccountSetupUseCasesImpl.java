@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.AccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountGroupConstant;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
@@ -152,6 +149,29 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         }
         AppUserEntity appUserEntity = appUserEntityOptional.get();
         appUserEntity.setDeviceGcmNotificationToken(gcmTokenId);
+        appUserEntityDao.saveRecord(appUserEntity);
+    }
+
+    @Override
+    public void updateBankAccountStatus(BankAccountStatusUpdateEvent accountStatusUpdateEvent) {
+        Optional<MintBankAccountEntity> optionalMintBankAccountEntity = mintBankAccountEntityDao.findByAccountNumber(accountStatusUpdateEvent.getAccountNumber());
+        if(!optionalMintBankAccountEntity.isPresent()) {
+            return;
+        }
+        MintBankAccountEntity bankAccountEntity = optionalMintBankAccountEntity.get();
+        bankAccountEntity.setAccountStatus(BankAccountStatusConstant.valueOf(accountStatusUpdateEvent.getStatus()));
+        mintBankAccountEntityDao.saveRecord(bankAccountEntity);
+    }
+
+    @Override
+    public void updateUserProfileDetails(UserDetailUpdateEvent updateEvent) {
+        Optional<AppUserEntity> optionalAppUserEntity = appUserEntityDao.findAppUserByUserId(updateEvent.getUserId());
+        if(!optionalAppUserEntity.isPresent()) {
+            return;
+        }
+        AppUserEntity appUserEntity = optionalAppUserEntity.get();
+        appUserEntity.setEmail(updateEvent.getEmail());
+        appUserEntity.setPhoneNumber(updateEvent.getPhoneNumber());
         appUserEntityDao.saveRecord(appUserEntity);
     }
 }
