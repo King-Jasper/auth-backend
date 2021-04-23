@@ -72,14 +72,14 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns customer employment information.")
-    @GetMapping(value = "customer-profile/employment-info", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<EmploymentInformationModel>> getEmploymentInfo(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
-
-        EmploymentInformationModel response = customerLoanProfileUseCase.getEmploymentInfo(authenticatedUser);
-        ApiResponseJSON<EmploymentInformationModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-    }
+//    @ApiOperation(value = "Returns customer employment information.")
+//    @GetMapping(value = "customer-profile/employment-info", produces = MediaType.APPLICATION_JSON_VALUE)
+//    public ResponseEntity<ApiResponseJSON<EmploymentInformationModel>> getEmploymentInfo(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser){
+//
+//        EmploymentInformationModel response = customerLoanProfileUseCase.getEmploymentInfo(authenticatedUser);
+//        ApiResponseJSON<EmploymentInformationModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+//        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+//    }
 
     @ApiOperation(value = "Returns paginated list of loans of a user.")
     @GetMapping(value = "loan-history", produces = MediaType.APPLICATION_JSON_VALUE)
