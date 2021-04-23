@@ -242,7 +242,14 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
     @Override
     public EmploymentInformationModel getEmploymentInfo(AuthenticatedUser currentUser) {
-        return null;
+
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+
+        CustomerLoanProfileEntity customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser).orElseThrow(
+                () -> new BadRequestException("No Customer Loan Profile exists for this")
+        );
+
+        return addEmployeeInformationToCustomerLoanProfile(customerLoanProfile);
     }
 
     private void updateEmploymentInformation(EmploymentDetailCreationRequest request, EmployeeInformationEntity info){
