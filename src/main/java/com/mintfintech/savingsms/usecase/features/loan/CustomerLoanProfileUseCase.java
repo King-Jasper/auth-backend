@@ -28,4 +28,6 @@ public interface CustomerLoanProfileUseCase {
     LoanCustomerProfileModel toLoanCustomerProfileModel(CustomerLoanProfileEntity customerLoanProfileEntity);
 
     void updateCustomerRating(AppUserEntity currentUser);
+
+    EmploymentInformationModel getEmploymentInfo(AuthenticatedUser currentUser);
  }
