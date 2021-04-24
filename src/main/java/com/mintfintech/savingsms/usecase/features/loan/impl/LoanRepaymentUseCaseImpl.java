@@ -10,10 +10,7 @@ import com.mintfintech.savingsms.domain.entities.LoanRepaymentEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanTransactionRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
@@ -128,6 +125,10 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         LoanRequestEntity loan = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
+
+        if (loan.getApprovalStatus() != ApprovalStatusConstant.DISBURSED) {
+            throw new BadRequestException("This loan was not disbursed");
+        }
 
         if (loan.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
             throw new BadRequestException("This loan has been repaid in full already");
