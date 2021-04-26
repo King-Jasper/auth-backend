@@ -262,7 +262,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         info.setVerificationStatus(ApprovalStatusConstant.PENDING);
         info.setEmployerEmail(request.getEmployerEmail());
         info.setEmployerAddress(request.getEmployerAddress());
-        info.setEmployerPhoneNo(request.getEmployerPhoneNo());
+        info.setEmployerPhoneNo(PhoneNumberUtils.toInternationalFormat(request.getEmployerPhoneNo()));
         info.setMonthlyIncome(request.getMonthlyIncome());
         info.setOrganizationName(request.getOrganizationName());
         info.setWorkEmail(request.getWorkEmail());

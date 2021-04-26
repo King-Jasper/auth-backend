@@ -2,16 +2,18 @@ package com.mintfintech.savingsms.usecase.models;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Data
 public class LoanModel {
 
     private String loanId;
 
-    private String loanAmount;
+    private BigDecimal loanAmount;
 
-    private String repaymentAmount;
+    private BigDecimal repaymentAmount;
 
-    private String amountPaid;
+    private BigDecimal amountPaid;
 
     private double interestRate;
 
@@ -26,6 +28,8 @@ public class LoanModel {
     private String createdDate;
 
     private String approvedDate;
+
+    private String lastPaymentDate;
 
     private LoanCustomerProfileModel owner;
 

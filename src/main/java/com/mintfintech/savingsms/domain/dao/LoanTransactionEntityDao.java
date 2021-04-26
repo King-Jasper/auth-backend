@@ -9,4 +9,6 @@ import java.util.List;
 public interface LoanTransactionEntityDao extends CrudDao<LoanTransactionEntity, Long> {
 
     List<LoanTransactionEntity> getLoanTransactions(LoanRequestEntity loanRequestEntity);
+
+    List<LoanTransactionEntity> getDebitLoanTransactions(LoanRequestEntity loanRequestEntity);
 }

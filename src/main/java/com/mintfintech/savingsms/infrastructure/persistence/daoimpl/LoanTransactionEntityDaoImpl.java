@@ -38,4 +38,11 @@ public class LoanTransactionEntityDaoImpl implements LoanTransactionEntityDao {
     public List<LoanTransactionEntity> getLoanTransactions(LoanRequestEntity loanRequestEntity) {
         return repository.getAllByRecordStatusAndLoanRequest(loanRequestEntity);
     }
+
+    @Override
+    public List<LoanTransactionEntity> getDebitLoanTransactions(LoanRequestEntity loanRequestEntity) {
+        return repository.getDebitTransactionByLoanRequest(loanRequestEntity);
+    }
+
+
 }

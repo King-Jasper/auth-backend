@@ -63,14 +63,18 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
 
+        if (loanRequestEntity.getApprovalStatus() != ApprovalStatusConstant.PENDING) {
+            throw new BadRequestException("This loan request is not in pending state");
+        }
+
         if (approved) {
             AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
             CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                     .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
 
-            if (loanRequestEntity.getLoanType() == LoanTypeConstant.PAYDAY){
+            if (loanRequestEntity.getLoanType() == LoanTypeConstant.PAYDAY) {
                 EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-                if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED){
+                if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED) {
                     throw new BadRequestException("Employment Information have not been verified for this user");
                 }
             }

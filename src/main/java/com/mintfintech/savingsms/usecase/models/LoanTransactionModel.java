@@ -2,12 +2,13 @@ package com.mintfintech.savingsms.usecase.models;
 
 import lombok.Data;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Data
 public class LoanTransactionModel {
 
-    private String amount;
+    private BigDecimal amount;
 
     private String status;
 
@@ -21,6 +22,6 @@ public class LoanTransactionModel {
 
     private String responseMessage;
 
-    private LocalDateTime paymentDate;
+    private String paymentDate;
 
 }

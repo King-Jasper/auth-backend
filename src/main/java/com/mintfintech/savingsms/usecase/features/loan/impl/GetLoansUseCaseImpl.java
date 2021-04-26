@@ -61,18 +61,20 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy())
                 .orElseThrow(() -> new BadRequestException("No profile exist"));
 
+        List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
 
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
-        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount().toPlainString());
-        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid().toPlainString());
+        loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
+        loanModel.setAmountPaid(loanRequestEntity.getAmountPaid());
         loanModel.setApprovalStatus(loanRequestEntity.getApprovalStatus().name());
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
-        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount().toPlainString());
+        loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount());
         loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
         loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
+        loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setOwner(customerLoanProfileUseCase.toLoanCustomerProfileModel(customerLoanProfileEntity));
 
         return loanModel;
@@ -90,14 +92,14 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         for (LoanTransactionEntity entity : transactions) {
 
             LoanTransactionModel model = new LoanTransactionModel();
-            model.setAmount(entity.getTransactionAmount().toPlainString());
+            model.setAmount(entity.getTransactionAmount());
             model.setReference(entity.getTransactionReference());
             model.setExternalReference(entity.getExternalReference());
             model.setResponseCode(entity.getResponseCode());
             model.setStatus(entity.getStatus().name());
             model.setResponseMessage(entity.getResponseMessage());
             model.setType(entity.getTransactionType().name());
-            model.setPaymentDate(entity.getDateCreated());
+            model.setPaymentDate(entity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
 
             transactionModels.add(model);
         }
