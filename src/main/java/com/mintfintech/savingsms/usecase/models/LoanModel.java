@@ -29,6 +29,7 @@ public class LoanModel {
 
     private String approvedDate;
 
+    private String lastPaymentDate;
     private String rejectionReason;
 
     private LoanCustomerProfileModel owner;
