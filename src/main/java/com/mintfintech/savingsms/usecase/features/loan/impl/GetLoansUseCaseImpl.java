@@ -59,8 +59,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     public LoanModel toLoanModel(LoanRequestEntity loanRequestEntity) {
         LoanModel loanModel = new LoanModel();
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy())
-                .orElseThrow(() -> new BadRequestException("No profile exist"));
+        Optional<CustomerLoanProfileEntity> customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy());
 
         List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
 
