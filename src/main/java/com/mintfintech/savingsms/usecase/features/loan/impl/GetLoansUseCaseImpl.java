@@ -58,8 +58,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     public LoanModel toLoanModel(LoanRequestEntity loanRequestEntity) {
         LoanModel loanModel = new LoanModel();
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy())
-                .orElseThrow(() -> new BadRequestException("No profile exist"));
+        Optional<CustomerLoanProfileEntity> customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy());
 
         List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
 
@@ -75,7 +74,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        loanModel.setOwner(customerLoanProfileUseCase.toLoanCustomerProfileModel(customerLoanProfileEntity));
+        loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
 
         return loanModel;
     }
