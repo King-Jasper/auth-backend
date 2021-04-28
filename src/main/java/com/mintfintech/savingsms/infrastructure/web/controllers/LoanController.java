@@ -116,7 +116,7 @@ public class LoanController {
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
                                                                                 @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
-                                                                                @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
+                                                                                @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
                                                                                 @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
@@ -144,7 +144,7 @@ public class LoanController {
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
                                                                                 @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
-                                                                                @ApiParam(value = "Employer Phone Number", required = true) @Pattern(regexp = "[0-9]{11}", message = "11 digits phone number is required.") @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
+                                                                                @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
                                                                                 @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
