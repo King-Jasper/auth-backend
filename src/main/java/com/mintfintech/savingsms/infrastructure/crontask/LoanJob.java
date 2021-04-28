@@ -25,7 +25,6 @@ public class LoanJob {
     public void sendNotificationForDuePayments() {
         log.info("Sending email notification to all customers with loan payment due");
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
-        loanRepaymentUseCase.dispatchEmailNotificationRepaymentOnDueDay();
     }
 
     @SchedulerLock(name = "LoanJob_runCheckDefaultedLoanPaymentService", lockAtMostForString = "PT45M")
