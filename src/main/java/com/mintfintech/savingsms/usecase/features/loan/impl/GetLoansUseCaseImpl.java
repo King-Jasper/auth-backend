@@ -18,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +60,9 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     public LoanModel toLoanModel(LoanRequestEntity loanRequestEntity) {
         LoanModel loanModel = new LoanModel();
 
+        ApprovalStatusConstant approvalStatus = loanRequestEntity.getApprovalStatus();
+        LoanRepaymentStatusConstant repaymentStatus = loanRequestEntity.getRepaymentStatus();
+
         Optional<CustomerLoanProfileEntity> customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(loanRequestEntity.getRequestedBy());
 
         List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
@@ -67,16 +71,35 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
         loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
         loanModel.setAmountPaid(loanRequestEntity.getAmountPaid());
-        loanModel.setApprovalStatus(loanRequestEntity.getApprovalStatus().name());
+        loanModel.setApprovalStatus(approvalStatus.name());
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
         loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount());
-        loanModel.setRepaymentStatus(loanRequestEntity.getRepaymentStatus().name());
+        loanModel.setRepaymentStatus(repaymentStatus.name());
         loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
         loanModel.setRejectionReason(StringUtils.defaultString(loanRequestEntity.getRejectionReason()));
+
+        String loanStatus = "";
+        if(approvalStatus == ApprovalStatusConstant.PENDING) {
+            loanStatus = "PENDING";
+        }else if(approvalStatus == ApprovalStatusConstant.DECLINED || approvalStatus == ApprovalStatusConstant.CANCELLED) {
+            loanStatus = "DECLINED";
+        }else {
+            // IT IS APPROVED
+            if(repaymentStatus == LoanRepaymentStatusConstant.PAID) {
+                loanStatus = "COMPLETED";
+            }else if(repaymentStatus == LoanRepaymentStatusConstant.PENDING || repaymentStatus == LoanRepaymentStatusConstant.PARTIALLY_PAID) {
+                if(loanRequestEntity.getRepaymentDueDate().isBefore(LocalDateTime.now())) {
+                    loanStatus = "OVERDUE";
+                }else {
+                    loanStatus = "ACTIVE";
+                }
+            }
+        }
+        loanModel.setClientLoanStatus(loanStatus);
         return loanModel;
     }
 
