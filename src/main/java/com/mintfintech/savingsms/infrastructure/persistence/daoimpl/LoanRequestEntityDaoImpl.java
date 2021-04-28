@@ -132,13 +132,18 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
                 return criteriaBuilder.equal(bankAccountJoin.get("mintAccount"), searchDTO.getAccount().getId());
             };
             specification = specification.and(temp);
-
         }
         if (searchDTO.getRepaymentStatus() != null) {
             specification = specification.and(withRepaymentStatus(searchDTO.getRepaymentStatus()));
         }
         if (searchDTO.getApprovalStatus() != null) {
-            specification = specification.and(withApprovalStatus(searchDTO.getApprovalStatus()));
+            if(searchDTO.getApprovalStatus() == ApprovalStatusConstant.APPROVED || searchDTO.getApprovalStatus() == ApprovalStatusConstant.DISBURSED) {
+                Specification<LoanRequestEntity> temp = withApprovalStatus(ApprovalStatusConstant.APPROVED)
+                        .or(withApprovalStatus(ApprovalStatusConstant.DISBURSED));
+                specification = specification.and(temp);
+            }else {
+                specification = specification.and(withApprovalStatus(searchDTO.getApprovalStatus()));
+            }
         }
         if (searchDTO.getLoanType() != null){
             specification = specification.and(withLoanType(searchDTO.getLoanType()));
