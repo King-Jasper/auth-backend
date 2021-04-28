@@ -86,11 +86,10 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanRequestEntity.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
 
             loanRequestEntityDao.saveRecord(loanRequestEntity);
-
             startFundDisbursement(loanRequestEntity);
 
         } else {
-            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.REJECTED);
+            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
             loanRequestEntity.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
             loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
             loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
