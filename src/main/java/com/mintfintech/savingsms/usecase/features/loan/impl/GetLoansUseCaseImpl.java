@@ -97,6 +97,8 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 }else {
                     loanStatus = "ACTIVE";
                 }
+            }else if(repaymentStatus == LoanRepaymentStatusConstant.CANCELLED) {
+                loanStatus = "DECLINED";
             }
         }
         loanModel.setClientLoanStatus(loanStatus);
