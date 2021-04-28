@@ -76,11 +76,6 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         if(retries >= 5) {
             goalId = RandomStringUtils.random(8);
         }
-        /*
-        return String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),
-                appSequenceEntityDao.getNextSequenceId(SequenceType.SAVINGS_GOAL_SEQ),
-                RandomStringUtils.randomNumeric(1));
-        */
         return goalId;
     }
 
