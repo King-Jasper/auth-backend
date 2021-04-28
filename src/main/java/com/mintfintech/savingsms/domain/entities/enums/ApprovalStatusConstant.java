@@ -2,5 +2,5 @@ package com.mintfintech.savingsms.domain.entities.enums;
 
 public enum ApprovalStatusConstant {
 
-    APPROVED, REJECTED, CANCELLED, PENDING, DISBURSED
+    APPROVED, DECLINED, CANCELLED, PENDING, DISBURSED
 }

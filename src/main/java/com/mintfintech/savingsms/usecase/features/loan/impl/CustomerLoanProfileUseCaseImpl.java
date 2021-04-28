@@ -185,7 +185,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         EmployeeInformationEntity oldState = new EmployeeInformationEntity();
         BeanUtils.copyProperties(employeeInformationEntity, oldState);
 
-        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.REJECTED);
+        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.DECLINED);
         employeeInformationEntity.setRejectionReason(isVerified ? null : reason);
         employeeInformationEntityDao.saveRecord(employeeInformationEntity);
 
@@ -195,9 +195,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
             for (LoanRequestEntity loanRequestEntity : loans){
                 if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING){
-                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.REJECTED);
+                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
                     loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
-
                     loanRequestEntityDao.saveRecord(loanRequestEntity);
                 }
             }
