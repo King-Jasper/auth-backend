@@ -6,5 +6,6 @@ public enum ApprovalStatusConstant {
     DECLINED,
     PENDING,
     DISBURSED,
+    REJECTED,
     CANCELLED
 }

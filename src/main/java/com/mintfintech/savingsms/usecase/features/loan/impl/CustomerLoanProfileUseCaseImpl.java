@@ -185,7 +185,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         EmployeeInformationEntity oldState = new EmployeeInformationEntity();
         BeanUtils.copyProperties(employeeInformationEntity, oldState);
 
-        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.DECLINED);
+        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.REJECTED);
         employeeInformationEntity.setRejectionReason(isVerified ? null : reason);
         employeeInformationEntityDao.saveRecord(employeeInformationEntity);
 
