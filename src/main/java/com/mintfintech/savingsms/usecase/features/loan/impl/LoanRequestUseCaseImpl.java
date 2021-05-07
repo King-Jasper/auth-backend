@@ -81,18 +81,18 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             loanRequestEntity = payDayLoanRequest(loanAmount, creditAccount, appUser);
         }
 
-//        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-//                .customerName(appUser.getName())
-//                .recipient(appUser.getEmail())
-//                .build();
-//
-//        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .customerName(appUser.getName())
+                .recipient(appUser.getEmail())
+                .build();
 
-//                LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-//                .recipient(applicationProperty.getSystemAdminEmail())
-//                .build();
-//
-//        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
+
+        loanEmailEvent = LoanEmailEvent.builder()
+                .recipient(applicationProperty.getSystemAdminEmail())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
 
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);

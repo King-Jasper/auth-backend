@@ -22,6 +22,7 @@ import org.springframework.retry.annotation.Retryable;
 
 import javax.inject.Named;
 import javax.persistence.criteria.Join;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -164,8 +165,11 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
 
     @Override
     public List<LoanRequestEntity> getLoanRepaymentDueInDays(int days) {
-        LocalDateTime to = LocalDateTime.now().plusDays(days).toLocalDate().atTime(LocalTime.MAX);
-        LocalDateTime from = to.toLocalDate().atStartOfDay();
+        LocalDate inDaysTime = LocalDate.now().plusDays(days);
+        LocalDateTime from = inDaysTime.atStartOfDay();
+        LocalDateTime to = inDaysTime.atTime(LocalTime.MAX);
+        System.out.println("from = " + from);
+        System.out.println("to = " + to);
         return repository.getRepaymentPlansDueAtTime(from, to);
     }
 

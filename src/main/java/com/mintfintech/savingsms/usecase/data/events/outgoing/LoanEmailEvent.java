@@ -5,9 +5,8 @@ import lombok.Data;
 
 @Builder
 @Data
-public class LoanRepaymentFailureEmailEvent {
+public class LoanEmailEvent {
 
     private String customerName;
     private String recipient;
-    private String reason;
 }

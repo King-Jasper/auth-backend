@@ -18,9 +18,8 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanProfileRejectionEmailEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
@@ -90,12 +89,12 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             customerLoanProfileEntityDao.saveRecord(newCustomerLoanProfile);
         }
 
-//        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-//                .customerName(appUser.getName())
-//                .recipient(appUser.getEmail())
-//                .build();
-//
-//        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_CREATION, new EventModel<>(loanEmailEvent));
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .customerName(appUser.getName())
+                .recipient(appUser.getEmail())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_CREATION, new EventModel<>(loanEmailEvent));
 
         return getLoanCustomerProfile(currentUser, "PAYDAY");
     }
@@ -120,12 +119,12 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         updateEmploymentInformation(request, employeeInfo);
 
-//        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-//                .recipient(applicationProperty.getSystemAdminEmail())
-//                .customerName(appUser.getName())
-//                .build();
-//
-//        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_UPDATE_ADMIN, new EventModel<>(loanEmailEvent));
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .recipient(applicationProperty.getSystemAdminEmail())
+                .customerName(appUser.getName())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_UPDATE_ADMIN, new EventModel<>(loanEmailEvent));
 
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
@@ -212,22 +211,22 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 }
             }
 
-//            LoanProfileRejectionEmailEvent event = LoanProfileRejectionEmailEvent.builder()
-//                    .customerName(appUserEntity.getName())
-//                    .recipient(appUserEntity.getEmail())
-//                    .reason(reason)
-//                    .build();
-//
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_DECLINED, new EventModel<>(event));
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .customerName(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .reason(reason)
+                    .build();
+
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_DECLINED, new EventModel<>(event));
 
         } else {
-//            LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-//                    .customerName(appUserEntity.getName())
-//                    .recipient(appUserEntity.getEmail())
-//                    .build();
-//
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_APPROVED, new EventModel<>(loanEmailEvent));
-//
+            LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                    .customerName(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .build();
+
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_APPROVED, new EventModel<>(loanEmailEvent));
+
         }
 
         String description = String.format("Verified the Employment information for this loan customer: %s", oldState.getId());

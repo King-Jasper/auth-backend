@@ -19,9 +19,9 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanRepaymentEmailEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanRepaymentFailureEmailEvent;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
@@ -67,15 +67,15 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             AppUserEntity appUser = appUserEntityDao.getRecordById(loan.getRequestedBy().getId());
 
-//            LoanRepaymentEmailEvent event = LoanRepaymentEmailEvent.builder()
-//                    .loanBalance(loan.getRepaymentAmount().subtract(loan.getAmountPaid()))
-//                    .amountPaid(loan.getAmountPaid())
-//                    .customerName(appUser.getName())
-//                    .loanDueDate(loan.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
-//                    .recipient(appUser.getEmail())
-//                    .build();
-//
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_REMINDER, new EventModel<>(event));
+            LoanRepaymentEmailEvent event = LoanRepaymentEmailEvent.builder()
+                    .loanBalance(loan.getRepaymentAmount().subtract(loan.getAmountPaid()))
+                    .amountPaid(loan.getAmountPaid())
+                    .customerName(appUser.getName())
+                    .loanDueDate(loan.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .recipient(appUser.getEmail())
+                    .build();
+
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_REMINDER, new EventModel<>(event));
 
         }
     }
@@ -176,21 +176,21 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             loan.setRepaymentStatus(amountPaid.compareTo(loan.getRepaymentAmount()) < 0 ? LoanRepaymentStatusConstant.PARTIALLY_PAID : LoanRepaymentStatusConstant.PAID);
             loan = loanRequestEntityDao.saveRecord(loan);
 
-//            LoanEmailEvent event = LoanEmailEvent.builder()
-//                    .customerName(appUser.getName())
-//                    .recipient(appUser.getEmail())
-//                    .build();
-//
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_SUCCESS, new EventModel<>(event));
+            LoanEmailEvent event = LoanEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .recipient(appUser.getEmail())
+                    .build();
+
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_SUCCESS, new EventModel<>(event));
 
         } else {
 
-//            LoanRepaymentFailureEmailEvent event = LoanRepaymentFailureEmailEvent.builder()
-//                    .reason(StringUtils.defaultString(transaction.getResponseMessage(), "Transaction Declined"))
-//                    .customerName(appUser.getName())
-//                    .recipient(appUser.getEmail())
-//                    .build();
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_FAILURE, new EventModel<>(event));
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .reason(StringUtils.defaultString(transaction.getResponseMessage(), "Transaction Declined"))
+                    .customerName(appUser.getName())
+                    .recipient(appUser.getEmail())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_FAILURE, new EventModel<>(event));
 
             throw new BusinessLogicConflictException("Loan Repayment Transaction Failed. Please try again later!!");
         }
@@ -199,15 +199,15 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             customerLoanProfileUseCase.updateCustomerRating(appUser);
             moveFundsForFullyPaidLoans(loan);
         } else {
-//            LoanRepaymentEmailEvent event = LoanRepaymentEmailEvent.builder()
-//                    .loanBalance(loan.getRepaymentAmount().subtract(loan.getAmountPaid()))
-//                    .amountPaid(loan.getAmountPaid())
-//                    .customerName(appUser.getName())
-//                    .loanDueDate(loan.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
-//                    .recipient(appUser.getEmail())
-//                    .build();
-//
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PARTIAL_REPAYMENT_SUCCESS, new EventModel<>(event));
+            LoanRepaymentEmailEvent event = LoanRepaymentEmailEvent.builder()
+                    .loanBalance(loan.getRepaymentAmount().subtract(loan.getAmountPaid()))
+                    .amountPaid(loan.getAmountPaid())
+                    .customerName(appUser.getName())
+                    .loanDueDate(loan.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .recipient(appUser.getEmail())
+                    .build();
+
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PARTIAL_REPAYMENT_SUCCESS, new EventModel<>(event));
 
         }
 

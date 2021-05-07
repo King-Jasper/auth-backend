@@ -93,13 +93,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
             loanRequestEntityDao.saveRecord(loanRequestEntity);
 
-//            LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
-//                    .customerName(appUser.getName())
-//                    .loanDueDate(loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
-//                    .loanRepaymentAmount(loanRequestEntity.getRepaymentAmount())
-//                    .recipient(appUser.getEmail())
-//                    .build();
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
+            LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .loanDueDate(loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .loanRepaymentAmount(loanRequestEntity.getRepaymentAmount())
+                    .recipient(appUser.getEmail())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
 
             startFundDisbursement(loanRequestEntity);
 
@@ -112,13 +112,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
             loanRequestEntityDao.saveRecord(loanRequestEntity);
 
-//            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
-//                    .customerName(appUser.getName())
-//                    .recipient(appUser.getEmail())
-//                    .loanAmount(loanRequestEntity.getLoanAmount())
-//                    .reason(reason)
-//                    .build();
-//            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .recipient(appUser.getEmail())
+                    .loanAmount(loanRequestEntity.getLoanAmount())
+                    .reason(reason)
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
 
         }
 
