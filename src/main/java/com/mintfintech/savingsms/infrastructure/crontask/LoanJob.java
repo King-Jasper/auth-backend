@@ -21,7 +21,7 @@ public class LoanJob {
     }
 
     @SchedulerLock(name = "LoanJob_sendNotificationForDuePayments", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 15 12 1/1 * ?", zone = "Africa/Lagos") // runs every day at 00:01am.
+    @Scheduled(cron = "0 01 00 1/1 * ?", zone = "Africa/Lagos") // runs every day at 00:01am.
     public void sendNotificationForDuePayments() {
         log.info("Sending email notification to all customers with loan payment due");
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
