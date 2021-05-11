@@ -44,6 +44,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final SettingsEntityDao settingsEntityDao;
     private final SystemIssueLogService systemIssueLogService;
     private final SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
+    private final MintBankAccountEntityDao mintBankAccountEntityDao;
 
     private static final String SIDE_HUSTLE_REFERRAL_CODE = "SIDEHUSTLE";
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
@@ -259,9 +260,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     @Override
     public void processReferredCustomerReward(MintAccountEntity referredAccount, SavingsGoalEntity fundedSavingsGoal) {
         /// stopped automatic payout.
-        return;
 
-       /* LocalDateTime newProgramDate = LocalDate.of(2021, 3, 24).atStartOfDay();
+        LocalDateTime newProgramDate = LocalDate.of(2021, 3, 24).atStartOfDay();
         if(fundedSavingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
             log.info("Savings is not customer savings goal");
             return;
@@ -286,6 +286,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return;
         }
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(referralEntity.getReferrer().getId());
+        MintBankAccountEntity referralBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(referralAccount, BankAccountTypeConstant.CURRENT);
+        if(referralBankAccount.getAccountTierLevel().getLevel() != TierLevelTypeConstant.TIER_THREE) {
+            return;
+        }
         Optional<AppUserEntity> referralUserOpt = appUserEntityDao.findAccountOwner(referralAccount);
         if(!referralUserOpt.isPresent()) {
             return;
@@ -303,9 +307,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
         }
-
-        */
-
     }
 
     private SavingsGoalEntity createSavingsGoal(MintAccountEntity accountEntity, AppUserEntity userEntity) {
