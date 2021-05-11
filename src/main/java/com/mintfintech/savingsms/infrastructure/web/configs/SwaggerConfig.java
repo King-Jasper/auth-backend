@@ -27,10 +27,9 @@ import java.util.Optional;
  * Created by jnwanya on
  * Thu, 06 Feb, 2020
  */
-
 @Profile({"dev", "sandbox", "staging"})
 @EnableSwagger2
-@Configuration
+//@Configuration
 public class SwaggerConfig {
 
     @Autowired

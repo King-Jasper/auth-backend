@@ -9,11 +9,13 @@ import net.javacrumbs.shedlock.spring.annotation.EnableSchedulerLock;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.http.client.BufferingClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.client.RestTemplate;
 
@@ -25,7 +27,6 @@ import java.util.Collections;
  * Created by jnwanya on
  * Wed, 29 Jan, 2020
  */
-@EnableAsync
 @EnableScheduling
 @EnableSchedulerLock(defaultLockAtMostFor = "PT30S")
 @Configuration
@@ -76,6 +77,18 @@ public class ApplicationConfig {
         String SALT = "fhsjdhk12h3kkslkdsndwe"; //The encryption salt
         return new BCryptPasswordEncoder(12, new SecureRandom(SALT.getBytes()));
     }
+
+    /*
+    @Bean("threadPoolTaskExecutor")
+    public TaskExecutor getAsyncExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(20);
+        executor.setMaxPoolSize(1000);
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setThreadNamePrefix("Async-");
+        return executor;
+    }
+    */
 
     @Bean
     public LockProvider lockProvider(DataSource dataSource) {
