@@ -62,9 +62,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
 
             Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(record.getReferrer(), SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
             AppUserEntity appUserEntity = appUserEntityDao.findAccountOwner(record.getReferrer()).orElse(null);
+            MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(record.getReferrer(), BankAccountTypeConstant.CURRENT);
+            if(bankAccountEntity.getAccountTierLevel().getLevel() != TierLevelTypeConstant.TIER_THREE) {
+                continue;
+            }
             SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(record.getReferrer(), appUserEntity));
-
-
+            
             boolean processed = processReferralPayment(record, referralSavingsGoalEntity);
             if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
                 referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
