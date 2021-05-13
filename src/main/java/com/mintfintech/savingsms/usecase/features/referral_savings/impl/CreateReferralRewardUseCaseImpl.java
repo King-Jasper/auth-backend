@@ -63,7 +63,11 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(record.getReferrer(), SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
             AppUserEntity appUserEntity = appUserEntityDao.findAccountOwner(record.getReferrer()).orElse(null);
             MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(record.getReferrer(), BankAccountTypeConstant.CURRENT);
-            if(bankAccountEntity.getAccountTierLevel().getLevel() != TierLevelTypeConstant.TIER_THREE) {
+            if(bankAccountEntity.getAccountTierLevel().getLevel() == TierLevelTypeConstant.TIER_ONE) {
+                continue;
+            }
+            MintBankAccountEntity referredAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(record.getReferred(), BankAccountTypeConstant.CURRENT);
+            if(referredAccount.getAccountTierLevel().getLevel() == TierLevelTypeConstant.TIER_ONE) {
                 continue;
             }
             SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(record.getReferrer(), appUserEntity));
@@ -290,7 +294,11 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         MintAccountEntity referralAccount = mintAccountEntityDao.getRecordById(referralEntity.getReferrer().getId());
         MintBankAccountEntity referralBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(referralAccount, BankAccountTypeConstant.CURRENT);
-        if(referralBankAccount.getAccountTierLevel().getLevel() != TierLevelTypeConstant.TIER_THREE) {
+        if(referralBankAccount.getAccountTierLevel().getLevel() == TierLevelTypeConstant.TIER_ONE) {
+            return;
+        }
+        MintBankAccountEntity referredBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(referredAccount, BankAccountTypeConstant.CURRENT);
+        if(referredBankAccount.getAccountTierLevel().getLevel() == TierLevelTypeConstant.TIER_ONE) {
             return;
         }
         Optional<AppUserEntity> referralUserOpt = appUserEntityDao.findAccountOwner(referralAccount);
