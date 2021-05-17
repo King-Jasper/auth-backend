@@ -13,6 +13,8 @@ public class RoundUpSavingResponse {
     private boolean exist;
     private Long id;
     private String roundUpType;
+    private String fundTransferRoundUpType;
+    private String billPaymentRoundUpType;
     private boolean isActive;
     private SavingsGoalModel savingsGoal;
 }

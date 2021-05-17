@@ -10,6 +10,7 @@ import lombok.Data;
 @Builder
 @Data
 public class RoundUpSavingSetUpRequest {
-    private String roundUpType;
     private int duration;
+    private String fundTransferRoundUpType;
+    private String billPaymentRoundUpType;
 }

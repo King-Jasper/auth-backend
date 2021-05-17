@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;

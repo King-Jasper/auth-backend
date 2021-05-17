@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RoundUpSavingsTypeConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.RoundUpTypeUpdateRequest;
 import com.mintfintech.savingsms.usecase.data.response.RoundUpSavingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
@@ -40,8 +41,10 @@ public class UpdateRoundUpSavingsUseCaseImpl implements UpdateRoundUpSavingsUseC
     private final SavingsGoalEntityDao savingsGoalEntityDao;
 
     @Override
-    public RoundUpSavingResponse updateRoundUpType(AuthenticatedUser authenticatedUser, Long roundUpSetUpId, String roundUpType) {
-        RoundUpSavingsTypeConstant roundUpSavingsType = RoundUpSavingsTypeConstant.valueOf(roundUpType);
+    public RoundUpSavingResponse updateRoundUpType(AuthenticatedUser authenticatedUser, Long roundUpSetUpId, RoundUpTypeUpdateRequest request) {
+        RoundUpSavingsTypeConstant fundTransferRPSavingsType = RoundUpSavingsTypeConstant.valueOf(request.getFundTransferRoundUpType());
+        RoundUpSavingsTypeConstant billPaymentRPSavingsType = RoundUpSavingsTypeConstant.valueOf(request.getBillPaymentRoundUpType());
+
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
         Optional<RoundUpSavingsSettingEntity> opt = roundUpSavingsSettingEntityDao.findById(roundUpSetUpId);
@@ -62,14 +65,16 @@ public class UpdateRoundUpSavingsUseCaseImpl implements UpdateRoundUpSavingsUseC
 
         RoundUpSavingsSettingEntity oldState = new RoundUpSavingsSettingEntity();
         BeanUtils.copyProperties(roundUpSavingsSetting, oldState);
-        String oldType = roundUpSavingsSetting.getFundTransferRoundUpType().getName();
+        String oldType1 = roundUpSavingsSetting.getFundTransferRoundUpType().getName();
+        String oldType2 = roundUpSavingsSetting.getBillPaymentRoundUpType().getName();
 
-        roundUpSavingsSetting.setBillPaymentRoundUpType(roundUpSavingsType);
-        roundUpSavingsSetting.setCardPaymentRoundUpType(roundUpSavingsType);
-        roundUpSavingsSetting.setFundTransferRoundUpType(roundUpSavingsType);
+        roundUpSavingsSetting.setBillPaymentRoundUpType(billPaymentRPSavingsType);
+        roundUpSavingsSetting.setCardPaymentRoundUpType(RoundUpSavingsTypeConstant.NONE);
+        roundUpSavingsSetting.setFundTransferRoundUpType(fundTransferRPSavingsType);
         roundUpSavingsSettingEntityDao.saveRecord(roundUpSavingsSetting);
 
-        String description = String.format("RoundUp Type update: From %s to  %s on record %d", oldType, roundUpSavingsType.getName(), roundUpSavingsSetting.getId());
+        String description = String.format("RoundUp Type update: Fund Transfer update from %s to %s, Bill payment update from %s to %s on record %d",
+                oldType1, fundTransferRPSavingsType.getName(), oldType2, billPaymentRPSavingsType.getName(), roundUpSavingsSetting.getId());
         auditTrailService.createAuditLog(authenticatedUser, AuditTrailService.AuditType.UPDATE, description, roundUpSavingsSetting, oldState);
         return getRoundUpSavingsUseCase.fromEntityToResponse(roundUpSavingsSetting);
     }

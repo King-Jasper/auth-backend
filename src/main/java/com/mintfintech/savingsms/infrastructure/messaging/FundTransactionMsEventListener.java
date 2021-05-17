@@ -1,13 +1,14 @@
 package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
-import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
-import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
-import com.mintfintech.savingsms.usecase.data.events.incoming.NipTransactionInterestEvent;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
+import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+
 import javax.inject.Named;
 
 /**
@@ -20,18 +21,22 @@ public class FundTransactionMsEventListener {
     private final Gson gson;
     private final ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase;
     private final ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase;
+    private final LoanRepaymentUseCase loanRepaymentUseCase;
 
-    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applySavingsInterestUseCase,
-                                          ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase) {
-        this.applyNipTransactionInterestUseCase = applySavingsInterestUseCase;
-        this.gson = gson;
-        this.processRoundUpSavingsUseCase = processRoundUpSavingsUseCase;
-    }
+
     private final String INTEREST_NIP_TRANSACTION = "com.mintfintech.savings-service.events.interest-nip-transaction";
     private final String TRANSACTION_LOG_TOPIC = "com.mintfintech.fund-transaction-service.events.transaction-log";
+    private final String ACCOUNT_CREDIT = "com.mintfintech.fund-transaction-service.events.account-credit";
+
+    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase, ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase, LoanRepaymentUseCase loanRepaymentUseCase) {
+        this.gson = gson;
+        this.applyNipTransactionInterestUseCase = applyNipTransactionInterestUseCase;
+        this.processRoundUpSavingsUseCase = processRoundUpSavingsUseCase;
+        this.loanRepaymentUseCase = loanRepaymentUseCase;
+    }
 
 
-    /*@KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
+/*@KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
     public void listenForInterestEligibleNipTransaction(String payload) {
         log.info("mint account creation: {}", payload);
         NipTransactionInterestEvent nipTransactionInterestEvent = gson.fromJson(payload, NipTransactionInterestEvent.class);
@@ -43,6 +48,13 @@ public class FundTransactionMsEventListener {
         // log.info("mint transaction log: {}", payload);
         MintTransactionPayload transactionPayload = gson.fromJson(payload, MintTransactionPayload.class);
         processRoundUpSavingsUseCase.processTransactionForRoundUpSavings(transactionPayload);
+    }
+
+    @KafkaListener(topics = {ACCOUNT_CREDIT})
+    public void listenForAccountCredit(String payload) {
+//        log.info("account credit: {}", payload);
+        AccountCreditEvent accountCreditEvent = gson.fromJson(payload, AccountCreditEvent.class);
+        loanRepaymentUseCase.processPaymentOfOverDueRepayment(accountCreditEvent);
     }
 
 }

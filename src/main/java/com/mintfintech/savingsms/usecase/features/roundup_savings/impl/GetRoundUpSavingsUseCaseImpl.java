@@ -53,6 +53,8 @@ public class GetRoundUpSavingsUseCaseImpl implements GetRoundUpSavingsUseCase {
                 .id(roundUpSavingsSettingEntity.getId())
                 .isActive(roundUpSavingsSettingEntity.isEnabled())
                 .roundUpType(roundUpSavingsSettingEntity.getFundTransferRoundUpType().getName())
+                .fundTransferRoundUpType(roundUpSavingsSettingEntity.getFundTransferRoundUpType().getName())
+                .billPaymentRoundUpType(roundUpSavingsSettingEntity.getBillPaymentRoundUpType().getName())
                 .savingsGoal(savingsGoalModel)
                 .build();
     }
