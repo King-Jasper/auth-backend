@@ -1,16 +1,13 @@
 package com.mintfintech.savingsms.domain.entities;
 
 import lombok.*;
-
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
-import java.math.BigDecimal;
-
 /**
  * Created by jnwanya on
- * Fri, 03 Apr, 2020
+ * Mon, 17 May, 2021
  */
 @Entity
 @Getter
@@ -18,16 +15,12 @@ import java.math.BigDecimal;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "savings_goal_interest")
-public class SavingsInterestEntity extends InterestAccrual {
+@Table(name = "investment_transaction")
+public class InvestmentTransactionEntity extends SavingsTransaction{
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private SavingsGoalEntity savingsGoal;
+    private InvestmentEntity investment;
 
-   /* private BigDecimal savingsBalance;
-
-    private double rate;
-
-    private BigDecimal interest;
-    */
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    private MintBankAccountEntity bankAccount;
 }

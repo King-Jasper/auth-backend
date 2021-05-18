@@ -83,13 +83,13 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         BigDecimal interestRatePerDay = BigDecimal.valueOf(planTenorEntity.getInterestRate() / (100.0 * 365.0));
         BigDecimal interest = savingsGoalEntity.getSavingsBalance().multiply(interestRatePerDay).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 
-        SavingsInterestEntity savingsInterestEntity = SavingsInterestEntity.builder()
-                .interest(interest)
-                .savingsBalance(savingsGoalEntity.getSavingsBalance())
-                .savingsGoal(savingsGoalEntity)
-                .rate(planTenorEntity.getInterestRate())
-                .build();
+        SavingsInterestEntity savingsInterestEntity = new SavingsInterestEntity();
+        savingsInterestEntity.setInterest(interest);
+        savingsInterestEntity.setSavingsGoal(savingsGoalEntity);
+        savingsInterestEntity.setSavingsBalance(savingsGoalEntity.getSavingsBalance());
+        savingsInterestEntity.setRate(planTenorEntity.getInterestRate());
         savingsInterestEntityDao.saveRecord(savingsInterestEntity);
+
         savingsGoalEntity.setAccruedInterest(savingsInterestEntityDao.getTotalInterestAmountOnGoal(savingsGoalEntity));
         savingsGoalEntity.setLastInterestApplicationDate(LocalDateTime.now());
         savingsGoalEntityDao.saveRecord(savingsGoalEntity);

@@ -5,6 +5,7 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Mon, 03 Feb, 2020
  */
 public enum SequenceType {
+    INVESTMENT_SEQ,
     SAVINGS_GOAL_SEQ,
     SAVING_GOAL_REFERENCE_SEQ,
     SAVING_INTEREST_REFERENCE_SEQ,

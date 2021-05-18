@@ -1,34 +1,23 @@
 package com.mintfintech.savingsms.domain.entities;
 
-
 import com.mintfintech.savingsms.domain.entities.enums.FundingSourceTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
-import lombok.*;
-
+import lombok.Builder;
+import lombok.Getter;
+import lombok.Setter;
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 /**
  * Created by jnwanya on
- * Tue, 31 Mar, 2020
+ * Mon, 17 May, 2021
  */
-@Entity
 @Getter
 @Setter
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@Table(name = "savings_goal_transaction")
-public class SavingsGoalTransactionEntity extends SavingsTransaction {
+@MappedSuperclass
+public abstract class SavingsTransaction extends AbstractBaseEntity<Long> {
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private SavingsGoalEntity savingsGoal;
-
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    private MintBankAccountEntity bankAccount;
-
-    /*
     @Column(nullable = false)
     private BigDecimal transactionAmount;
 
@@ -61,6 +50,4 @@ public class SavingsGoalTransactionEntity extends SavingsTransaction {
     private String transactionResponseMessage;
 
     private String externalReference;
-    */
-
 }

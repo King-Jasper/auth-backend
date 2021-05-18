@@ -60,7 +60,8 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         String goalId = RandomStringUtils.random(8);
         while(!success && retries < 5) {
             try {
-               goalId = String.format("%s%06d%s", RandomStringUtils.randomNumeric(1),
+               goalId = String.format("%s%06d%s",
+                       RandomStringUtils.randomNumeric(1),
                        appSequenceEntityDao.getNextSequenceIdTemp(SequenceType.SAVINGS_GOAL_SEQ),
                        RandomStringUtils.randomNumeric(1));
                success = true;
