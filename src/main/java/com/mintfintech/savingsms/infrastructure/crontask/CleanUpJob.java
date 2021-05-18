@@ -17,7 +17,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class CleanUpJob {
 
-    private final AsyncTest asyncTest;
 
     private final UpdateRoundUpSavingsUseCase updateRoundUpSavingsUseCase;
     @SchedulerLock(name = "CleanUpJob_roundUpSavingsCleanUp", lockAtMostForString = "PT5M")
