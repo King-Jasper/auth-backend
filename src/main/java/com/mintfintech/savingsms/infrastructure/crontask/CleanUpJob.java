@@ -5,7 +5,6 @@ import com.mintfintech.savingsms.utils.AsyncTest;
 import lombok.AllArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
-
 import javax.inject.Named;
 import java.time.LocalDateTime;
 
@@ -16,8 +15,6 @@ import java.time.LocalDateTime;
 @Named
 @AllArgsConstructor
 public class CleanUpJob {
-
-    private final AsyncTest asyncTest;
 
     private final UpdateRoundUpSavingsUseCase updateRoundUpSavingsUseCase;
     @SchedulerLock(name = "CleanUpJob_roundUpSavingsCleanUp", lockAtMostForString = "PT5M")

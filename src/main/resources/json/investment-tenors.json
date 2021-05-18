@@ -1,0 +1,37 @@
+[
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 30,
+    "maximumDuration": 59,
+    "description": "30 - 59 days (1 - 2 months)",
+    "interestRate": 5.04
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 60,
+    "maximumDuration": 89,
+    "description": "60 - 89 days (2 - 3 months)",
+    "interestRate": 5.32
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 90,
+    "maximumDuration": 181,
+    "description": "60 - 181 days (3 - 6 months)",
+    "interestRate": 5.60
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 182,
+    "maximumDuration": 364,
+    "description": "182 - 364 days (6 - 12 months)",
+    "interestRate": 7.00
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 365,
+    "maximumDuration": 730,
+    "description": "365 - 730 days (1 - 2 years)",
+    "interestRate": 15.00
+  }
+]
