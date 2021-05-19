@@ -95,7 +95,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         InvestmentCreationResponseModel response = new InvestmentCreationResponseModel();
 
         if (isCustomerDebited) {
-            response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment, appUser));
+            response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
             response.setCreated(true);
             response.setMessage("Investment Created Successfully");
         } else {
