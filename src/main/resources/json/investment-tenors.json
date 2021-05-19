@@ -4,34 +4,63 @@
     "minimumDuration": 30,
     "maximumDuration": 59,
     "description": "30 - 59 days (1 - 2 months)",
-    "interestRate": 5.04
+    "interestRate": 12.00,
+    "penaltyRate": 20.00
   },
   {
     "durationType": "DAYS",
     "minimumDuration": 60,
-    "maximumDuration": 89,
-    "description": "60 - 89 days (2 - 3 months)",
-    "interestRate": 5.32
+    "maximumDuration": 149,
+    "description": "60 - 149 days (3 - 5 months)",
+    "interestRate": 13.50,
+    "penaltyRate": 25.00
   },
   {
     "durationType": "DAYS",
-    "minimumDuration": 90,
-    "maximumDuration": 181,
-    "description": "60 - 181 days (3 - 6 months)",
-    "interestRate": 5.60
+    "minimumDuration": 150,
+    "maximumDuration": 269,
+    "description": "150 - 269 days (6 - 9 months)",
+    "interestRate": 14.50,
+    "penaltyRate": 30.00
   },
   {
     "durationType": "DAYS",
-    "minimumDuration": 182,
+    "minimumDuration": 270,
     "maximumDuration": 364,
-    "description": "182 - 364 days (6 - 12 months)",
-    "interestRate": 7.00
+    "description": "270 - 364 days (10 - 12 months)",
+    "interestRate": 18.50,
+    "penaltyRate": 50.00
   },
   {
     "durationType": "DAYS",
     "minimumDuration": 365,
-    "maximumDuration": 730,
-    "description": "365 - 730 days (1 - 2 years)",
-    "interestRate": 15.00
+    "maximumDuration": 454,
+    "description": "365 - 454 days (13 - 15 months)",
+    "interestRate": 22.50,
+    "penaltyRate": 55.00
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 455,
+    "maximumDuration": 544,
+    "description": "455 - 544 days (16 - 18 months)",
+    "interestRate": 26.50,
+    "penaltyRate": 60.00
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 545,
+    "maximumDuration": 634,
+    "description": "545 - 634 days (19 - 21 months)",
+    "interestRate": 30.50,
+    "penaltyRate": 65.00
+  },
+  {
+    "durationType": "DAYS",
+    "minimumDuration": 635,
+    "maximumDuration": 729,
+    "description": "635 - 729 days (22 - 24 months)",
+    "interestRate": 34.50,
+    "penaltyRate": 70.00
   }
 ]

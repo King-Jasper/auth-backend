@@ -45,23 +45,30 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         int retries = 0;
         boolean success = false;
         String id = RandomStringUtils.randomNumeric(8);
-        while(!success && retries < 5) {
+        while (!success && retries < 5) {
             try {
                 id = String.format("%s%06d%s", RandomStringUtils.randomNumeric(1), appSequenceEntityDao.getNextSequenceIdTemp(SequenceType.INVESTMENT_SEQ), RandomStringUtils.randomNumeric(1));
                 success = true;
-            }catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex){
+            } catch (StaleObjectStateException | ObjectOptimisticLockingFailureException | OptimisticLockException | LockTimeoutException ex) {
                 log.info("exception caught - {},  id - {}, retries - {}", ex.getClass().getSimpleName(), id, retries);
                 retries++;
                 success = false;
             }
-            if(retries > 0 && success) {
+            if (retries > 0 && success) {
                 log.info("Successful retrieval of unique Id - {}", id);
             }
         }
-        if(retries >= 5) {
+        if (retries >= 5) {
             id = RandomStringUtils.randomNumeric(8);
         }
         return id;
+    }
+
+    @Override
+    public String generateInvestmentTransactionRef() {
+        return String.format("MI%09d%s",
+                appSequenceEntityDao.getNextSequenceId(SequenceType.INVESTMENT_TRANSACTION_REFERENCE_SEQ),
+                RandomStringUtils.randomNumeric(1));
     }
 
     @Override

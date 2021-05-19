@@ -17,7 +17,7 @@ import java.time.LocalDateTime;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "savings_goal")
+@Table(name = "investment")
 public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     @Column(nullable = false, unique = true, updatable = false)

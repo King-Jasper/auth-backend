@@ -430,15 +430,15 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
 
             BigDecimal balanceBeforeProcess = creditAccount.getAvailableBalance();
 
-            SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                    .transactionAmount(amountRequest)
-                    .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                    .bankAccount(creditAccount)
-                    .transactionType(TransactionTypeConstant.DEBIT)
-                    .transactionStatus(TransactionStatusConstant.PENDING)
-                    .savingsGoal(savingsGoalEntity)
-                    .currentBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal())
-                    .build();
+            SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
+            transactionEntity.setSavingsGoal(savingsGoalEntity);
+            transactionEntity.setBankAccount(creditAccount);
+            transactionEntity.setTransactionAmount(amountRequest);
+            transactionEntity.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+            transactionEntity.setCurrentBalance(withdrawalRequestEntity.getBalanceBeforeWithdrawal());
+            transactionEntity.setTransactionType(TransactionTypeConstant.DEBIT);
+            transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
+            transactionEntity.setTransactionReference(savingsGoalTransactionEntityDao.generateTransactionReference());
 
             transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
             withdrawalRequestEntity.setFundDisbursementTransaction(transactionEntity);

@@ -27,4 +27,6 @@ public class InvestmentTenorEntity extends AbstractBaseEntity<Long> {
     private double interestRate;
 
     private String durationDescription;
+
+    private double penaltyRate;
 }
