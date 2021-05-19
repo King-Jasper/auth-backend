@@ -1,13 +1,10 @@
 package com.mintfintech.savingsms.infrastructure.crontask;
 
 import com.mintfintech.savingsms.usecase.features.roundup_savings.UpdateRoundUpSavingsUseCase;
-import com.mintfintech.savingsms.utils.AsyncTest;
 import lombok.AllArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
-
 import javax.inject.Named;
-import java.time.LocalDateTime;
 
 /**
  * Created by jnwanya on
@@ -16,8 +13,6 @@ import java.time.LocalDateTime;
 @Named
 @AllArgsConstructor
 public class CleanUpJob {
-
-    private final AsyncTest asyncTest;
 
     private final UpdateRoundUpSavingsUseCase updateRoundUpSavingsUseCase;
     @SchedulerLock(name = "CleanUpJob_roundUpSavingsCleanUp", lockAtMostForString = "PT5M")
