@@ -136,6 +136,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setAccruedInterest(BigDecimal.ZERO);
         investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(interestToWithdraw));
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
+        investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
     }
 }
