@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -40,7 +41,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         InvestmentEntity investment = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
 
-        if(investment.getInvestmentStatus() != SavingsGoalStatusConstant.ACTIVE) {
+        if(investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
             throw new BadRequestException("Investment is not active. Current status - "+investment.getInvestmentStatus());
         }
         MintAccountEntity account = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
