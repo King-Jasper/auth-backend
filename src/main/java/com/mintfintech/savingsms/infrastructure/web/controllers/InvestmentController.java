@@ -62,10 +62,9 @@ public class InvestmentController {
     }
 
     @ApiOperation(value = "Returns paginated list of investments of a user.")
-    @GetMapping(value = "investment-history", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @ApiParam(value = "Investment Status: ALL, ACTIVE, COMPLETED") @Valid @Pattern(regexp = "(ALL|ACTIVE|COMPLETED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
-                                                                                        @ApiParam(value = "Investment Type: ALL, MUTUAL_INVESTMENT") @Valid @Pattern(regexp = "(ALL|MUTUAL_INVESTMENT)") @RequestParam(value = "investmentType", defaultValue = "ALL") String investmentType,
                                                                                         @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                         @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                         @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
@@ -75,7 +74,6 @@ public class InvestmentController {
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .accountId(authenticatedUser.getAccountId())
                 .investmentStatus(investmentStatus)
-                .investmentType(investmentType)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .build();
@@ -83,6 +81,8 @@ public class InvestmentController {
         PagedDataResponse<InvestmentModel> response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
         ApiResponseJSON<PagedDataResponse<InvestmentModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    
     @ApiOperation(value = "Fund an investment.")
     @PostMapping(value = "/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
