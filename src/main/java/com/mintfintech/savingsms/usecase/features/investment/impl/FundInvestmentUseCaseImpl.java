@@ -95,6 +95,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
            return response;
        }
        investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
+       investmentEntity.setTotalAmountInvested(investmentEntity.getAmountInvested().add(amount));
        investmentEntityDao.saveRecord(investmentEntity);
        response.setResponseCode(responseCode);
        response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
@@ -102,7 +103,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     }
 
     private void processDebit(InvestmentTransactionEntity transactionEntity) {
-         // process bankone debit
+        // TODO process bankone debit.
         transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
         transactionEntity.setExternalReference(RandomStringUtils.random(12));
         transactionEntity.setTransactionResponseMessage("Successful");

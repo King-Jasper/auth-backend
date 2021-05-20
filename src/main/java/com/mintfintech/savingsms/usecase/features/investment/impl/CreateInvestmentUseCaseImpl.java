@@ -94,6 +94,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             return response;
         }
         investment.setRecordStatus(RecordStatusConstant.ACTIVE);
+        investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
         response.setCreated(true);

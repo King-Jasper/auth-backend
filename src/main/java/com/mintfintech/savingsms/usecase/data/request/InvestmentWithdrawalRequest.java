@@ -12,7 +12,8 @@ import java.math.BigDecimal;
 @Builder
 @Data
 public class InvestmentWithdrawalRequest {
+    private String investmentCode;
     private BigDecimal amount;
     private boolean fullLiquidation;
-    private String debitAccountId;
+    private String creditAccountId;
 }

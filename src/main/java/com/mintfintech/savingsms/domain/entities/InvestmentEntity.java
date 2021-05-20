@@ -60,4 +60,10 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @Builder.Default
     private BigDecimal totalAmountWithdrawn = BigDecimal.ZERO;
 
+    @Builder.Default
+    private BigDecimal totalAmountInvested = BigDecimal.ZERO;
+
+    @Builder.Default
+    private BigDecimal totalInterestWithdrawn = BigDecimal.ZERO;
+
 }
