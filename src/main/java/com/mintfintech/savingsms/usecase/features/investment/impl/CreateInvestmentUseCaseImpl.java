@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
@@ -33,6 +34,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final GetInvestmentUseCase getInvestmentUseCase;
     private final AccountAuthorisationUseCase accountAuthorisationUseCase;
     private final FundInvestmentUseCase fundInvestmentUseCase;
+    private final ApplicationProperty applicationProperty;
 
     @Override
     @Transactional
@@ -75,6 +77,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .investmentStatus(SavingsGoalStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
                 .durationInDays(durationInDays)
+                .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
                 //.lastInterestApplicationDate(LocalDateTime.now().plusDays(durationInDays - 1))
                 .maturityDate(LocalDateTime.now().plusDays(durationInDays))
                 .owner(mintAccount)

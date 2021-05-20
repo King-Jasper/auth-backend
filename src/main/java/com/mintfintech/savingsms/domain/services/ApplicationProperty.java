@@ -48,6 +48,10 @@ public class ApplicationProperty {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
     }
 
+    public double getMaxLiquidateRate() {
+        return Double.parseDouble(environmentService.getVariable("investment.max-liquidate-rate", "0.0"));
+    }
+
     public long getReferralRewardAmount() {
         return Long.parseLong(environmentService.getVariable("mint.referral-reward-amount", "200"));
     }

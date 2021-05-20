@@ -47,6 +47,8 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     private int durationInDays;
 
+    private double maxLiquidateRate;
+
     @Column(nullable = false)
     private LocalDateTime maturityDate;
 

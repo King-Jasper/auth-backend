@@ -68,3 +68,6 @@ loan:
     interest-rate: 1.88
     max-percent-amount: 70
     max-tenor-days: 30
+
+investment:
+  max-liquidate-rate: 80

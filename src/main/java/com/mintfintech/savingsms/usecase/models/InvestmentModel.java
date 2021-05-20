@@ -28,6 +28,8 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
 
     private double interestRate;
 
+    private double penaltyCharge;
+
     private int durationInDays;
 
     private BigDecimal accruedInterest;
@@ -37,4 +39,6 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
     private BigDecimal totalAmountWithdrawn;
 
     private BigDecimal totalExpectedReturn;
+
+    private double maxLiquidateRate;
 }

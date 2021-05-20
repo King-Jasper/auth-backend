@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
+import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -33,13 +34,18 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
     @Query(value = "select i from InvestmentEntity i where i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE" +
             " and i.investmentStatus =:status and i.maturityDate between :fromTime and :toTime")
     Page<InvestmentEntity> getInvestmentWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
-                                                             @Param("fromTime") LocalDateTime fromTime,
-                                                             @Param("toTime") LocalDateTime toTime, Pageable pageable);
+                                                           @Param("fromTime") LocalDateTime fromTime,
+                                                           @Param("toTime") LocalDateTime toTime, Pageable pageable);
 
     Optional<InvestmentEntity> findTopByCodeIgnoreCase(String code);
 
     List<InvestmentEntity> getAllByOwnerAndRecordStatus(MintAccountEntity accountEntity, RecordStatusConstant statusConstant);
 
-
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.InvestmentStat(i.investmentStatus, count(i), sum(i.amountInvested), sum(i.accruedInterest), sum(((i.investmentTenor.interestRate * 0.01 * i.amountInvested)/12) * MONTH(i.maturityDate - NOW()))) " +
+            "from InvestmentEntity i where " +
+            "i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
+            "i.owner =:owner " +
+            "group by i.investmentStatus")
+    List<InvestmentStat> getInvestmentStatistics(@Param("owner") MintAccountEntity accountEntity);
 
 }

@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
+import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -109,6 +110,11 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     public Page<InvestmentEntity> getRecordsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize) {
         Pageable pageable = PageRequest.of(pageIndex, recordSize);
         return repository.getInvestmentWithMaturityPeriod(SavingsGoalStatusConstant.ACTIVE, fromTime, toTime, pageable);
+    }
+
+    @Override
+    public List<InvestmentStat> getInvestmentStatOnAccount(MintAccountEntity mintAccountEntity) {
+        return repository.getInvestmentStatistics(mintAccountEntity);
     }
 
     private static Specification<InvestmentEntity> withActiveStatus() {
