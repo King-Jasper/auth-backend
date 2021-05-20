@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -18,7 +19,7 @@ import java.util.Optional;
  * Created by jnwanya on
  * Mon, 17 May, 2021
  */
-public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Long> {
+public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Long>, JpaSpecificationExecutor<InvestmentEntity> {
 
     @Query("select count(i) from InvestmentEntity i where i.amountInvested > 0.0 and i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
