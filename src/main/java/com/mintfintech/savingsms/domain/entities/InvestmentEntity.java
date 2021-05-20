@@ -33,6 +33,9 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @Column(nullable = false)
     private BigDecimal amountInvested = BigDecimal.ZERO;
 
+    @Builder.Default
+    private BigDecimal accruedInterest = BigDecimal.ZERO;
+
     @Enumerated(EnumType.STRING)
     private SavingsGoalStatusConstant investmentStatus;
 

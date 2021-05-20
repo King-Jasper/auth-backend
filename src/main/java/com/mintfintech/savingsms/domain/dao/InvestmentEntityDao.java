@@ -14,7 +14,6 @@ import java.util.Optional;
  */
 public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     String generateCode();
-    String generateInvestmentTransactionRef();
     List<InvestmentEntity> getRecordsOnAccount(MintAccountEntity mintAccountEntity);
     Optional<InvestmentEntity> findByCode(String code);
     Page<InvestmentEntity> getRecordsForEligibleInterestApplication(int pageIndex, int recordSize);

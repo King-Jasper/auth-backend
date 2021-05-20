@@ -1,33 +1,27 @@
 package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
+import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentTransactionRepository;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import javax.inject.Named;
-import java.util.Optional;
 
 @Named
-public class InvestmentTransactionEntityDaoImpl implements InvestmentTransactionEntityDao {
+public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTransactionEntity, Long> implements InvestmentTransactionEntityDao {
 
     private final InvestmentTransactionRepository repository;
-
-    public InvestmentTransactionEntityDaoImpl(InvestmentTransactionRepository repository) {
+    private final AppSequenceEntityDao appSequenceEntityDao;
+    public InvestmentTransactionEntityDaoImpl(InvestmentTransactionRepository repository, AppSequenceEntityDao appSequenceEntityDao) {
+        super(repository);
         this.repository = repository;
+        this.appSequenceEntityDao = appSequenceEntityDao;
     }
 
     @Override
-    public Optional<InvestmentTransactionEntity> findById(Long aLong) {
-        return repository.findById(aLong);
-    }
-
-    @Override
-    public InvestmentTransactionEntity getRecordById(Long aLong) throws RuntimeException {
-        return findById(aLong).orElseThrow(() -> new RuntimeException("Not found. InvestmentTransactionEntity with id: " + aLong));
-    }
-
-    @Override
-    public InvestmentTransactionEntity saveRecord(InvestmentTransactionEntity record) {
-        return repository.save(record);
+    public String generateTransactionReference() {
+        return String.format("MI%09d%s", appSequenceEntityDao.getNextSequenceId(SequenceType.INVESTMENT_TRANSACTION_REFERENCE_SEQ), RandomStringUtils.randomNumeric(1));
     }
 }

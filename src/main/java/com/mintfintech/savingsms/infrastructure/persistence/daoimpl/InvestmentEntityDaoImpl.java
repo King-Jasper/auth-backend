@@ -65,13 +65,6 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     }
 
     @Override
-    public String generateInvestmentTransactionRef() {
-        return String.format("MI%09d%s",
-                appSequenceEntityDao.getNextSequenceId(SequenceType.INVESTMENT_TRANSACTION_REFERENCE_SEQ),
-                RandomStringUtils.randomNumeric(1));
-    }
-
-    @Override
     public List<InvestmentEntity> getRecordsOnAccount(MintAccountEntity mintAccountEntity) {
         return repository.getAllByOwnerAndRecordStatus(mintAccountEntity, RecordStatusConstant.ACTIVE);
     }

@@ -1,11 +1,13 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentInterestEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
@@ -15,9 +17,14 @@ import java.time.format.DateTimeFormatter;
 public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private final InvestmentInterestEntityDao investmentInterestEntityDao;
+    private final InvestmentEntityDao investmentEntityDao;
 
     @Override
-    public InvestmentModel toInvestmentModel(InvestmentEntity investment, AppUserEntity appUser) {
+    public InvestmentModel toInvestmentModel(InvestmentEntity investment) {
+
+        if(!Hibernate.isInitialized(investment)) {
+            investment = investmentEntityDao.getRecordById(investment.getId());
+        }
 
         InvestmentModel model = new InvestmentModel();
 
@@ -35,9 +42,9 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
         model.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn());
 
-        model.setAccountId(model.getAccountId());
-        model.setCustomerName(appUser.getName());
-        model.setUserId(appUser.getUserId());
+       // model.setAccountId(model.getAccountId());
+       // model.setCustomerName(appUser.getName());
+       // model.setUserId(appUser.getUserId());
 
         return model;
     }

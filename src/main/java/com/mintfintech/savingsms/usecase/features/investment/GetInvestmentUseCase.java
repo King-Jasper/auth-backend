@@ -6,5 +6,5 @@ import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 
 public interface GetInvestmentUseCase {
 
-    InvestmentModel toInvestmentModel(InvestmentEntity investment, AppUserEntity appUser);
+    InvestmentModel toInvestmentModel(InvestmentEntity investment);
 }
