@@ -1,6 +1,6 @@
 package com.mintfintech.savingsms.domain.models.reports;
 
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -10,7 +10,7 @@ import java.math.BigDecimal;
 @Setter
 public class InvestmentStat {
 
-    private SavingsGoalStatusConstant investmentStatus;
+    private InvestmentStatusConstant investmentStatus;
 
     private long totalRecords;
 
@@ -21,7 +21,7 @@ public class InvestmentStat {
     private double outstandingInterest;
 
     public InvestmentStat(
-            SavingsGoalStatusConstant investmentStatus,
+            InvestmentStatusConstant investmentStatus,
             long totalRecords,
             BigDecimal totalInvestment,
             BigDecimal accruedInterest,

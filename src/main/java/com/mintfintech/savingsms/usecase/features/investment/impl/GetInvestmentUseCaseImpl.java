@@ -1,13 +1,7 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentInterestEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
@@ -15,8 +9,11 @@ import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
+import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
@@ -27,6 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -39,6 +37,41 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     private final InvestmentEntityDao investmentEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
+    private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
+    private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
+
+    @Override
+    public List<InvestmentTransactionModel> getInvestmentTransactions(String investmentId) {
+
+        InvestmentEntity investment = investmentEntityDao.findByCode(investmentId)
+                .orElseThrow(() -> new NotFoundException("Invalid investment id " + investmentId));
+
+        List<InvestmentTransactionEntity> fundings
+                = investmentTransactionEntityDao.getTransactionsByInvestment(investment, TransactionTypeConstant.DEBIT, TransactionStatusConstant.SUCCESSFUL);
+
+        List<InvestmentWithdrawalEntity> withdrawals
+                = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStatusConstant.PROCESSED);
+
+        List<InvestmentTransactionModel> transactions = new ArrayList<>();
+
+        fundings.forEach(funding -> {
+            InvestmentTransactionModel transaction = new InvestmentTransactionModel();
+            transaction.setAmount(funding.getTransactionAmount());
+            transaction.setDate(funding.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            transaction.setType("Investment Funding");
+            transactions.add(transaction);
+        });
+
+        withdrawals.forEach(withdrawal -> {
+            InvestmentTransactionModel transaction = new InvestmentTransactionModel();
+            transaction.setAmount(withdrawal.getAmount());
+            transaction.setDate(withdrawal.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            transaction.setType("Investment Liquidation");
+            transactions.add(transaction);
+        });
+
+        return transactions;
+    }
 
     @Override
     public InvestmentModel toInvestmentModel(InvestmentEntity investment) {
@@ -61,12 +94,14 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setDateWithdrawn(investment.getDateWithdrawn() != null ? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         model.setMaturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setDurationInDays(investment.getDurationInDays());
+        model.setDurationInMonths(investment.getDurationInMonths());
         model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
         model.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn());
         model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
         model.setPenaltyCharge(investment.getInvestmentTenor().getPenaltyRate());
         model.setMaxLiquidateRate(investment.getMaxLiquidateRate());
+        model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
 
         //model.setAccountId(model.getAccountId());
         model.setCustomerName(appUser.getName());
@@ -79,13 +114,12 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     public InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size) {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
+        InvestmentStatusConstant status = !searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null;
 
         InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
-                .investmentStatus(!searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null)
                 .investmentStatus(status)
-                .investmentType(!searchRequest.getInvestmentType().equals("ALL") ? InvestmentTypeConstant.valueOf(searchRequest.getInvestmentType()) : null)
                 .account(mintAccount.orElse(null))
                 .build();
 
@@ -103,23 +137,26 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
             for (InvestmentStat stat : stats) {
-                if (stat.getInvestmentStatus().equals(status)) {
-                    summary.setTotalInvestments(stat.getTotalRecords());
-                    summary.setTotalInvested(stat.getTotalInvestment());
-                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())));
-                    summary.setTotalExpectedReturns(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).add(stat.getTotalInvestment()));
-                }
 
-                if (stat.getInvestmentStatus().equals(SavingsGoalStatusConstant.ACTIVE)) {
-                    summary.setTotalActiveInvestment(stat.getTotalRecords());
+                if (stat.getInvestmentStatus().equals(status)) {
+                    if (stat.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
+                        summary.setTotalInvestments(stat.getTotalRecords());
+                        summary.setTotalInvested(stat.getTotalInvestment());
+                        summary.setTotalProfit(stat.getAccruedInterest());
+                        summary.setTotalExpectedReturns(stat.getAccruedInterest().add(stat.getTotalInvestment()));
+                    } else {
+                        summary.setTotalInvestments(stat.getTotalRecords());
+                        summary.setTotalInvested(stat.getTotalInvestment());
+                        summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())));
+                        summary.setTotalExpectedReturns(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).add(stat.getTotalInvestment()));
+                    }
                 }
             }
-
         }
         return summary;
     }
 
-    private BigDecimal calculateTotalExpectedReturn(InvestmentEntity investment) {
+    private BigDecimal calculateOutstandingInterest(InvestmentEntity investment) {
 
         double interestPerYear = (investment.getInvestmentTenor().getInterestRate() * investment.getAmountInvested().doubleValue()) / 100.0;
 
@@ -130,8 +167,13 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         long remainingMonthsToMaturity = ChronoUnit.MONTHS.between(today, maturityDate);
 
-        double remainInterest = interestPerMonth * remainingMonthsToMaturity;
+        double outstandingInterest = interestPerMonth * remainingMonthsToMaturity;
 
-        return investment.getAmountInvested().add(investment.getAccruedInterest()).add(BigDecimal.valueOf(remainInterest));
+        return BigDecimal.valueOf(outstandingInterest);
+    }
+
+    private BigDecimal calculateTotalExpectedReturn(InvestmentEntity investment) {
+
+        return investment.getAmountInvested().add(investment.getAccruedInterest()).add(calculateOutstandingInterest(investment));
     }
 }

@@ -1,65 +1,65 @@
 [
   {
-    "durationType": "DAYS",
-    "minimumDuration": 30,
-    "maximumDuration": 59,
-    "description": "30 - 59 days (1 - 2 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 1,
+    "maximumDuration": 2,
+    "description": "1 - 2 months",
     "interestRate": 12.00,
     "penaltyRate": 20.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 60,
-    "maximumDuration": 149,
-    "description": "60 - 149 days (3 - 5 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 3,
+    "maximumDuration": 5,
+    "description": "3 - 5 months",
     "interestRate": 13.50,
     "penaltyRate": 25.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 150,
-    "maximumDuration": 269,
-    "description": "150 - 269 days (6 - 9 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 6,
+    "maximumDuration": 9,
+    "description": "6 - 9 months",
     "interestRate": 14.50,
     "penaltyRate": 30.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 270,
-    "maximumDuration": 364,
-    "description": "270 - 364 days (10 - 12 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 10,
+    "maximumDuration": 12,
+    "description": "10 - 12 months",
     "interestRate": 18.50,
     "penaltyRate": 50.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 365,
-    "maximumDuration": 454,
-    "description": "365 - 454 days (13 - 15 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 13,
+    "maximumDuration": 15,
+    "description": "13 - 15 months",
     "interestRate": 22.50,
     "penaltyRate": 55.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 455,
-    "maximumDuration": 544,
-    "description": "455 - 544 days (16 - 18 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 16,
+    "maximumDuration": 18,
+    "description": "16 - 18 months",
     "interestRate": 26.50,
     "penaltyRate": 60.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 545,
-    "maximumDuration": 634,
-    "description": "545 - 634 days (19 - 21 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 19,
+    "maximumDuration": 21,
+    "description": "19 - 21 months",
     "interestRate": 30.50,
     "penaltyRate": 65.00
   },
   {
-    "durationType": "DAYS",
-    "minimumDuration": 635,
-    "maximumDuration": 729,
-    "description": "635 - 729 days (22 - 24 months)",
+    "durationType": "MONTHS",
+    "minimumDuration": 22,
+    "maximumDuration": 24,
+    "description": "22 - 24 months",
     "interestRate": 34.50,
     "penaltyRate": 70.00
   }

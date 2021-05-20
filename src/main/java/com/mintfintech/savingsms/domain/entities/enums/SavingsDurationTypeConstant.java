@@ -5,5 +5,5 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Tue, 04 Feb, 2020
  */
 public enum SavingsDurationTypeConstant {
-    DAYS
+    DAYS, MONTHS
 }

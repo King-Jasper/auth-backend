@@ -18,6 +18,4 @@ public class InvestmentStatSummary {
 
     private long totalInvestments = 0;
 
-    private long totalActiveInvestment = 0;
-
 }

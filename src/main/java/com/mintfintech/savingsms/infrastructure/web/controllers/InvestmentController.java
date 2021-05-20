@@ -14,6 +14,9 @@ import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUse
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentModel;
+import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
+import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -34,6 +37,7 @@ import javax.validation.Valid;
 import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
 
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Investment Management Endpoints", description = "Handles investment transaction management.")
@@ -59,7 +63,7 @@ public class InvestmentController {
 
     @ApiOperation(value = "Returns paginated list of investments of a user.")
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<InvestmentStatSummary>> getLoans(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<InvestmentStatSummary>> getInvestments(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                            @ApiParam(value = "Investment Status: ALL, ACTIVE, COMPLETED") @Valid @Pattern(regexp = "(ALL|ACTIVE|COMPLETED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
                                                                            @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                            @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
@@ -78,6 +82,15 @@ public class InvestmentController {
         ApiResponseJSON<InvestmentStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "Returns list of investment transaction history.")
+    @GetMapping(value = "{investmentId}/transaction-history", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<InvestmentTransactionModel>>> getInvestmentTransactions(@PathVariable(value = "investmentId") String investmentId) {
+
+        List<InvestmentTransactionModel> response = getInvestmentUseCase.getInvestmentTransactions(investmentId);
+        ApiResponseJSON<List<InvestmentTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
     
     @ApiOperation(value = "Fund an investment.")
     @PostMapping(value = "/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -91,7 +104,7 @@ public class InvestmentController {
     @ApiOperation(value = "Liquidate an investment.")
     @PostMapping(value = "/liquidate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentModel>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                     @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
+                                                                                @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
         InvestmentModel response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);

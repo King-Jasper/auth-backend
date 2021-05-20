@@ -48,6 +48,8 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     private int durationInDays;
 
+    private int durationInMonths;
+
     private double maxLiquidateRate;
 
     @Column(nullable = false)

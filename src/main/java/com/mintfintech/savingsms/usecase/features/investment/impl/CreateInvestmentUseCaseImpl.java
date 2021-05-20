@@ -19,7 +19,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -68,7 +70,10 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             return response;
         }
 
-        int durationInDays = (investmentTenor.getMaximumDuration() + 1) - investmentTenor.getMinimumDuration();
+
+        int durationInMonths = (investmentTenor.getMaximumDuration() - investmentTenor.getMinimumDuration()) + 1;
+        LocalDateTime maturityDate = LocalDateTime.now().plusMonths(durationInMonths);
+        int durationInDays = (int) maturityDate.until(LocalDateTime.now(), ChronoUnit.DAYS);
 
         InvestmentEntity investment = InvestmentEntity.builder()
                 .amountInvested(investAmount)
@@ -77,10 +82,11 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .investmentStatus(InvestmentStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
                 .durationInDays(durationInDays)
+                .durationInMonths(durationInMonths)
+                .maturityDate(maturityDate)
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
-                //.lastInterestApplicationDate(LocalDateTime.now().plusDays(durationInDays - 1))
-                .maturityDate(LocalDateTime.now().plusDays(durationInDays))
                 .owner(mintAccount)
+                .totalAmountInvested(investAmount)
                 .build();
 
         investment = investmentEntityDao.saveRecord(investment);
@@ -88,7 +94,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investment, debitAccount, investAmount);
 
         InvestmentCreationResponse response = new InvestmentCreationResponse();
-        if(transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
+        if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
             investment.setRecordStatus(RecordStatusConstant.DELETED);
             investmentEntityDao.saveRecord(investment);
             response.setInvestment(null);
