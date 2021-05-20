@@ -79,11 +79,11 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     public InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size) {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
-        SavingsGoalStatusConstant status = !searchRequest.getInvestmentStatus().equals("ALL") ? SavingsGoalStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null;
 
         InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
+                .investmentStatus(!searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null)
                 .investmentStatus(status)
                 .investmentType(!searchRequest.getInvestmentType().equals("ALL") ? InvestmentTypeConstant.valueOf(searchRequest.getInvestmentType()) : null)
                 .account(mintAccount.orElse(null))

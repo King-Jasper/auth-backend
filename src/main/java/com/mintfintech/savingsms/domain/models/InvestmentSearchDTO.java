@@ -13,7 +13,7 @@ public class InvestmentSearchDTO {
 
     private LocalDateTime fromDate;
     private LocalDateTime toDate;
-    private SavingsGoalStatusConstant investmentStatus;
+    private InvestmentStatusConstant investmentStatus;
     private MintAccountEntity account;
     private InvestmentTypeConstant investmentType;
 }

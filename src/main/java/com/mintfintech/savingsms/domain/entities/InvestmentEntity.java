@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import lombok.*;
@@ -37,7 +38,7 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     private BigDecimal accruedInterest = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    private SavingsGoalStatusConstant investmentStatus;
+    private InvestmentStatusConstant investmentStatus;
 
     @Enumerated(EnumType.STRING)
     private InvestmentTypeConstant investmentType = InvestmentTypeConstant.MUTUAL_INVESTMENT;
@@ -61,5 +62,11 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     @Builder.Default
     private BigDecimal totalAmountWithdrawn = BigDecimal.ZERO;
+
+    @Builder.Default
+    private BigDecimal totalAmountInvested = BigDecimal.ZERO;
+
+    @Builder.Default
+    private BigDecimal totalInterestWithdrawn = BigDecimal.ZERO;
 
 }

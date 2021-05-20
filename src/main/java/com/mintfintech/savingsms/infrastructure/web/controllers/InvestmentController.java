@@ -4,14 +4,18 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
+import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import lombok.Data;
@@ -42,6 +46,7 @@ public class InvestmentController {
     private final CreateInvestmentUseCase createInvestmentUseCase;
     private final FundInvestmentUseCase fundInvestmentUseCase;
     private final GetInvestmentUseCase getInvestmentUseCase;
+    private final WithdrawalInvestmentUseCase withdrawalInvestmentUseCase;
 
     @ApiOperation(value = "Creates a new investment.")
     @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -77,14 +82,23 @@ public class InvestmentController {
     @ApiOperation(value = "Fund an investment.")
     @PostMapping(value = "/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                        @RequestBody @Valid FundInvestment requestJSON) {
+                                                                                        @RequestBody @Valid FundInvestmentJSON requestJSON) {
         InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestment(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @ApiOperation(value = "Liquidate an investment.")
+    @PostMapping(value = "/liquidate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<InvestmentModel>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                     @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
+        InvestmentModel response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
     @Data
-    static class FundInvestment {
+    static class FundInvestmentJSON {
         @NotEmpty(message = "Investment code is required.")
         private String investmentCode;
         @NotEmpty(message = "Debit Account is required.")
@@ -97,6 +111,29 @@ public class InvestmentController {
                     .investmentCode(investmentCode)
                     .debitAccountId(debitAccountId)
                     .amount(amount)
+                    .build();
+        }
+    }
+
+    @Data
+    static class LiquidateInvestmentJSON {
+        @NotEmpty(message = "Investment code is required.")
+        private String investmentCode;
+        @NotEmpty(message = "Debit Account is required.")
+        private String creditAccountId;
+        private boolean fullLiquidation;
+        @ApiModelProperty(notes = "The amount to be liquidated. Required if fullLiquidation is false")
+        private BigDecimal liquidationAmount;
+
+        public InvestmentWithdrawalRequest toRequest() {
+            if(!fullLiquidation && (liquidationAmount == null || liquidationAmount.compareTo(BigDecimal.ZERO) == 0)) {
+                throw new BadRequestException("Liquidation amount must be provided.");
+            }
+            return InvestmentWithdrawalRequest.builder()
+                    .investmentCode(investmentCode)
+                    .creditAccountId(creditAccountId)
+                    .fullLiquidation(fullLiquidation)
+                    .amount(liquidationAmount)
                     .build();
         }
     }

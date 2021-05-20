@@ -126,7 +126,7 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.between(root.get("dateCreated"), startDate, endDate));
     }
 
-    private static Specification<InvestmentEntity> withInvestmentStatus(SavingsGoalStatusConstant status) {
+    private static Specification<InvestmentEntity> withInvestmentStatus(InvestmentStatusConstant status) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("investmentStatus"), status));
     }
 

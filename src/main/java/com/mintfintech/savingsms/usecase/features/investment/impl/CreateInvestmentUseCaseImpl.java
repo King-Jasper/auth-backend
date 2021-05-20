@@ -74,7 +74,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .amountInvested(investAmount)
                 .code(investmentEntityDao.generateCode())
                 .creator(appUser)
-                .investmentStatus(SavingsGoalStatusConstant.INACTIVE)
+                .investmentStatus(InvestmentStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
                 .durationInDays(durationInDays)
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
@@ -97,6 +97,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             return response;
         }
         investment.setRecordStatus(RecordStatusConstant.ACTIVE);
+        investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
+        investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
         response.setCreated(true);

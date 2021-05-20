@@ -8,10 +8,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.FundingSourceTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
@@ -78,7 +75,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
        if(debitAccount.getAvailableBalance().compareTo(amount) < 0) {
            throw new BusinessLogicConflictException("Sorry, you have insufficient balance to fund your investment.");
        }
-       if(investmentEntity.getInvestmentStatus() != SavingsGoalStatusConstant.ACTIVE) {
+       if(investmentEntity.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
            throw new BusinessLogicConflictException("Sorry is no longer active. Current status - "+investmentEntity.getInvestmentStatus());
        }
        LocalDateTime maturityDate = investmentEntity.getMaturityDate();
@@ -95,6 +92,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
            return response;
        }
        investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
+       investmentEntity.setTotalAmountInvested(investmentEntity.getAmountInvested().add(amount));
        investmentEntityDao.saveRecord(investmentEntity);
        response.setResponseCode(responseCode);
        response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
@@ -102,7 +100,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     }
 
     private void processDebit(InvestmentTransactionEntity transactionEntity) {
-         // process bankone debit
+        // TODO process bankone debit.
         transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
         transactionEntity.setExternalReference(RandomStringUtils.random(12));
         transactionEntity.setTransactionResponseMessage("Successful");
