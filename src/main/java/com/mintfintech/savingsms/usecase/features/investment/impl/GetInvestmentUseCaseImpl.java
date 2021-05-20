@@ -31,6 +31,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private final InvestmentInterestEntityDao investmentInterestEntityDao;
     private final InvestmentEntityDao investmentEntityDao;
+    private final AppUserEntityDao appUserEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
 
     @Override
     public InvestmentModel toInvestmentModel(InvestmentEntity investment) {
@@ -58,9 +60,9 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn());
         model.setTotalExpectedReturn(BigDecimal.ZERO);
 
-       // model.setAccountId(model.getAccountId());
-       // model.setCustomerName(appUser.getName());
-       // model.setUserId(appUser.getUserId());
+        //model.setAccountId(model.getAccountId());
+        model.setCustomerName(appUser.getName());
+        model.setUserId(appUser.getUserId());
 
         return model;
     }
@@ -80,7 +82,9 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
 
-        return new PagedDataResponse<>(investmentEntityPage.getTotalElements(), investmentEntityPage.getTotalPages(),
+        return new PagedDataResponse<>(
+                investmentEntityPage.getTotalElements(),
+                investmentEntityPage.getTotalPages(),
                 investmentEntityPage.get().map(this::toInvestmentModel)
                         .collect(Collectors.toList()));
     }

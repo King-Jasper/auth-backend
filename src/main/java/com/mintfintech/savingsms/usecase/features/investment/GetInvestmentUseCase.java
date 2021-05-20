@@ -8,4 +8,5 @@ import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 public interface GetInvestmentUseCase {
 
     InvestmentModel toInvestmentModel(InvestmentEntity investment);
+    PagedDataResponse<InvestmentModel> getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size);
 }
