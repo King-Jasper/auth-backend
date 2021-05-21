@@ -157,9 +157,9 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private BigDecimal calculateOutstandingInterest(InvestmentEntity investment) {
 
-        double interestPerAnnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue() ;
+        double interestPerAnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue() ;
 
-        double dailyInterest = interestPerAnnum / 365;
+        double dailyInterest = interestPerAnum / 365.0;
 
         LocalDate maturityDate = investment.getMaturityDate().toLocalDate();
         LocalDate today = LocalDate.now();
