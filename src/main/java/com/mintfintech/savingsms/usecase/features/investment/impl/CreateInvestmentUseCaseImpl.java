@@ -70,17 +70,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             return response;
         }
 
-        int durationInMonths = (investmentTenor.getMaximumDuration() - investmentTenor.getMinimumDuration()) + 1;
-        LocalDateTime maturityDate = LocalDateTime.now().plusMonths(durationInMonths);
-
         InvestmentEntity investment = InvestmentEntity.builder()
                 .amountInvested(investAmount)
                 .code(investmentEntityDao.generateCode())
                 .creator(appUser)
                 .investmentStatus(InvestmentStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
-                .durationInMonths(durationInMonths)
-                .maturityDate(maturityDate)
+                .durationInMonths(request.getDurationInMonths())
+                .maturityDate(LocalDateTime.now().plusMonths(request.getDurationInMonths()))
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
                 .owner(mintAccount)
                 .totalAmountInvested(investAmount)
