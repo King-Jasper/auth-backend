@@ -2,9 +2,7 @@ package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import lombok.*;
-
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -46,7 +44,7 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private InvestmentTenorEntity investmentTenor;
 
-    private int durationInDays;
+    private double interestRate;
 
     private int durationInMonths;
 
