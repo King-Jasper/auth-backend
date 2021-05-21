@@ -27,14 +27,13 @@ import java.util.Optional;
  * Created by jnwanya on
  * Thu, 06 Feb, 2020
  */
-@Profile({"dev", "sandbox", "staging"})
+@Profile("!prod")
 @EnableSwagger2
-//@Configuration
+@Configuration
 public class SwaggerConfig {
 
     @Autowired
     Optional<GitProperties> gitInfo;
-
 
     private BuildProperties buildProperties;
 
