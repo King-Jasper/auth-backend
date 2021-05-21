@@ -30,8 +30,6 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
 
     private double penaltyCharge;
 
-    private int durationInDays;
-
     private int durationInMonths;
 
     private BigDecimal accruedInterest;

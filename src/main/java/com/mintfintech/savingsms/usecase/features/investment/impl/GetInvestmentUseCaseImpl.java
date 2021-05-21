@@ -89,11 +89,10 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setAmountInvested(investment.getAmountInvested());
         model.setAccruedInterest(investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment));
         model.setLockedInvestment(investment.isLockedInvestment());
-        model.setInterestRate(investment.getInvestmentTenor().getInterestRate());
+        model.setInterestRate(investment.getInterestRate());
         model.setCode(investment.getCode());
         model.setDateWithdrawn(investment.getDateWithdrawn() != null ? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         model.setMaturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        model.setDurationInDays(investment.getDurationInDays());
         model.setDurationInMonths(investment.getDurationInMonths());
         model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
@@ -158,16 +157,16 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private BigDecimal calculateOutstandingInterest(InvestmentEntity investment) {
 
-        double interestPerYear = (investment.getInvestmentTenor().getInterestRate() * investment.getAmountInvested().doubleValue()) / 100.0;
+        double interestPerAnnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue() ;
 
-        double interestPerMonth = interestPerYear / 12;
+        double dailyInterest = interestPerAnnum / 365;
 
         LocalDate maturityDate = investment.getMaturityDate().toLocalDate();
         LocalDate today = LocalDate.now();
 
-        long remainingMonthsToMaturity = ChronoUnit.MONTHS.between(today, maturityDate);
+        long remainingDaysToMaturity = ChronoUnit.DAYS.between(today, maturityDate);
 
-        double outstandingInterest = interestPerMonth * remainingMonthsToMaturity;
+        double outstandingInterest = dailyInterest * remainingDaysToMaturity;
 
         return BigDecimal.valueOf(outstandingInterest);
     }
