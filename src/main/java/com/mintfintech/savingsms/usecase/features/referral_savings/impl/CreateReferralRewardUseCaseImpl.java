@@ -338,6 +338,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .mintAccount(accountEntity)
                 .name("Earnings from Referral")
                 .savingsPlanTenor(planTenor)
+                .interestRate(planTenor.getInterestRate())
                 .selectedDuration(minimumDuration)
                 .creator(userEntity)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())

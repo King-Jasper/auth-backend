@@ -17,5 +17,6 @@ public interface SavingsInterestEntityDao extends CrudDao<SavingsInterestEntity,
     long countInterestOnGoal(SavingsGoalEntity savingsGoalEntity);
     long countInterestOnGoal(SavingsGoalEntity savingsGoalEntity, LocalDateTime fromTime, LocalDateTime toTime);
     Optional<SavingsInterestEntity> findLastInterestApplied(SavingsGoalEntity savingsGoalEntity);
+    Optional<SavingsInterestEntity> findFirstInterestApplied(SavingsGoalEntity savingsGoalEntity);
     Page<SavingsInterestEntity> getAccruedInterestOnGoal(SavingsGoalEntity goalEntity, int page, int size);
 }

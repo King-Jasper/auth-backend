@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
@@ -20,12 +21,14 @@ import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
 
 import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -45,6 +48,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     private SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
     private SavingsPlanEntityDao savingsPlanEntityDao;
     private SavingsGoalCategoryEntityDao savingsGoalCategoryEntityDao;
+    private SavingsInterestEntityDao savingsInterestEntityDao;
     private TierLevelEntityDao tierLevelEntityDao;
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
@@ -186,6 +190,7 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
                 .autoSave(goalCreationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
                 .savingsPlanTenor(planTenor)
+                .interestRate(planTenor.getInterestRate())
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
                 .name(goalName)
                 .maturityDate(maturityDate)
@@ -251,4 +256,30 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
     }
 
 
+    @Async
+    @Override
+    public void runInterestUpdate() {
+        int size = 1000;
+        int page = 0;
+        PagedResponse<SavingsGoalEntity> pagedResponse = savingsGoalEntityDao.getPagedEligibleInterestSavingsGoal(page, size);
+        processInterestUpdate(pagedResponse.getRecords());
+        for(page = 1; page < pagedResponse.getTotalPages(); page++) {
+            pagedResponse = savingsGoalEntityDao.getPagedEligibleInterestSavingsGoal(page, size);
+            processInterestUpdate(pagedResponse.getRecords());
+        }
+    }
+    private void processInterestUpdate(List<SavingsGoalEntity> goalEntityList) {
+        for(SavingsGoalEntity savingsGoalEntity : goalEntityList) {
+            if(savingsGoalEntity.getInterestRate() != 0.0) {
+                continue;
+            }
+            Optional<SavingsInterestEntity> firstInterestOpt = savingsInterestEntityDao.findFirstInterestApplied(savingsGoalEntity);
+            if(!firstInterestOpt.isPresent()) {
+                continue;
+            }
+            SavingsInterestEntity interestEntity = firstInterestOpt.get();
+            savingsGoalEntity.setInterestRate(interestEntity.getRate());
+            savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+        }
+    }
 }

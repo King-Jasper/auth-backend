@@ -47,6 +47,11 @@ public class SavingsInterestEntityDaoImpl implements SavingsInterestEntityDao {
     }
 
     @Override
+    public Optional<SavingsInterestEntity> findFirstInterestApplied(SavingsGoalEntity savingsGoalEntity) {
+        return repository.findFirstBySavingsGoalOrderByDateCreatedAsc(savingsGoalEntity);
+    }
+
+    @Override
     public Page<SavingsInterestEntity> getAccruedInterestOnGoal(SavingsGoalEntity goalEntity, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return repository.getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE, goalEntity, pageable);

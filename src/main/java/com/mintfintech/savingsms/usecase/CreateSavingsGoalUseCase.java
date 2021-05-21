@@ -14,4 +14,6 @@ import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 public interface CreateSavingsGoalUseCase {
     //SavingsGoalEntity createDefaultSavingsGoal(MintAccountEntity mintAccountEntity, AppUserEntity appUserEntity);
     SavingsGoalModel  createNewSavingsGoal(AuthenticatedUser currentUser, SavingsGoalCreationRequest goalCreationRequest);
+
+    void runInterestUpdate();
 }
