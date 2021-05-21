@@ -2,26 +2,26 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Service
 @RequiredArgsConstructor
@@ -49,8 +49,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), mintAccount)
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
 
-        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findById(Long.getLong(request.getTenorId()))
-                .orElseThrow(() -> new BadRequestException("Invalid investment tenor Id"));
+        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
+                .orElseThrow(() -> new BadRequestException("Could not fetch a tenor for this duration"));
 
         if (!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");
@@ -70,10 +70,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             return response;
         }
 
-
         int durationInMonths = (investmentTenor.getMaximumDuration() - investmentTenor.getMinimumDuration()) + 1;
         LocalDateTime maturityDate = LocalDateTime.now().plusMonths(durationInMonths);
-        int durationInDays = (int) maturityDate.until(LocalDateTime.now(), ChronoUnit.DAYS);
 
         InvestmentEntity investment = InvestmentEntity.builder()
                 .amountInvested(investAmount)
@@ -86,6 +84,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
                 .owner(mintAccount)
                 .totalAmountInvested(investAmount)
+                .interestRate(investmentTenor.getInterestRate())
                 .build();
 
         investment = investmentEntityDao.saveRecord(investment);

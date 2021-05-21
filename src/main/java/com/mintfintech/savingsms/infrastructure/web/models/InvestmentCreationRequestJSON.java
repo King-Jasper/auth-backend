@@ -11,9 +11,8 @@ import javax.validation.constraints.Pattern;
 @Data
 public class InvestmentCreationRequestJSON {
 
-    @ApiModelProperty(notes = "The investment tenor Id.", required = true)
-    @NotEmpty
-    private String tenorId;
+    @ApiModelProperty(notes = "The investment duration in months.", required = true)
+    private int durationInMonths;
 
     @ApiModelProperty(notes = "The amount to be invested. N5000 minimum", required = true)
     @Min(value = 5000, message = "Minimum of N5000")
@@ -32,7 +31,7 @@ public class InvestmentCreationRequestJSON {
         return InvestmentCreationRequest.builder()
                 .debitAccountId(debitAccountId)
                 .investmentAmount(investmentAmount)
-                .tenorId(tenorId)
+                .durationInMonths(durationInMonths)
                 .transactionPin(transactionPin)
                 .build();
     }

@@ -42,4 +42,9 @@ public class InvestmentTenorEntityDaoImpl implements InvestmentTenorEntityDao {
     public List<InvestmentTenorEntity> getTenorList() {
         return repository.getAllByRecordStatus(RecordStatusConstant.ACTIVE);
     }
+
+    @Override
+    public Optional<InvestmentTenorEntity> findInvestmentTenorForDuration(int duration, RecordStatusConstant status) {
+        return repository.findInvestmentTenorForDuration(duration, status);
+    }
 }
