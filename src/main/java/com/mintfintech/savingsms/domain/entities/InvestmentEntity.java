@@ -38,6 +38,7 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @Enumerated(EnumType.STRING)
     private InvestmentStatusConstant investmentStatus;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
     private InvestmentTypeConstant investmentType = InvestmentTypeConstant.MUTUAL_INVESTMENT;
 

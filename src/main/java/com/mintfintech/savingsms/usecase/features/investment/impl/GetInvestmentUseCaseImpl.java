@@ -24,9 +24,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -69,6 +67,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             transaction.setType("Investment Liquidation");
             transactions.add(transaction);
         });
+
+        transactions.sort(Comparator.comparing(o -> LocalDate.parse(o.getDate())));
 
         return transactions;
     }
