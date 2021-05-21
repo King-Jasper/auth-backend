@@ -81,7 +81,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .creator(appUser)
                 .investmentStatus(InvestmentStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
-                .durationInDays(durationInDays)
                 .durationInMonths(durationInMonths)
                 .maturityDate(maturityDate)
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())

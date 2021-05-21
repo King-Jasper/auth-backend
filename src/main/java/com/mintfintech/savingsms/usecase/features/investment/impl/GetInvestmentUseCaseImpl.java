@@ -93,7 +93,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setCode(investment.getCode());
         model.setDateWithdrawn(investment.getDateWithdrawn() != null ? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         model.setMaturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        model.setDurationInDays(investment.getDurationInDays());
+       // model.setDurationInDays(investment.getDurationInDays());
         model.setDurationInMonths(investment.getDurationInMonths());
         model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
