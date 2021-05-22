@@ -2,6 +2,8 @@ package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
@@ -29,4 +31,5 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     Page<InvestmentEntity> getRecordsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize);
 
     List<InvestmentStat> getInvestmentStatOnAccount(MintAccountEntity mintAccountEntity);
+
 }

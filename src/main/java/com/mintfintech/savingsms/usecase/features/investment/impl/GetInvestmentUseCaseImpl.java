@@ -136,19 +136,11 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
             for (InvestmentStat stat : stats) {
-
                 if (stat.getInvestmentStatus().equals(status)) {
-                    if (stat.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
-                        summary.setTotalInvestments(stat.getTotalRecords());
-                        summary.setTotalInvested(stat.getTotalInvestment());
-                        summary.setTotalProfit(stat.getAccruedInterest());
-                        summary.setTotalExpectedReturns(stat.getAccruedInterest().add(stat.getTotalInvestment()));
-                    } else {
-                        summary.setTotalInvestments(stat.getTotalRecords());
-                        summary.setTotalInvested(stat.getTotalInvestment());
-                        summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())));
-                        summary.setTotalExpectedReturns(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).add(stat.getTotalInvestment()));
-                    }
+                    summary.setTotalInvestments(stat.getTotalRecords());
+                    summary.setTotalInvested(stat.getTotalInvestment());
+                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())));
+                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()));
                 }
             }
         }

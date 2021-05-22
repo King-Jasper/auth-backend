@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
@@ -41,7 +42,7 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
 
     List<InvestmentEntity> getAllByOwnerAndRecordStatus(MintAccountEntity accountEntity, RecordStatusConstant statusConstant);
 
-    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.InvestmentStat(i.investmentStatus, count(i), sum(i.amountInvested), sum(i.accruedInterest), sum(((i.interestRate * 0.01 * i.amountInvested)/365) * DAY(i.maturityDate - NOW()))) " +
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.InvestmentStat(i.investmentStatus, count(i), sum(i.amountInvested), sum(i.accruedInterest), sum(((i.interestRate * 0.01 * i.amountInvested)/365.0) * DAY(i.maturityDate - NOW()))) " +
             "from InvestmentEntity i where " +
             "i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
             "i.owner =:owner " +
