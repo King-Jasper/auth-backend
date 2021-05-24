@@ -92,7 +92,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(BigDecimal.ZERO)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStatus(InvestmentWithdrawalStageConstant.COMPLETED)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
@@ -126,7 +126,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(interestToWithdraw)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStatus(InvestmentWithdrawalStageConstant.COMPLETED)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();

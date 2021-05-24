@@ -23,6 +23,6 @@ public class InvestmentWithdrawalEntityDaoImpl extends CrudDaoImpl<InvestmentWit
 
     @Override
     public List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentEntity investmentEntity, InvestmentWithdrawalStageConstant withdrawalStatus) {
-        return repository.getAllByInvestmentAndWithdrawalStatus(investmentEntity, withdrawalStatus);
+        return repository.getAllByInvestmentAndWithdrawalStage(investmentEntity, withdrawalStatus);
     }
 }

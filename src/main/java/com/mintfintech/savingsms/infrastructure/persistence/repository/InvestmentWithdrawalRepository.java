@@ -13,6 +13,6 @@ import java.util.List;
  */
 public interface InvestmentWithdrawalRepository extends JpaRepository<InvestmentWithdrawalEntity, Long> {
 
-    List<InvestmentWithdrawalEntity> getAllByInvestmentAndWithdrawalStatus(InvestmentEntity investment, InvestmentWithdrawalStageConstant withdrawalStatus);
+    List<InvestmentWithdrawalEntity> getAllByInvestmentAndWithdrawalStage(InvestmentEntity investment, InvestmentWithdrawalStageConstant withdrawalStatus);
 
 }
