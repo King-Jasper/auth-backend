@@ -37,7 +37,7 @@ public class ApplicationProperty {
     }
 
     public int savingsMinimumNumberOfDaysForWithdrawal() {
-        return Integer.parseInt(environmentService.getVariable("savings-goal.minimum-days-for-withdrawal", "30"));
+        return Integer.parseInt(environmentService.getVariable("savings-goal.minimum-days-for-withdrawal", "10"));
     }
 
     public double savingsInterestPercentageDeduction() {
