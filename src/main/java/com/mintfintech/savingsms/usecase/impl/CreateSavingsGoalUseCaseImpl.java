@@ -83,8 +83,8 @@ public class CreateSavingsGoalUseCaseImpl implements CreateSavingsGoalUseCase {
             planTenor = savingsPlanTenorEntityDao.findById(goalCreationRequest.getDurationId())
                     .orElseThrow(() -> new BadRequestException("Invalid savings plan duration."));
         }else {
-            if(goalCreationRequest.getDurationInDays() < 30) {
-                throw new BusinessLogicConflictException("Savings duration must be a minimum of 30 days.");
+            if(goalCreationRequest.getDurationInDays() < 10) {
+                throw new BusinessLogicConflictException("Savings duration must be a minimum of 10 days.");
             }
             Optional<SavingsPlanTenorEntity> durationOptional = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(goalCreationRequest.getDurationInDays());
             if(!durationOptional.isPresent()) {
