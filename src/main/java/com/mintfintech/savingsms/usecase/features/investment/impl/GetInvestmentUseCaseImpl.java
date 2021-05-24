@@ -4,12 +4,10 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
-import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
@@ -21,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -48,7 +45,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 = investmentTransactionEntityDao.getTransactionsByInvestment(investment, TransactionTypeConstant.DEBIT, TransactionStatusConstant.SUCCESSFUL);
 
         List<InvestmentWithdrawalEntity> withdrawals
-                = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStatusConstant.PROCESSED);
+                = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStageConstant.COMPLETED);
 
         List<InvestmentTransactionModel> transactions = new ArrayList<>();
 

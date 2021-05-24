@@ -2,7 +2,7 @@ package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentWithdrawalEntity;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 
 import java.util.List;
 
@@ -12,5 +12,5 @@ import java.util.List;
  */
 public interface InvestmentWithdrawalEntityDao extends CrudDao<InvestmentWithdrawalEntity, Long>{
 
-    List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentEntity investmentEntity, InvestmentWithdrawalStatusConstant withdrawalStatus);
+    List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentEntity investmentEntity, InvestmentWithdrawalStageConstant withdrawalStatus);
 }

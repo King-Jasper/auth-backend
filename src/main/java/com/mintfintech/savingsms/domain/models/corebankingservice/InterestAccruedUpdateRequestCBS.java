@@ -15,4 +15,5 @@ public class InterestAccruedUpdateRequestCBS {
     private String reference;
     private String narration;
     private BigDecimal interestAmount;
+    private String interestCategory;
 }

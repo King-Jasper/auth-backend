@@ -2,7 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentWithdrawalEntity;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
@@ -13,6 +13,6 @@ import java.util.List;
  */
 public interface InvestmentWithdrawalRepository extends JpaRepository<InvestmentWithdrawalEntity, Long> {
 
-    List<InvestmentWithdrawalEntity> getAllByInvestmentAndWithdrawalStatus(InvestmentEntity investment, InvestmentWithdrawalStatusConstant withdrawalStatus);
+    List<InvestmentWithdrawalEntity> getAllByInvestmentAndWithdrawalStatus(InvestmentEntity investment, InvestmentWithdrawalStageConstant withdrawalStatus);
 
 }

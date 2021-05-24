@@ -3,8 +3,7 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -93,7 +92,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(BigDecimal.ZERO)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStatus(InvestmentWithdrawalStatusConstant.PROCESSED)
+                .withdrawalStatus(InvestmentWithdrawalStageConstant.COMPLETED)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
@@ -127,7 +126,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(interestToWithdraw)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStatus(InvestmentWithdrawalStatusConstant.PROCESSED)
+                .withdrawalStatus(InvestmentWithdrawalStageConstant.COMPLETED)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();

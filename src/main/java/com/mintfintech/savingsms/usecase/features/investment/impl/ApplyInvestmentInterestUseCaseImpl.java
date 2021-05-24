@@ -7,7 +7,7 @@ import com.mintfintech.savingsms.domain.entities.AccumulatedInterestEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentInterestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionCategory;
+import com.mintfintech.savingsms.domain.entities.enums.InterestCategoryConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.InterestAccruedUpdateRequestCBS;
@@ -41,7 +41,7 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
     @Override
     public void processAndApplyInterest() {
 
-        int size = 50;
+        int size = 1000;
         BigDecimal totalAccumulatedInterest = BigDecimal.valueOf(0.00);
 
         Page<InvestmentEntity> pagedInvestments = investmentEntityDao.getRecordsForEligibleInterestApplication(0, size);
@@ -62,31 +62,28 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
     }
     private BigDecimal processInterestComputation(List<InvestmentEntity> investments) {
         BigDecimal totalInterest = BigDecimal.valueOf(0.0);
-
-        for (InvestmentEntity investment : investments){
-            if(!shouldApplyInterest(investment)) {
-                log.info("Interest not applied to goal {}", investment.getCode());
-                continue;
-            }
-
-            BigDecimal interest = applyInterest(investment);
-            totalInterest = totalInterest.add(interest);
-         }
-
+        for (InvestmentEntity investment : investments) {
+            try {
+                if(!shouldApplyInterest(investment)) {
+                    continue;
+                }
+                BigDecimal interest = applyInterest(investment);
+                totalInterest = totalInterest.add(interest);
+            }catch (Exception ignored){}
+        }
         return totalInterest;
     }
 
     private BigDecimal applyInterest(InvestmentEntity investment) {
 
-        BigDecimal interestRatePerDay = BigDecimal.valueOf(investment.getInterestRate() / (100.0 * 365.0));
-        BigDecimal interest = investment.getAmountInvested().multiply(interestRatePerDay).setScale(2, BigDecimal.ROUND_HALF_EVEN);
+        double interestRatePerDay = investment.getInterestRate() / (100.0 * 365.0);
+        BigDecimal interest = investment.getAmountInvested().multiply(BigDecimal.valueOf(interestRatePerDay)).setScale(2, BigDecimal.ROUND_HALF_EVEN);
 
         InvestmentInterestEntity investmentInterest = new InvestmentInterestEntity();
         investmentInterest.setInvestment(investment);
         investmentInterest.setInterest(interest);
         investmentInterest.setRate(investment.getInterestRate());
         investmentInterest.setSavingsBalance(investment.getAmountInvested());
-
         investmentInterestEntityDao.saveRecord(investmentInterest);
 
         investment.setAccruedInterest(investment.getAccruedInterest().add(interest));
@@ -122,7 +119,7 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()
                 .interestDate(LocalDate.now()).totalInterest(totalAccumulatedInterest)
                 .reference(reference).transactionStatus(TransactionStatusConstant.PENDING)
-                .transactionCategory(TransactionCategory.INVESTMENT)
+                .interestCategory(InterestCategoryConstant.INVESTMENT)
                 .build();
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
 
@@ -131,6 +128,7 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
                 .interestAmount(totalAccumulatedInterest)
                 .reference(accumulatedInterestEntity.getReference())
                 .narration(narration)
+                .interestCategory(InterestCategoryConstant.INVESTMENT.name())
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.updateAccruedInterest(updateRequestCBS);
         if(msClientResponse.getStatusCode() != HttpStatus.OK.value()) {

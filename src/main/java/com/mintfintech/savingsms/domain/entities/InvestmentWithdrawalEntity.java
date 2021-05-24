@@ -1,13 +1,12 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
 import lombok.*;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 /**
  * Created by jnwanya on
@@ -30,7 +29,11 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
 
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
-    private InvestmentWithdrawalStatusConstant withdrawalStatus;
+    private InvestmentWithdrawalStageConstant withdrawalStage;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private InvestmentWithdrawalTypeConstant withdrawalType;
 
     @Column(nullable = false)
     private BigDecimal amount;
@@ -54,4 +57,6 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
     private boolean matured = true;
 
     private LocalDate dateForWithdrawal;
+
+
 }

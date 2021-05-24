@@ -4,7 +4,7 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionCategory;
+import com.mintfintech.savingsms.domain.entities.enums.InterestCategoryConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
@@ -12,7 +12,6 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferRe
 import com.mintfintech.savingsms.domain.models.corebankingservice.InterestAccruedUpdateRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
-import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
@@ -27,7 +26,6 @@ import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 /**
@@ -133,7 +131,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()
                 .interestDate(LocalDate.now()).totalInterest(totalAccumulatedInterest)
                 .reference(reference).transactionStatus(TransactionStatusConstant.PENDING)
-                .transactionCategory(TransactionCategory.SAVINGS_GOAL)
+                .interestCategory(InterestCategoryConstant.SAVINGS_GOAL)
                 .build();
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
 
