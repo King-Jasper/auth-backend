@@ -4,6 +4,8 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -34,6 +36,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final InvestmentTenorEntityDao investmentTenorEntityDao;
     private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
     private final GetInvestmentUseCase getInvestmentUseCase;
+    private final ApplicationProperty applicationProperty;
 
     @Override
     public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
@@ -49,7 +52,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
+
         int minimumLiquidationPeriodInDays = 15;
+        if(!applicationProperty.isLiveEnvironment()) {
+            minimumLiquidationPeriodInDays = 2;
+        }
 
         long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         if(daysPast < minimumLiquidationPeriodInDays) {
@@ -93,6 +100,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .investment(investment)
                 .matured(false)
                 .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
+                .withdrawalType(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
@@ -127,6 +135,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .investment(investment)
                 .matured(false)
                 .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
+                .withdrawalType(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
