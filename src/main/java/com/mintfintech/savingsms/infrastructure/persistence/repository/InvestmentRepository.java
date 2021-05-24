@@ -24,11 +24,11 @@ import java.util.Optional;
 public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Long>, JpaSpecificationExecutor<InvestmentEntity> {
 
     @Query("select count(i) from InvestmentEntity i where i.amountInvested > 0.0 and i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
-            "and i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+            "and i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant.ACTIVE")
     long countEligibleInterestInvestment();
 
     @Query("select i from InvestmentEntity i where i.amountInvested > 0.0 and i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
-            "and i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+            "and i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant.ACTIVE")
     Page<InvestmentEntity> getEligibleInterestInvestment(Pageable pageable);
 
 

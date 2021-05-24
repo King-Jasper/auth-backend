@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
+import com.mintfintech.savingsms.domain.entities.enums.TransactionCategory;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import lombok.*;
 
@@ -38,4 +39,7 @@ public class AccumulatedInterestEntity extends AbstractBaseEntity<Long>{
     private String responseMessage;
 
     private String externalReference;
+
+    @Enumerated(EnumType.STRING)
+    private TransactionCategory transactionCategory;
 }

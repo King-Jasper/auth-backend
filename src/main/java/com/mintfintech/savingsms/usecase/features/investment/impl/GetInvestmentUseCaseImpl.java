@@ -139,8 +139,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 if (stat.getInvestmentStatus().equals(status)) {
                     summary.setTotalInvestments(stat.getTotalRecords());
                     summary.setTotalInvested(stat.getTotalInvestment());
-                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())));
-                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()));
+                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
                 }
             }
         }
@@ -160,11 +160,13 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         double outstandingInterest = dailyInterest * remainingDaysToMaturity;
 
-        return BigDecimal.valueOf(outstandingInterest);
+        return BigDecimal.valueOf(outstandingInterest).setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
     private BigDecimal calculateTotalExpectedReturn(InvestmentEntity investment) {
 
-        return investment.getAmountInvested().add(investment.getAccruedInterest()).add(calculateOutstandingInterest(investment));
+        BigDecimal totalExpectedReturns = investment.getAmountInvested().add(investment.getAccruedInterest()).add(calculateOutstandingInterest(investment));
+
+        return totalExpectedReturns.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 }

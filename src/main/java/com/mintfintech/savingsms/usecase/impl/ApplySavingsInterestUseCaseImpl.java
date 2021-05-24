@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionCategory;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
@@ -132,6 +133,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()
                 .interestDate(LocalDate.now()).totalInterest(totalAccumulatedInterest)
                 .reference(reference).transactionStatus(TransactionStatusConstant.PENDING)
+                .transactionCategory(TransactionCategory.SAVINGS_GOAL)
                 .build();
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
 
