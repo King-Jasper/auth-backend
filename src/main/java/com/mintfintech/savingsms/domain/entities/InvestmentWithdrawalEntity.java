@@ -58,5 +58,17 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
 
     private LocalDate dateForWithdrawal;
 
+    @OneToOne(optional = true)
+    private InvestmentTransactionEntity penaltyCharge;
+
+    @OneToOne(optional = true)
+    private InvestmentTransactionEntity withholdingTaxCharge;
+
+    @OneToOne(optional = true)
+    private InvestmentTransactionEntity principalPayout;
+
+    @OneToOne(optional = true)
+    private InvestmentTransactionEntity interestPayout;
+
 
 }
