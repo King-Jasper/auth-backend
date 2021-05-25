@@ -60,7 +60,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         if(daysPast < minimumLiquidationPeriodInDays) {
-            throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of "+minimumLiquidationPeriodInDays+" before liquidation.");
+            throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of "+minimumLiquidationPeriodInDays+" days before liquidation.");
         }
 
         if(request.isFullLiquidation()) {
@@ -77,8 +77,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
          BigDecimal maximumWithdrawalAmount = amountInvest.subtract(BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal/ 100.0)));
 
          if(amountToWithdraw.compareTo(maximumWithdrawalAmount) > 0) {
-             String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %f percent of investment amount.",
-                     MoneyFormatterUtil.priceWithDecimal(maximumWithdrawalAmount), percentWithdrawal);
+             String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %s percent of investment amount.",
+                     MoneyFormatterUtil.priceWithDecimal(maximumWithdrawalAmount), MoneyFormatterUtil.priceWithoutDecimal(percentWithdrawal));
              throw new BusinessLogicConflictException(errorMessage);
          }
 
