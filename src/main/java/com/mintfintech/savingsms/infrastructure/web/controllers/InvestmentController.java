@@ -74,8 +74,8 @@ public class InvestmentController {
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .accountId(authenticatedUser.getAccountId())
                 .investmentStatus(investmentStatus)
-                .fromDate(fromDate)
-                .toDate(toDate)
+                .startFromDate(fromDate)
+                .startToDate(toDate)
                 .build();
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);

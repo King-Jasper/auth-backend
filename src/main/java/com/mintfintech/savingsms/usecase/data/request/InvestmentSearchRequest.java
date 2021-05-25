@@ -10,7 +10,10 @@ import java.time.LocalDate;
 public class InvestmentSearchRequest {
     private String accountId;
     private String investmentStatus;
-    private LocalDate fromDate;
-    private LocalDate toDate;
-    private String investmentType;
+    private String customerName;
+    private LocalDate startFromDate;
+    private LocalDate startToDate;
+    private LocalDate matureFromDate;
+    private LocalDate matureToDate;
+    private int duration;
 }

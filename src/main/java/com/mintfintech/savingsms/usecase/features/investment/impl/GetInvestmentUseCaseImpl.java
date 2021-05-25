@@ -100,7 +100,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
 
         //model.setAccountId(model.getAccountId());
-        model.setCustomerName(appUser.getName());
+        model.setCustomerName(investment.getOwner().getName());
         model.setUserId(appUser.getUserId());
 
         return model;
@@ -113,8 +113,12 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         InvestmentStatusConstant status = !searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null;
 
         InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
-                .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
-                .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
+                .startFromDate(searchRequest.getStartFromDate() != null ? searchRequest.getStartFromDate().atStartOfDay() : null)
+                .startToDate(searchRequest.getStartToDate() != null ? searchRequest.getStartToDate().atTime(23, 59) : null)
+                .duration(searchRequest.getDuration())
+                .customerName(searchRequest.getCustomerName())
+                .matureFromDate(searchRequest.getMatureFromDate() != null ? searchRequest.getMatureFromDate().atStartOfDay() : null)
+                .matureToDate(searchRequest.getMatureToDate() != null ? searchRequest.getMatureToDate().atTime(23, 59) : null)
                 .investmentStatus(status)
                 .account(mintAccount.orElse(null))
                 .build();
@@ -130,23 +134,46 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         if (mintAccount.isPresent() && status != null) {
 
-            List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
+            List<InvestmentEntity> investments = investmentEntityDao
+                    .searchInvestmentOnAccountAndStatus(mintAccount.get(), status);
 
-            for (InvestmentStat stat : stats) {
-                if (stat.getInvestmentStatus().equals(status)) {
-                    summary.setTotalInvestments(stat.getTotalRecords());
-                    summary.setTotalInvested(stat.getTotalInvestment());
-                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-                }
+            long totalRecords = investmentEntityPage.getTotalElements();
+
+            BigDecimal totalInvestment = BigDecimal.ZERO;
+
+            BigDecimal accruedInterest = BigDecimal.ZERO;
+
+            BigDecimal outstandingInterest = BigDecimal.ZERO;
+
+            for (InvestmentEntity investment : investments) {
+                totalInvestment = totalInvestment.add(investment.getAmountInvested());
+                accruedInterest = accruedInterest.add(investment.getAccruedInterest());
+                outstandingInterest = outstandingInterest.add(calculateOutstandingInterest(investment));
             }
+
+            summary.setTotalInvestments(totalRecords);
+            summary.setTotalInvested(totalInvestment.setScale(2, BigDecimal.ROUND_HALF_EVEN));
+            summary.setTotalProfit(accruedInterest.add(outstandingInterest).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+            summary.setTotalExpectedReturns(totalInvestment.add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+
+
+//            List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
+//
+//            for (InvestmentStat stat : stats) {
+//                if (stat.getInvestmentStatus().equals(status)) {
+//                    summary.setTotalInvestments(stat.getTotalRecords());
+//                    summary.setTotalInvested(stat.getTotalInvestment());
+//                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+//                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+//                }
+//            }
         }
         return summary;
     }
 
     private BigDecimal calculateOutstandingInterest(InvestmentEntity investment) {
 
-        double interestPerAnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue() ;
+        double interestPerAnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue();
 
         double dailyInterest = interestPerAnum / 365.0;
 
