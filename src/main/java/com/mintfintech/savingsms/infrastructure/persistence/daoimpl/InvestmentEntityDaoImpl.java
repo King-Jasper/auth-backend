@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.StaleObjectStateException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -83,21 +84,39 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
 
         Specification<InvestmentEntity> specification = withActiveStatus();
 
-        if (searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
-            specification = specification.and(withDateRange(searchDTO.getFromDate(), searchDTO.getToDate()));
+        if (searchDTO.getStartToDate() != null && searchDTO.getStartFromDate() != null) {
+            specification = specification.and(withStartDateRange(searchDTO.getStartFromDate(), searchDTO.getStartToDate()));
         }
 
-        if(searchDTO.getAccount() != null) {
+        if (searchDTO.getMatureFromDate() != null && searchDTO.getMatureToDate() != null) {
+            specification = specification.and(withMaturityDateRange(searchDTO.getMatureFromDate(), searchDTO.getMatureToDate()));
+        }
+
+        if (searchDTO.getAccount() != null) {
             specification = specification.and(withMintAccount(searchDTO.getAccount()));
         }
 
         if (searchDTO.getInvestmentStatus() != null) {
             specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
+
+            if (searchDTO.getAccount() != null && searchDTO.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
+                specification = specification.and(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED));
+            }
         }
 
-        if (searchDTO.getInvestmentType() != null) {
-            specification = specification.and(withInvestmentType(searchDTO.getInvestmentType()));
+        if (searchDTO.getDuration() != 0) {
+            specification = specification.and(withDuration(searchDTO.getDuration()));
         }
+
+        if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+
+            Specification<InvestmentEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
+                return criteriaBuilder.like(accountJoin.get("name"), searchDTO.getCustomerName().toLowerCase() + "%");
+            };
+            specification = specification.and(temp);
+        }
+
         return repository.findAll(specification, pageable);
     }
 
@@ -118,24 +137,34 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         return repository.getInvestmentStatistics(mintAccountEntity);
     }
 
+    @Override
+    public List<InvestmentEntity> searchInvestmentOnAccountAndStatus(MintAccountEntity mintAccountEntity, InvestmentStatusConstant investmentStatusConstant) {
+        return repository.getAllByOwnerAndInvestmentStatus(mintAccountEntity, investmentStatusConstant);
+    }
+
     private static Specification<InvestmentEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE)));
     }
 
-    private static Specification<InvestmentEntity> withDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+    private static Specification<InvestmentEntity> withStartDateRange(LocalDateTime startDate, LocalDateTime endDate) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.between(root.get("dateCreated"), startDate, endDate));
+    }
+
+    private static Specification<InvestmentEntity> withMaturityDateRange(LocalDateTime startDate, LocalDateTime endDate) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.between(root.get("maturityDate"), startDate, endDate));
     }
 
     private static Specification<InvestmentEntity> withInvestmentStatus(InvestmentStatusConstant status) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("investmentStatus"), status));
     }
 
-    private static Specification<InvestmentEntity> withInvestmentType(InvestmentTypeConstant type) {
-        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("investmentType"), type));
+    private static Specification<InvestmentEntity> withDuration(int duration) {
+        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("durationInMonths"), duration));
     }
 
     private static Specification<InvestmentEntity> withMintAccount(MintAccountEntity account) {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("owner"), account.getId()));
     }
+
 }

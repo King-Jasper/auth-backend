@@ -49,4 +49,6 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
             "group by i.investmentStatus")
     List<InvestmentStat> getInvestmentStatistics(@Param("owner") MintAccountEntity accountEntity);
 
+    List<InvestmentEntity> getAllByOwnerAndInvestmentStatus(MintAccountEntity accountEntity, InvestmentStatusConstant statusConstant);
+
 }
