@@ -143,6 +143,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         investment.setAmountInvested(BigDecimal.ZERO);
         investment.setAccruedInterest(BigDecimal.ZERO);
+        investment.setInvestmentStatus(InvestmentStatusConstant.LIQUIDATED);
         investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(interestToWithdraw));
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
         investment.setDateWithdrawn(LocalDateTime.now());
