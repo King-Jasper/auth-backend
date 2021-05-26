@@ -132,41 +132,42 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 investmentEntityPage.get().map(this::toInvestmentModel)
                         .collect(Collectors.toList())));
 
-        if (mintAccount.isPresent() && status != null) {
+        if (mintAccount.isPresent()) {
 
-            List<InvestmentEntity> investments = investmentEntityDao
-                    .searchInvestmentOnAccountAndStatus(mintAccount.get(), status);
+            if (status != null) {
+                List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
-            long totalRecords = investmentEntityPage.getTotalElements();
+                for (InvestmentStat stat : stats) {
+                    if (stat.getInvestmentStatus().equals(status)) {
+                        summary.setTotalInvestments(stat.getTotalRecords());
+                        summary.setTotalInvested(stat.getTotalInvestment());
+                        summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                        summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                    }
+                }
+            } else {
+                List<InvestmentEntity> investments = investmentEntityDao.getRecordsOnAccount(mintAccount.get());
 
-            BigDecimal totalInvestment = BigDecimal.ZERO;
+                long totalRecords = investmentEntityPage.getTotalElements();
 
-            BigDecimal accruedInterest = BigDecimal.ZERO;
+                BigDecimal totalInvestment = BigDecimal.ZERO;
 
-            BigDecimal outstandingInterest = BigDecimal.ZERO;
+                BigDecimal accruedInterest = BigDecimal.ZERO;
 
-            for (InvestmentEntity investment : investments) {
-                totalInvestment = totalInvestment.add(investment.getAmountInvested());
-                accruedInterest = accruedInterest.add(investment.getAccruedInterest());
-                outstandingInterest = outstandingInterest.add(calculateOutstandingInterest(investment));
+                BigDecimal outstandingInterest = BigDecimal.ZERO;
+
+                for (InvestmentEntity investment : investments) {
+                    totalInvestment = totalInvestment.add(investment.getAmountInvested());
+                    accruedInterest = accruedInterest.add(investment.getAccruedInterest());
+                    outstandingInterest = outstandingInterest.add(calculateOutstandingInterest(investment));
+                }
+
+                summary.setTotalInvestments(totalRecords);
+                summary.setTotalInvested(totalInvestment.setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                summary.setTotalProfit(accruedInterest.add(outstandingInterest).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                summary.setTotalExpectedReturns(totalInvestment.add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+
             }
-
-            summary.setTotalInvestments(totalRecords);
-            summary.setTotalInvested(totalInvestment.setScale(2, BigDecimal.ROUND_HALF_EVEN));
-            summary.setTotalProfit(accruedInterest.add(outstandingInterest).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-            summary.setTotalExpectedReturns(totalInvestment.add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-
-
-//            List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
-//
-//            for (InvestmentStat stat : stats) {
-//                if (stat.getInvestmentStatus().equals(status)) {
-//                    summary.setTotalInvestments(stat.getTotalRecords());
-//                    summary.setTotalInvested(stat.getTotalInvestment());
-//                    summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-//                    summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-//                }
-//            }
         }
         return summary;
     }

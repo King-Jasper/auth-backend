@@ -32,6 +32,4 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
 
     List<InvestmentStat> getInvestmentStatOnAccount(MintAccountEntity mintAccountEntity);
 
-    List<InvestmentEntity> searchInvestmentOnAccountAndStatus(MintAccountEntity mintAccountEntity, InvestmentStatusConstant investmentStatusConstant);
-
 }

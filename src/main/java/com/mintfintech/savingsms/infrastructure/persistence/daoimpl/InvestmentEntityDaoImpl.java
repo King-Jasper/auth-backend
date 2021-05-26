@@ -137,11 +137,6 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         return repository.getInvestmentStatistics(mintAccountEntity);
     }
 
-    @Override
-    public List<InvestmentEntity> searchInvestmentOnAccountAndStatus(MintAccountEntity mintAccountEntity, InvestmentStatusConstant investmentStatusConstant) {
-        return repository.getAllByOwnerAndInvestmentStatus(mintAccountEntity, investmentStatusConstant);
-    }
-
     private static Specification<InvestmentEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE)));
