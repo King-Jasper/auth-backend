@@ -10,4 +10,12 @@ import com.mintfintech.savingsms.usecase.models.InvestmentModel;
  */
 public interface WithdrawalInvestmentUseCase {
     InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request);
+
+    void processInterestPayout();
+
+    void processPenaltyChargePayout();
+
+    void processWithholdingTaxPayout();
+
+    void processPrincipalPayout();
 }

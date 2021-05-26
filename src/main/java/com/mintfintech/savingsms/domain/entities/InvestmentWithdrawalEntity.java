@@ -70,5 +70,8 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
     @OneToOne(optional = true)
     private InvestmentTransactionEntity interestPayout;
 
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    private MintBankAccountEntity creditAccount;
+
 
 }

@@ -20,4 +20,8 @@ public interface CoreBankingServiceClient {
     MsClientResponse<SavingsFundingVerificationResponseCBS> verifySavingsFundingRequest(String transactionReference);
     MsClientResponse<FundTransferResponseCBS> processLoanApproval(LoanTransactionRequestCBS requestCBS);
     MsClientResponse<FundTransferResponseCBS> processLoanRepayment(LoanTransactionRequestCBS requestCBS);
+    MsClientResponse<FundTransferResponseCBS> processInvestmentFunding(InvestmentFundingRequestCBS requestCBS);
+    MsClientResponse<FundTransferResponseCBS> processInvestmentWithdrawal(InvestmentWithdrawalRequestCBS requestCBS);
+    MsClientResponse<FundTransferResponseCBS> updateInvestmentAccruedInterest(InterestAccruedUpdateRequestCBS updateRequest);
+
 }

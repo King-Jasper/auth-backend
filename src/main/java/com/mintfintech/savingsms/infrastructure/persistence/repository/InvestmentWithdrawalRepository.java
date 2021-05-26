@@ -15,4 +15,6 @@ public interface InvestmentWithdrawalRepository extends JpaRepository<Investment
 
     List<InvestmentWithdrawalEntity> getAllByInvestmentAndWithdrawalStage(InvestmentEntity investment, InvestmentWithdrawalStageConstant withdrawalStatus);
 
+    List<InvestmentWithdrawalEntity> getAllByWithdrawalStage(InvestmentWithdrawalStageConstant withdrawalStatus);
+
 }

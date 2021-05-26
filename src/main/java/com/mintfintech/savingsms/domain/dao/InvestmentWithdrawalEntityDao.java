@@ -13,4 +13,6 @@ import java.util.List;
 public interface InvestmentWithdrawalEntityDao extends CrudDao<InvestmentWithdrawalEntity, Long>{
 
     List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentEntity investmentEntity, InvestmentWithdrawalStageConstant withdrawalStatus);
+
+    List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant withdrawalStatus);
 }

@@ -2,10 +2,13 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.InvestmentWithdrawalRequestCBS;
+import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -16,17 +19,22 @@ import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+
 import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 /**
  * Created by jnwanya on
  * Thu, 20 May, 2021
  */
 @Named
+@Slf4j
 @AllArgsConstructor
 public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseCase {
 
@@ -37,59 +45,113 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
     private final GetInvestmentUseCase getInvestmentUseCase;
     private final ApplicationProperty applicationProperty;
+    private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
+    private final CoreBankingServiceClient coreBankingServiceClient;
+    private final SystemIssueLogService systemIssueLogService;
 
     @Override
     public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
         InvestmentEntity investment = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
 
-        if(investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
-            throw new BadRequestException("Investment is not active. Current status - "+investment.getInvestmentStatus());
+        if (investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
+            throw new BadRequestException("Investment is not active. Current status - " + investment.getInvestmentStatus());
         }
         MintAccountEntity account = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
-        if(!account.getId().equals(investment.getOwner().getId())){
+        if (!account.getId().equals(investment.getOwner().getId())) {
             throw new BusinessLogicConflictException("Sorry, request cannot be processed.");
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
         int minimumLiquidationPeriodInDays = 15;
-        if(!applicationProperty.isLiveEnvironment()) {
+        if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }
 
         long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
-        if(daysPast < minimumLiquidationPeriodInDays) {
-            throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of "+minimumLiquidationPeriodInDays+" days before liquidation.");
+        if (daysPast < minimumLiquidationPeriodInDays) {
+            throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of " + minimumLiquidationPeriodInDays + " days before liquidation.");
         }
 
-        if(request.isFullLiquidation()) {
+        if (request.isFullLiquidation()) {
             processFullLiquidation(investment, creditAccount);
-        }else {
+        } else {
             processPartialLiquidation(investment, creditAccount, request.getAmount());
         }
         return getInvestmentUseCase.toInvestmentModel(investment);
     }
 
+    @Override
+    public void processInterestPayout() {
+        List<InvestmentWithdrawalEntity> withdrawals = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant.PENDING_INTEREST_TO_CUSTOMER);
+
+        if (!withdrawals.isEmpty()) {
+            log.info("Withdrawal request pending interest payout: {}", withdrawals.size());
+        }
+
+        for (InvestmentWithdrawalEntity withdrawal : withdrawals) {
+            processInterestPayoutPayment(withdrawal);
+        }
+    }
+
+    @Override
+    public void processPenaltyChargePayout() {
+        List<InvestmentWithdrawalEntity> withdrawals = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+
+        if (!withdrawals.isEmpty()) {
+            log.info("Withdrawal request pending interest penalty charge: {}", withdrawals.size());
+        }
+
+        for (InvestmentWithdrawalEntity withdrawal : withdrawals) {
+            processInterestPenaltyChargePayment(withdrawal);
+        }
+    }
+
+    @Override
+    public void processWithholdingTaxPayout() {
+        List<InvestmentWithdrawalEntity> withdrawals = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
+
+        if (!withdrawals.isEmpty()) {
+            log.info("Withdrawal request pending tax payment: {}", withdrawals.size());
+        }
+
+        for (InvestmentWithdrawalEntity withdrawal : withdrawals) {
+            processTaxPayment(withdrawal);
+        }
+    }
+
+    @Override
+    public void processPrincipalPayout() {
+        List<InvestmentWithdrawalEntity> withdrawals = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+
+        if (!withdrawals.isEmpty()) {
+            log.info("Withdrawal request principal payout: {}", withdrawals.size());
+        }
+
+        for (InvestmentWithdrawalEntity withdrawal : withdrawals) {
+            processPrincipalPayment(withdrawal);
+        }
+    }
+
     private void processPartialLiquidation(InvestmentEntity investment, MintBankAccountEntity creditAccount, BigDecimal amountToWithdraw) {
-         double percentWithdrawal = 70;
-         BigDecimal amountInvest = investment.getAmountInvested();
-         BigDecimal maximumWithdrawalAmount = amountInvest.subtract(BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal/ 100.0)));
+        double percentWithdrawal = 70;
+        BigDecimal amountInvest = investment.getAmountInvested();
+        BigDecimal maximumWithdrawalAmount = amountInvest.subtract(BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal / 100.0)));
 
-         if(amountToWithdraw.compareTo(maximumWithdrawalAmount) > 0) {
-             String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %s percent of investment amount.",
-                     MoneyFormatterUtil.priceWithDecimal(maximumWithdrawalAmount), MoneyFormatterUtil.priceWithoutDecimal(percentWithdrawal));
-             throw new BusinessLogicConflictException(errorMessage);
-         }
+        if (amountToWithdraw.compareTo(maximumWithdrawalAmount) > 0) {
+            String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %s percent of investment amount.",
+                    MoneyFormatterUtil.priceWithDecimal(maximumWithdrawalAmount), MoneyFormatterUtil.priceWithoutDecimal(percentWithdrawal));
+            throw new BusinessLogicConflictException(errorMessage);
+        }
 
-         InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
-         double interestPenaltyRate =  tenorEntity.getPenaltyRate();
+        InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
+        double interestPenaltyRate = tenorEntity.getPenaltyRate();
 
-         BigDecimal accruedInterest = investment.getAccruedInterest();
+        BigDecimal accruedInterest = investment.getAccruedInterest();
 
-         BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate/ 100.0));
+        BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
 
-         // TODO update the withdrawal status to an appropriate value.
         InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
                 .amount(amountToWithdraw)
                 .amountCharged(interestCharge)
@@ -99,12 +161,13 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(BigDecimal.ZERO)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
+                .creditAccount(creditAccount)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE)
                 .withdrawalType(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
-        withdrawalEntity = investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
+        investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
 
         investment.setAmountInvested(amountInvest.subtract(amountToWithdraw));
         investment.setAccruedInterest(accruedInterest.subtract(interestCharge));
@@ -115,16 +178,15 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private void processFullLiquidation(InvestmentEntity investment, MintBankAccountEntity creditAccount) {
 
         InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
-        double interestPenaltyRate =  tenorEntity.getPenaltyRate();
+        double interestPenaltyRate = tenorEntity.getPenaltyRate();
         BigDecimal amountInvested = investment.getAmountInvested();
         BigDecimal accruedInterest = investment.getAccruedInterest();
 
-        BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate/ 100.0));
+        BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
         BigDecimal amountToWithdraw = amountInvested.add(accruedInterest.subtract(interestCharge));
 
         BigDecimal interestToWithdraw = accruedInterest.subtract(interestCharge);
 
-        // TODO update the withdrawal status to an appropriate value.
         InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
                 .amount(amountToWithdraw)
                 .amountCharged(interestCharge)
@@ -134,12 +196,13 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .interest(interestToWithdraw)
                 .investment(investment)
                 .matured(false)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED)
+                .creditAccount(creditAccount)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_TO_CUSTOMER)
                 .withdrawalType(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
                 .build();
-        withdrawalEntity = investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
+        investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
 
         investment.setAmountInvested(BigDecimal.ZERO);
         investment.setAccruedInterest(BigDecimal.ZERO);
@@ -148,5 +211,251 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
         investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
+    }
+
+    private void processInterestPayoutPayment(InvestmentWithdrawalEntity withdrawal) {
+        String reference = investmentTransactionEntityDao.generateTransactionReference();
+        InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
+
+        InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
+        transaction.setInvestment(withdrawal.getInvestment());
+        transaction.setBankAccount(withdrawal.getCreditAccount());
+        transaction.setTransactionAmount(withdrawal.getInterest());
+        transaction.setTransactionReference(reference);
+        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction = investmentTransactionEntityDao.saveRecord(transaction);
+
+        withdrawal.setInterestPayout(transaction);
+        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_INTEREST_TO_CUSTOMER);
+        withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
+
+        InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
+                .accountNumber(bankAccount.getAccountNumber())
+                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .transactionAmount(transaction.getTransactionAmount().doubleValue())
+                .transactionReference(reference)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PAYOUT.name())
+                .withdrawalType(withdrawal.getWithdrawalType().name())
+                .build();
+
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processInvestmentWithdrawal(request);
+
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
+            String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+            systemIssueLogService.logIssue("Investment Withdrawal Issue", "Interest payout failed", message);
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_INTEREST_TO_CUSTOMER);
+            transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+        } else {
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
+            transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
+                }
+
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+                }
+                transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
+
+            } else {
+                String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Investment Withdrawal Issue", "Interest payout failed", message);
+                withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_INTEREST_TO_CUSTOMER);
+                transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+            }
+        }
+        investmentTransactionEntityDao.saveRecord(transaction);
+        investmentWithdrawalEntityDao.saveRecord(withdrawal);
+    }
+
+    private void processInterestPenaltyChargePayment(InvestmentWithdrawalEntity withdrawal) {
+        String reference = investmentTransactionEntityDao.generateTransactionReference();
+        InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
+
+        InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
+        transaction.setInvestment(withdrawal.getInvestment());
+        transaction.setBankAccount(withdrawal.getCreditAccount());
+        transaction.setTransactionAmount(withdrawal.getAmountCharged());
+        transaction.setTransactionReference(reference);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
+        transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction = investmentTransactionEntityDao.saveRecord(transaction);
+
+        withdrawal.setPenaltyCharge(transaction);
+        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_PRE_LIQUIDATION_PENALTY);
+        withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
+
+        InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
+                .accountNumber(bankAccount.getAccountNumber())
+                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .transactionAmount(transaction.getTransactionAmount().doubleValue())
+                .transactionReference(reference)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PENALTY_CHARGE.name())
+                .withdrawalType(withdrawal.getWithdrawalType().name())
+                .build();
+
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processInvestmentWithdrawal(request);
+
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
+            String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+            systemIssueLogService.logIssue("Investment Withdrawal Issue", "Liquidation penalty charge failed", message);
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRE_LIQUIDATION_PENALTY);
+            transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+        } else {
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
+            transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+                }
+
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
+                }
+                transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
+
+            } else {
+                String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Investment Withdrawal Issue", "Liquidation penalty charge failed", message);
+                withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRE_LIQUIDATION_PENALTY);
+                transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+            }
+        }
+        investmentTransactionEntityDao.saveRecord(transaction);
+        investmentWithdrawalEntityDao.saveRecord(withdrawal);
+    }
+
+    private void processTaxPayment(InvestmentWithdrawalEntity withdrawal) {
+        String reference = investmentTransactionEntityDao.generateTransactionReference();
+        InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
+
+        InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
+        transaction.setInvestment(withdrawal.getInvestment());
+        transaction.setBankAccount(withdrawal.getCreditAccount());
+        transaction.setTransactionAmount(withdrawal.getInterest().multiply(BigDecimal.valueOf(0.1)));
+        transaction.setTransactionReference(reference);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
+        transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction = investmentTransactionEntityDao.saveRecord(transaction);
+
+        withdrawal.setWithholdingTaxCharge(transaction);
+        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_TAX_PAYMENT);
+        withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
+
+        InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
+                .accountNumber(bankAccount.getAccountNumber())
+                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .transactionAmount(transaction.getTransactionAmount().doubleValue())
+                .transactionReference(reference)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.TAX_PAYMENT.name())
+                .withdrawalType(withdrawal.getWithdrawalType().name())
+                .build();
+
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processInvestmentWithdrawal(request);
+
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
+            String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+            systemIssueLogService.logIssue("Investment Withdrawal Issue", "Withholding tax payment failed", message);
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_TAX_PAYMENT);
+            transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+        } else {
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
+            transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+                }
+
+                if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
+                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+                }
+                transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
+
+            } else {
+                String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Investment Withdrawal Issue", "Withholding tax payment failed", message);
+                withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_TAX_PAYMENT);
+                transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+            }
+        }
+        investmentTransactionEntityDao.saveRecord(transaction);
+        investmentWithdrawalEntityDao.saveRecord(withdrawal);
+    }
+
+    private void processPrincipalPayment(InvestmentWithdrawalEntity withdrawal) {
+        String reference = investmentTransactionEntityDao.generateTransactionReference();
+        InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
+
+        InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
+        transaction.setInvestment(withdrawal.getInvestment());
+        transaction.setBankAccount(withdrawal.getCreditAccount());
+        transaction.setTransactionAmount(withdrawal.getAmount());
+        transaction.setTransactionReference(reference);
+        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction = investmentTransactionEntityDao.saveRecord(transaction);
+
+        withdrawal.setPrincipalPayout(transaction);
+        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_PRINCIPAL_TO_CUSTOMER);
+        withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
+
+        InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
+                .accountNumber(bankAccount.getAccountNumber())
+                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .transactionAmount(transaction.getTransactionAmount().doubleValue())
+                .transactionReference(reference)
+                .withdrawalStage(InvestmentWithdrawalStageConstant.PRINCIPAL_PAYOUT.name())
+                .withdrawalType(withdrawal.getWithdrawalType().name())
+                .build();
+
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processInvestmentWithdrawal(request);
+
+        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
+            String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+            systemIssueLogService.logIssue("Investment Withdrawal Issue", "Principal payout failed", message);
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRINCIPAL_TO_CUSTOMER);
+            transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+        } else {
+            FundTransferResponseCBS responseCBS = msClientResponse.getData();
+            transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
+            transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+
+            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+                withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED);
+                transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
+            } else {
+                String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
+                systemIssueLogService.logIssue("Investment Withdrawal Issue", "Principal payout failed", message);
+                withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRINCIPAL_TO_CUSTOMER);
+                transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
+            }
+        }
+        investmentTransactionEntityDao.saveRecord(transaction);
+        investmentWithdrawalEntityDao.saveRecord(withdrawal);
+    }
+
+
+    private String constructInvestmentNarration(String investmentCode, String reference) {
+        String narration = String.format("Mint Investment withdrawal %s %s", investmentCode, reference);
+        if (narration.length() > 61) {
+            return narration.substring(0, 60);
+        }
+        return narration;
     }
 }

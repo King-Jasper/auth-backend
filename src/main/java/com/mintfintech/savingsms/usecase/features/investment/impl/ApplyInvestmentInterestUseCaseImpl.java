@@ -50,26 +50,28 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
 
         int totalPages = pagedInvestments.getTotalPages();
 
-        if(pagedInvestments.getTotalElements() > 0) {
+        if (pagedInvestments.getTotalElements() > 0) {
             log.info("Investments for interest consideration: {}", pagedInvestments.getTotalElements());
         }
-        for(int i = 1; i < totalPages; i++) {
+        for (int i = 1; i < totalPages; i++) {
             pagedInvestments = investmentEntityDao.getRecordsForEligibleInterestApplication(i, size);
             totalAccumulatedInterest = totalAccumulatedInterest.add(processInterestComputation(pagedInvestments.getContent()));
         }
         updateInterestLiabilityAccountWithAccumulatedInterest(totalAccumulatedInterest);
 
     }
+
     private BigDecimal processInterestComputation(List<InvestmentEntity> investments) {
         BigDecimal totalInterest = BigDecimal.valueOf(0.0);
         for (InvestmentEntity investment : investments) {
             try {
-                if(!shouldApplyInterest(investment)) {
+                if (!shouldApplyInterest(investment)) {
                     continue;
                 }
                 BigDecimal interest = applyInterest(investment);
                 totalInterest = totalInterest.add(interest);
-            }catch (Exception ignored){}
+            } catch (Exception ignored) {
+            }
         }
         return totalInterest;
     }
@@ -95,12 +97,12 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
 
     private boolean shouldApplyInterest(InvestmentEntity investment) {
 
-        if(investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
+        if (investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
             log.info("Investment is not longer active.");
             return false;
         }
 
-        if(investment.getLastInterestApplicationDate() != null) {
+        if (investment.getLastInterestApplicationDate() != null) {
             boolean interestAppliedToday = DateUtil.sameDay(LocalDateTime.now(), investment.getLastInterestApplicationDate());
             log.info("Interest has been applied today: {}", interestAppliedToday);
             return !interestAppliedToday;
@@ -110,42 +112,47 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
     }
 
     private void updateInterestLiabilityAccountWithAccumulatedInterest(BigDecimal totalAccumulatedInterest) {
-        if(totalAccumulatedInterest.compareTo(BigDecimal.ZERO) == 0) {
+        if (totalAccumulatedInterest.compareTo(BigDecimal.ZERO) == 0) {
             log.info("NO ACCUMULATED INTEREST: {}", totalAccumulatedInterest);
             return;
         }
 
         String reference = accumulatedInterestEntityDao.generatedReference();
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()
-                .interestDate(LocalDate.now()).totalInterest(totalAccumulatedInterest)
-                .reference(reference).transactionStatus(TransactionStatusConstant.PENDING)
+                .interestDate(LocalDate.now())
+                .totalInterest(totalAccumulatedInterest)
+                .reference(reference)
+                .transactionStatus(TransactionStatusConstant.PENDING)
                 .interestCategory(InterestCategoryConstant.INVESTMENT)
                 .build();
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
 
-        String narration = "IAI - "+reference+" Accumulated Interest";
+        String narration = "IAI - " + reference + " Accumulated Interest";
+
         InterestAccruedUpdateRequestCBS updateRequestCBS = InterestAccruedUpdateRequestCBS.builder()
                 .interestAmount(totalAccumulatedInterest)
                 .reference(accumulatedInterestEntity.getReference())
                 .narration(narration)
                 .interestCategory(InterestCategoryConstant.INVESTMENT.name())
                 .build();
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.updateAccruedInterest(updateRequestCBS);
-        if(msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+
+        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.updateInvestmentAccruedInterest(updateRequestCBS);
+
+        if (msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
             String message = msClientResponse.getMessage();
             accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
             accumulatedInterestEntity.setResponseMessage(message);
             accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
-            systemIssueLogService.logIssue("Interest Posting Failed", "Accumulated Interest Update Failure", reference+" - "+message);
+            systemIssueLogService.logIssue("Interest Posting Failed", "Accumulated Interest Update Failure", reference + " - " + message);
             return;
         }
         FundTransferResponseCBS responseCBS = msClientResponse.getData();
-        if(!"00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+        if (!"00".equalsIgnoreCase(responseCBS.getResponseCode())) {
             accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.FAILED);
             accumulatedInterestEntity.setResponseMessage(responseCBS.getResponseMessage());
             accumulatedInterestEntity.setResponseCode(responseCBS.getResponseCode());
             accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
-            systemIssueLogService.logIssue("Interest Posting Failed","Accumulated Interest Update Failure", reference+" - "+responseCBS.getResponseMessage());
+            systemIssueLogService.logIssue("Interest Posting Failed", "Accumulated Interest Update Failure", reference + " - " + responseCBS.getResponseMessage());
             return;
         }
         accumulatedInterestEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);

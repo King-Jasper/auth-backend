@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentWithdrawalEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentWithdrawalRepository;
+
 import javax.inject.Named;
 import java.util.List;
 
@@ -16,6 +17,7 @@ import java.util.List;
 public class InvestmentWithdrawalEntityDaoImpl extends CrudDaoImpl<InvestmentWithdrawalEntity, Long> implements InvestmentWithdrawalEntityDao {
 
     private final InvestmentWithdrawalRepository repository;
+
     public InvestmentWithdrawalEntityDaoImpl(InvestmentWithdrawalRepository repository) {
         super(repository);
         this.repository = repository;
@@ -24,5 +26,10 @@ public class InvestmentWithdrawalEntityDaoImpl extends CrudDaoImpl<InvestmentWit
     @Override
     public List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentEntity investmentEntity, InvestmentWithdrawalStageConstant withdrawalStatus) {
         return repository.getAllByInvestmentAndWithdrawalStage(investmentEntity, withdrawalStatus);
+    }
+
+    @Override
+    public List<InvestmentWithdrawalEntity> getWithdrawalByInvestmentAndStatus(InvestmentWithdrawalStageConstant withdrawalStatus) {
+        return repository.getAllByWithdrawalStage(withdrawalStatus);
     }
 }
