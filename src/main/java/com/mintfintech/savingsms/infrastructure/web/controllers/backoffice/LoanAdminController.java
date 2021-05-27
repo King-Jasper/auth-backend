@@ -105,7 +105,7 @@ public class LoanAdminController {
                                                                                      @ApiParam(value = "Approval Status: ALL, APPROVED, DECLINED, PENDING, CANCELLED, DISBURSED") @Valid @Pattern(regexp = "(ALL|APPROVED|DECLINED|PENDING|CANCELLED|DISBURSED)") @RequestParam(value = "approvalStatus", defaultValue = "ALL") String approvalStatus,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
-                                                                                     @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                     @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                      @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
@@ -126,7 +126,7 @@ public class LoanAdminController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@ApiParam(value = "Verification Status: ALL, APPROVED, REJECTED, PENDING") @Valid @Pattern(regexp = "(ALL|APPROVED|REJECTED|PENDING)") @RequestParam(value = "verificationStatus", defaultValue = "ALL") String verificationStatus,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
-                                                                                                                @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                                                @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                                 @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
