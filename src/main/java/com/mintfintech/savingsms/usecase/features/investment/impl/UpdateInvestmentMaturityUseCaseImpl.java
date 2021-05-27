@@ -1,14 +1,23 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
+import com.mintfintech.savingsms.domain.dao.InvestmentWithdrawalEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
+import com.mintfintech.savingsms.domain.entities.InvestmentWithdrawalEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
 import com.mintfintech.savingsms.usecase.features.investment.UpdateInvestmentMaturityUseCase;
+import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -21,6 +30,8 @@ import java.util.List;
 public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMaturityUseCase {
 
     private final InvestmentEntityDao investmentEntityDao;
+    private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
 
     @Override
     public void updateStatusForMaturedInvestment() {
@@ -65,7 +76,31 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                 continue;
             }
 
-            investment.setInvestmentStatus(InvestmentStatusConstant.MATURED);
+            MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(investment.getOwner(), BankAccountTypeConstant.CURRENT);
+
+            BigDecimal amountInvested = investment.getAmountInvested();
+            BigDecimal accruedInterest = investment.getAccruedInterest();
+            BigDecimal amountToWithdraw = amountInvested.add(accruedInterest);
+
+            InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
+                    .amount(amountToWithdraw)
+                    .balanceBeforeWithdrawal(amountInvested)
+                    .interestBeforeWithdrawal(accruedInterest)
+                    .dateForWithdrawal(DateUtil.addWorkingDays(LocalDate.now(), 2))
+                    .interest(accruedInterest)
+                    .investment(investment)
+                    .matured(true)
+                    .creditAccount(creditAccount)
+                    .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT)
+                    .withdrawalType(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)
+                    .requestedBy(investment.getCreator())
+                    .totalAmount(amountToWithdraw)
+                    .build();
+
+            investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
+
+            investment.setInvestmentStatus(InvestmentStatusConstant.COMPLETED);
+            investment.setDateWithdrawn(LocalDateTime.now());
             investmentEntityDao.saveRecord(investment);
         }
     }

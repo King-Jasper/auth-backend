@@ -343,7 +343,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(withdrawal.getInvestment());
         transaction.setBankAccount(withdrawal.getCreditAccount());
-        transaction.setTransactionAmount(withdrawal.getInterest().multiply(BigDecimal.valueOf(0.1)));
+        transaction.setTransactionAmount(withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1)));
         transaction.setTransactionReference(reference);
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
