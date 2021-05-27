@@ -232,9 +232,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_INTEREST_TO_CUSTOMER);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
+        String narration = "Investment("+investment.getCode()+") interest payment - "+reference;
+
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
-                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
                 .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PAYOUT.name())
@@ -293,9 +295,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_PRE_LIQUIDATION_PENALTY);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
+        String narration = "Investment("+investment.getCode()+") liquidation penalty charge - "+reference;
+
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
-                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
                 .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PENALTY_CHARGE.name())
