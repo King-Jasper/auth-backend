@@ -12,6 +12,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,7 +57,7 @@ public class InvestmentAdminController {
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .investmentStatus(investmentStatus)
                 .startToDate(startToDate)
-                .customerName(customerName.trim())
+                .customerName(StringUtils.isNotEmpty(customerName) ? customerName.trim() : null)
                 .duration(duration)
                 .matureFromDate(matureFromDate)
                 .matureToDate(matureToDate)

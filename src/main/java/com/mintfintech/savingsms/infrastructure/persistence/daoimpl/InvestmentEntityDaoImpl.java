@@ -109,10 +109,9 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         }
 
         if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
-
             Specification<InvestmentEntity> temp = (root, query, criteriaBuilder) -> {
                 Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
-                return criteriaBuilder.like(accountJoin.get("name"), searchDTO.getCustomerName().toLowerCase() + "%");
+                return criteriaBuilder.like(criteriaBuilder.lower(accountJoin.get("name")), "%"+searchDTO.getCustomerName().toLowerCase()+"%");
             };
             specification = specification.and(temp);
         }
