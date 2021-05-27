@@ -55,9 +55,6 @@ public class SavingsGoalReportController {
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                              @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                              @RequestParam("size") int size, @RequestParam("page") int page) {
-        if(size > 20) {
-            size = 20;
-        }
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
                 .customerName(customerName)
                 .savingsStatus(goalStatus)
@@ -79,7 +76,7 @@ public class SavingsGoalReportController {
                                                                                                                            @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
                                                                                                                            @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                            @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
-                                                                                                                           @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                                                           @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                                            @Valid @Min(value = 0) @RequestParam("page") int page) {
 
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
