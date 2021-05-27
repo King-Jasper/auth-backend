@@ -33,7 +33,7 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
 
 
     @Query(value = "select i from InvestmentEntity i where i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE" +
-            " and i.investmentStatus =:status and i.maturityDate between :fromTime and :toTime")
+            " and i.investmentStatus =:status and i.maturityDate between :fromTime and :toTime order by i.maturityDate asc")
     Page<InvestmentEntity> getInvestmentWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
                                                            @Param("fromTime") LocalDateTime fromTime,
                                                            @Param("toTime") LocalDateTime toTime, Pageable pageable);

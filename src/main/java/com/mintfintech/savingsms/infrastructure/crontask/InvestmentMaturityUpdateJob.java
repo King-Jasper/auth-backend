@@ -17,7 +17,7 @@ public class InvestmentMaturityUpdateJob {
         this.updateInvestmentMaturityUseCase = updateInvestmentMaturityUseCase;
     }
 
-    @Scheduled(cron = "0 0 0/2 ? * *") // runs every 2 hours every day
+    @Scheduled(cron = "0 0 7-20 ? * *") // runs every 1 hour from 7am to 8pm
     @SchedulerLock(name = "InvestmentMaturityUpdateJob_processInvestmentMaturityUpdate", lockAtMostForString = "PT30M")
     public void processInvestmentMaturityUpdate() {
         log.info("cron task processInvestmentMaturityUpdate");

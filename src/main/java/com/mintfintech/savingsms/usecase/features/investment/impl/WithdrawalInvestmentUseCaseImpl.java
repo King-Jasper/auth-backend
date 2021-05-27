@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.corebankingservice.CBInvestmentWithdrawalStage;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.InvestmentWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
@@ -239,7 +240,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PAYOUT.name())
+                .withdrawalStage(CBInvestmentWithdrawalStage.INTEREST_PAYOUT.name())
                 .withdrawalType(withdrawal.getWithdrawalType().name())
                 .build();
 
@@ -302,7 +303,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.INTEREST_PENALTY_CHARGE.name())
+                .withdrawalStage(CBInvestmentWithdrawalStage.INTEREST_PENALTY_CHARGE.name())
                 .withdrawalType(withdrawal.getWithdrawalType().name())
                 .build();
 
@@ -363,7 +364,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .narration(constructInvestmentNarration(investment.getCode(), reference))
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.TAX_PAYMENT.name())
+                .withdrawalStage(CBInvestmentWithdrawalStage.TAX_PAYMENT.name())
                 .withdrawalType(withdrawal.getWithdrawalType().name())
                 .build();
 
@@ -424,7 +425,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .narration(constructInvestmentNarration(investment.getCode(), reference))
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.PRINCIPAL_PAYOUT.name())
+                .withdrawalStage(CBInvestmentWithdrawalStage.PRINCIPAL_PAYOUT.name())
                 .withdrawalType(withdrawal.getWithdrawalType().name())
                 .build();
 

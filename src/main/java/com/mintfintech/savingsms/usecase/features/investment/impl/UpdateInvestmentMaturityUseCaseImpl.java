@@ -36,7 +36,8 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
     @Override
     public void updateStatusForMaturedInvestment() {
 
-        LocalDateTime now = LocalDateTime.now();
+        /*
+
         LocalDateTime startTime, endTime;
         if (now.getHour() > 12) {
             startTime = now.withHour(12).withMinute(0);
@@ -45,8 +46,12 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
             startTime = LocalDate.now().atStartOfDay();
             endTime = now.withHour(12).withMinute(0);
         }
+        */
+       // LocalDateTime now = LocalDateTime.now();
+        LocalDateTime startTime = LocalDate.now().atStartOfDay();
+        LocalDateTime endTime =  LocalDate.now().atTime(LocalTime.MAX);
 
-        int size = 50;
+        int size = 20;
         Page<InvestmentEntity> pagedResponse = investmentEntityDao.getRecordsWithMaturityDateWithinPeriod(startTime, endTime, 0, size);
 
         processMaturityStatusUpdate(pagedResponse.getContent());
@@ -75,6 +80,9 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                 log.info("Investment :{} is not active", investment.getCode());
                 continue;
             }
+            investment.setInvestmentStatus(InvestmentStatusConstant.COMPLETED);
+            investment.setDateWithdrawn(LocalDateTime.now());
+            investmentEntityDao.saveRecord(investment);
 
             MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(investment.getOwner(), BankAccountTypeConstant.CURRENT);
 
@@ -91,17 +99,13 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                     .investment(investment)
                     .matured(true)
                     .creditAccount(creditAccount)
-                    .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT)
+                    .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_TO_CUSTOMER)
                     .withdrawalType(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)
                     .requestedBy(investment.getCreator())
                     .totalAmount(amountToWithdraw)
                     .build();
 
             investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
-
-            investment.setInvestmentStatus(InvestmentStatusConstant.COMPLETED);
-            investment.setDateWithdrawn(LocalDateTime.now());
-            investmentEntityDao.saveRecord(investment);
         }
     }
 }
