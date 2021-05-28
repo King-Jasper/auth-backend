@@ -36,18 +36,6 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
     @Override
     public void updateStatusForMaturedInvestment() {
 
-        /*
-
-        LocalDateTime startTime, endTime;
-        if (now.getHour() > 12) {
-            startTime = now.withHour(12).withMinute(0);
-            endTime = LocalDateTime.of(LocalDate.now(), LocalTime.MAX).withNano(0);
-        } else {
-            startTime = LocalDate.now().atStartOfDay();
-            endTime = now.withHour(12).withMinute(0);
-        }
-        */
-       // LocalDateTime now = LocalDateTime.now();
         LocalDateTime startTime = LocalDate.now().atStartOfDay();
         LocalDateTime endTime =  LocalDate.now().atTime(LocalTime.MAX);
 

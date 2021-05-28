@@ -2,8 +2,11 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
-import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
@@ -23,7 +26,6 @@ import javax.persistence.LockTimeoutException;
 import javax.persistence.OptimisticLockException;
 import javax.persistence.criteria.Join;
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -128,7 +130,7 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     @Override
     public Page<InvestmentEntity> getRecordsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize) {
         Pageable pageable = PageRequest.of(pageIndex, recordSize);
-        return repository.getInvestmentWithMaturityPeriod(SavingsGoalStatusConstant.ACTIVE, fromTime, toTime, pageable);
+        return repository.getInvestmentWithMaturityPeriod(InvestmentStatusConstant.ACTIVE, fromTime, toTime, pageable);
     }
 
     @Override
