@@ -224,7 +224,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setBankAccount(withdrawal.getCreditAccount());
         transaction.setTransactionAmount(withdrawal.getInterest());
         transaction.setTransactionReference(reference);
-        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
@@ -411,7 +411,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setBankAccount(withdrawal.getCreditAccount());
         transaction.setTransactionAmount(withdrawal.getAmount());
         transaction.setTransactionReference(reference);
-        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
