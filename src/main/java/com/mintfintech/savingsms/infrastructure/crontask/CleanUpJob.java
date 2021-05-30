@@ -4,7 +4,6 @@ import com.mintfintech.savingsms.usecase.features.roundup_savings.UpdateRoundUpS
 import lombok.AllArgsConstructor;
 import net.javacrumbs.shedlock.core.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
-
 import javax.inject.Named;
 
 /**
