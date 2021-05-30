@@ -4,7 +4,6 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -34,7 +33,7 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
 
     @Query(value = "select i from InvestmentEntity i where i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE" +
             " and i.investmentStatus =:status and i.maturityDate between :fromTime and :toTime order by i.maturityDate asc")
-    Page<InvestmentEntity> getInvestmentWithMaturityPeriod(@Param("status") SavingsGoalStatusConstant status,
+    Page<InvestmentEntity> getInvestmentWithMaturityPeriod(@Param("status") InvestmentStatusConstant status,
                                                            @Param("fromTime") LocalDateTime fromTime,
                                                            @Param("toTime") LocalDateTime toTime, Pageable pageable);
 
