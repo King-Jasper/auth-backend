@@ -27,7 +27,7 @@ import java.util.Optional;
  * Created by jnwanya on
  * Thu, 06 Feb, 2020
  */
-@Profile("!prod")
+@Profile({"dev", "sandbox", "mint-investment", "test"})
 @EnableSwagger2
 @Configuration
 public class SwaggerConfig {
