@@ -21,6 +21,7 @@ import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -50,6 +51,10 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final SystemIssueLogService systemIssueLogService;
 
+
+    @Value("${investment.min-liquidation-days:15}")
+    private int minimumLiquidationPeriodInDays;
+
     @Override
     public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
@@ -65,7 +70,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
-        int minimumLiquidationPeriodInDays = 15;
+       // int minimumLiquidationPeriodInDays = 15;
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }
