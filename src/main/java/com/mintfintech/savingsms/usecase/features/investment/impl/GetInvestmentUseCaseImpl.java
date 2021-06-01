@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +29,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private final InvestmentInterestEntityDao investmentInterestEntityDao;
