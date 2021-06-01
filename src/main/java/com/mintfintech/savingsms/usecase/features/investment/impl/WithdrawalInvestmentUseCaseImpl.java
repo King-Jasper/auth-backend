@@ -52,9 +52,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final SystemIssueLogService systemIssueLogService;
 
 
-    @Value("${investment.min-liquidation-days:15}")
-    private int minimumLiquidationPeriodInDays;
-
     @Override
     public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
@@ -71,6 +68,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
        // int minimumLiquidationPeriodInDays = 15;
+        int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }

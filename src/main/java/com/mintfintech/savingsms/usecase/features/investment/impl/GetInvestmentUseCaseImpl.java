@@ -40,9 +40,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
     private final ApplicationProperty applicationProperty;
 
-    @Value("${investment.min-liquidation-days:15}")
-    private int minimumLiquidationPeriodInDays;
-
     @Override
     public List<InvestmentTransactionModel> getInvestmentTransactions(String investmentId) {
 
@@ -95,6 +92,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setAccruedInterest(investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment));
         //model.setLockedInvestment(investment.isLockedInvestment());
 
+        int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }
