@@ -60,7 +60,7 @@ public class InvestmentPlanUseCaseImpl implements InvestmentPlanUseCase {
                         .minimumDuration(investmentTenorEntity.getMinimumDuration())
                         .penaltyRate(investmentTenorEntity.getPenaltyRate())
                         .build()
-                ).sorted(Comparator.comparing(InvestmentTenorModel::getDescription))
+                ).sorted(Comparator.comparing(InvestmentTenorModel::getMinimumDuration))
                 .collect(Collectors.toList());
     }
 
