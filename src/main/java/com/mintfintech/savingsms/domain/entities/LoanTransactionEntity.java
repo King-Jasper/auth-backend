@@ -51,4 +51,6 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
 
     private String responseMessage;
 
+
+
 }
