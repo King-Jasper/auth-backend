@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
@@ -12,20 +13,23 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
+import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
     private final InvestmentInterestEntityDao investmentInterestEntityDao;
@@ -34,6 +38,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     private final MintAccountEntityDao mintAccountEntityDao;
     private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
     private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
+    private final ApplicationProperty applicationProperty;
 
     @Override
     public List<InvestmentTransactionModel> getInvestmentTransactions(String investmentId) {
@@ -85,7 +90,20 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setType(investment.getInvestmentType().name());
         model.setAmountInvested(investment.getAmountInvested());
         model.setAccruedInterest(investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment));
-        model.setLockedInvestment(investment.isLockedInvestment());
+        //model.setLockedInvestment(investment.isLockedInvestment());
+
+        int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
+        if (!applicationProperty.isLiveEnvironment()) {
+            minimumLiquidationPeriodInDays = 2;
+        }
+        boolean canLiquidate = false;
+        if(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
+            long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+            if(daysPast <= minimumLiquidationPeriodInDays) {
+                canLiquidate = true;
+            }
+        }
+        model.setCanLiquidate(canLiquidate);
         model.setInterestRate(investment.getInterestRate());
         model.setCode(investment.getCode());
         model.setDateWithdrawn(investment.getDateWithdrawn() != null ? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);

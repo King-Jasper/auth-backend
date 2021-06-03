@@ -24,7 +24,7 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
 
     private String dateWithdrawn;
 
-    private boolean lockedInvestment;
+    private boolean canLiquidate;
 
     private double interestRate;
 

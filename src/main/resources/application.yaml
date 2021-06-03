@@ -72,3 +72,4 @@ loan:
 
 investment:
   max-liquidate-rate: 80
+  min-liquidation-days: 15

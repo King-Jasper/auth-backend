@@ -25,6 +25,7 @@ import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -57,6 +58,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final ApplicationEventService applicationEventService;
     private final AppUserEntityDao appUserEntityDao;
 
+
     @Override
     public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
@@ -72,7 +74,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
-        int minimumLiquidationPeriodInDays = 15;
+       // int minimumLiquidationPeriodInDays = 15;
+        int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }
@@ -252,7 +255,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setBankAccount(withdrawal.getCreditAccount());
         transaction.setTransactionAmount(withdrawal.getInterest());
         transaction.setTransactionReference(reference);
-        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
@@ -439,7 +442,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setBankAccount(withdrawal.getCreditAccount());
         transaction.setTransactionAmount(withdrawal.getAmount());
         transaction.setTransactionReference(reference);
-        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
+        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
