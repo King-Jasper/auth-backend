@@ -13,8 +13,11 @@ import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
@@ -40,7 +43,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
-    private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
+    private final ApplicationEventService applicationEventService;
 
     @Override
     public LoanModel loanRequest(AuthenticatedUser currentUser, double amount, String loanType, String creditAccountId) {
@@ -77,6 +80,20 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         if (loanTypeConstant.equals(LoanTypeConstant.PAYDAY)) {
             loanRequestEntity = payDayLoanRequest(loanAmount, creditAccount, appUser);
         }
+
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .customerName(appUser.getName())
+                .recipient(appUser.getEmail())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
+
+        loanEmailEvent = LoanEmailEvent.builder()
+                .recipient(applicationProperty.getSystemAdminEmail())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
+
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
 

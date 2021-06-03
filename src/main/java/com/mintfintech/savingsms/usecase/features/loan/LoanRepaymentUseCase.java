@@ -8,8 +8,6 @@ public interface LoanRepaymentUseCase {
 
     void dispatchEmailToCustomersWithPaymentDueInTwoDays();
 
-    void dispatchEmailNotificationRepaymentOnDueDay();
-
     void checkDefaultedRepayment();
 
     void processPaymentOfOverDueRepayment(AccountCreditEvent accountCreditEvent);

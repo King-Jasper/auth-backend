@@ -20,13 +20,17 @@ import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConsta
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanTransactionRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -38,6 +42,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @Service
@@ -55,6 +60,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final AppUserEntityDao appUserEntityDao;
+    private final ApplicationEventService applicationEventService;
 
     @Transactional
     @Override
@@ -66,9 +72,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         if (loanRequestEntity.getApprovalStatus() != ApprovalStatusConstant.PENDING) {
             throw new BadRequestException("This loan request is not in pending state");
         }
+        AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
 
         if (approved) {
-            AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
             CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                     .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
 
@@ -86,6 +92,15 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanRequestEntity.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
 
             loanRequestEntityDao.saveRecord(loanRequestEntity);
+
+            LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .loanDueDate(loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .loanRepaymentAmount(loanRequestEntity.getRepaymentAmount())
+                    .recipient(appUser.getEmail())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
+
             startFundDisbursement(loanRequestEntity);
 
         } else {
@@ -96,6 +111,15 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanRequestEntity.setRejectionReason(reason);
 
             loanRequestEntityDao.saveRecord(loanRequestEntity);
+
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .recipient(appUser.getEmail())
+                    .loanAmount(loanRequestEntity.getLoanAmount())
+                    .reason(reason)
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
+
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
