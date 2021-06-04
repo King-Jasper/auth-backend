@@ -92,10 +92,13 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
 
+        BigDecimal totalAccruedInterest = investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment);
+
         model.setStatus(investment.getInvestmentStatus().name());
         model.setType(investment.getInvestmentType().name());
         model.setAmountInvested(investment.getAmountInvested());
-        model.setAccruedInterest(investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment));
+        model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_EVEN));
+        model.setAccruedInterest(investment.getAccruedInterest());
         //model.setLockedInvestment(investment.isLockedInvestment());
 
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
