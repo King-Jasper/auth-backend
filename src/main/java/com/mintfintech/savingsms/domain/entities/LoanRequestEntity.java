@@ -74,4 +74,8 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private LoanTypeConstant loanType;
 
+    private String trackingReference;
+
+    private String accountNumber;
+
 }

@@ -8,14 +8,10 @@ public interface LoanRepaymentUseCase {
 
     void dispatchEmailToCustomersWithPaymentDueInTwoDays();
 
-    void checkDefaultedRepayment();
+    void dueLoanRepaymentCheck();
 
     void processPaymentOfOverDueRepayment(AccountCreditEvent accountCreditEvent);
 
     LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId);
-
-    void processLoanRecoverySuspenseAccountToMintLoanAccount();
-
-    void processInterestIncomeSuspenseAccountToInterestIncomeAccount();
 
 }

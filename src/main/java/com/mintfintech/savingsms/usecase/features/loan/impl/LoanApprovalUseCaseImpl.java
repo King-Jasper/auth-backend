@@ -1,42 +1,27 @@
 package com.mintfintech.savingsms.usecase.features.loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
-import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanApprovalEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
-import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
-import com.mintfintech.savingsms.domain.entities.LoanApprovalEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
-import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.LoanTransactionRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.LoanApplicationRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.LoanApplicationResponseCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.NewLoanAccountResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
-import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
-import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
-import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -50,17 +35,16 @@ import java.util.List;
 public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
     private final LoanRequestEntityDao loanRequestEntityDao;
-    private final LoanTransactionEntityDao loanTransactionEntityDao;
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final ApplicationProperty applicationProperty;
     private final GetLoansUseCase getLoansUseCase;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
-    private final SystemIssueLogService systemIssueLogService;
-    private final LoanApprovalEntityDao loanApprovalEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final ApplicationEventService applicationEventService;
+    private final LoanTransactionEntityDao loanTransactionEntityDao;
 
     @Transactional
     @Override
@@ -75,237 +59,117 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
 
         if (approved) {
-            CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
-                    .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
 
-            if (loanRequestEntity.getLoanType() == LoanTypeConstant.PAYDAY) {
-                EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-                if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED) {
-                    throw new BadRequestException("Employment Information have not been verified for this user");
-                }
-            }
-
-            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.APPROVED);
-            loanRequestEntity.setApprovedDate(LocalDateTime.now());
-            loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
-            loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
-            loanRequestEntity.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
-
-            loanRequestEntityDao.saveRecord(loanRequestEntity);
-
-            LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
-                    .customerName(appUser.getName())
-                    .loanDueDate(loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
-                    .loanRepaymentAmount(loanRequestEntity.getRepaymentAmount())
-                    .recipient(appUser.getEmail())
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
-
-            startFundDisbursement(loanRequestEntity);
-
+            processLoanApproval(loanRequestEntity, appUser, authenticatedUser);
         } else {
-            loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
-            loanRequestEntity.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
-            loanRequestEntity.setApproveByName(authenticatedUser.getUsername());
-            loanRequestEntity.setApproveByUserId(authenticatedUser.getUserId());
-            loanRequestEntity.setRejectionReason(reason);
 
-            loanRequestEntityDao.saveRecord(loanRequestEntity);
-
-            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
-                    .customerName(appUser.getName())
-                    .recipient(appUser.getEmail())
-                    .loanAmount(loanRequestEntity.getLoanAmount())
-                    .reason(reason)
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
-
+            processLoanDecline(loanRequestEntity, appUser, authenticatedUser, reason);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
     }
 
-    private void startFundDisbursement(LoanRequestEntity loan) {
-
-        LoanApprovalEntity loanApprovalEntity = LoanApprovalEntity.builder()
-                .loanRequest(loan)
-                .loanTransactionType(LoanTransactionTypeConstant.PENDING_MINT_TO_SUSPENSE)
-                .build();
-        loanApprovalEntityDao.saveRecord(loanApprovalEntity);
-    }
-
     @Override
-    public void creditLoanSuspenseAccount(LoanRequestEntity loan, LoanApprovalEntity approval) {
+    public void processApprovedLoans() {
 
-        String ref = loanRequestEntityDao.generateLoanTransactionRef();
+        List<LoanRequestEntity> loans = loanRequestEntityDao.getApprovedLoans();
 
-        approval.setLoanSuspenseCreditReference(ref);
-        approval.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_MINT_TO_SUSPENSE);
-        loanApprovalEntityDao.saveAndFlush(approval);
+        for (LoanRequestEntity loan : loans) {
+            MsClientResponse<NewLoanAccountResponseCBS> msClientResponse = coreBankingServiceClient.getLoanAccountDetails(loan.getTrackingReference());
 
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(loan.getLoanAmount())
-                .loanTransactionType(LoanTransactionTypeConstant.MINT_TO_SUSPENSE.name())
-                .narration(constructLoanApprovalNarration(loan, ref))
-                .reference(ref)
-                .build();
+            if (msClientResponse.isSuccess() && StringUtils.isNotEmpty(msClientResponse.getData().getAccountNumber())) {
 
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanApproval(request);
+                NewLoanAccountResponseCBS responseCBS = msClientResponse.getData();
 
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Approval Issue", "Mint To Suspense funding failed", message);
-            approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_MINT_TO_SUSPENSE);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            approval.setLoanSuspenseCreditResponseCode(responseCBS.getResponseCode());
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.PENDING_INTEREST_TO_SUSPENSE);
-            } else {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_MINT_TO_SUSPENSE);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Approval Issue", "Mint To Suspense funding failed", message);
-            }
-        }
-
-        loanApprovalEntityDao.saveRecord(approval);
-    }
-
-    @Override
-    public void creditInterestIncomeSuspenseAccount(LoanRequestEntity loan, LoanApprovalEntity approval) {
-
-        String ref = loanRequestEntityDao.generateLoanTransactionRef();
-
-        approval.setLoanIncomeSuspenseCreditReference(ref);
-        approval.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_INTEREST_TO_SUSPENSE);
-        loanApprovalEntityDao.saveAndFlush(approval);
-
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(loan.getLoanInterest())
-                .loanTransactionType(LoanTransactionTypeConstant.INTEREST_TO_SUSPENSE.name())
-                .narration(constructLoanApprovalNarration(loan, ref))
-                .reference(ref)
-                .build();
-
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanApproval(request);
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Approval Issue", "Interest To Suspense funding failed", message);
-            approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_INTEREST_TO_SUSPENSE);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            approval.setLoanIncomeSuspenseCreditCode(responseCBS.getResponseCode());
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_CUSTOMER);
-            } else {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_INTEREST_TO_SUSPENSE);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Approval Issue", "Interest To Suspense funding failed", message);
-            }
-        }
-        loanApprovalEntityDao.saveRecord(approval);
-    }
-
-    @Override
-    public void creditCustomerAccount(LoanRequestEntity loan, LoanApprovalEntity approval) {
-
-        String ref = loanRequestEntityDao.generateLoanTransactionRef();
-
-        LoanTransactionEntity transaction = LoanTransactionEntity.builder()
-                .transactionType(TransactionTypeConstant.CREDIT)
-                .transactionReference(ref)
-                .transactionAmount(loan.getLoanAmount())
-                .autoDebit(false)
-                .loanRequest(loan)
-                .status(TransactionStatusConstant.PENDING)
-                .build();
-
-        transaction = loanTransactionEntityDao.saveRecord(transaction);
-        approval.setDisbursementTransaction(transaction);
-        approval.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_SUSPENSE_TO_CUSTOMER);
-        loanApprovalEntityDao.saveAndFlush(approval);
-
-        MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
-
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(loan.getLoanAmount())
-                .loanTransactionType(LoanTransactionTypeConstant.SUSPENSE_TO_CUSTOMER.name())
-                .narration(constructLoanApprovalNarration(loan, ref))
-                .reference(ref)
-                .accountNumber(bankAccountEntity.getAccountNumber())
-                .build();
-
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanApproval(request);
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Approval Issue", "Suspense To Customer funding failed", message);
-            transaction.setStatus(TransactionStatusConstant.FAILED);
-            approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_CUSTOMER);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            transaction.setResponseCode(responseCBS.getResponseCode());
-            transaction.setResponseMessage(responseCBS.getResponseMessage());
-            transaction.setExternalReference(responseCBS.getBankOneReference());
-
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSED);
-                transaction.setStatus(TransactionStatusConstant.SUCCESSFUL);
-
+                loan.setAccountNumber(responseCBS.getAccountNumber());
                 loan.setApprovalStatus(ApprovalStatusConstant.DISBURSED);
                 loanRequestEntityDao.saveRecord(loan);
 
-                //send disbursement email
-            } else {
-                approval.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_CUSTOMER);
-                transaction.setStatus(TransactionStatusConstant.FAILED);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Approval Issue", "Suspense To Customer funding failed", message);
+                LoanTransactionEntity transaction = LoanTransactionEntity.builder()
+                        .loanRequest(loan)
+                        .transactionAmount(loan.getLoanAmount())
+                        .status(TransactionStatusConstant.SUCCESSFUL)
+                        .transactionType(TransactionTypeConstant.CREDIT)
+                        .build();
+
+                loanTransactionEntityDao.saveRecord(transaction);
             }
         }
-        loanTransactionEntityDao.saveRecord(transaction);
-        loanApprovalEntityDao.saveRecord(approval);
     }
 
-    @Override
-    public void processMintToSuspenseAccount() {
-        List<LoanApprovalEntity> loanApprovals = loanApprovalEntityDao.getPendingMintToSuspenseTransaction();
-        for (LoanApprovalEntity approval : loanApprovals) {
-            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(approval.getLoanRequest().getId());
-            creditLoanSuspenseAccount(loan, approval);
+    private void processLoanApproval(LoanRequestEntity loanRequest, AppUserEntity appUser, AuthenticatedUser authenticatedUser) {
+        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
+                .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
+
+        if (loanRequest.getLoanType() == LoanTypeConstant.PAYDAY) {
+            EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
+            if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED) {
+                throw new BadRequestException("Employment Information have not been verified for this user");
+            }
+        }
+
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(loanRequest.getBankAccount().getId());
+
+        LoanApplicationRequestCBS request = LoanApplicationRequestCBS.builder()
+                .loanType(loanRequest.getLoanType().name())
+                .accountNumber(bankAccount.getAccountNumber())
+                .amount(loanRequest.getLoanAmount().intValue())
+                .build();
+
+        MsClientResponse<LoanApplicationResponseCBS> msClientResponse = coreBankingServiceClient.createLoanApplication(request);
+
+        if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
+                && msClientResponse.isSuccess()
+                && StringUtils.isNotEmpty(msClientResponse.getData().getTrackingReference())
+                && msClientResponse.getData().isSuccess()
+        ) {
+            LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
+
+            loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
+            loanRequest.setApprovedDate(LocalDateTime.now());
+            loanRequest.setApproveByName(authenticatedUser.getUsername());
+            loanRequest.setApproveByUserId(authenticatedUser.getUserId());
+            loanRequest.setTrackingReference(responseCBS.getTrackingReference());
+            loanRequest.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
+            loanRequestEntityDao.saveRecord(loanRequest);
+
+            MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
+            if (StringUtils.isEmpty(mintAccount.getBankOneCustomerId())) {
+                mintAccount.setBankOneCustomerId(responseCBS.getCustomerId());
+                mintAccountEntityDao.saveRecord(mintAccount);
+            }
+
+            LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
+                    .customerName(appUser.getName())
+                    .loanDueDate(loanRequest.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    .loanRepaymentAmount(loanRequest.getRepaymentAmount())
+                    .recipient(appUser.getEmail())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
+        } else {
+            throw new BusinessLogicConflictException("Unable to approve loan at the moment. Please try again later.");
         }
     }
 
-    @Override
-    public void processInterestToSuspenseAccount() {
-        List<LoanApprovalEntity> loanApprovals = loanApprovalEntityDao.getPendingInterestToSuspenseTransaction();
+    private void processLoanDecline(LoanRequestEntity loanRequest,
+                                    AppUserEntity appUser,
+                                    AuthenticatedUser authenticatedUser,
+                                    String reason
+    ) {
+        loanRequest.setApprovalStatus(ApprovalStatusConstant.DECLINED);
+        loanRequest.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
+        loanRequest.setApproveByName(authenticatedUser.getUsername());
+        loanRequest.setApproveByUserId(authenticatedUser.getUserId());
+        loanRequest.setRejectionReason(reason);
 
-        for (LoanApprovalEntity approval : loanApprovals) {
-            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(approval.getLoanRequest().getId());
-            creditInterestIncomeSuspenseAccount(loan, approval);
-        }
-    }
+        loanRequestEntityDao.saveRecord(loanRequest);
 
-    @Override
-    public void processSuspenseAccountToCustomer() {
-        List<LoanApprovalEntity> loanApprovals = loanApprovalEntityDao.getPendingSuspenseToCustomerTransaction();
-
-        for (LoanApprovalEntity approval : loanApprovals) {
-            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(approval.getLoanRequest().getId());
-            creditCustomerAccount(loan, approval);
-
-        }
-    }
-
-    private String constructLoanApprovalNarration(LoanRequestEntity loanRequestEntity, String reference) {
-        String narration = String.format("LA-%s %s", loanRequestEntity.getLoanId(), reference);
-        if (narration.length() > 61) {
-            return narration.substring(0, 60);
-        }
-        return narration;
+        LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                .customerName(appUser.getName())
+                .recipient(appUser.getEmail())
+                .loanAmount(loanRequest.getLoanAmount())
+                .reason(reason)
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
     }
 }

@@ -27,35 +27,26 @@ public class LoanJob {
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
     }
 
-    @SchedulerLock(name = "LoanJob_runCheckDefaultedLoanPaymentService", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 50 23 1/1 * ?") // runs every day at 11:50pm.
-    public void runCheckDefaultedLoanPaymentService() {
-        loanRepaymentUseCase.checkDefaultedRepayment();
+    @SchedulerLock(name = "LoanJob_runDueLoanRepaymentCheckService", lockAtMostForString = "PT45M")
+    @Scheduled(cron = "0 00 12 1/1 * ?") // runs every day at 12:00pm.
+    public void runDueLoanRepaymentCheckService() {
+        loanRepaymentUseCase.dueLoanRepaymentCheck();
     }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "LoanJob_runApprovedLoanPendingDisbursement", lockAtMostForString = "PT6M")
-    public void runApprovedLoanPendingDisbursement() {
+    @SchedulerLock(name = "LoanJob_runProcessApprovedLoans", lockAtMostForString = "PT6M")
+    public void runProcessApprovedLoans() {
         try {
-            approvalUseCase.processMintToSuspenseAccount();
-            Thread.sleep(500);
-            approvalUseCase.processInterestToSuspenseAccount();
-            Thread.sleep(500);
-            approvalUseCase.processSuspenseAccountToCustomer();
+            approvalUseCase.processApprovedLoans();
         } catch (Exception ignored) {
         }
     }
 
-    @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "LoanJob_runPendingApprovedRepayment", lockAtMostForString = "PT6M")
-    public void runPendingApprovedRepayment() {
-        try {
-            loanRepaymentUseCase.processLoanRecoverySuspenseAccountToMintLoanAccount();
-            Thread.sleep(500);
-            loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
-        } catch (Exception ignored) {
-        }
+    @Scheduled(cron = "0 0 7-20 ? * *") // runs every 1 hour from 7am to 8pm
+    @SchedulerLock(name = "InvestmentMaturityUpdateJob_processInvestmentMaturityUpdate", lockAtMostForString = "PT30M")
+    public void processInvestmentMaturityUpdate() {
+        log.info("cron task processInvestmentMaturityUpdate");
+        updateInvestmentMaturityUseCase.updateStatusForMaturedInvestment();
     }
-
 
 }

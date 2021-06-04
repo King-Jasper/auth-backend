@@ -1,34 +1,34 @@
 package com.mintfintech.savingsms.usecase.features.loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRepaymentEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRepaymentEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
-import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.LoanTransactionRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRequestCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
-import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanRepaymentEmailEvent;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
-import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
-import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
-import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -53,9 +53,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     private final GetLoansUseCase getLoansUseCase;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final CoreBankingServiceClient coreBankingServiceClient;
-    private final SystemIssueLogService systemIssueLogService;
     private final UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
-    private final LoanRepaymentEntityDao repaymentEntityDao;
     private final ApplicationEventService applicationEventService;
 
 
@@ -81,16 +79,22 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     }
 
     @Override
-    public void checkDefaultedRepayment() {
+    public void dueLoanRepaymentCheck() {
         List<LoanRequestEntity> repaymentDueToday = loanRequestEntityDao.getLoanRepaymentDueToday();
 
-        repaymentDueToday.forEach(loanRequestEntity -> {
-            loanRequestEntity.setRepaymentStatus(LoanRepaymentStatusConstant.FAILED);
-            loanRequestEntityDao.saveRecord(loanRequestEntity);
+        if (repaymentDueToday.isEmpty()) {
+            return;
+        }
 
-            AppUserEntity loanOwner = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
+        repaymentDueToday.forEach(loan -> {
 
-            customerLoanProfileUseCase.updateCustomerRating(loanOwner);
+            List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loan);
+
+            for (LoanTransactionEntity transaction : transactions) {
+                if (transaction.isLienActive()) {
+                    removeLienFromAccount(loan, transaction);
+                }
+            }
         });
     }
 
@@ -131,9 +135,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 }
 
             }
-
         }
-
     }
 
     @Override
@@ -168,9 +170,9 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             amountToPay = amountPending;
         }
 
-        LoanTransactionEntity transaction = debitCustomerAccount(loan, false, amountToPay, debitAccount.getAccountNumber());
+        Optional<LoanTransactionEntity> optionalLoanTransaction = placeLienOnAccount(loan, amountToPay, debitAccount.getAccountNumber());
 
-        if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL) {
+        if (optionalLoanTransaction.isPresent()) {
             BigDecimal amountPaid = loan.getAmountPaid().add(amountToPay);
             loan.setAmountPaid(amountPaid);
             loan.setRepaymentStatus(amountPaid.compareTo(loan.getRepaymentAmount()) < 0 ? LoanRepaymentStatusConstant.PARTIALLY_PAID : LoanRepaymentStatusConstant.PAID);
@@ -184,9 +186,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_SUCCESS, new EventModel<>(event));
 
         } else {
-
             LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
-                    .reason(StringUtils.defaultString(transaction.getResponseMessage(), "Transaction Declined"))
+                    .reason(StringUtils.defaultString(optionalLoanTransaction.get().getResponseMessage(), "Transaction Declined"))
                     .customerName(appUser.getName())
                     .recipient(appUser.getEmail())
                     .build();
@@ -197,7 +198,6 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (loan.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
             customerLoanProfileUseCase.updateCustomerRating(appUser);
-            moveFundsForFullyPaidLoans(loan);
         } else {
             LoanRepaymentEmailEvent event = LoanRepaymentEmailEvent.builder()
                     .loanBalance(loan.getRepaymentAmount().subtract(loan.getAmountPaid()))
@@ -208,172 +208,59 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     .build();
 
             applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PARTIAL_REPAYMENT_SUCCESS, new EventModel<>(event));
-
         }
 
         return getLoansUseCase.toLoanModel(loan);
     }
 
-    @Override
-    public void processLoanRecoverySuspenseAccountToMintLoanAccount() {
-        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingRecoveryToMintTransaction();
+    private void removeLienFromAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
 
-        for (LoanRepaymentEntity repayment : repayments) {
-            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(repayment.getLoanRequest().getId());
-            creditMintLoanAccount(loan, repayment);
-        }
-    }
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
 
-    @Override
-    public void processInterestIncomeSuspenseAccountToInterestIncomeAccount() {
-        List<LoanRepaymentEntity> repayments = repaymentEntityDao.getPendingSuspenseToIncomeTransaction();
-
-        for (LoanRepaymentEntity repayment : repayments) {
-            LoanRequestEntity loan = loanRequestEntityDao.getRecordById(repayment.getLoanRequest().getId());
-            creditLoanInterestIncomeAccount(loan, repayment);
-        }
-    }
-
-    private LoanTransactionEntity debitCustomerAccount(LoanRequestEntity loan, Boolean isAutoDebit, BigDecimal amountToPay, String debitAccountNumber) {
-
-        String ref = loanRequestEntityDao.generateLoanTransactionRef();
-
-        LoanTransactionEntity transaction = LoanTransactionEntity.builder()
-                .loanRequest(loan)
-                .autoDebit(isAutoDebit)
-                .transactionAmount(amountToPay)
-                .transactionReference(ref)
-                .status(TransactionStatusConstant.PENDING)
-                .transactionType(TransactionTypeConstant.DEBIT)
+        LienAccountRequestCBS request = LienAccountRequestCBS.builder()
+                .accountNumber(debitAccount.getAccountNumber())
+                .referenceID(transaction.getLienReference())
                 .build();
 
-        transaction = loanTransactionEntityDao.saveRecord(transaction);
+        MsClientResponse<LienAccountResponseCBS> msClientResponse = coreBankingServiceClient.removeLienOnAccount(request);
 
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(transaction.getTransactionAmount())
-                .loanTransactionType(LoanTransactionTypeConstant.CUSTOMER_TO_RECOVERY.name())
-                .narration(constructLoanRepaymentNarration(loan, ref))
-                .reference(ref)
+        if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
+                && msClientResponse.isSuccess()
+                && msClientResponse.getData().isSuccess()) {
+
+            transaction.setLienActive(false);
+            loanTransactionEntityDao.saveRecord(transaction);
+        }
+    }
+
+    private Optional<LoanTransactionEntity> placeLienOnAccount(LoanRequestEntity loan, BigDecimal amountToPay, String debitAccountNumber) {
+
+        LienAccountRequestCBS request = LienAccountRequestCBS.builder()
                 .accountNumber(debitAccountNumber)
+                .amount(amountToPay)
+                .reason("Loan Repayment for " + loan.getLoanId())
                 .build();
 
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
+        MsClientResponse<LienAccountResponseCBS> msClientResponse = coreBankingServiceClient.placeLienOnAccount(request);
 
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Repayment Issue", "Customer To Loan Recovery Suspense funding failed", message);
-            transaction.setStatus(TransactionStatusConstant.FAILED);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            transaction.setResponseCode(responseCBS.getResponseCode());
-            transaction.setResponseMessage(responseCBS.getResponseMessage());
-            transaction.setExternalReference(responseCBS.getBankOneReference());
+        if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
+                && msClientResponse.isSuccess()
+                && msClientResponse.getData().isSuccess()) {
 
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                transaction.setStatus(TransactionStatusConstant.SUCCESSFUL);
-            } else {
-                transaction.setStatus(TransactionStatusConstant.FAILED);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), transaction.getTransactionReference(), msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue", "Customer To Loan Recovery Suspense funding failed", message);
-            }
+            LienAccountResponseCBS responseCBS = msClientResponse.getData();
 
+            LoanTransactionEntity transaction = LoanTransactionEntity.builder()
+                    .loanRequest(loan)
+                    .transactionAmount(amountToPay)
+                    .status(TransactionStatusConstant.SUCCESSFUL)
+                    .transactionType(TransactionTypeConstant.DEBIT)
+                    .lienActive(true)
+                    .lienReference(responseCBS.getReferenceID())
+                    .responseCode(responseCBS.getStatus())
+                    .responseMessage(responseCBS.getMessage())
+                    .build();
+            return Optional.of(loanTransactionEntityDao.saveRecord(transaction));
         }
-        return loanTransactionEntityDao.saveRecord(transaction);
+        return Optional.empty();
     }
-
-    private void moveFundsForFullyPaidLoans(LoanRequestEntity loan) {
-
-        LoanRepaymentEntity loanRepayment = LoanRepaymentEntity.builder()
-                .loanRequest(loan)
-                .loanTransactionType(LoanTransactionTypeConstant.PENDING_RECOVERY_TO_MINT)
-                .build();
-
-        repaymentEntityDao.saveRecord(loanRepayment);
-    }
-
-    private void creditMintLoanAccount(LoanRequestEntity loan, LoanRepaymentEntity repayment) {
-
-        String ref = loanRequestEntityDao.generateLoanId();
-
-        repayment.setLoanRecoveryCreditReference(ref);
-        repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_RECOVERY_TO_MINT);
-        repaymentEntityDao.saveAndFlush(repayment);
-
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(loan.getLoanAmount())
-                .loanTransactionType(LoanTransactionTypeConstant.RECOVERY_TO_MINT.name())
-                .narration(constructLoanRepaymentNarration(loan, ref))
-                .fee(loan.getLoanInterest())
-                .reference(ref)
-                .build();
-
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Repayment Issue", "Loan Recovery Suspense To Mint funding failed", message);
-            repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            repayment.setLoanRecoveryCreditCode(responseCBS.getResponseCode());
-
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                repayment.setLoanTransactionType(LoanTransactionTypeConstant.PENDING_SUSPENSE_TO_INCOME);
-            } else {
-                repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_RECOVERY_TO_MINT);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue", "Loan Recovery Suspense To Mint funding failed", message);
-            }
-        }
-        repaymentEntityDao.saveRecord(repayment);
-    }
-
-    private void creditLoanInterestIncomeAccount(LoanRequestEntity loan, LoanRepaymentEntity repayment) {
-
-        String ref = loanRequestEntityDao.generateLoanId();
-
-        repayment.setLoanIncomeCreditReference(ref);
-        repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSING_SUSPENSE_TO_INCOME);
-        repaymentEntityDao.saveAndFlush(repayment);
-
-        LoanTransactionRequestCBS request = LoanTransactionRequestCBS.builder()
-                .loanId(loan.getLoanId())
-                .amount(loan.getLoanInterest())
-                .loanTransactionType(LoanTransactionTypeConstant.SUSPENSE_TO_INCOME.name())
-                .narration(constructLoanRepaymentNarration(loan, ref))
-                .reference(ref)
-                .build();
-
-        MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processLoanRepayment(request);
-
-        if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
-            String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Loan Repayment Issue", "Interest Income Suspense To Interest Income funding failed", message);
-            repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
-        } else {
-            FundTransferResponseCBS responseCBS = msClientResponse.getData();
-            repayment.setLoanIncomeCreditCode(responseCBS.getResponseCode());
-
-            if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
-                repayment.setLoanTransactionType(LoanTransactionTypeConstant.PROCESSED);
-            } else {
-                repayment.setLoanTransactionType(LoanTransactionTypeConstant.FAILED_SUSPENSE_TO_INCOME);
-                String message = String.format("Loan Id: %s; transaction Id: %s ; message: %s", loan.getLoanId(), ref, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Loan Repayment Issue", "Interest Income Suspense To Interest Income funding failed", message);
-            }
-        }
-        repaymentEntityDao.saveRecord(repayment);
-    }
-
-    private String constructLoanRepaymentNarration(LoanRequestEntity loanRequestEntity, String reference) {
-        String narration = String.format("LR-%s %s", loanRequestEntity.getLoanId(), reference);
-        if (narration.length() > 61) {
-            return narration.substring(0, 60);
-        }
-        return narration;
-    }
-
-
 }

@@ -40,12 +40,14 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
     @Enumerated(EnumType.STRING)
     private TransactionTypeConstant transactionType;
 
-    private boolean autoDebit;
+    @Builder.Default
+    private boolean lienActive = false;
 
-    @Column(nullable = false, unique = true)
     private String transactionReference;
 
     private String externalReference;
+
+    private String lienReference;
 
     private String responseCode;
 
