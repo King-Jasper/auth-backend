@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
@@ -32,5 +33,10 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
     @Override
     public List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity, TransactionTypeConstant type, TransactionStatusConstant status) {
         return repository.getAllByInvestmentAndTransactionTypeAndTransactionStatus(investmentEntity, type, status);
+    }
+
+    @Override
+    public List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity) {
+        return repository.getAllByRecordStatusAndInvestment(RecordStatusConstant.ACTIVE, investmentEntity);
     }
 }

@@ -46,22 +46,27 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         InvestmentEntity investment = investmentEntityDao.findByCode(investmentId)
                 .orElseThrow(() -> new NotFoundException("Invalid investment id " + investmentId));
 
+        List<InvestmentTransactionEntity> transactionEntities = investmentTransactionEntityDao.getTransactionsByInvestment(investment);
+       /*
         List<InvestmentTransactionEntity> fundings
                 = investmentTransactionEntityDao.getTransactionsByInvestment(investment, TransactionTypeConstant.DEBIT, TransactionStatusConstant.SUCCESSFUL);
 
         List<InvestmentWithdrawalEntity> withdrawals
                 = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStageConstant.COMPLETED);
-
+        */
         List<InvestmentTransactionModel> transactions = new ArrayList<>();
 
-        fundings.forEach(funding -> {
+        transactionEntities.forEach(funding -> {
             InvestmentTransactionModel transaction = new InvestmentTransactionModel();
             transaction.setAmount(funding.getTransactionAmount());
             transaction.setDate(funding.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            transaction.setType("Investment Funding");
+            transaction.setType(funding.getTransactionType().name());
+            transaction.setTransactionStatus(funding.getTransactionStatus().name());
+            transaction.setReference(funding.getTransactionReference());
             transactions.add(transaction);
         });
 
+        /*
         withdrawals.forEach(withdrawal -> {
             InvestmentTransactionModel transaction = new InvestmentTransactionModel();
             transaction.setAmount(withdrawal.getAmount());
@@ -69,6 +74,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             transaction.setType("Investment Liquidation");
             transactions.add(transaction);
         });
+        */
 
         transactions.sort(Comparator.comparing(o -> LocalDate.parse(o.getDate())));
 

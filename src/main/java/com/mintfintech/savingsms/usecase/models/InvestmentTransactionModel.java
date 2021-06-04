@@ -12,4 +12,8 @@ public class InvestmentTransactionModel {
     private String date;
 
     private String type;
+
+    private String transactionStatus;
+
+    private String reference;
 }
