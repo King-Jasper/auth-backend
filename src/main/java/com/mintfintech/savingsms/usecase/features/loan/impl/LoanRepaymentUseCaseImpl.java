@@ -1,13 +1,7 @@
 package com.mintfintech.savingsms.usecase.features.loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
@@ -15,12 +9,13 @@ import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountResponseCBS;
+import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanRepaymentEmailEvent;
@@ -55,6 +50,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private final ApplicationEventService applicationEventService;
+    private final SystemIssueLogService systemIssueLogService;
+    private final MintAccountEntityDao mintAccountEntityDao;
 
 
     @Override
@@ -96,46 +93,6 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 }
             }
         });
-    }
-
-    @Override
-    public void processPaymentOfOverDueRepayment(AccountCreditEvent accountCredit) {
-        Optional<MintBankAccountEntity> bankAccountEntityOptional = mintBankAccountEntityDao.findByAccountNumber(accountCredit.getAccountNumber());
-        if (!bankAccountEntityOptional.isPresent()) {
-            return;
-        }
-
-        List<LoanRequestEntity> overDueLoanRepayments = loanRequestEntityDao.getOverdueLoanRepayment(bankAccountEntityOptional.get());
-
-        if (overDueLoanRepayments.isEmpty()) {
-            return;
-        }
-
-        for (LoanRequestEntity loan : overDueLoanRepayments) {
-
-            BigDecimal amountToPay = loan.getRepaymentAmount().subtract(loan.getAmountPaid());
-
-            MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
-            debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
-
-            BigDecimal availableBalance = debitAccount.getAvailableBalance();
-
-            if (availableBalance.compareTo(amountToPay) < 0) {
-                amountToPay = availableBalance;
-            }
-
-            LoanTransactionEntity transaction = debitCustomerAccount(loan, true, amountToPay, debitAccount.getAccountNumber());
-
-            if (transaction.getStatus() == TransactionStatusConstant.SUCCESSFUL) {
-                loan.setAmountPaid(loan.getAmountPaid().add(amountToPay));
-                loan = loanRequestEntityDao.saveRecord(loan);
-
-                if (loan.getRepaymentAmount().compareTo(loan.getAmountPaid()) == 0) {
-                    moveFundsForFullyPaidLoans(loan);
-                }
-
-            }
-        }
     }
 
     @Override
@@ -187,7 +144,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         } else {
             LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
-                    .reason(StringUtils.defaultString(optionalLoanTransaction.get().getResponseMessage(), "Transaction Declined"))
+                    .reason(StringUtils.defaultString("Transaction Declined"))
                     .customerName(appUser.getName())
                     .recipient(appUser.getEmail())
                     .build();
@@ -213,6 +170,37 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
         return getLoansUseCase.toLoanModel(loan);
     }
 
+    @Override
+    public void checkDueLoanPendingDebit() {
+
+        List<LoanRequestEntity> loans = loanRequestEntityDao.getPendingDebitLoans();
+
+        if (loans.isEmpty()){
+            return;
+        }
+
+        for (LoanRequestEntity loan : loans) {
+
+            MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
+
+            MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
+
+            MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getAccountNumber());
+
+            if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
+                    && msClientResponse.isSuccess()
+                    && msClientResponse.getData().getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
+
+                LoanDetailResponseCBS responseCBS = msClientResponse.getData();
+
+                loan.setAmountPaid(responseCBS.getTotalAmountPaid());
+                loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
+
+                loanRequestEntityDao.saveRecord(loan);
+            }
+        }
+    }
+
     private void removeLienFromAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
 
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
@@ -230,6 +218,9 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             transaction.setLienActive(false);
             loanTransactionEntityDao.saveRecord(transaction);
+        } else {
+            String message = String.format("Lien Reference: %s; Account number: %s ; message: %s", transaction.getLienReference(), debitAccount.getAccountNumber(), msClientResponse.getMessage());
+            systemIssueLogService.logIssue("Lien Removal Failure", "Account Lien Removal Failed", message);
         }
     }
 

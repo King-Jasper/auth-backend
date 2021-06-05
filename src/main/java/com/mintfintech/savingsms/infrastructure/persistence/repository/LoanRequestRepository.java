@@ -70,6 +70,13 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
     List<LoanRequestEntity> getOverdueLoanRepayment(MintBankAccountEntity mintBankAccountEntity);
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " r.repaymentStatus != com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.COMPLETED and" +
+            " r.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.DISBURSED and" +
+            " r.repaymentDueDate < NOW()")
+    List<LoanRequestEntity> getPendingDebitLoans();
+
+
+    @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
             " r.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.APPROVED and" +
             " r.trackingReference NOT NULL")
     List<LoanRequestEntity> getApprovedLoans();

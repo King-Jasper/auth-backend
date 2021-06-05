@@ -112,7 +112,7 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
     @Override
     public MsClientResponse<NewLoanAccountResponseCBS> getLoanAccountDetails(String trackingReference) {
         String baseUrl = getServiceBaseUrl();
-        String serviceUrl = String.format("%s/api/v1/loans/new?%s", baseUrl, trackingReference);
+        String serviceUrl = String.format("%s/api/v1/loans/new?trackingReference=%s", baseUrl, trackingReference);
 
         try {
             ClientResponse clientResponse = msRestClientService.getRequest(serviceUrl);
@@ -162,6 +162,24 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
             return response;
         } catch (Exception ex) {
             return MsClientResponse.<LienAccountResponseCBS>builder().success(false).build();
+        }
+    }
+
+    @Override
+    public MsClientResponse<LoanDetailResponseCBS> getLoanDetails(String customerId, String accountNumber) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/api/v1/loans?customerId=%s&loanAccountNumber=%s", baseUrl, customerId, accountNumber);
+
+        try {
+            ClientResponse clientResponse = msRestClientService.getRequest(serviceUrl);
+            Type responseType = new TypeToken<MsClientResponse<LoanDetailResponseCBS>>() {
+            }.getType();
+            MsClientResponse<LoanDetailResponseCBS> response = gson.fromJson(clientResponse.getResponseBody(), responseType);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            return response;
+        } catch (Exception ex) {
+            return MsClientResponse.<LoanDetailResponseCBS>builder().success(false).build();
         }
     }
 

@@ -194,4 +194,9 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     public List<LoanRequestEntity> getApprovedLoans() {
         return repository.getApprovedLoans();
     }
+
+    @Override
+    public List<LoanRequestEntity> getPendingDebitLoans() {
+        return repository.getPendingDebitLoans();
+    }
 }

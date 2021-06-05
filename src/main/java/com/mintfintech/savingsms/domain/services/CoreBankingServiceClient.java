@@ -25,4 +25,5 @@ public interface CoreBankingServiceClient {
     MsClientResponse<NewLoanAccountResponseCBS> getLoanAccountDetails(String trackingReference);
     MsClientResponse<LienAccountResponseCBS> placeLienOnAccount(LienAccountRequestCBS requestCBS);
     MsClientResponse<LienAccountResponseCBS> removeLienOnAccount(LienAccountRequestCBS requestCBS);
+    MsClientResponse<LoanDetailResponseCBS> getLoanDetails(String customerId, String accountNumber);
 }

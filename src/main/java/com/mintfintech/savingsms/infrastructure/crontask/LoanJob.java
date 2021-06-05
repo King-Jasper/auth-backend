@@ -42,11 +42,10 @@ public class LoanJob {
         }
     }
 
-    @Scheduled(cron = "0 0 7-20 ? * *") // runs every 1 hour from 7am to 8pm
-    @SchedulerLock(name = "InvestmentMaturityUpdateJob_processInvestmentMaturityUpdate", lockAtMostForString = "PT30M")
-    public void processInvestmentMaturityUpdate() {
-        log.info("cron task processInvestmentMaturityUpdate");
-        updateInvestmentMaturityUseCase.updateStatusForMaturedInvestment();
+    @Scheduled(cron = "0 0 9/3 ? * *") // runs every 3 hour starting from 9am daily
+    @SchedulerLock(name = "LoanJob_processCheckDueLoanPendingDebit", lockAtMostForString = "PT30M")
+    public void processCheckDueLoanPendingDebit() {
+        loanRepaymentUseCase.checkDueLoanPendingDebit();
     }
 
 }
