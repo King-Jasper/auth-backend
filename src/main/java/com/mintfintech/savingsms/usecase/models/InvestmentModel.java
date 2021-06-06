@@ -36,6 +36,8 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
 
     private BigDecimal amountInvested;
 
+   // private BigDecimal totalAmountInvested;
+
     private BigDecimal totalAmountWithdrawn;
 
     private BigDecimal totalAccruedInterest;

@@ -96,8 +96,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         model.setStatus(investment.getInvestmentStatus().name());
         model.setType(investment.getInvestmentType().name());
-        model.setAmountInvested(investment.getAmountInvested());
-        model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_EVEN));
+        model.setAmountInvested(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE ? investment.getAmountInvested() : investment.getTotalAmountInvested());
+        model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_UP));
         model.setAccruedInterest(investment.getAccruedInterest());
         //model.setLockedInvestment(investment.isLockedInvestment());
 
