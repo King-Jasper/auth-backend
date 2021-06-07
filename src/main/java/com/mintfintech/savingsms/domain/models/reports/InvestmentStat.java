@@ -20,11 +20,14 @@ public class InvestmentStat {
 
     private double outstandingInterest;
 
+    private BigDecimal totalExpectedReturns;
+
     public InvestmentStat(
             InvestmentStatusConstant investmentStatus,
             long totalRecords,
             BigDecimal totalInvestment,
             BigDecimal accruedInterest,
+            BigDecimal totalExpectedReturns,
             double outstandingInterest
     ) {
         this.investmentStatus = investmentStatus;
@@ -32,5 +35,6 @@ public class InvestmentStat {
         this.totalInvestment = totalInvestment;
         this.accruedInterest = accruedInterest;
         this.outstandingInterest = outstandingInterest;
+        this.totalExpectedReturns = totalExpectedReturns;
     }
 }

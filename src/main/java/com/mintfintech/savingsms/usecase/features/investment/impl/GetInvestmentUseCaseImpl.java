@@ -92,9 +92,9 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             minimumLiquidationPeriodInDays = 2;
         }
         boolean canLiquidate = false;
-        if(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
+        if (investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
             long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
-            if(daysPast >= minimumLiquidationPeriodInDays) {
+            if (daysPast >= minimumLiquidationPeriodInDays) {
                 canLiquidate = true;
             }
         }
@@ -148,21 +148,27 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         if (mintAccount.isPresent()) {
 
             if (status != null) {
-                List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
-                for (InvestmentStat stat : stats) {
-                    if (stat.getInvestmentStatus().equals(status)) {
-                        summary.setTotalInvestments(stat.getTotalRecords());
-                        summary.setTotalInvested(stat.getTotalInvestment());
-                        summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-                        summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                if (status == InvestmentStatusConstant.COMPLETED) {
+                    List<InvestmentStat> stats = investmentEntityDao.getStatsForCompletedInvestment(mintAccount.get());
+
+                    for (InvestmentStat stat : stats) {
+                        if (stat.getInvestmentStatus().equals(InvestmentStatusConstant.LIQUIDATED) || stat.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
+                            summary.setTotalInvestments(summary.getTotalInvestments() + stat.getTotalRecords());
+                            summary.setTotalInvested(summary.getTotalInvested().add(stat.getTotalInvestment()));
+                            summary.setTotalExpectedReturns(summary.getTotalExpectedReturns().add(stat.getTotalExpectedReturns()));
+                        }
                     }
+                } else {
+                    List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
-                    if(status.equals(InvestmentStatusConstant.COMPLETED) && stat.getInvestmentStatus().equals(InvestmentStatusConstant.LIQUIDATED)){
-                        summary.setTotalInvestments(summary.getTotalInvestments() + stat.getTotalRecords());
-                        summary.setTotalInvested(summary.getTotalInvested().add(stat.getTotalInvestment()));
-                        summary.setTotalProfit(summary.getTotalProfit().add(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
-                        summary.setTotalExpectedReturns(summary.getTotalExpectedReturns().add(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
+                    for (InvestmentStat stat : stats) {
+                        if (stat.getInvestmentStatus().equals(status)) {
+                            summary.setTotalInvestments(stat.getTotalRecords());
+                            summary.setTotalInvested(stat.getTotalInvestment());
+                            summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                            summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                        }
                     }
                 }
             } else {
