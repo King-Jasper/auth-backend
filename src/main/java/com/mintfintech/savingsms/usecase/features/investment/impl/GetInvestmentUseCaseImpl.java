@@ -1,8 +1,11 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
-import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
+import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -14,9 +17,7 @@ import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCas
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
 import org.hibernate.Hibernate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +41,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     private final AppUserEntityDao appUserEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
     private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
-    private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
     private final ApplicationProperty applicationProperty;
 
     @Override
@@ -47,13 +50,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .orElseThrow(() -> new NotFoundException("Invalid investment id " + investmentId));
 
         List<InvestmentTransactionEntity> transactionEntities = investmentTransactionEntityDao.getTransactionsByInvestment(investment);
-       /*
-        List<InvestmentTransactionEntity> fundings
-                = investmentTransactionEntityDao.getTransactionsByInvestment(investment, TransactionTypeConstant.DEBIT, TransactionStatusConstant.SUCCESSFUL);
-
-        List<InvestmentWithdrawalEntity> withdrawals
-                = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStageConstant.COMPLETED);
-        */
         List<InvestmentTransactionModel> transactions = new ArrayList<>();
 
         transactionEntities.forEach(funding -> {
@@ -65,16 +61,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             transaction.setReference(funding.getTransactionReference());
             transactions.add(transaction);
         });
-
-        /*
-        withdrawals.forEach(withdrawal -> {
-            InvestmentTransactionModel transaction = new InvestmentTransactionModel();
-            transaction.setAmount(withdrawal.getAmount());
-            transaction.setDate(withdrawal.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            transaction.setType("Investment Liquidation");
-            transactions.add(transaction);
-        });
-        */
 
         transactions.sort(Comparator.comparing(o -> LocalDate.parse(o.getDate())));
 
@@ -170,6 +156,13 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                         summary.setTotalInvested(stat.getTotalInvestment());
                         summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
                         summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                    }
+
+                    if(status.equals(InvestmentStatusConstant.COMPLETED) && stat.getInvestmentStatus().equals(InvestmentStatusConstant.LIQUIDATED)){
+                        summary.setTotalInvestments(summary.getTotalInvestments() + stat.getTotalRecords());
+                        summary.setTotalInvested(summary.getTotalInvested().add(stat.getTotalInvestment()));
+                        summary.setTotalProfit(summary.getTotalProfit().add(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
+                        summary.setTotalExpectedReturns(summary.getTotalExpectedReturns().add(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN)));
                     }
                 }
             } else {
