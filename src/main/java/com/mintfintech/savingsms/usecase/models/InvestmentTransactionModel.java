@@ -16,4 +16,6 @@ public class InvestmentTransactionModel {
     private String transactionStatus;
 
     private String reference;
+
+    private String description;
 }

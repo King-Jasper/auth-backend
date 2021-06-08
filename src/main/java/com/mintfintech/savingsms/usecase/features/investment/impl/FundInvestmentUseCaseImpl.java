@@ -62,6 +62,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         transaction.setTransactionType(TransactionTypeConstant.CREDIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Investment funding.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         processDebit(transaction, investmentEntity, debitAccount.getAccountNumber());

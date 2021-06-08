@@ -102,6 +102,15 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                     .build();
 
             investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
+
+            investment.setAmountInvested(BigDecimal.ZERO);
+            investment.setAccruedInterest(BigDecimal.ZERO);
+            investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(accruedInterest));
+            investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
+            investment.setDateWithdrawn(LocalDateTime.now());
+            investmentEntityDao.saveRecord(investment);
+
+
             sendInvestmentMaturityEmail(investment);
         }
     }

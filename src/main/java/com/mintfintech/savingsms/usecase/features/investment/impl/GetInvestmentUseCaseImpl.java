@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -60,6 +61,15 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             transaction.setType(funding.getTransactionType().name());
             transaction.setTransactionStatus(funding.getTransactionStatus().name());
             transaction.setReference(funding.getTransactionReference());
+            if(StringUtils.isNotEmpty(funding.getTransactionDescription())) {
+                transaction.setDescription(funding.getTransactionDescription());
+            }else {
+                if(funding.getTransactionType() == TransactionTypeConstant.DEBIT) {
+                    transaction.setDescription("Investment debit.");
+                }else {
+                    transaction.setDescription("Investment credit.");
+                }
+            }
             transactions.add(transaction);
         });
 

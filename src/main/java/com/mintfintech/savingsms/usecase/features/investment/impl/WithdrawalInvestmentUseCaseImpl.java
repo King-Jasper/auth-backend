@@ -258,6 +258,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Interest payout.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setInterestPayout(transaction);
@@ -321,6 +322,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Liquidation penalty charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setPenaltyCharge(transaction);
@@ -384,6 +386,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Withholding Tax Charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setWithholdingTaxCharge(transaction);
@@ -445,6 +448,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Investment principal payout.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setPrincipalPayout(transaction);
