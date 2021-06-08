@@ -78,7 +78,7 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
             " r.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.APPROVED and" +
-            " r.trackingReference NOT NULL")
+            " r.trackingReference is not NULL and r.accountNumber is null")
     List<LoanRequestEntity> getApprovedLoans();
 
 }
