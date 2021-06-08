@@ -77,6 +77,7 @@ public class InvestmentController {
                 .startFromDate(fromDate)
                 .startToDate(toDate)
                 .build();
+        //System.out.println(searchRequest.toString());
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
         ApiResponseJSON<InvestmentStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);

@@ -125,7 +125,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
         InvestmentStatusConstant status = null;
-        if(searchRequest.isCompletedRecords() && StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
+        if(StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
             status = InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus());
         }
 
