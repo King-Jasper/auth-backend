@@ -15,5 +15,6 @@ public class InvestmentSearchRequest {
     private LocalDate startToDate;
     private LocalDate matureFromDate;
     private LocalDate matureToDate;
+    private boolean completedRecords;
     private int duration;
 }

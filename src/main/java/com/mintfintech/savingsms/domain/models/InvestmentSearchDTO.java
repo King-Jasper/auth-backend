@@ -20,5 +20,6 @@ public class InvestmentSearchDTO {
     private String customerName;
     private LocalDateTime matureFromDate;
     private LocalDateTime matureToDate;
+    private boolean completedRecords;
     private int duration;
 }

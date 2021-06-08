@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCas
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -123,7 +124,10 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     public InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size) {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
-        InvestmentStatusConstant status = !searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null;
+        InvestmentStatusConstant status = null;
+        if(searchRequest.isCompletedRecords() && StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
+            status = InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus());
+        }
 
         InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
                 .startFromDate(searchRequest.getStartFromDate() != null ? searchRequest.getStartFromDate().atStartOfDay() : null)
@@ -134,6 +138,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .matureToDate(searchRequest.getMatureToDate() != null ? searchRequest.getMatureToDate().atTime(23, 59) : null)
                 .investmentStatus(status)
                 .account(mintAccount.orElse(null))
+                .completedRecords(searchRequest.isCompletedRecords())
                 .build();
 
         Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
