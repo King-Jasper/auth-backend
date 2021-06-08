@@ -48,7 +48,7 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
             "group by i.investmentStatus")
     List<InvestmentStat> getInvestmentStatistics(@Param("owner") MintAccountEntity accountEntity);
 
-    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.InvestmentStat(i.investmentStatus, count(i), sum(i.totalAmountInvested), sum(i.accruedInterest), sum(i.totalAmountWithdrawn), 0.0) " +
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.InvestmentStat(i.investmentStatus, count(i), sum(i.totalAmountWithdrawn - i.totalInterestWithdrawn), sum(i.totalInterestWithdrawn), sum(i.totalAmountWithdrawn), 0.0) " +
             "from InvestmentEntity i where " +
             "i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
             "i.owner =:owner " +

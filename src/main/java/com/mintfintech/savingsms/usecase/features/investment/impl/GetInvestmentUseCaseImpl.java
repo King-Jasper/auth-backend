@@ -61,12 +61,12 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             transaction.setType(funding.getTransactionType().name());
             transaction.setTransactionStatus(funding.getTransactionStatus().name());
             transaction.setReference(funding.getTransactionReference());
-            if(StringUtils.isNotEmpty(funding.getTransactionDescription())) {
+            if (StringUtils.isNotEmpty(funding.getTransactionDescription())) {
                 transaction.setDescription(funding.getTransactionDescription());
-            }else {
-                if(funding.getTransactionType() == TransactionTypeConstant.DEBIT) {
+            } else {
+                if (funding.getTransactionType() == TransactionTypeConstant.DEBIT) {
                     transaction.setDescription("Investment debit.");
-                }else {
+                } else {
                     transaction.setDescription("Investment credit.");
                 }
             }
@@ -89,14 +89,22 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
 
-        BigDecimal totalAccruedInterest = investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment);
+        if (investment.getInvestmentStatus() == InvestmentStatusConstant.COMPLETED || investment.getInvestmentStatus() == InvestmentStatusConstant.LIQUIDATED) {
+            model.setAmountInvested(investment.getTotalAmountWithdrawn().subtract(investment.getTotalInterestWithdrawn()));
+            model.setTotalAccruedInterest(investment.getTotalInterestWithdrawn());
+            model.setTotalExpectedReturn(investment.getTotalAmountWithdrawn());
+            model.setEstimatedProfitAtMaturity(investment.getTotalInterestWithdrawn());
+        } else {
+            BigDecimal totalAccruedInterest = investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment);
+            model.setAmountInvested(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE ? investment.getAmountInvested() : investment.getTotalAmountInvested());
+            model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_UP));
+            model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
+            model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
+        }
 
         model.setStatus(investment.getInvestmentStatus().name());
         model.setType(investment.getInvestmentType().name());
-        model.setAmountInvested(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE ? investment.getAmountInvested() : investment.getTotalAmountInvested());
-        model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_UP));
         model.setAccruedInterest(investment.getAccruedInterest());
-        //model.setLockedInvestment(investment.isLockedInvestment());
 
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
@@ -118,12 +126,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
         model.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn());
-        model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
         model.setPenaltyCharge(investment.getInvestmentTenor().getPenaltyRate());
         model.setMaxLiquidateRate(investment.getMaxLiquidateRate());
-        model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
-
-        //model.setAccountId(model.getAccountId());
         model.setCustomerName(investment.getOwner().getName());
         model.setUserId(appUser.getUserId());
 
@@ -135,7 +139,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
         InvestmentStatusConstant status = null;
-        if(StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
+        if (StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
             status = InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus());
         }
 
