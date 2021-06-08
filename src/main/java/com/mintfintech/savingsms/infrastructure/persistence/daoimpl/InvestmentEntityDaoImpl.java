@@ -109,32 +109,14 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
                 }
             }
         }else {
-            if (searchDTO.getInvestmentStatus() != null) {
-                if(searchDTO.isCompletedRecords()) {
-                    specification = specification.and(
-                            withInvestmentStatus(InvestmentStatusConstant.COMPLETED)
-                                    .or(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED)));
-                }else {
-                    specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
-                }
-            }
-        }
-        /*
-        if (searchDTO.getInvestmentStatus() != null) {
-            if(searchDTO.getInvestmentStatus() == InvestmentStatusConstant.COMPLETED) {
-                if(searchDTO.getAccount() == null) {
-                    specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
-                }else {
-                    specification = specification.and(
-                            withInvestmentStatus(InvestmentStatusConstant.COMPLETED)
-                                    .or(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED))
-                    );
-                }
+            if (searchDTO.getInvestmentStatus() == null && searchDTO.isCompletedRecords()) {
+                specification = specification.and(
+                        withInvestmentStatus(InvestmentStatusConstant.COMPLETED)
+                                .or(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED)));
             }else {
                 specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
             }
-        }*/
-
+        }
         if (searchDTO.getDuration() != 0) {
             specification = specification.and(withDuration(searchDTO.getDuration()));
         }
