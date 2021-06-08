@@ -105,7 +105,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
         investmentEntity.setTotalAmountInvested(investmentEntity.getAmountInvested().add(amount));
         investmentEntityDao.saveRecord(investmentEntity);
-        //       sendInvestmentFundingSuccessEmail(investment, transaction.getTransactionAmount());
+
+        sendInvestmentFundingSuccessEmail(investmentEntity, transactionEntity.getTransactionAmount());
+
         response.setResponseCode(responseCode);
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
         return response;
@@ -160,7 +162,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .investmentBalance(investment.getAmountInvested())
                 .duration(investment.getDurationInMonths())
                 .interestRate(investment.getInterestRate())
-                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
                 .recipient(appUser.getEmail())
                 .name(appUser.getName())
                 .build();

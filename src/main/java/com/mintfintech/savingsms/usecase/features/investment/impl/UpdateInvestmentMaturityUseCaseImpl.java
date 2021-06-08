@@ -102,7 +102,7 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                     .build();
 
             investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
-//            sendInvestmentMaturityEmail(investment);
+            sendInvestmentMaturityEmail(investment);
         }
     }
 

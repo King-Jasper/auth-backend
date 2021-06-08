@@ -185,7 +185,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
         investmentEntityDao.saveRecord(investment);
 
-//        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
+        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
     }
 
     private void processFullLiquidation(InvestmentEntity investment, MintBankAccountEntity creditAccount) {
@@ -225,7 +225,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
 
-//        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
+        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
     }
 
     private void sendInvestmentLiquidationEmail(InvestmentEntity investment, InvestmentWithdrawalEntity withdrawal) {
@@ -236,7 +236,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .investmentAmount(withdrawal.getBalanceBeforeWithdrawal())
                 .investmentBalance(investment.getAmountInvested())
                 .liquidatedAmount(withdrawal.getAmount())
-                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
                 .name(appUser.getName())
                 .penaltyCharge(withdrawal.getAmountCharged())
                 .recipient(appUser.getEmail())

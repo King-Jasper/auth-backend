@@ -107,7 +107,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
 
-//        sendInvestmentCreationEmail(investment, appUser);
+        sendInvestmentCreationEmail(investment, appUser);
 
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
         response.setCreated(true);
@@ -123,7 +123,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .interestRate(investment.getInterestRate())
                 .recipient(appUser.getEmail())
                 .name(appUser.getName())
-                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
                 .build();
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_CREATION, new EventModel<>(event));
