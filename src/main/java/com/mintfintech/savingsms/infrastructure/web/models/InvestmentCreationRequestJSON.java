@@ -15,7 +15,8 @@ public class InvestmentCreationRequestJSON {
     private int durationInMonths;
 
     @ApiModelProperty(notes = "The amount to be invested. N5000 minimum", required = true)
-    @Min(value = 5000, message = "Minimum of N5000")
+   // @Min(value = 5000, message = "Minimum of N5000")
+    @Min(value = 500, message = "Minimum of N500")
     private double investmentAmount;
 
     @ApiModelProperty(notes = "The bank accountId to be debited", required = true)
