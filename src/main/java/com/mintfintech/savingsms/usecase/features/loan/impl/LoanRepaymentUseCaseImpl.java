@@ -185,7 +185,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
 
-            MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getAccountNumber());
+            MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getBankOneAccountNumber());
 
             if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
                     && msClientResponse.isSuccess()

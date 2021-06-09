@@ -79,6 +79,6 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
 
     private String trackingReference;
 
-    private String accountNumber;
+    private String bankOneAccountNumber;
 
 }

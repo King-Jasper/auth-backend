@@ -83,7 +83,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
                 NewLoanAccountResponseCBS responseCBS = msClientResponse.getData();
 
-                loan.setAccountNumber(responseCBS.getAccountNumber());
+                loan.setBankOneAccountNumber(responseCBS.getAccountNumber());
                 loan.setApprovalStatus(ApprovalStatusConstant.DISBURSED);
                 loanRequestEntityDao.saveRecord(loan);
 
