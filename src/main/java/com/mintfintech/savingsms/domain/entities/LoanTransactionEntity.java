@@ -43,6 +43,7 @@ public class LoanTransactionEntity extends AbstractBaseEntity<Long>{
     @Builder.Default
     private boolean lienActive = false;
 
+    @Column(nullable = false, unique = true)
     private String transactionReference;
 
     private String externalReference;

@@ -27,15 +27,15 @@ public class LoanJob {
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
     }
 
-    @SchedulerLock(name = "LoanJob_runDueLoanRepaymentCheckService", lockAtMostForString = "PT45M")
+    @SchedulerLock(name = "LoanJob_loanRepaymentDueToday", lockAtMostForString = "PT45M")
     @Scheduled(cron = "0 00 12 1/1 * ?") // runs every day at 12:00pm.
-    public void runDueLoanRepaymentCheckService() {
-        loanRepaymentUseCase.dueLoanRepaymentCheck();
+    public void loanRepaymentDueToday() {
+        loanRepaymentUseCase.loanRepaymentDueToday();
     }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "LoanJob_runProcessApprovedLoans", lockAtMostForString = "PT6M")
-    public void runProcessApprovedLoans() {
+    @SchedulerLock(name = "LoanJob_processApprovedLoans", lockAtMostForString = "PT6M")
+    public void processApprovedLoans() {
         try {
             approvalUseCase.processApprovedLoans();
         } catch (Exception ignored) {
@@ -43,8 +43,8 @@ public class LoanJob {
     }
 
     @Scheduled(cron = "0 0 9/3 ? * *") // runs every 3 hour starting from 9am daily
-    @SchedulerLock(name = "LoanJob_processCheckDueLoanPendingDebit", lockAtMostForString = "PT30M")
-    public void processCheckDueLoanPendingDebit() {
+    @SchedulerLock(name = "LoanJob_processDueLoanPendingDebit", lockAtMostForString = "PT30M")
+    public void processDueLoanPendingDebit() {
         loanRepaymentUseCase.checkDueLoanPendingDebit();
     }
 

@@ -76,7 +76,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     }
 
     @Override
-    public void dueLoanRepaymentCheck() {
+    public void loanRepaymentDueToday() {
         List<LoanRequestEntity> repaymentDueToday = loanRequestEntityDao.getLoanRepaymentDueToday();
 
         if (repaymentDueToday.isEmpty()) {
@@ -175,7 +175,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         List<LoanRequestEntity> loans = loanRequestEntityDao.getPendingDebitLoans();
 
-        if (loans.isEmpty()){
+        if (loans.isEmpty()) {
             return;
         }
 
@@ -193,8 +193,12 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
                 LoanDetailResponseCBS responseCBS = msClientResponse.getData();
 
-                loan.setAmountPaid(responseCBS.getTotalAmountPaid());
-                loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
+                if (responseCBS.getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
+                    loan.setAmountPaid(responseCBS.getTotalAmountPaid());
+                    loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
+                }
+
+                loan.setAmountCollectedOnBankOne(responseCBS.getTotalAmountPaid());
 
                 loanRequestEntityDao.saveRecord(loan);
             }

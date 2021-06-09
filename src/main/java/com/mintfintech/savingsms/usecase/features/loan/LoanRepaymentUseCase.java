@@ -7,7 +7,7 @@ public interface LoanRepaymentUseCase {
 
     void dispatchEmailToCustomersWithPaymentDueInTwoDays();
 
-    void dueLoanRepaymentCheck();
+    void loanRepaymentDueToday();
 
     LoanModel repayment(AuthenticatedUser currentUser, double amount, String loanId);
 
