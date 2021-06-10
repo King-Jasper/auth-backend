@@ -88,7 +88,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
          */
 
         long hoursPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.HOURS);
-        if(hoursPast > 12) {
+        if(hoursPast < 12) {
             throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of 12 hours before liquidation.");
         }
 
