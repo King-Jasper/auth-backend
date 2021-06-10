@@ -52,6 +52,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .orElseThrow(() -> new NotFoundException("Invalid investment id " + investmentId));
 
         List<InvestmentTransactionEntity> transactionEntities = investmentTransactionEntityDao.getTransactionsByInvestment(investment);
+        System.out.println("history size - "+transactionEntities.size());
         List<InvestmentTransactionModel> transactions = new ArrayList<>();
 
         transactionEntities.forEach(funding -> {

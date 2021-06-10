@@ -294,6 +294,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
@@ -358,6 +359,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)) {
@@ -420,6 +422,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
@@ -482,6 +485,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED);
