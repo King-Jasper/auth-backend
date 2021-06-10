@@ -120,7 +120,7 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
         AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
 
         InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
-                .investmentAmount(investment.getAmountInvested())
+                .investmentAmount(investment.getTotalAmountWithdrawn())
                 .recipient(appUser.getEmail())
                 .name(appUser.getName())
                 .build();
