@@ -112,8 +112,12 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         }
         boolean canLiquidate = false;
         if (investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
-            long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
+            /*long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
             if (daysPast >= minimumLiquidationPeriodInDays) {
+                canLiquidate = true;
+            }*/
+            long hoursPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.HOURS);
+            if(hoursPast > 12) {
                 canLiquidate = true;
             }
         }

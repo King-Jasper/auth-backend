@@ -75,6 +75,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
        // int minimumLiquidationPeriodInDays = 15;
+        /*
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
@@ -83,6 +84,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         if (daysPast < minimumLiquidationPeriodInDays) {
             throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of " + minimumLiquidationPeriodInDays + " days before liquidation.");
+        }
+         */
+
+        long hoursPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.HOURS);
+        if(hoursPast > 12) {
+            throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of 12 hours before liquidation.");
         }
 
         if (request.isFullLiquidation()) {

@@ -104,7 +104,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             return response;
         }
         investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
-        System.out.println("Total amount invested - "+investmentEntity.getTotalAmountInvested()+" current amount - "+amount);
+        //System.out.println("Total amount invested - "+investmentEntity.getTotalAmountInvested()+" current amount - "+amount);
         investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(amount));
         investmentEntityDao.saveRecord(investmentEntity);
 
