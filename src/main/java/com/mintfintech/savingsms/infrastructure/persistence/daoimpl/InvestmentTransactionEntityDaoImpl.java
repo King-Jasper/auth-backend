@@ -32,11 +32,11 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 
     @Override
     public List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity, TransactionTypeConstant type, TransactionStatusConstant status) {
-        return repository.getAllByInvestmentAndTransactionTypeAndTransactionStatus(investmentEntity, type, status);
+        return repository.getAllByInvestmentAndTransactionTypeAndTransactionStatusOrderByDateCreatedDesc(investmentEntity, type, status);
     }
 
     @Override
     public List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity) {
-        return repository.getAllByRecordStatusAndInvestment(RecordStatusConstant.ACTIVE, investmentEntity);
+        return repository.getAllByRecordStatusAndInvestmentOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE, investmentEntity);
     }
 }

@@ -12,7 +12,7 @@ import java.util.List;
 
 public interface InvestmentTransactionRepository extends JpaRepository<InvestmentTransactionEntity, Long> {
 
-    List<InvestmentTransactionEntity> getAllByInvestmentAndTransactionTypeAndTransactionStatus(InvestmentEntity investment, TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus);
+    List<InvestmentTransactionEntity> getAllByInvestmentAndTransactionTypeAndTransactionStatusOrderByDateCreatedDesc(InvestmentEntity investment, TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus);
 
-    List<InvestmentTransactionEntity> getAllByRecordStatusAndInvestment(RecordStatusConstant statusConstant, InvestmentEntity investmentEntity);
+    List<InvestmentTransactionEntity> getAllByRecordStatusAndInvestmentOrderByDateCreatedDesc(RecordStatusConstant statusConstant, InvestmentEntity investmentEntity);
 }
