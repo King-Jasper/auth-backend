@@ -34,16 +34,16 @@ public class ReferralGoalFundingUseCaseImpl implements ReferralGoalFundingUseCas
     @Override
     public SavingsGoalFundingResponse fundReferralSavingsGoal(SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
-        SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                .transactionAmount(amount)
-                .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                .bankAccount(mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT))
-                .transactionType(TransactionTypeConstant.DEBIT)
-                .transactionStatus(TransactionStatusConstant.PENDING)
-                .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
-                .savingsGoal(savingsGoal)
-                .currentBalance(savingsGoal.getSavingsBalance())
-                .build();
+        SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
+        transactionEntity.setSavingsGoal(savingsGoal);
+        transactionEntity.setBankAccount(mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT));
+        transactionEntity.setTransactionAmount(amount);
+        transactionEntity.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transactionEntity.setCurrentBalance(savingsGoal.getSavingsBalance());
+        transactionEntity.setTransactionType(TransactionTypeConstant.DEBIT);
+        transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transactionEntity.setTransactionReference(savingsGoalTransactionEntityDao.generateTransactionReference());
+
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
         transactionEntity.setRecordStatus(RecordStatusConstant.INACTIVE);
 

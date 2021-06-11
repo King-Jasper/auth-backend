@@ -47,40 +47,40 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         String reference = transactionPayload.getInternalReference();
         String category = transactionPayload.getCategory();
         String type = transactionPayload.getTransactionType();
-        if(roundUpSavingsTransactionEntityDao.findByTransactionReference(reference).isPresent()) {
+        if (roundUpSavingsTransactionEntityDao.findByTransactionReference(reference).isPresent()) {
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
-        if(!"DEBIT".equalsIgnoreCase(type) || transactionCategory == null) {
-           return;
+        if (!"DEBIT".equalsIgnoreCase(type) || transactionCategory == null) {
+            return;
         }
         Optional<MintBankAccountEntity> debitAccountOpt = mintBankAccountEntityDao.findByAccountId(transactionPayload.getDebitAccountId());
-        if(!debitAccountOpt.isPresent()){
+        if (!debitAccountOpt.isPresent()) {
             return;
         }
         MintBankAccountEntity debitAccount = debitAccountOpt.get();
         Optional<RoundUpSavingsSettingEntity> settingEntityOpt = roundUpSavingsSettingEntityDao.findRoundUpSavingsByAccount(debitAccount.getMintAccount());
-        if(!settingEntityOpt.isPresent() || !settingEntityOpt.get().isEnabled()) {
+        if (!settingEntityOpt.isPresent() || !settingEntityOpt.get().isEnabled()) {
             return;
         }
         RoundUpSavingsSettingEntity settingEntity = settingEntityOpt.get();
         RoundUpSavingsTypeConstant roundUpType = getRoundUpType(transactionCategory, settingEntity);
-        if(roundUpType == RoundUpSavingsTypeConstant.NONE){
+        if (roundUpType == RoundUpSavingsTypeConstant.NONE) {
             return;
         }
         BigDecimal transactionAmount = transactionPayload.getTransactionAmount();
         BigDecimal amountToSave = getAmountToSave(roundUpType, transactionAmount);
-        if(amountToSave.compareTo(BigDecimal.ZERO) == 0) {
+        if (amountToSave.compareTo(BigDecimal.ZERO) == 0) {
             log.info("Amount to save is {}", amountToSave);
             return;
         }
-        if(!hasSufficientBalance(transactionPayload, amountToSave)) {
+        if (!hasSufficientBalance(transactionPayload, amountToSave)) {
             log.info("Insufficient balance to process roundup savings");
             return;
         }
         MintAccountEntity accountEntity = debitAccount.getMintAccount();
         Optional<SavingsGoalEntity> roundUpSavingsOpt = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.ROUND_UP_SAVINGS);
-        if(!roundUpSavingsOpt.isPresent()) {
+        if (!roundUpSavingsOpt.isPresent()) {
             return;
         }
         SavingsGoalEntity roundUpSavings = roundUpSavingsOpt.get();
@@ -98,29 +98,34 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     }
 
 
-
-
     private RoundUpSavingsTypeConstant getRoundUpType(RoundUpTransactionCategoryType transactionCategory, RoundUpSavingsSettingEntity settingEntity) {
         RoundUpSavingsTypeConstant typeConstant;
         switch (transactionCategory) {
-            case FUND_TRANSFER: typeConstant = settingEntity.getFundTransferRoundUpType(); break;
-            case BILL_PAYMENT: typeConstant = settingEntity.getBillPaymentRoundUpType(); break;
-            case CARD_PAYMENT: typeConstant = settingEntity.getCardPaymentRoundUpType(); break;
-            default: typeConstant = RoundUpSavingsTypeConstant.NONE;
+            case FUND_TRANSFER:
+                typeConstant = settingEntity.getFundTransferRoundUpType();
+                break;
+            case BILL_PAYMENT:
+                typeConstant = settingEntity.getBillPaymentRoundUpType();
+                break;
+            case CARD_PAYMENT:
+                typeConstant = settingEntity.getCardPaymentRoundUpType();
+                break;
+            default:
+                typeConstant = RoundUpSavingsTypeConstant.NONE;
         }
         return typeConstant;
     }
 
     private BigDecimal getAmountToSave(RoundUpSavingsTypeConstant roundUpType, BigDecimal transactionAmount) {
         BigDecimal value = BigDecimal.valueOf(10.0);
-        if(roundUpType == RoundUpSavingsTypeConstant.NEAREST_HUNDRED) {
+        if (roundUpType == RoundUpSavingsTypeConstant.NEAREST_HUNDRED) {
             value = BigDecimal.valueOf(100.0);
-        }else if(roundUpType == RoundUpSavingsTypeConstant.NEAREST_THOUSAND) {
+        } else if (roundUpType == RoundUpSavingsTypeConstant.NEAREST_THOUSAND) {
             value = BigDecimal.valueOf(1000.0);
         }
         BigDecimal remainder = transactionAmount.remainder(value);
         BigDecimal amountToSaved = value.subtract(remainder);
-        if(amountToSaved.compareTo(value) == 0) {
+        if (amountToSaved.compareTo(value) == 0) {
             return BigDecimal.ZERO;
         }
         return amountToSaved;
@@ -128,10 +133,10 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
 
     private boolean hasSufficientBalance(MintTransactionPayload payload, BigDecimal amountToSave) {
         BigDecimal currentBalance = payload.getBalanceAfterTransaction();
-        if(currentBalance == null) {
+        if (currentBalance == null) {
             currentBalance = payload.getBalanceBeforeTransaction().subtract(payload.getTransactionAmount());
         }
-        if(currentBalance.compareTo(amountToSave) > 0) {
+        if (currentBalance.compareTo(amountToSave) > 0) {
             return true;
         }
         log.info("Insufficient Balance {}: {}", currentBalance, amountToSave);
@@ -139,25 +144,26 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     }
 
     private void processSavingFunding(RoundUpSavingsTransactionEntity roundUpSavingsTransactionEntity) {
-         SavingsGoalEntity goalEntity = roundUpSavingsTransactionEntity.getSavingsGoal();
-         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(roundUpSavingsTransactionEntity.getTransactionAccount().getId());
-         BigDecimal amount = roundUpSavingsTransactionEntity.getAmountSaved();
+        SavingsGoalEntity goalEntity = roundUpSavingsTransactionEntity.getSavingsGoal();
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(roundUpSavingsTransactionEntity.getTransactionAccount().getId());
+        BigDecimal amount = roundUpSavingsTransactionEntity.getAmountSaved();
 
-         String reference = savingsGoalTransactionEntityDao.generateTransactionReference();
+        String reference = savingsGoalTransactionEntityDao.generateTransactionReference();
 
-         BigDecimal savingsNewBalance = goalEntity.getSavingsBalance().add(amount);
-         SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                 .savingsGoal(goalEntity)
-                 .transactionType(TransactionTypeConstant.CREDIT)
-                 .transactionStatus(TransactionStatusConstant.PENDING)
-                 .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
-                 .transactionAmount(amount)
-                 .bankAccount(debitAccount)
-                 .currentBalance(goalEntity.getSavingsBalance())
-                 .newBalance(savingsNewBalance)
-                 .transactionReference(reference)
-                 .build();
-         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
+        BigDecimal savingsNewBalance = goalEntity.getSavingsBalance().add(amount);
+
+        SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
+        transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transactionEntity.setTransactionType(TransactionTypeConstant.CREDIT);
+        transactionEntity.setNewBalance(savingsNewBalance);
+        transactionEntity.setTransactionAmount(amount);
+        transactionEntity.setSavingsGoal(goalEntity);
+        transactionEntity.setBankAccount(debitAccount);
+        transactionEntity.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transactionEntity.setCurrentBalance(goalEntity.getSavingsBalance());
+        transactionEntity.setTransactionReference(reference);
+
+        transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
         roundUpSavingsTransactionEntity.setTransaction(transactionEntity);
         roundUpSavingsTransactionEntityDao.saveRecord(roundUpSavingsTransactionEntity);
 
@@ -171,7 +177,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processSavingFunding(fundingRequestCBS);
         transactionEntity = savingsFundingUtil.processFundingTransactionResponse(transactionEntity, msClientResponse);
-        if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
+        if (transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
             goalEntity = savingsGoalEntityDao.getRecordById(goalEntity.getId());
             goalEntity.setSavingsBalance(goalEntity.getSavingsBalance().add(amount));
             savingsGoalEntityDao.saveRecord(goalEntity);

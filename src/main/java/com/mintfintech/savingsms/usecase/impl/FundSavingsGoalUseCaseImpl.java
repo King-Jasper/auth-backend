@@ -176,17 +176,17 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
     @Override
     public SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount) {
 
-        SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                .transactionAmount(amount)
-                .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
-                .bankAccount(debitAccount)
-                .transactionType(TransactionTypeConstant.CREDIT)
-                .transactionStatus(TransactionStatusConstant.PENDING)
-                .fundingSource(FundingSourceTypeConstant.MINT_ACCOUNT)
-                .savingsGoal(savingsGoal)
-                .performedBy(appUserEntity)
-                .currentBalance(savingsGoal.getSavingsBalance())
-                .build();
+        SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
+        transactionEntity.setSavingsGoal(savingsGoal);
+        transactionEntity.setBankAccount(debitAccount);
+        transactionEntity.setTransactionAmount(amount);
+        transactionEntity.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transactionEntity.setCurrentBalance(savingsGoal.getSavingsBalance());
+        transactionEntity.setTransactionType(TransactionTypeConstant.CREDIT);
+        transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
+        transactionEntity.setTransactionReference(savingsGoalTransactionEntityDao.generateTransactionReference());
+        transactionEntity.setPerformedBy(appUserEntity);
+
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
         BigDecimal balanceBeforeTransaction = debitAccount.getAvailableBalance();
@@ -222,6 +222,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             publishTransactionNotificationUseCase.createTransactionLog(transactionEntity, balanceBeforeTransaction, newBalance);
             publishTransactionNotificationUseCase.sendSavingsFundingSuccessNotification(transactionEntity);
             fundingResponse.setResponseCode("00");
+            fundingResponse.setResponseMessage("Transaction processed successfully.");
             createReferralRewardUseCase.processReferredCustomerReward(debitAccount.getMintAccount(), savingsGoal);
         }else if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING) {
             fundingResponse.setResponseCode("01");

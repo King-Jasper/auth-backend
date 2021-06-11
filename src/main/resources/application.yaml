@@ -27,7 +27,8 @@ logging:
 microservices:
   core-banking:
     service-name: core-banking-service
-
+  accounts:
+    service-name: account-service
 mint:
   bank-code: 50304
   support-phonenumber: 08067507490
@@ -68,3 +69,7 @@ loan:
     interest-rate: 1.88
     max-percent-amount: 70
     max-tenor-days: 30
+
+investment:
+  max-liquidate-rate: 80
+  min-liquidation-days: 15

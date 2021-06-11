@@ -58,6 +58,10 @@ public class MoneyFormatterUtil {
 
     public static void main(String[] args) {
 
+       // BigDecimal temp = BigDecimal.valueOf(158.259999999);
+       // System.out.println(temp);
+       // temp = BigDecimal.valueOf(158.259999999).setScale(2, BigDecimal.ROUND_HALF_EVEN);
+       // System.out.println(temp);
        // LocalDateTime end = LocalDateTime.of(LocalDate.of(2021, 2, 9), LocalTime.of(9, 30));
        // System.out.println(end);
         /*LocalDateTime now = LocalDateTime.now();

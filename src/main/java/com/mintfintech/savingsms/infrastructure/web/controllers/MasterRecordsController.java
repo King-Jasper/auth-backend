@@ -1,8 +1,10 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.usecase.master_record.InvestmentPlanUseCase;
 import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
 import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
+import com.mintfintech.savingsms.usecase.models.InvestmentTenorModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalCategoryModel;
 import com.mintfintech.savingsms.usecase.models.SavingsPlanModel;
 import com.mintfintech.savingsms.usecase.models.SavingsPlanTenorModel;
@@ -29,10 +31,14 @@ public class MasterRecordsController {
 
     private final SavingsPlanUseCases savingsPlanUseCases;
     private final SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
+    private final InvestmentPlanUseCase investmentPlanUseCase;
 
-    public MasterRecordsController(SavingsPlanUseCases savingsPlanUseCases, SavingsGoalCategoryUseCase savingsGoalCategoryUseCase) {
+    public MasterRecordsController(SavingsPlanUseCases savingsPlanUseCases,
+                                   SavingsGoalCategoryUseCase savingsGoalCategoryUseCase,
+                                   InvestmentPlanUseCase investmentPlanUseCase) {
         this.savingsPlanUseCases = savingsPlanUseCases;
         this.savingsGoalCategoryUseCase = savingsGoalCategoryUseCase;
+        this.investmentPlanUseCase = investmentPlanUseCase;
     }
 
     @Deprecated
@@ -65,6 +71,14 @@ public class MasterRecordsController {
     public ResponseEntity<ApiResponseJSON<List<SavingsGoalCategoryModel>>> getSavingsGoalCategoryList() {
         List<SavingsGoalCategoryModel> responseList = savingsGoalCategoryUseCase.savingsGoalCategoryList();
         ApiResponseJSON<List<SavingsGoalCategoryModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns a list of investment tenors.")
+    @GetMapping(value = "/v1/common/investment-tenors", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<InvestmentTenorModel>>> getInvestmentTenorList() {
+        List<InvestmentTenorModel> responseList = investmentPlanUseCase.investmentTenorList();
+        ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

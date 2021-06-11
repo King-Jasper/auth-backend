@@ -144,19 +144,19 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
             AppUserEntity appUserEntity = appUserEntityDao.getRecordById(fundingRequestEntity.getCreator().getId());
             MintAccountEntity accountEntity = mintAccountEntityDao.getRecordById(appUserEntity.getPrimaryAccount().getId());
             MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(accountEntity, BankAccountTypeConstant.CURRENT);
-            SavingsGoalTransactionEntity transactionEntity = SavingsGoalTransactionEntity.builder()
-                    .transactionAmount(fundingRequestEntity.getAmount())
-                    .transactionReference(fundingRequestEntity.getFundingReference())
-                    .transactionResponseCode("00")
-                    .transactionResponseMessage("Success")
-                    .transactionStatus(TransactionStatusConstant.SUCCESSFUL)
-                    .fundingSource(FundingSourceTypeConstant.CARD)
-                    .transactionType(TransactionTypeConstant.CREDIT)
-                    .savingsGoal(savingsGoalEntity)
-                    .bankAccount(bankAccountEntity)
-                    .currentBalance(currentBalance)
-                    .newBalance(newBalance)
-                    .build();
+
+            SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
+            transactionEntity.setSavingsGoal(savingsGoalEntity);
+            transactionEntity.setCurrentBalance(currentBalance);
+            transactionEntity.setBankAccount(bankAccountEntity);
+            transactionEntity.setTransactionAmount(fundingRequestEntity.getAmount());
+            transactionEntity.setFundingSource(FundingSourceTypeConstant.CARD);
+            transactionEntity.setNewBalance(newBalance);
+            transactionEntity.setTransactionResponseMessage("Success");
+            transactionEntity.setTransactionResponseCode("00");
+            transactionEntity.setTransactionType(TransactionTypeConstant.CREDIT);
+            transactionEntity.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
+
             savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
             fundingRequestEntity.setFundingTransaction(transactionEntity);
             savingsFundingRequestEntityDao.saveRecord(fundingRequestEntity);

@@ -20,16 +20,17 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "savings_goal_transaction")
-public class SavingsGoalTransactionEntity extends AbstractBaseEntity<Long> {
+public class SavingsGoalTransactionEntity extends SavingsTransaction {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private SavingsGoalEntity savingsGoal;
 
-    @Column(nullable = false)
-    private BigDecimal transactionAmount;
-
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private MintBankAccountEntity bankAccount;
+
+    /*
+    @Column(nullable = false)
+    private BigDecimal transactionAmount;
 
     @Builder.Default
     @Column(nullable = false)
@@ -60,5 +61,6 @@ public class SavingsGoalTransactionEntity extends AbstractBaseEntity<Long> {
     private String transactionResponseMessage;
 
     private String externalReference;
+    */
 
 }

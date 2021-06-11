@@ -19,14 +19,15 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "savings_goal_interest")
-public class SavingsInterestEntity extends AbstractBaseEntity<Long> {
+public class SavingsInterestEntity extends InterestAccrual {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private SavingsGoalEntity savingsGoal;
 
-    private BigDecimal savingsBalance;
+   /* private BigDecimal savingsBalance;
 
     private double rate;
 
     private BigDecimal interest;
+    */
 }

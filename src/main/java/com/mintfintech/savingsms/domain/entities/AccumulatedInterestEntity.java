@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
+import com.mintfintech.savingsms.domain.entities.enums.InterestCategoryConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import lombok.*;
 
@@ -18,7 +19,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "accumulated_interest")
-public class AccumulatedInterestEntity extends AbstractBaseEntity<Long>{
+public class AccumulatedInterestEntity extends AbstractBaseEntity<Long> {
 
     @Column(nullable = false)
     private BigDecimal totalInterest;
@@ -38,4 +39,7 @@ public class AccumulatedInterestEntity extends AbstractBaseEntity<Long>{
     private String responseMessage;
 
     private String externalReference;
+
+    @Enumerated(EnumType.STRING)
+    private InterestCategoryConstant interestCategory;
 }

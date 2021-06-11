@@ -44,8 +44,16 @@ public class ApplicationProperty {
         return Double.parseDouble(environmentService.getVariable("savings-goal.interest-percentage-deduction", "50"));
     }
 
+    public int investmentMinimumLiquidationDays() {
+        return Integer.parseInt(environmentService.getVariable("investment.min-liquidation-days", "15"));
+    }
+
     public double getNipTransactionInterest() {
         return Double.parseDouble(environmentService.getVariable("mint-interest.nip-transaction", "0.0"));
+    }
+
+    public double getMaxLiquidateRate() {
+        return Double.parseDouble(environmentService.getVariable("investment.max-liquidate-rate", "0.0"));
     }
 
     public long getReferralRewardAmount() {

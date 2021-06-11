@@ -6,10 +6,7 @@ import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalRepository;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
-import com.mintfintech.savingsms.usecase.master_record.CurrencyDataUseCases;
-import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
-import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
-import com.mintfintech.savingsms.usecase.master_record.TierLevelDataUseCase;
+import com.mintfintech.savingsms.usecase.master_record.*;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +27,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
     private TierLevelDataUseCase tierLevelDataUseCase;
     private CurrencyDataUseCases currencyDataUseCases;
     private SavingsPlanUseCases savingsPlanUseCases;
+    private InvestmentPlanUseCase investmentPlanUseCase;
     private SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
     private SavingsGoalRepository repository;
@@ -54,6 +52,7 @@ public class ApplicationDataLoader implements ApplicationListener<ContextRefresh
             savingsPlanUseCases.createDefaultSavingsPlan();
             savingsPlanUseCases.createDefaultSavingsTenor();
             savingsGoalCategoryUseCase.createDefaultSavingsCategory();
+            investmentPlanUseCase.createDefaultInvestmentTenor();
         } ).start();
         log.info("Application started");
 
