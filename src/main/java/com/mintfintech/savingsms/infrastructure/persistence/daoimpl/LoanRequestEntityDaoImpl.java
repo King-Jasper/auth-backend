@@ -191,8 +191,8 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     @Override
-    public List<LoanRequestEntity> getApprovedLoans() {
-        return repository.getApprovedLoans();
+    public List<LoanRequestEntity> getApprovedLoansWithNoAccountNumber() {
+        return repository.getApprovedLoansWithoutAccountNumber();
     }
 
     @Override

@@ -74,7 +74,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     @Override
     public void processApprovedLoans() {
 
-        List<LoanRequestEntity> loans = loanRequestEntityDao.getApprovedLoans();
+        List<LoanRequestEntity> loans = loanRequestEntityDao.getApprovedLoansWithNoAccountNumber();
 
         for (LoanRequestEntity loan : loans) {
             MsClientResponse<NewLoanAccountResponseCBS> msClientResponse = coreBankingServiceClient.getLoanAccountDetails(loan.getTrackingReference());
