@@ -10,8 +10,19 @@ import com.mintfintech.savingsms.domain.models.EventModel;
 public interface ApplicationEventService {
     void publishEvent(EventType eventType, EventModel<?> domain);
 
-    //
     enum EventType {
+        EMAIL_LOAN_PROFILE_CREATION("com.mintfintech.services.events.notification.email.loan-profile-creation"),
+        EMAIL_LOAN_PROFILE_APPROVED("com.mintfintech.services.events.notification.email.loan-profile-approved"),
+        EMAIL_LOAN_PROFILE_DECLINED("com.mintfintech.services.events.notification.email.loan-profile-declined"),
+        EMAIL_LOAN_REQUEST_SUCCESS("com.mintfintech.services.events.notification.email.loan-request-success"),
+        EMAIL_LOAN_REQUEST_APPROVED("com.mintfintech.services.events.notification.email.loan-request-approved"),
+        EMAIL_LOAN_REQUEST_DECLINED("com.mintfintech.services.events.notification.email.loan-request-declined"),
+        EMAIL_LOAN_REPAYMENT_REMINDER("com.mintfintech.services.events.notification.email.loan-repayment-reminder"),
+        EMAIL_LOAN_REPAYMENT_SUCCESS("com.mintfintech.services.events.notification.email.loan-repayment-success"),
+        EMAIL_LOAN_REPAYMENT_FAILURE("com.mintfintech.services.events.notification.email.loan-repayment-failure"),
+        EMAIL_LOAN_PARTIAL_REPAYMENT_SUCCESS("com.mintfintech.services.events.notification.email.loan-partial-repayment-success"),
+        EMAIL_LOAN_REQUEST_ADMIN("com.mintfintech.services.events.notification.email.loan-request-admin"),
+        EMAIL_LOAN_PROFILE_UPDATE_ADMIN("com.mintfintech.services.events.notification.email.loan-profile-update-admin"),
         EMAIL_SYSTEM_ISSUE_ALERT("com.mintfintech.services.events.notification.email.system-internal-issue-alert"),
         EMAIL_SAVINGS_GOAL_FUNDING_FAILURE("com.mintfintech.services.events.notification.email.savings-funding-failure"),
         EMAIL_SAVINGS_GOAL_FUNDING_SUCCESS("com.mintfintech.services.events.notification.email.savings-funding-success"),

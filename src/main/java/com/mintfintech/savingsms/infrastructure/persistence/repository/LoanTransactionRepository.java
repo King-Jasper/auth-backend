@@ -2,7 +2,6 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.LoanTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTransactionTypeConstant;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

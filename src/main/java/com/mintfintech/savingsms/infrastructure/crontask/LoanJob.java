@@ -21,42 +21,31 @@ public class LoanJob {
     }
 
     @SchedulerLock(name = "LoanJob_sendNotificationForDuePayments", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 59 08 * * *", zone = "Africa/Lagos")
+    @Scheduled(cron = "0 01 00 1/1 * ?", zone = "Africa/Lagos") // runs every day at 00:01am.
     public void sendNotificationForDuePayments() {
         log.info("Sending email notification to all customers with loan payment due");
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
-        loanRepaymentUseCase.dispatchEmailNotificationRepaymentOnDueDay();
     }
 
-    @SchedulerLock(name = "LoanJob_runCheckDefaultedLoanPaymentService", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 50 23 1/1 * ?") // runs every day at 11:50pm.
-    public void runCheckDefaultedLoanPaymentService() {
-        loanRepaymentUseCase.checkDefaultedRepayment();
+    @SchedulerLock(name = "LoanJob_loanRepaymentDueToday", lockAtMostForString = "PT45M")
+    @Scheduled(cron = "0 00 12 1/1 * ?") // runs every day at 12:00pm.
+    public void loanRepaymentDueToday() {
+        loanRepaymentUseCase.loanRepaymentDueToday();
     }
 
     @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "LoanJob_runApprovedLoanPendingDisbursement", lockAtMostForString = "PT6M")
-    public void runApprovedLoanPendingDisbursement() {
+    @SchedulerLock(name = "LoanJob_processApprovedLoans", lockAtMostForString = "PT6M")
+    public void processApprovedLoans() {
         try {
-            approvalUseCase.processMintToSuspenseAccount();
-            Thread.sleep(500);
-            approvalUseCase.processInterestToSuspenseAccount();
-            Thread.sleep(500);
-            approvalUseCase.processSuspenseAccountToCustomer();
+            approvalUseCase.processApprovedLoans();
         } catch (Exception ignored) {
         }
     }
 
-    @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "LoanJob_runPendingApprovedRepayment", lockAtMostForString = "PT6M")
-    public void runPendingApprovedRepayment() {
-        try {
-            loanRepaymentUseCase.processLoanRecoverySuspenseAccountToMintLoanAccount();
-            Thread.sleep(500);
-            loanRepaymentUseCase.processInterestIncomeSuspenseAccountToInterestIncomeAccount();
-        } catch (Exception ignored) {
-        }
+    @Scheduled(cron = "0 0 9/3 ? * *") // runs every 3 hour starting from 9am daily
+    @SchedulerLock(name = "LoanJob_processDueLoanPendingDebit", lockAtMostForString = "PT30M")
+    public void processDueLoanPendingDebit() {
+        loanRepaymentUseCase.checkDueLoanPendingDebit();
     }
-
 
 }

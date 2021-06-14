@@ -18,10 +18,12 @@ public interface CoreBankingServiceClient {
     MsClientResponse<TransactionStatusResponseCBS> reQueryTransactionStatus(TransactionStatusRequestCBS transactionStatusRequestCBS);
     MsClientResponse<GeneratedReferenceCBS> generateSavingsFundingReference(SavingsFundingReferenceRequestCBS requestCBS);
     MsClientResponse<SavingsFundingVerificationResponseCBS> verifySavingsFundingRequest(String transactionReference);
-    MsClientResponse<FundTransferResponseCBS> processLoanApproval(LoanTransactionRequestCBS requestCBS);
-    MsClientResponse<FundTransferResponseCBS> processLoanRepayment(LoanTransactionRequestCBS requestCBS);
     MsClientResponse<FundTransferResponseCBS> processInvestmentFunding(InvestmentFundingRequestCBS requestCBS);
     MsClientResponse<FundTransferResponseCBS> processInvestmentWithdrawal(InvestmentWithdrawalRequestCBS requestCBS);
     MsClientResponse<FundTransferResponseCBS> updateInvestmentAccruedInterest(InterestAccruedUpdateRequestCBS updateRequest);
-
+    MsClientResponse<LoanApplicationResponseCBS> createLoanApplication(LoanApplicationRequestCBS requestCBS);
+    MsClientResponse<NewLoanAccountResponseCBS> getLoanAccountDetails(String trackingReference);
+    MsClientResponse<LienAccountResponseCBS> placeLienOnAccount(LienAccountRequestCBS requestCBS);
+    MsClientResponse<LienAccountResponseCBS> removeLienOnAccount(LienAccountRequestCBS requestCBS);
+    MsClientResponse<LoanDetailResponseCBS> getLoanDetails(String customerId, String accountNumber);
 }

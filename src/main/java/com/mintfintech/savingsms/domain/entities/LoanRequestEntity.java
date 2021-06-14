@@ -50,6 +50,9 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     private BigDecimal amountPaid = BigDecimal.ZERO;
 
     @Builder.Default
+    private BigDecimal amountCollectedOnBankOne = BigDecimal.ZERO;
+
+    @Builder.Default
     private double interestRate = 0.0;
 
     private LocalDateTime approvedDate;
@@ -73,5 +76,9 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
 
     @Enumerated(EnumType.STRING)
     private LoanTypeConstant loanType;
+
+    private String trackingReference;
+
+    private String bankOneAccountNumber;
 
 }

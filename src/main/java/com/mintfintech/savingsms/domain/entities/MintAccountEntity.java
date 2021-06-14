@@ -25,6 +25,8 @@ public class MintAccountEntity extends AbstractBaseEntity<Long> {
     @Column(nullable = false)
     private String name;
 
+    private String bankOneCustomerId;
+
     @Builder.Default
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
