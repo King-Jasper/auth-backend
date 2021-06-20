@@ -19,6 +19,7 @@ import java.util.Optional;
  */
 public interface SavingsInterestRepository extends JpaRepository<SavingsInterestEntity, Long> {
     Optional<SavingsInterestEntity> findFirstBySavingsGoalOrderByDateCreatedDesc(SavingsGoalEntity savingsGoalEntity);
+    Optional<SavingsInterestEntity> findFirstBySavingsGoalOrderByDateCreatedAsc(SavingsGoalEntity savingsGoalEntity);
 
     @Query("select sum(si.interest) from SavingsInterestEntity si where si.savingsGoal =:goal")
     Optional<BigDecimal> sumSavingsInterest(@Param("goal") SavingsGoalEntity savingsGoalEntity);

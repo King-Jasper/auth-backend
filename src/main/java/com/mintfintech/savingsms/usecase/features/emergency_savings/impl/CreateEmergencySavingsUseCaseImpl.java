@@ -109,6 +109,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 .autoSave(creationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
                 .savingsPlanTenor(planTenor)
+                .interestRate(planTenor.getInterestRate())
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
                 .name(goalName)
                 .lockedSavings(false)

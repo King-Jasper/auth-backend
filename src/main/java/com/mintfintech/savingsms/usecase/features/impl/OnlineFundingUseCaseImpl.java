@@ -152,6 +152,7 @@ public class OnlineFundingUseCaseImpl implements OnlineFundingUseCase {
             transactionEntity.setTransactionAmount(fundingRequestEntity.getAmount());
             transactionEntity.setFundingSource(FundingSourceTypeConstant.CARD);
             transactionEntity.setNewBalance(newBalance);
+            transactionEntity.setTransactionReference(StringUtils.defaultString(fundingRequestEntity.getFundingReference(), fundingRequestEntity.getPaymentReference()));
             transactionEntity.setTransactionResponseMessage("Success");
             transactionEntity.setTransactionResponseCode("00");
             transactionEntity.setTransactionType(TransactionTypeConstant.CREDIT);

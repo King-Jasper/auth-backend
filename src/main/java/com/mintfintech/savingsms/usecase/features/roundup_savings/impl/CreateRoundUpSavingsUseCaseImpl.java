@@ -101,6 +101,7 @@ public class CreateRoundUpSavingsUseCaseImpl implements CreateRoundUpSavingsUseC
                 .mintAccount(accountEntity)
                 .name("Round-Up Savings")
                 .savingsPlanTenor(planTenorEntity)
+                .interestRate(planTenorEntity.getInterestRate())
                 .maturityDate(maturityDate)
                 .selectedDuration(selectedDuration)
                 .creator(appUserEntity)
