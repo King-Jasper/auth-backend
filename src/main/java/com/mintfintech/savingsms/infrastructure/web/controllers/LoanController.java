@@ -9,10 +9,7 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
-import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
-import com.mintfintech.savingsms.usecase.models.LoanModel;
-import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
+import com.mintfintech.savingsms.usecase.models.*;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -64,10 +61,11 @@ public class LoanController {
 
     @ApiOperation(value = "Returns customer loan profile.")
     @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getCustomerLoanProfile(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                                            @ApiParam(value = "Loan Type: PAYDAY") @Pattern(regexp = "(PAYDAY)") @NotEmpty @RequestParam("loanType") String loanType) {
-        LoanCustomerProfileModel response = customerLoanProfileUseCase.getLoanCustomerProfile(authenticatedUser, loanType);
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+    public ResponseEntity<ApiResponseJSON<CustomerLoanProfileDashboard>> getCustomerLoanProfile(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                @ApiParam(value = "Loan Type: PAYDAY") @Pattern(regexp = "(PAYDAY)") @NotEmpty @RequestParam("loanType") String loanType) {
+
+        CustomerLoanProfileDashboard response = customerLoanProfileUseCase.getLoanCustomerProfileDashboard(authenticatedUser, loanType);
+        ApiResponseJSON<CustomerLoanProfileDashboard> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
