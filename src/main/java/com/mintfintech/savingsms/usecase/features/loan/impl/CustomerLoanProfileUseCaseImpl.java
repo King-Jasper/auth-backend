@@ -18,6 +18,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
@@ -32,6 +33,7 @@ import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.Hibernate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -67,6 +69,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         CustomerLoanProfileEntity customerLoanProfileEntity;
 
         Optional<CustomerLoanProfileEntity> optionalCustomerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
+        EmployeeInformationEntity employeeInformationEntity;
 
         if (optionalCustomerLoanProfileEntity.isPresent()) {
             customerLoanProfileEntity = optionalCustomerLoanProfileEntity.get();
@@ -75,10 +78,10 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 throw new BadRequestException("An Employment Information already exists for this user.");
             }
 
-            EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
+            employeeInformationEntity = createEmploymentInformation(request);
             customerLoanProfileEntity.setEmployeeInformation(employeeInformationEntity);
         } else {
-            EmployeeInformationEntity employeeInformationEntity = createEmploymentInformation(request);
+            employeeInformationEntity = createEmploymentInformation(request);
 
             customerLoanProfileEntity = CustomerLoanProfileEntity.builder()
                     .appUser(appUser)
@@ -86,6 +89,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                     .build();
         }
         customerLoanProfileEntityDao.saveRecord(customerLoanProfileEntity);
+
+        publishEmploymentDetails(appUser, employeeInformationEntity);
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
                 .customerName(appUser.getName())
@@ -116,6 +121,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
 
         updateEmploymentInformation(request, employeeInfo);
+
+        publishEmploymentDetails(appUser, employeeInfo);
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
                 .recipient(applicationProperty.getSystemAdminEmail())
@@ -333,7 +340,33 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .workEmail(request.getWorkEmail())
                 .build();
 
-        return employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+        EmployeeInformationEntity informationEntity = employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+
+
+
+        return informationEntity;
+    }
+
+    private void publishEmploymentDetails(AppUserEntity appUserEntity, EmployeeInformationEntity informationEntity) {
+        ResourceFileEntity employmentLetter = informationEntity.getEmploymentLetter();
+        if(!Hibernate.isInitialized(employmentLetter)) {
+            employmentLetter = resourceFileEntityDao.getRecordById(employmentLetter.getId());
+        }
+        EmploymentInfoUpdateEvent infoUpdateEvent = EmploymentInfoUpdateEvent.builder()
+                .employerAddress(informationEntity.getEmployerAddress())
+                .employerEmail(informationEntity.getEmployerEmail())
+                .employerPhoneNumber(informationEntity.getEmployerPhoneNo())
+                .monthlySalary(informationEntity.getMonthlyIncome())
+                .organizationName(informationEntity.getOrganizationName())
+                .organizationUrl(informationEntity.getOrganizationUrl())
+                .userId(appUserEntity.getUserId())
+                .workEmail(informationEntity.getWorkEmail())
+                .employmentLetterFileId(employmentLetter.getFileId())
+                .employmentLetterFileName(employmentLetter.getFileName())
+                .employmentLetterFileSize(employmentLetter.getFileSizeInKB())
+                .employmentLetterFileUrl(employmentLetter.getUrl())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMPLOYMENT_INFORMATION_UPDATE, new EventModel<>(infoUpdateEvent));
     }
 
     private void validateEmploymentLetter(MultipartFile employmentLetter) {
