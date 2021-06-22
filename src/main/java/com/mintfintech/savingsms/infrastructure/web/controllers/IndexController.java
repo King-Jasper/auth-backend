@@ -94,7 +94,7 @@ public class IndexController {
     @GetMapping(value = "/loan-details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanDetailResponseCBS>> fetchLoanDetails(@RequestParam("accountNumber") String accountNo, @RequestParam("customerId") String customerId) {
         MsClientResponse<LoanDetailResponseCBS> responseMs =  coreBankingServiceClient.getLoanDetails(customerId, accountNo);
-        ApiResponseJSON<LoanDetailResponseCBS> apiResponse = new ApiResponseJSON<>("Process initiated successfully.", responseMs.getData());
+        ApiResponseJSON<LoanDetailResponseCBS> apiResponse = new ApiResponseJSON<>("Success.", responseMs.getData());
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 }
