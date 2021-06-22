@@ -1,5 +1,8 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
+import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
+import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
@@ -25,16 +28,20 @@ public class IndexController {
 
     private CreateReferralRewardUseCase createReferralRewardUseCase;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
+    private CoreBankingServiceClient coreBankingServiceClient;
 
 
     @Autowired
     public void setCreateSavingsGoalUseCase(CreateSavingsGoalUseCase createSavingsGoalUseCase) {
         this.createSavingsGoalUseCase = createSavingsGoalUseCase;
     }
-
     @Autowired
     public void setCreateReferralRewardUseCase(CreateReferralRewardUseCase createReferralRewardUseCase) {
         this.createReferralRewardUseCase = createReferralRewardUseCase;
+    }
+    @Autowired
+    public void setCoreBankingServiceClient(CoreBankingServiceClient coreBankingServiceClient) {
+        this.coreBankingServiceClient = coreBankingServiceClient;
     }
 
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -81,6 +88,13 @@ public class IndexController {
     public ResponseEntity<ApiResponseJSON<Object>> interestUpdate() {
         createSavingsGoalUseCase.runInterestUpdate();
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Process initiated successfully.");
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/loan-details", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanDetailResponseCBS>> fetchLoanDetails(@RequestParam("accountNumber") String accountNo, @RequestParam("customerId") String customerId) {
+        MsClientResponse<LoanDetailResponseCBS> responseMs =  coreBankingServiceClient.getLoanDetails(customerId, accountNo);
+        ApiResponseJSON<LoanDetailResponseCBS> apiResponse = new ApiResponseJSON<>("Process initiated successfully.", responseMs.getData());
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 }
