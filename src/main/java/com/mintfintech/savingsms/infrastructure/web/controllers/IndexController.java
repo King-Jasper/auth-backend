@@ -97,7 +97,7 @@ public class IndexController {
     public ResponseEntity<ApiResponseJSON<LoanDetailResponseCBS>> fetchLoanDetails(@RequestParam("accountNumber") String accountNo, @RequestParam("customerId") String customerId) {
         LienAccountRequestCBS requestCBS = LienAccountRequestCBS.builder()
                 .accountNumber("1100022849")
-                .referenceID("300000000014")
+                .referenceId("300000000014")
                 .build();
         coreBankingServiceClient.removeLienOnAccount(requestCBS);
         MsClientResponse<LoanDetailResponseCBS> responseMs =  coreBankingServiceClient.getLoanDetails(customerId, accountNo);
