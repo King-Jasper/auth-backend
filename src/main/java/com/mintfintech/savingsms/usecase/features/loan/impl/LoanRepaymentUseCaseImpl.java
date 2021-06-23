@@ -250,6 +250,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     .status(TransactionStatusConstant.SUCCESSFUL)
                     .transactionType(TransactionTypeConstant.DEBIT)
                     .lienActive(true)
+                    .transactionReference(responseCBS.getReferenceID())
                     .lienReference(responseCBS.getReferenceID())
                     .responseCode(responseCBS.getStatus())
                     .responseMessage(responseCBS.getMessage())

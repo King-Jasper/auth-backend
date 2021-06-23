@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
+import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -93,6 +95,11 @@ public class IndexController {
 
     @GetMapping(value = "/loan-details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanDetailResponseCBS>> fetchLoanDetails(@RequestParam("accountNumber") String accountNo, @RequestParam("customerId") String customerId) {
+        LienAccountRequestCBS requestCBS = LienAccountRequestCBS.builder()
+                .accountNumber("1100022849")
+                .referenceID("300000000014")
+                .build();
+        coreBankingServiceClient.removeLienOnAccount(requestCBS);
         MsClientResponse<LoanDetailResponseCBS> responseMs =  coreBankingServiceClient.getLoanDetails(customerId, accountNo);
         ApiResponseJSON<LoanDetailResponseCBS> apiResponse = new ApiResponseJSON<>("Success.", responseMs.getData());
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
