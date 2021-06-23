@@ -26,6 +26,7 @@ import javax.validation.constraints.Max;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 /**
@@ -72,7 +73,7 @@ public class SavingsGoalReportController {
     @ApiOperation(value = "Returns paginated list of customer savings goal using accountId.")
     @GetMapping(value = "customer/{accountId}/savings-goal", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getCustomerSavingsGoalByAccountId(@PathVariable(value = "accountId") String accountId,
-                                                                                                                           @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
+                                                                                                                           @NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ALL") String goalStatus,
                                                                                                                            @NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
                                                                                                                            @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                            @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
@@ -80,7 +81,7 @@ public class SavingsGoalReportController {
                                                                                                                            @Valid @Min(value = 0) @RequestParam("page") int page) {
 
         SavingsSearchRequest searchRequest = SavingsSearchRequest.builder()
-                .savingsStatus(goalStatus)
+                .savingsStatus(goalStatus.equalsIgnoreCase("ALL") ? "": goalStatus)
                 .accountId(accountId)
                 .fromDate(fromDate)
                 .toDate(toDate)

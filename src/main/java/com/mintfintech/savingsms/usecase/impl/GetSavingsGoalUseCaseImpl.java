@@ -275,8 +275,13 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59): null)
                 .build();
 
+        BigDecimal amountSaved = savingsGoalEntityDao.sumSearchedSavingsGoal(searchDTO);
         Page<SavingsGoalEntity> goalEntityPage = savingsGoalEntityDao.searchSavingsGoal(searchDTO, page, size);
-        return new PagedDataResponse<>(goalEntityPage.getTotalElements(), goalEntityPage.getTotalPages(),
+
+        return new PagedDataResponse<>(
+                goalEntityPage.getTotalElements(),
+                goalEntityPage.getTotalPages(),
+                amountSaved,
                 goalEntityPage.get().map(this::fromSavingsGoalEntityToPortalSavingsGoalResponse)
                         .collect(Collectors.toList()));
     }

@@ -142,11 +142,13 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .build();
 
         Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
+        BigDecimal totalInvestmentAmount = investmentEntityDao.sumSearchedInvestments(searchDTO);
 
         InvestmentStatSummary summary = new InvestmentStatSummary();
         summary.setInvestments(new PagedDataResponse<>(
                 investmentEntityPage.getTotalElements(),
                 investmentEntityPage.getTotalPages(),
+                totalInvestmentAmount,
                 investmentEntityPage.get().map(this::toInvestmentModel)
                         .collect(Collectors.toList())));
 

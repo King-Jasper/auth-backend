@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
+import com.mintfintech.savingsms.domain.models.reports.AmountModel;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -22,9 +23,12 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 
 import javax.inject.Named;
+import javax.persistence.EntityManager;
 import javax.persistence.LockTimeoutException;
 import javax.persistence.OptimisticLockException;
-import javax.persistence.criteria.Join;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.*;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -39,11 +43,12 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
 
     private final InvestmentRepository repository;
     private final AppSequenceEntityDao appSequenceEntityDao;
-
-    public InvestmentEntityDaoImpl(InvestmentRepository repository, AppSequenceEntityDao appSequenceEntityDao) {
+    private final EntityManager entityManager;
+    public InvestmentEntityDaoImpl(InvestmentRepository repository, AppSequenceEntityDao appSequenceEntityDao, EntityManager entityManager) {
         super(repository);
         this.repository = repository;
         this.appSequenceEntityDao = appSequenceEntityDao;
+        this.entityManager = entityManager;
     }
 
     @Override
@@ -84,7 +89,9 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     public Page<InvestmentEntity> searchInvestments(InvestmentSearchDTO searchDTO, int pageIndex, int recordSize) {
         Pageable pageable = PageRequest.of(pageIndex, recordSize, Sort.by("dateCreated").descending());
 
-        Specification<InvestmentEntity> specification = withActiveStatus();
+        Specification<InvestmentEntity> specification = (root, query, criteriaBuilder) -> buildSearchQuery(searchDTO, root, query, criteriaBuilder);
+
+       /* Specification<InvestmentEntity> specification = withActiveStatus();
 
         if (searchDTO.getStartToDate() != null && searchDTO.getStartFromDate() != null) {
             specification = specification.and(withStartDateRange(searchDTO.getStartFromDate(), searchDTO.getStartToDate()));
@@ -109,16 +116,62 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         if (searchDTO.getDuration() != 0) {
             specification = specification.and(withDuration(searchDTO.getDuration()));
         }
-
         if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
             Specification<InvestmentEntity> temp = (root, query, criteriaBuilder) -> {
                 Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
                 return criteriaBuilder.like(criteriaBuilder.lower(accountJoin.get("name")), "%"+searchDTO.getCustomerName().toLowerCase()+"%");
             };
             specification = specification.and(temp);
-        }
+        }*/
 
         return repository.findAll(specification, pageable);
+    }
+
+    @Override
+    public BigDecimal sumSearchedInvestments(InvestmentSearchDTO investmentSearchDTO) {
+
+        CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+        CriteriaQuery<AmountModel> query = cb.createQuery(AmountModel.class);
+        Root<InvestmentEntity> root = query.from(InvestmentEntity.class);
+
+        Predicate whereClause = buildSearchQuery(investmentSearchDTO, root, query, cb);
+
+        query.select(cb.construct(AmountModel.class, cb.sum(root.get("amountInvested"))));
+
+        query.where(whereClause);
+        TypedQuery<AmountModel> typedQuery = entityManager.createQuery(query);
+        BigDecimal amount = typedQuery.getSingleResult().getAmount();
+        return amount == null ? BigDecimal.ZERO : amount;
+    }
+
+    private Predicate buildSearchQuery(InvestmentSearchDTO searchDTO, Root<InvestmentEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
+        Predicate whereClause = cb.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE);
+
+        if (searchDTO.getStartToDate() != null && searchDTO.getStartFromDate() != null) {
+            whereClause = cb.and(whereClause, cb.between(root.get("dateCreated"), searchDTO.getStartFromDate(), searchDTO.getStartToDate()));
+        }
+        if (searchDTO.getMatureFromDate() != null && searchDTO.getMatureToDate() != null) {
+            whereClause = cb.and(whereClause, cb.between(root.get("maturityDate"), searchDTO.getMatureFromDate(), searchDTO.getMatureToDate()));
+        }
+        if (searchDTO.getAccount() != null) {
+            whereClause = cb.and(whereClause, cb.equal(root.get("owner"), searchDTO.getAccount().getId()));
+        }
+
+        if (searchDTO.getInvestmentStatus() != null) {
+            whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), searchDTO.getInvestmentStatus()));
+            if (searchDTO.getAccount() != null && searchDTO.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
+                whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED));
+            }
+        }
+        if (searchDTO.getDuration() != 0) {
+            whereClause = cb.and(whereClause, cb.equal(root.get("durationInMonths"), searchDTO.getDuration()));
+        }
+
+        if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+            Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
+            whereClause = cb.and(whereClause, cb.like(cb.lower(accountJoin.get("name")), "%"+searchDTO.getCustomerName().toLowerCase()+"%"));
+        }
+        return whereClause;
     }
 
     @Override

@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +32,8 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     PagedResponse<SavingsGoalEntity> getPagedSavingsGoalsWithMaturityDateWithinPeriod(LocalDateTime fromTime, LocalDateTime toTime, int pageIndex, int recordSize);
 
     Page<SavingsGoalEntity> searchSavingsGoal(SavingsSearchDTO savingsSearchDTO, int pageIndex, int recordSize);
+    BigDecimal sumSearchedSavingsGoal(SavingsSearchDTO savingsSearchDTO);
+
     List<SavingsMaturityStat> savingsMaturityStatisticsList(LocalDateTime startDate, LocalDateTime endDate);
 
     void deleteSavings(SavingsGoalEntity savingsGoalEntity);

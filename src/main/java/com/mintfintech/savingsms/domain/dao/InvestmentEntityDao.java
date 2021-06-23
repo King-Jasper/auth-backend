@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import org.springframework.data.domain.Page;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +26,8 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     Optional<InvestmentEntity> findByCode(String code);
 
     Page<InvestmentEntity> searchInvestments(InvestmentSearchDTO investmentSearchDTO, int pageIndex, int recordSize);
+
+    BigDecimal sumSearchedInvestments(InvestmentSearchDTO investmentSearchDTO);
 
     Page<InvestmentEntity> getRecordsForEligibleInterestApplication(int pageIndex, int recordSize);
 

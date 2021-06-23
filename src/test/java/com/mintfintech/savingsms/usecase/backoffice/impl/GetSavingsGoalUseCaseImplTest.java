@@ -13,7 +13,6 @@ import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
-import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.impl.GetSavingsGoalUseCaseImpl;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
@@ -81,7 +80,7 @@ public class GetSavingsGoalUseCaseImplTest {
         appSequenceEntityDao = new AppSequenceEntityDaoImpl(appSequenceRepository);
         savingsPlanTenorEntityDao = new SavingsPlanTenorEntityDaoImpl(savingsPlanTenorRepository);
         savingsPlanEntityDao = new SavingsPlanEntityDaoImpl(savingsPlanRepository,appSequenceEntityDao);
-        savingsGoalEntityDao = new SavingsGoalEntityDaoImpl(savingsGoalRepository,appSequenceEntityDao);
+        savingsGoalEntityDao = new SavingsGoalEntityDaoImpl(savingsGoalRepository,appSequenceEntityDao, entityManager);
         getSavingsGoalUseCase = new GetSavingsGoalUseCaseImpl(savingsPlanTenorEntityDao, savingsGoalTransactionEntityDao,
                 savingsInterestEntityDao, savingsPlanEntityDao,savingsGoalEntityDao,mintAccountEntityDao,
                 appUserEntityDao,applicationProperty,computeAvailableAmountUseCase,applicationEventService);
