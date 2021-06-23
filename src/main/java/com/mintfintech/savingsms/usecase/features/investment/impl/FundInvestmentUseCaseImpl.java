@@ -1,21 +1,19 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
-import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.InvestmentFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentFundingEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -28,6 +26,7 @@ import org.springframework.http.HttpStatus;
 import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Created by jnwanya on
@@ -45,6 +44,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     private final GetInvestmentUseCase getInvestmentUseCase;
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final SystemIssueLogService systemIssueLogService;
+    private final ApplicationEventService applicationEventService;
+    private final AppUserEntityDao appUserEntityDao;
 
     @Override
     public InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount) {
@@ -56,9 +57,10 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         transaction.setBankAccount(debitAccount);
         transaction.setTransactionAmount(amount);
         transaction.setTransactionReference(reference);
-        transaction.setTransactionType(TransactionTypeConstant.DEBIT);
+        transaction.setTransactionType(TransactionTypeConstant.CREDIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Investment funding");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         processDebit(transaction, investmentEntity, debitAccount.getAccountNumber());
@@ -100,8 +102,12 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             return response;
         }
         investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
-        investmentEntity.setTotalAmountInvested(investmentEntity.getAmountInvested().add(amount));
+        //System.out.println("Total amount invested - "+investmentEntity.getTotalAmountInvested()+" current amount - "+amount);
+        investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(amount));
         investmentEntityDao.saveRecord(investmentEntity);
+
+        sendInvestmentFundingSuccessEmail(investmentEntity, transactionEntity.getTransactionAmount());
+
         response.setResponseCode(responseCode);
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
         return response;
@@ -147,5 +153,20 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             return narration.substring(0, 60);
         }
         return narration;
+    }
+
+    private void sendInvestmentFundingSuccessEmail(InvestmentEntity investment, BigDecimal amount) {
+        AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
+        InvestmentFundingEmailEvent event = InvestmentFundingEmailEvent.builder()
+                .amount(amount)
+                .investmentBalance(investment.getAmountInvested())
+                .duration(investment.getDurationInMonths())
+                .interestRate(investment.getInterestRate())
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .recipient(appUser.getEmail())
+                .name(appUser.getName())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_FUNDING_SUCCESS, new EventModel<>(event));
     }
 }

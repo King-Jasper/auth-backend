@@ -36,7 +36,11 @@ public interface ApplicationEventService {
         MISSING_ACCOUNT_RECORD("com.mintfintech.accounts-service.events.missing-account-records"),
         EMPLOYMENT_INFORMATION_UPDATE("com.mintfintech.savings-service.events.employment-info-update"),
         MISSING_BANK_ACCOUNT_RECORD("com.mintfintech.accounts-service.events.missing-account-records.bank-account-id"),
-        APPLICATION_AUDIT_TRAIL("com.mintfintech.report-service.events.audit-trail");
+        APPLICATION_AUDIT_TRAIL("com.mintfintech.report-service.events.audit-trail"),
+        INVESTMENT_CREATION("com.mintfintech.saving-service.events.notification.email.investment-creation"),
+        INVESTMENT_LIQUIDATION_SUCCESS("com.mintfintech.saving-service.events.notification.email.investment-liquidation"),
+        INVESTMENT_MATURITY("com.mintfintech.saving-service.events.notification.email.investment-maturity"),
+        INVESTMENT_FUNDING_SUCCESS("com.mintfintech.saving-service.events.notification.email.investment-funding-success");
         private final String topic;
 
         EventType(String topic) {

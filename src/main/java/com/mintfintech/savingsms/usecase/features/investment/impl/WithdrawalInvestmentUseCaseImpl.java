@@ -3,14 +3,18 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.CBInvestmentWithdrawalStage;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.InvestmentWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentLiquidationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -28,6 +32,7 @@ import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -50,6 +55,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final SystemIssueLogService systemIssueLogService;
+    private final ApplicationEventService applicationEventService;
+    private final AppUserEntityDao appUserEntityDao;
 
 
     @Override
@@ -177,6 +184,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setAccruedInterest(accruedInterest.subtract(interestCharge));
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
         investmentEntityDao.saveRecord(investment);
+
+        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
     }
 
     private void processFullLiquidation(InvestmentEntity investment, MintBankAccountEntity creditAccount) {
@@ -215,6 +224,25 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
         investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
+
+        sendInvestmentLiquidationEmail(investment, withdrawalEntity);
+    }
+
+    private void sendInvestmentLiquidationEmail(InvestmentEntity investment, InvestmentWithdrawalEntity withdrawal) {
+
+        AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
+
+        InvestmentLiquidationEmailEvent event = InvestmentLiquidationEmailEvent.builder()
+                .investmentAmount(withdrawal.getBalanceBeforeWithdrawal())
+                .investmentBalance(investment.getAmountInvested())
+                .liquidatedAmount(withdrawal.getAmount())
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .name(appUser.getName())
+                .penaltyCharge(withdrawal.getAmountCharged())
+                .recipient(appUser.getEmail())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_LIQUIDATION_SUCCESS, new EventModel<>(event));
     }
 
     private void processInterestPayoutPayment(InvestmentWithdrawalEntity withdrawal) {
@@ -230,13 +258,14 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Interest payout.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setInterestPayout(transaction);
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_INTEREST_TO_CUSTOMER);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
-        String narration = "Investment("+investment.getCode()+") interest payment - "+reference;
+        String narration = "Investment(" + investment.getCode() + ") interest payment - " + reference;
 
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
@@ -258,6 +287,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
@@ -293,13 +323,14 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Liquidation penalty charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setPenaltyCharge(transaction);
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_PRE_LIQUIDATION_PENALTY);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
-        String narration = "Investment("+investment.getCode()+") liquidation penalty charge - "+reference;
+        String narration = "Investment(" + investment.getCode() + ") liquidation penalty charge - " + reference;
 
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
@@ -321,6 +352,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)) {
@@ -356,6 +388,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Withholding Tax Charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setWithholdingTaxCharge(transaction);
@@ -382,6 +415,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
@@ -417,6 +451,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
         transaction.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
+        transaction.setTransactionDescription("Investment principal payout.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         withdrawal.setPrincipalPayout(transaction);
@@ -443,6 +478,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
             transaction.setTransactionResponseMessage(responseCBS.getResponseMessage());
             transaction.setTransactionResponseCode(responseCBS.getResponseCode());
+            transaction.setExternalReference(responseCBS.getBankOneReference());
 
             if ("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
                 withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.COMPLETED);

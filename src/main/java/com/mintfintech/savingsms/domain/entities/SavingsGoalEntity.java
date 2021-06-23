@@ -35,6 +35,8 @@ public class SavingsGoalEntity extends AbstractBaseEntity<Long> {
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private SavingsPlanTenorEntity savingsPlanTenor;
 
+    private double interestRate;
+
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     private SavingsGoalCategoryEntity goalCategory;
 

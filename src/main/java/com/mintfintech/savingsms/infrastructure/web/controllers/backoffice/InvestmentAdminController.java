@@ -42,26 +42,56 @@ public class InvestmentAdminController {
     private final GetInvestmentUseCase getInvestmentUseCase;
 
     @ApiOperation(value = "Returns paginated investment list.")
-    @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getAllInvestments(@ApiParam(value = "Investment Status: ALL, ACTIVE, COMPLETED, MATURED, LIQUIDATED") @Valid @Pattern(regexp = "(ALL|ACTIVE|COMPLETED|MATURED|LIQUIDATED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
+    @GetMapping(value = "completed", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getCompletedInvestments(@ApiParam(value = "Investment Status: ALL, COMPLETED, LIQUIDATED") @Valid @Pattern(regexp = "(ALL|COMPLETED|LIQUIDATED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
                                                                                                  @ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startToDate", required = false) LocalDate startToDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureFromDate", required = false) LocalDate matureFromDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureToDate", required = false) LocalDate matureToDate,
                                                                                                  @ApiParam(value = "Duration of investment in months. Min:1") @Valid @Min(value = 0) @RequestParam(value = "duration", required = false, defaultValue = "0") int duration,
-                                                                                                 @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                                 @ApiParam(value = "No. of records per page. Min:1, Max:500") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                  @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
-                .investmentStatus(investmentStatus)
+                .investmentStatus(investmentStatus.equalsIgnoreCase("ALL")? "" : investmentStatus)
                 .startToDate(startToDate)
                 .customerName(StringUtils.isNotEmpty(customerName) ? customerName.trim() : null)
                 .duration(duration)
                 .matureFromDate(matureFromDate)
                 .matureToDate(matureToDate)
                 .startFromDate(startFromDate)
+                .completedRecords(true)
+                .build();
+
+        InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
+
+        ApiResponseJSON<PagedDataResponse<InvestmentModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response.getInvestments());
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns paginated investment list.")
+    @GetMapping(value = "active", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getAllInvestments(@ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
+                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
+                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startToDate", required = false) LocalDate startToDate,
+                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureFromDate", required = false) LocalDate matureFromDate,
+                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureToDate", required = false) LocalDate matureToDate,
+                                                                                                 @ApiParam(value = "Duration of investment in months. Min:1") @Valid @Min(value = 0) @RequestParam(value = "duration", required = false, defaultValue = "0") int duration,
+                                                                                                 @ApiParam(value = "No. of records per page. Min:1, Max:500") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
+                                                                                                 @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
+    ) {
+
+        InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
+                .startToDate(startToDate)
+                .customerName(StringUtils.isNotEmpty(customerName) ? customerName.trim() : null)
+                .duration(duration)
+                .matureFromDate(matureFromDate)
+                .matureToDate(matureToDate)
+                .startFromDate(startFromDate)
+                .investmentStatus("ACTIVE")
+                .completedRecords(false)
                 .build();
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);

@@ -1,8 +1,10 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentWithdrawalEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentWithdrawalEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
@@ -10,6 +12,9 @@ import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
+import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.features.investment.UpdateInvestmentMaturityUseCase;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.RequiredArgsConstructor;
@@ -21,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 
@@ -32,6 +38,8 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
     private final InvestmentEntityDao investmentEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
+    private final ApplicationEventService applicationEventService;
+    private final AppUserEntityDao appUserEntityDao;
 
     @Override
     public void updateStatusForMaturedInvestment() {
@@ -94,6 +102,29 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
                     .build();
 
             investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
+
+            investment.setAmountInvested(BigDecimal.ZERO);
+            investment.setAccruedInterest(BigDecimal.ZERO);
+            investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(accruedInterest));
+            investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
+            investment.setDateWithdrawn(LocalDateTime.now());
+            investmentEntityDao.saveRecord(investment);
+
+
+            sendInvestmentMaturityEmail(investment);
         }
+    }
+
+    private void sendInvestmentMaturityEmail(InvestmentEntity investment) {
+
+        AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
+
+        InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
+                .investmentAmount(investment.getTotalAmountWithdrawn())
+                .recipient(appUser.getEmail())
+                .name(appUser.getName())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_MATURITY, new EventModel<>(event));
     }
 }

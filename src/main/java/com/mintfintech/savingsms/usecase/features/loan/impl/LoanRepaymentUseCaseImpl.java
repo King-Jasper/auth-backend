@@ -211,7 +211,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         LienAccountRequestCBS request = LienAccountRequestCBS.builder()
                 .accountNumber(debitAccount.getAccountNumber())
-                .referenceID(transaction.getLienReference())
+                .referenceId(transaction.getLienReference())
                 .build();
 
         MsClientResponse<LienAccountResponseCBS> msClientResponse = coreBankingServiceClient.removeLienOnAccount(request);
@@ -250,6 +250,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     .status(TransactionStatusConstant.SUCCESSFUL)
                     .transactionType(TransactionTypeConstant.DEBIT)
                     .lienActive(true)
+                    .transactionReference(responseCBS.getReferenceID())
                     .lienReference(responseCBS.getReferenceID())
                     .responseCode(responseCBS.getStatus())
                     .responseMessage(responseCBS.getMessage())

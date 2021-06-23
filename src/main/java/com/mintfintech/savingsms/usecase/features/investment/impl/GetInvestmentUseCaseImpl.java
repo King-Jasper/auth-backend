@@ -1,8 +1,12 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
-import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
+import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -14,9 +18,8 @@ import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCas
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
 import lombok.AllArgsConstructor;
-import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +28,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -37,7 +43,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     private final AppUserEntityDao appUserEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
     private final InvestmentTransactionEntityDao investmentTransactionEntityDao;
-    private final InvestmentWithdrawalEntityDao investmentWithdrawalEntityDao;
     private final ApplicationProperty applicationProperty;
 
     @Override
@@ -46,27 +51,26 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         InvestmentEntity investment = investmentEntityDao.findByCode(investmentId)
                 .orElseThrow(() -> new NotFoundException("Invalid investment id " + investmentId));
 
-        List<InvestmentTransactionEntity> fundings
-                = investmentTransactionEntityDao.getTransactionsByInvestment(investment, TransactionTypeConstant.DEBIT, TransactionStatusConstant.SUCCESSFUL);
-
-        List<InvestmentWithdrawalEntity> withdrawals
-                = investmentWithdrawalEntityDao.getWithdrawalByInvestmentAndStatus(investment, InvestmentWithdrawalStageConstant.COMPLETED);
-
+        List<InvestmentTransactionEntity> transactionEntities = investmentTransactionEntityDao.getTransactionsByInvestment(investment);
+        System.out.println("history size - "+transactionEntities.size());
         List<InvestmentTransactionModel> transactions = new ArrayList<>();
 
-        fundings.forEach(funding -> {
+        transactionEntities.forEach(funding -> {
             InvestmentTransactionModel transaction = new InvestmentTransactionModel();
             transaction.setAmount(funding.getTransactionAmount());
             transaction.setDate(funding.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            transaction.setType("Investment Funding");
-            transactions.add(transaction);
-        });
-
-        withdrawals.forEach(withdrawal -> {
-            InvestmentTransactionModel transaction = new InvestmentTransactionModel();
-            transaction.setAmount(withdrawal.getAmount());
-            transaction.setDate(withdrawal.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            transaction.setType("Investment Liquidation");
+            transaction.setType(funding.getTransactionType().name());
+            transaction.setTransactionStatus(funding.getTransactionStatus().name());
+            transaction.setReference(funding.getTransactionReference());
+            if (StringUtils.isNotEmpty(funding.getTransactionDescription())) {
+                transaction.setDescription(funding.getTransactionDescription());
+            } else {
+                if (funding.getTransactionType() == TransactionTypeConstant.DEBIT) {
+                    transaction.setDescription("Investment debit.");
+                } else {
+                    transaction.setDescription("Investment credit.");
+                }
+            }
             transactions.add(transaction);
         });
 
@@ -86,20 +90,31 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
         AppUserEntity appUser = appUserEntityDao.getRecordById(investment.getCreator().getId());
 
+        if (investment.getInvestmentStatus() == InvestmentStatusConstant.COMPLETED || investment.getInvestmentStatus() == InvestmentStatusConstant.LIQUIDATED) {
+            model.setAmountInvested(investment.getTotalAmountWithdrawn().subtract(investment.getTotalInterestWithdrawn()));
+            model.setTotalAccruedInterest(investment.getTotalInterestWithdrawn());
+            model.setTotalExpectedReturn(investment.getTotalAmountWithdrawn());
+            model.setEstimatedProfitAtMaturity(investment.getTotalInterestWithdrawn());
+        } else {
+            BigDecimal totalAccruedInterest = investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment);
+            model.setAmountInvested(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE ? investment.getAmountInvested() : investment.getTotalAmountInvested());
+            model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_UP));
+            model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
+            model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
+        }
+
         model.setStatus(investment.getInvestmentStatus().name());
         model.setType(investment.getInvestmentType().name());
-        model.setAmountInvested(investment.getAmountInvested());
-        model.setAccruedInterest(investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment));
-        //model.setLockedInvestment(investment.isLockedInvestment());
+        model.setAccruedInterest(investment.getAccruedInterest());
 
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
         }
         boolean canLiquidate = false;
-        if(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
+        if (investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE) {
             long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
-            if(daysPast <= minimumLiquidationPeriodInDays) {
+            if (daysPast >= minimumLiquidationPeriodInDays) {
                 canLiquidate = true;
             }
         }
@@ -112,12 +127,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         model.setTenorName(investment.getInvestmentTenor().getDurationDescription());
         model.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn());
-        model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
         model.setPenaltyCharge(investment.getInvestmentTenor().getPenaltyRate());
         model.setMaxLiquidateRate(investment.getMaxLiquidateRate());
-        model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
-
-        //model.setAccountId(model.getAccountId());
         model.setCustomerName(investment.getOwner().getName());
         model.setUserId(appUser.getUserId());
 
@@ -128,7 +139,10 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     public InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size) {
 
         Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
-        InvestmentStatusConstant status = !searchRequest.getInvestmentStatus().equals("ALL") ? InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus()) : null;
+        InvestmentStatusConstant status = null;
+        if (StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
+            status = InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus());
+        }
 
         InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
                 .startFromDate(searchRequest.getStartFromDate() != null ? searchRequest.getStartFromDate().atStartOfDay() : null)
@@ -139,6 +153,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .matureToDate(searchRequest.getMatureToDate() != null ? searchRequest.getMatureToDate().atTime(23, 59) : null)
                 .investmentStatus(status)
                 .account(mintAccount.orElse(null))
+                .completedRecords(searchRequest.isCompletedRecords())
                 .build();
 
         Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
@@ -155,14 +170,27 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         if (mintAccount.isPresent()) {
 
             if (status != null) {
-                List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
 
-                for (InvestmentStat stat : stats) {
-                    if (stat.getInvestmentStatus().equals(status)) {
-                        summary.setTotalInvestments(stat.getTotalRecords());
-                        summary.setTotalInvested(stat.getTotalInvestment());
-                        summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
-                        summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                if (status == InvestmentStatusConstant.COMPLETED) {
+                    List<InvestmentStat> stats = investmentEntityDao.getStatsForCompletedInvestment(mintAccount.get());
+
+                    for (InvestmentStat stat : stats) {
+                        if (stat.getInvestmentStatus().equals(InvestmentStatusConstant.LIQUIDATED) || stat.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
+                            summary.setTotalInvestments(summary.getTotalInvestments() + stat.getTotalRecords());
+                            summary.setTotalInvested(summary.getTotalInvested().add(stat.getTotalInvestment()));
+                            summary.setTotalExpectedReturns(summary.getTotalExpectedReturns().add(stat.getTotalExpectedReturns()));
+                        }
+                    }
+                } else {
+                    List<InvestmentStat> stats = investmentEntityDao.getInvestmentStatOnAccount(mintAccount.get());
+
+                    for (InvestmentStat stat : stats) {
+                        if (stat.getInvestmentStatus().equals(status)) {
+                            summary.setTotalInvestments(stat.getTotalRecords());
+                            summary.setTotalInvested(stat.getTotalInvestment());
+                            summary.setTotalProfit(stat.getAccruedInterest().add(BigDecimal.valueOf(stat.getOutstandingInterest())).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                            summary.setTotalExpectedReturns(summary.getTotalInvested().add(summary.getTotalProfit()).setScale(2, BigDecimal.ROUND_HALF_EVEN));
+                        }
                     }
                 }
             } else {

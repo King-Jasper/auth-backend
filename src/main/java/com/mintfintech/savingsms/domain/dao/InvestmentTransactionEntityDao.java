@@ -11,4 +11,5 @@ public interface InvestmentTransactionEntityDao extends CrudDao<InvestmentTransa
     String generateTransactionReference();
 
     List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity, TransactionTypeConstant type, TransactionStatusConstant status);
+    List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity);
 }

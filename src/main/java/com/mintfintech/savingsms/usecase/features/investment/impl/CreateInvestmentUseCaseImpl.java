@@ -5,10 +5,13 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -22,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -37,6 +41,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final AccountAuthorisationUseCase accountAuthorisationUseCase;
     private final FundInvestmentUseCase fundInvestmentUseCase;
     private final ApplicationProperty applicationProperty;
+    private final ApplicationEventService applicationEventService;
 
     @Override
     @Transactional
@@ -101,10 +106,27 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
         investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
+
+        sendInvestmentCreationEmail(investment, appUser);
+
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
         response.setCreated(true);
         response.setMessage("Investment Created Successfully");
         return response;
+    }
+
+    private void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
+
+        InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
+                .duration(investment.getDurationInMonths())
+                .investmentAmount(investment.getAmountInvested())
+                .interestRate(investment.getInterestRate())
+                .recipient(appUser.getEmail())
+                .name(appUser.getName())
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_CREATION, new EventModel<>(event));
     }
 
 }

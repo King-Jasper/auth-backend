@@ -50,4 +50,6 @@ public abstract class SavingsTransaction extends AbstractBaseEntity<Long> {
     private String transactionResponseMessage;
 
     private String externalReference;
+
+    private String transactionDescription;
 }

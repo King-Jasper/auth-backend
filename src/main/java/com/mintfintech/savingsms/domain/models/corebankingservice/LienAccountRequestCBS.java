@@ -15,5 +15,5 @@ public class LienAccountRequestCBS {
 
     private BigDecimal amount;
 
-    private String referenceID;
+    private String referenceId;
 }
