@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 
 import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
+import com.mintfintech.savingsms.usecase.features.loan.UpdateEmploymentInfoUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,11 +22,13 @@ public class AccountMSEventListener {
     private final Gson gson;
     private final AccountSetupUseCases accountSetupUseCases;
     private final CreateReferralRewardUseCase createReferralRewardUseCase;
+    private final UpdateEmploymentInfoUseCase updateEmploymentInfoUseCase;
 
-    public AccountMSEventListener(Gson gson, AccountSetupUseCases accountSetupUseCases, CreateReferralRewardUseCase createReferralRewardUseCase) {
+    public AccountMSEventListener(Gson gson, AccountSetupUseCases accountSetupUseCases, CreateReferralRewardUseCase createReferralRewardUseCase, UpdateEmploymentInfoUseCase updateEmploymentInfoUseCase) {
         this.gson = gson;
         this.accountSetupUseCases = accountSetupUseCases;
         this.createReferralRewardUseCase = createReferralRewardUseCase;
+        this.updateEmploymentInfoUseCase = updateEmploymentInfoUseCase;
     }
     private final String MINT_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.mint-account-creation";
     private final String MINT_BANK_ACCOUNT_CREATION_EVENT = "com.mintfintech.accounts-service.events.bank-account-creation";
@@ -36,6 +40,7 @@ public class AccountMSEventListener {
     private final String CUSTOMER_REFERRAL_EVENT = "com.mintfintech.accounts-service.events.customer-referral-info";
     private final String MINT_BANK_ACCOUNT_STATUS_UPDATE_EVENT = "com.mintfintech.accounts-service.events.bank-account-status-update";
     private final String USER_PROFILE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.user-profile-update";
+    private final String EMPLOYMENT_INFORMATION_UPDATE_EVENT = "com.mintfintech.savings-service.events.employment-info-update";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
@@ -96,6 +101,12 @@ public class AccountMSEventListener {
     public void listenForUserProfileUpdate(String payload) {
         UserDetailUpdateEvent event = gson.fromJson(payload, UserDetailUpdateEvent.class);
         accountSetupUseCases.updateUserProfileDetails(event);
+    }
+
+    @KafkaListener(topics = {EMPLOYMENT_INFORMATION_UPDATE_EVENT})
+    public void listenForEmploymentInfoUpdate(String payload) {
+        EmploymentInfoUpdateEvent event = gson.fromJson(payload, EmploymentInfoUpdateEvent.class);
+        updateEmploymentInfoUseCase.updateCustomerEmploymentInformation(event);
     }
 
 }
