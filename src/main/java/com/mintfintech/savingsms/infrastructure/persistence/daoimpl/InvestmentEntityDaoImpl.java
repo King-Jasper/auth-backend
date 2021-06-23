@@ -202,11 +202,6 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         return repository.getInvestmentStatistics(mintAccountEntity);
     }
 
-    @Override
-    public List<InvestmentStat> getStatsForCompletedInvestment(MintAccountEntity mintAccountEntity) {
-        return repository.getStatisticsForCompletedInvestment(mintAccountEntity);
-    }
-
     private static Specification<InvestmentEntity> withActiveStatus() {
         return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.and(
                 criteriaBuilder.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE)));
