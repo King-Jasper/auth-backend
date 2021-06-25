@@ -50,8 +50,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
-    private static final BigDecimal referralAmount = BigDecimal.valueOf(1000.00);
-    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal referralAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(250.00);
 
 
     @Async
