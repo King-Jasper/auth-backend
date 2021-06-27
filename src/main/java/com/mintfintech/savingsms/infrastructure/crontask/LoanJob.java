@@ -27,8 +27,9 @@ public class LoanJob {
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
     }
 
+    //0 0 23 ? * MON,TUE,WED,THU,FRI
     @SchedulerLock(name = "LoanJob_loanRepaymentDueToday", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 00 23 1/1 * ?") // runs every day at 12:00pm.
+    @Scheduled(cron = "0 0 23 ? * MON,TUE,WED,THU,FRI") // runs every day at 11:00pm.
     public void loanRepaymentDueToday() {
         loanRepaymentUseCase.loanRepaymentDueToday();
     }
