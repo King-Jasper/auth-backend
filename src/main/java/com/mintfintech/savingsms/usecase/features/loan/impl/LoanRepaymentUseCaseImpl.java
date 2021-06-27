@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
@@ -83,8 +84,15 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             return;
         }
 
-        repaymentDueToday.forEach(loan -> {
+        Calendar calendar = Calendar.getInstance();
+        boolean isWeekend = calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY;
 
+        repaymentDueToday.forEach(loan -> {
+            if(isWeekend) {
+                loan.setRepaymentDueDate(loan.getRepaymentDueDate().plusDays(1));
+                loanRequestEntityDao.saveRecord(loan);
+                return; // next the current iteration.
+            }
             List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loan);
 
             for (LoanTransactionEntity transaction : transactions) {
