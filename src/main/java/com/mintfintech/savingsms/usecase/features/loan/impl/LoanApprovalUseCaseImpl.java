@@ -23,12 +23,16 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeFieldType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
+import java.util.Calendar;
 import java.util.List;
 
 @Service
@@ -128,12 +132,21 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         ) {
             LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
 
+            LocalDateTime repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
+
+            DayOfWeek dayOfWeek = repaymentDate.getDayOfWeek();
+            if(dayOfWeek == DayOfWeek.SATURDAY) {
+                repaymentDate = repaymentDate.plusDays(3);
+            }else if(dayOfWeek == DayOfWeek.SUNDAY) {
+                repaymentDate = repaymentDate.plusDays(2);
+            }
+
             loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequest.setApprovedDate(LocalDateTime.now());
             loanRequest.setApproveByName(authenticatedUser.getUsername());
             loanRequest.setApproveByUserId(authenticatedUser.getUserId());
             loanRequest.setTrackingReference(responseCBS.getTrackingReference());
-            loanRequest.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
+            loanRequest.setRepaymentDueDate(repaymentDate);
             loanRequestEntityDao.saveRecord(loanRequest);
 
             MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
