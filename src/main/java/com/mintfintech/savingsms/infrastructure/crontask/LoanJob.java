@@ -43,7 +43,7 @@ public class LoanJob {
         }
     }
 //0 0 9/3 ? * *
-    @Scheduled(cron = "0 0 10/3 ? * *") // runs every 3 hour starting from 9am daily
+    @Scheduled(cron = "0 0/30 0 ? * *") // runs every 3 hour starting from 9am daily
     @SchedulerLock(name = "LoanJob_processDueLoanPendingDebit", lockAtMostForString = "PT30M")
     public void processDueLoanPendingDebit() {
         loanRepaymentUseCase.checkDueLoanPendingDebit();

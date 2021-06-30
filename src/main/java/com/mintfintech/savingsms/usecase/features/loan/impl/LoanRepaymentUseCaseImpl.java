@@ -201,19 +201,14 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
 
-            if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
-                    && msClientResponse.isSuccess()
-                    && msClientResponse.getData().getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
-
+            if (msClientResponse.getStatusCode() == HttpStatus.OK.value() && msClientResponse.isSuccess()) {
                 LoanDetailResponseCBS responseCBS = msClientResponse.getData();
-
-                if (responseCBS.getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
+                System.out.println("paid off - "+ (responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0));
+                if(responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0) {
                     loan.setAmountPaid(responseCBS.getTotalAmountPaid());
                     loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
                 }
-
                 loan.setAmountCollectedOnBankOne(responseCBS.getTotalAmountPaid());
-
                 loanRequestEntityDao.saveRecord(loan);
             }
         }
