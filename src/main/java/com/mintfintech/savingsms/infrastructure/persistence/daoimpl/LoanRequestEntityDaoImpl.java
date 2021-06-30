@@ -197,6 +197,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
 
     @Override
     public List<LoanRequestEntity> getPendingDebitLoans() {
-        return repository.getPendingDebitLoans();
+        LocalDateTime startTime = LocalDateTime.now();
+        return repository.getPendingDebitLoans(startTime);
     }
 }

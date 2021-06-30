@@ -27,6 +27,7 @@ public class LoanJob {
         loanRepaymentUseCase.dispatchEmailToCustomersWithPaymentDueInTwoDays();
     }
 
+    //
     @SchedulerLock(name = "LoanJob_loanRepaymentDueToday", lockAtMostForString = "PT45M")
     @Scheduled(cron = "0 00 23 1/1 * ?") // runs every day at 12:00pm.
     public void loanRepaymentDueToday() {
@@ -41,7 +42,7 @@ public class LoanJob {
         } catch (Exception ignored) {
         }
     }
-
+    //0 0/30 0 ? * *
     @Scheduled(cron = "0 0 9/3 ? * *") // runs every 3 hour starting from 9am daily
     @SchedulerLock(name = "LoanJob_processDueLoanPendingDebit", lockAtMostForString = "PT30M")
     public void processDueLoanPendingDebit() {

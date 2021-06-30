@@ -26,6 +26,7 @@ import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -33,10 +34,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
@@ -83,8 +86,16 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             return;
         }
 
-        repaymentDueToday.forEach(loan -> {
+       // Calendar calendar = Calendar.getInstance();
+       // boolean isWeekend = calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SATURDAY || calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY;
 
+        repaymentDueToday.forEach(loan -> {
+            /*if(isWeekend) {
+                loan.setRepaymentDueDate(loan.getRepaymentDueDate().plusDays(1));
+                loanRequestEntityDao.saveRecord(loan);
+                return; // next the current iteration.
+            }
+            */
             List<LoanTransactionEntity> transactions = loanTransactionEntityDao.getLoanTransactions(loan);
 
             for (LoanTransactionEntity transaction : transactions) {
@@ -174,6 +185,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     public void checkDueLoanPendingDebit() {
 
         List<LoanRequestEntity> loans = loanRequestEntityDao.getPendingDebitLoans();
+        log.info("loan size - {}", loans.size());
 
         if (loans.isEmpty()) {
             return;
@@ -187,19 +199,16 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getBankOneAccountNumber());
 
-            if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
-                    && msClientResponse.isSuccess()
-                    && msClientResponse.getData().getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
+            log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
 
+            if (msClientResponse.getStatusCode() == HttpStatus.OK.value() && msClientResponse.isSuccess()) {
                 LoanDetailResponseCBS responseCBS = msClientResponse.getData();
-
-                if (responseCBS.getTotalOutstandingAmount().equals(BigDecimal.ZERO)) {
+                System.out.println("paid off - "+ (responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0));
+                if(responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0) {
                     loan.setAmountPaid(responseCBS.getTotalAmountPaid());
                     loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
                 }
-
                 loan.setAmountCollectedOnBankOne(responseCBS.getTotalAmountPaid());
-
                 loanRequestEntityDao.saveRecord(loan);
             }
         }
