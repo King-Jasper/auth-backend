@@ -26,6 +26,7 @@ import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -38,6 +39,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
@@ -183,6 +185,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     public void checkDueLoanPendingDebit() {
 
         List<LoanRequestEntity> loans = loanRequestEntityDao.getPendingDebitLoans();
+        log.info("loan size - {}", loans.size());
 
         if (loans.isEmpty()) {
             return;
@@ -195,6 +198,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
             MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
 
             MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getBankOneAccountNumber());
+
+            log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
 
             if (msClientResponse.getStatusCode() == HttpStatus.OK.value()
                     && msClientResponse.isSuccess()
