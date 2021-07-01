@@ -29,8 +29,9 @@ public class LoanJob {
 
     //   | 0 00 23 1/1 * ?
     @SchedulerLock(name = "LoanJob_loanRepaymentDueToday", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 20 21 ? * *") // runs every day at 12:00pm.
+    @Scheduled(cron = "0 30 21 ? * *") // runs every day at 12:00pm.
     public void loanRepaymentDueToday() {
+        log.info("loanRepaymentDueToday executes");
         loanRepaymentUseCase.loanRepaymentDueToday();
     }
 

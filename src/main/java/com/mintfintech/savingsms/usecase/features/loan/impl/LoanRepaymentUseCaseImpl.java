@@ -185,7 +185,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
     public void checkDueLoanPendingDebit() {
 
         List<LoanRequestEntity> loans = loanRequestEntityDao.getPendingDebitLoans();
-        log.info("loan size - {}", loans.size());
+        //log.info("loan size - {}", loans.size());
 
         if (loans.isEmpty()) {
             return;
