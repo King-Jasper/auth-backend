@@ -89,7 +89,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             loanStatus = "DECLINED";
         }else {
             // IT IS APPROVED
-            if(repaymentStatus == LoanRepaymentStatusConstant.PAID) {
+            if(repaymentStatus == LoanRepaymentStatusConstant.PAID || repaymentStatus == LoanRepaymentStatusConstant.COMPLETED) {
                 loanStatus = "COMPLETED";
             }else if(repaymentStatus == LoanRepaymentStatusConstant.PENDING || repaymentStatus == LoanRepaymentStatusConstant.PARTIALLY_PAID) {
                 if(loanRequestEntity.getRepaymentDueDate().isBefore(LocalDateTime.now())) {
