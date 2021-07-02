@@ -54,7 +54,15 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     private static Specification<LoanRequestEntity> withRepaymentStatus(LoanRepaymentStatusConstant loanStatus) {
-        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus));
+
+        return ((root, criteriaQuery, criteriaBuilder) -> {
+            if(loanStatus == LoanRepaymentStatusConstant.PAID) {
+                return criteriaBuilder.or(criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus),
+                        criteriaBuilder.equal(root.get("repaymentStatus"), LoanRepaymentStatusConstant.COMPLETED));
+            }else {
+                return criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus);
+            }
+        });
     }
 
     private static Specification<LoanRequestEntity> withApprovalStatus(ApprovalStatusConstant approvalStatus) {
@@ -135,7 +143,16 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
             specification = specification.and(temp);
         }
         if (searchDTO.getRepaymentStatus() != null) {
-            specification = specification.and(withRepaymentStatus(searchDTO.getRepaymentStatus()));
+            if(searchDTO.getAccount() != null && searchDTO.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
+                Specification<LoanRequestEntity> temp =  (root, query, criteriaBuilder) -> {
+                    return criteriaBuilder.or(criteriaBuilder.equal(root.get("repaymentStatus"), searchDTO.getRepaymentStatus()),
+                            criteriaBuilder.equal(root.get("repaymentStatus"), LoanRepaymentStatusConstant.COMPLETED));
+                };
+                specification = specification.and(temp);
+            }else {
+                Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), searchDTO.getRepaymentStatus());
+                specification = specification.and(temp);
+            }
         }
         if (searchDTO.getApprovalStatus() != null) {
             if(searchDTO.getApprovalStatus() == ApprovalStatusConstant.APPROVED || searchDTO.getApprovalStatus() == ApprovalStatusConstant.DISBURSED) {
