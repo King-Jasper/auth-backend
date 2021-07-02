@@ -113,6 +113,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
                 .interestRate(applicationProperty.getPayDayLoanInterestRate())
                 .loanAmount(loanAmount)
                 .repaymentAmount(loanAmount.add(loanInterest))
+                .activeLoan(true)
                 .requestedBy(appUser)
                 .loanInterest(loanInterest)
                 .loanType(LoanTypeConstant.PAYDAY)

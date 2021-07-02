@@ -172,6 +172,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         loanRequest.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
         loanRequest.setApproveByName(authenticatedUser.getUsername());
         loanRequest.setApproveByUserId(authenticatedUser.getUserId());
+        loanRequest.setActiveLoan(false);
         loanRequest.setRejectionReason(reason);
 
         loanRequestEntityDao.saveRecord(loanRequest);

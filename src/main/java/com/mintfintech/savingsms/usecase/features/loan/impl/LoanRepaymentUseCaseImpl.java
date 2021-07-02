@@ -142,10 +142,13 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
         if (optionalLoanTransaction.isPresent()) {
             BigDecimal amountPaid = loan.getAmountPaid().add(amountToPay);
+            LoanRepaymentStatusConstant repaymentStatusConstant = amountPaid.compareTo(loan.getRepaymentAmount()) < 0 ? LoanRepaymentStatusConstant.PARTIALLY_PAID : LoanRepaymentStatusConstant.PAID;
             loan.setAmountPaid(amountPaid);
-            loan.setRepaymentStatus(amountPaid.compareTo(loan.getRepaymentAmount()) < 0 ? LoanRepaymentStatusConstant.PARTIALLY_PAID : LoanRepaymentStatusConstant.PAID);
+            loan.setRepaymentStatus(repaymentStatusConstant);
+            if(repaymentStatusConstant == LoanRepaymentStatusConstant.PAID){
+                loan.setActiveLoan(false);
+            }
             loan = loanRequestEntityDao.saveRecord(loan);
-
             LoanEmailEvent event = LoanEmailEvent.builder()
                     .customerName(appUser.getName())
                     .recipient(appUser.getEmail())
@@ -207,6 +210,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 if(responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0) {
                     loan.setAmountPaid(responseCBS.getTotalAmountPaid());
                     loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
+                    loan.setActiveLoan(false);
                 }
                 loan.setAmountCollectedOnBankOne(responseCBS.getTotalAmountPaid());
                 loanRequestEntityDao.saveRecord(loan);
