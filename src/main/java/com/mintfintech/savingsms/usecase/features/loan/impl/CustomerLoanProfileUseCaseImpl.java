@@ -225,6 +225,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             for (LoanRequestEntity loanRequestEntity : loans) {
                 if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING) {
                     loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
+                    loanRequestEntity.setActiveLoan(false);
                     loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
                     loanRequestEntityDao.saveRecord(loanRequestEntity);
                 }

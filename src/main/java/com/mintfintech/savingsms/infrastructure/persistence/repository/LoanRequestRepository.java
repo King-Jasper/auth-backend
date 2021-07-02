@@ -30,6 +30,7 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
             " s.amountPaid < s.repaymentAmount")
     long countActiveCustomerLoanOnAccount(AppUserEntity requestedBy);
 
+    /*
     @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
             " s.loanType = com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant.PAYDAY and" +
@@ -37,6 +38,14 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
             " s.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.PENDING or" +
             " s.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.DISBURSED) and" +
             " s.amountPaid < s.repaymentAmount")
+    long countActiveCustomerPayDayLoan(AppUserEntity requestedBy);
+    */
+
+
+    @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.loanType = com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant.PAYDAY and " +
+            " s.activeLoan = true")
     long countActiveCustomerPayDayLoan(AppUserEntity requestedBy);
 
     List<LoanRequestEntity> getAllByRequestedByAndRecordStatus(AppUserEntity requestedBy, RecordStatusConstant recordStatus);

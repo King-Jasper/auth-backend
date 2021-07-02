@@ -55,6 +55,9 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     @Builder.Default
     private double interestRate = 0.0;
 
+    @Builder.Default
+    private boolean activeLoan = true;
+
     private LocalDateTime approvedDate;
 
     private LocalDateTime repaymentDueDate;
