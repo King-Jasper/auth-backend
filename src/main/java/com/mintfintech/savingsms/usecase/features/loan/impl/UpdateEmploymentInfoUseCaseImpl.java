@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.loan.impl;
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
+import com.mintfintech.savingsms.domain.dao.ResourceFileEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
@@ -38,6 +39,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final ApplicationProperty applicationProperty;
     private final ApplicationEventService applicationEventService;
+    private final ResourceFileEntityDao resourceFileEntityDao;
 
     @Override
     public void updateCustomerEmploymentInformation(EmploymentInfoUpdateEvent updateEvent) {
@@ -46,7 +48,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(updateEvent.getUserId());
 
         Optional<CustomerLoanProfileEntity> customerLoanProfileEntityOpt = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
-        if(!customerLoanProfileEntityOpt.isPresent()) {
+        if (!customerLoanProfileEntityOpt.isPresent()) {
             log.info("Not loan profile created for customer - {}", updateEvent.getUserId());
             return;
         }
@@ -72,6 +74,15 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         employeeInfo.setWorkEmail(updateEvent.getWorkEmail());
         employeeInfo.setOrganizationUrl(updateEvent.getOrganizationUrl());
         employeeInformationEntityDao.saveRecord(employeeInfo);
+
+        ResourceFileEntity fileEntity = ResourceFileEntity.builder()
+                .fileId(updateEvent.getEmploymentLetterFileId())
+                .fileName(updateEvent.getEmploymentLetterFileName())
+                .fileSizeInKB(updateEvent.getEmploymentLetterFileSize())
+                .remoteResource(true)
+                .url(updateEvent.getEmploymentLetterFileUrl())
+                .build();
+        resourceFileEntityDao.saveRecord(fileEntity);
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
                 .recipient(applicationProperty.getSystemAdminEmail())
