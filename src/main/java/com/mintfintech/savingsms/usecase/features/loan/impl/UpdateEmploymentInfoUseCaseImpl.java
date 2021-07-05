@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.loan.impl;
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
+import com.mintfintech.savingsms.domain.dao.ResourceFileEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
@@ -38,6 +39,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final ApplicationProperty applicationProperty;
     private final ApplicationEventService applicationEventService;
+    private final ResourceFileEntityDao resourceFileEntityDao;
 
     @Override
     public void updateCustomerEmploymentInformation(EmploymentInfoUpdateEvent updateEvent) {
@@ -57,12 +59,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         }
 
         EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-        /*
-        if (request.getEmploymentLetter() != null) {
-            ResourceFileEntity employmentLetter = imageResourceUseCase.createImage("employment-letters", request.getEmploymentLetter());
-            info.setEmploymentLetter(employmentLetter);
-        }
-        */
+
         employeeInfo.setVerificationStatus(ApprovalStatusConstant.PENDING);
         employeeInfo.setEmployerEmail(updateEvent.getEmployerEmail());
         employeeInfo.setEmployerAddress(updateEvent.getEmployerAddress());
@@ -72,6 +69,16 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         employeeInfo.setWorkEmail(updateEvent.getWorkEmail());
         employeeInfo.setOrganizationUrl(updateEvent.getOrganizationUrl());
         employeeInformationEntityDao.saveRecord(employeeInfo);
+
+        if(updateEvent.getEmploymentLetterFileSize() > 0) {
+            ResourceFileEntity employmentLetter = resourceFileEntityDao.getRecordById(employeeInfo.getEmploymentLetter().getId());
+            employmentLetter.setFileId(updateEvent.getEmploymentLetterFileId());
+            employmentLetter.setFileName(updateEvent.getEmploymentLetterFileName());
+            employmentLetter.setFileSizeInKB(updateEvent.getEmploymentLetterFileSize());
+            employmentLetter.setRemoteResource(true);
+            employmentLetter.setUrl(updateEvent.getEmploymentLetterFileUrl());
+            resourceFileEntityDao.saveRecord(employmentLetter);
+        }
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
                 .recipient(applicationProperty.getSystemAdminEmail())
