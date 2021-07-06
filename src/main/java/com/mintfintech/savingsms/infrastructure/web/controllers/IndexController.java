@@ -69,7 +69,7 @@ public class IndexController {
                                                                   @RequestParam(value = "userId", defaultValue = "", required = false) String userId,
                                                                   @RequestParam(value = "overridePeriod", defaultValue = "false", required = false) boolean overridePeriod) {
         new Thread(() -> {
-               System.out.println("user Id - "+userId);
+              // System.out.println("user Id - "+userId);
                 createReferralRewardUseCase.processReferralByUser(userId, size, overridePeriod);
         }).start();
 
@@ -95,11 +95,6 @@ public class IndexController {
 
     @GetMapping(value = "/loan-details", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanDetailResponseCBS>> fetchLoanDetails(@RequestParam("accountNumber") String accountNo, @RequestParam("customerId") String customerId) {
-        LienAccountRequestCBS requestCBS = LienAccountRequestCBS.builder()
-                .accountNumber("1100022849")
-                .referenceId("300000000014")
-                .build();
-        coreBankingServiceClient.removeLienOnAccount(requestCBS);
         MsClientResponse<LoanDetailResponseCBS> responseMs =  coreBankingServiceClient.getLoanDetails(customerId, accountNo);
         ApiResponseJSON<LoanDetailResponseCBS> apiResponse = new ApiResponseJSON<>("Success.", responseMs.getData());
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);

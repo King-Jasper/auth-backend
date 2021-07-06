@@ -192,8 +192,8 @@ public class LoanController {
 
     @Data
     private static class LoanRequest {
-        @ApiModelProperty(notes = "The loan amount to request. N1000 minimum", required = true)
-        @Min(value = 1000, message = "Minimum of N1000")
+        @ApiModelProperty(notes = "The loan amount to request. N10000 minimum", required = true)
+        @Min(value = 10000, message = "Minimum amount for loan is N10000")
         @NotNull
         private double amount;
 
@@ -210,7 +210,7 @@ public class LoanController {
     @Data
     private static class LoanPayBackRequest {
         @ApiModelProperty(notes = "The amount to pay back. N1000 minimum", required = true)
-        @Min(value = 1000, message = "Minimum of N1000")
+        @Min(value = 1000, message = "Minimum amount is N1000")
         @NotNull
         private double amount;
 

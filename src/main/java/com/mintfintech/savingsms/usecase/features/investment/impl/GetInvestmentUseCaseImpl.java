@@ -9,10 +9,11 @@ import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.*;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
@@ -26,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
@@ -77,6 +79,40 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         transactions.sort(Comparator.comparing(o -> LocalDate.parse(o.getDate())));
 
         return transactions;
+    }
+
+    @Override
+    public InvestmentMaturityStatSummary getMaturityStatistics(LocalDate fromDate, LocalDate toDate) {
+        long days = fromDate.until(toDate, ChronoUnit.DAYS);
+        if(days > 90) {
+            throw new BusinessLogicConflictException("Sorry, Maximum of 90 days range is permitted");
+        }
+        if(fromDate.isBefore(LocalDate.now())) {
+            throw new BusinessLogicConflictException("Start date cannot be before current date.");
+        }
+        LocalDateTime startDate = fromDate.atStartOfDay();
+        LocalDateTime endDate = toDate.atTime(LocalTime.MAX);
+
+        List<SavingsMaturityStat> maturityStatList = investmentEntityDao.getInvestmentMaturityStatistics(startDate, endDate);
+        InvestmentMaturityStatSummary maturityStatModel = new InvestmentMaturityStatSummary();
+        List<InvestmentMaturityStatModel> investmentMaturityStatList = new ArrayList<>();
+        int year = fromDate.getYear();
+        for(SavingsMaturityStat modelStat : maturityStatList) {
+            LocalDate statDate = LocalDate.of(year, modelStat.getMonth(), modelStat.getDay());
+            InvestmentMaturityStatModel maturityStat = new InvestmentMaturityStatModel();
+            maturityStat.setMaturityDate(statDate.format(DateTimeFormatter.ISO_DATE));
+            maturityStat.setTotalRecords(modelStat.getTotalRecords());
+            maturityStat.setTotalAmount(modelStat.getTotalInterest().add(modelStat.getTotalSavings()));
+            maturityStat.setTotalInterest(modelStat.getTotalInterest());
+            maturityStat.setTotalInvested(modelStat.getTotalSavings());
+            maturityStatModel.setTotalAmount(maturityStatModel.getTotalAmount().add(maturityStat.getTotalAmount()));
+            maturityStatModel.setTotalInterest(maturityStatModel.getTotalInterest().add(modelStat.getTotalInterest()));
+            maturityStatModel.setTotalInvested(maturityStatModel.getTotalInvested().add(modelStat.getTotalSavings()));
+            maturityStatModel.setTotalRecords(maturityStatModel.getTotalRecords() + modelStat.getTotalRecords());
+            investmentMaturityStatList.add(maturityStat);
+        }
+        maturityStatModel.setInvestmentMaturityStatList(investmentMaturityStatList);
+        return maturityStatModel;
     }
 
     @Override
