@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.AmountModel;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -88,54 +89,13 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     @Override
     public Page<InvestmentEntity> searchInvestments(InvestmentSearchDTO searchDTO, int pageIndex, int recordSize) {
         Pageable pageable = PageRequest.of(pageIndex, recordSize, Sort.by("dateCreated").descending());
-
         Specification<InvestmentEntity> specification = (root, query, criteriaBuilder) -> buildSearchQuery(searchDTO, root, query, criteriaBuilder);
-
-       /* Specification<InvestmentEntity> specification = withActiveStatus();
-
-        if (searchDTO.getStartToDate() != null && searchDTO.getStartFromDate() != null) {
-            specification = specification.and(withStartDateRange(searchDTO.getStartFromDate(), searchDTO.getStartToDate()));
-        }
-
-        if (searchDTO.getMatureFromDate() != null && searchDTO.getMatureToDate() != null) {
-            specification = specification.and(withMaturityDateRange(searchDTO.getMatureFromDate(), searchDTO.getMatureToDate()));
-        }
-
-        if (searchDTO.getAccount() != null) {
-            specification = specification.and(withMintAccount(searchDTO.getAccount()));
-        }
-        if(searchDTO.getAccount() != null) {
-            if (searchDTO.getInvestmentStatus() != null) {
-                if(searchDTO.getInvestmentStatus() == InvestmentStatusConstant.COMPLETED) {
-                    specification = specification.and(
-                            withInvestmentStatus(InvestmentStatusConstant.COMPLETED)
-                                    .or(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED))
-                    );
-                }else {
-                    specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
-                }
-            }
-        }else {
-            if (searchDTO.getInvestmentStatus() == null && searchDTO.isCompletedRecords()) {
-                specification = specification.and(
-                        withInvestmentStatus(InvestmentStatusConstant.COMPLETED)
-                                .or(withInvestmentStatus(InvestmentStatusConstant.LIQUIDATED)));
-            }else {
-                specification = specification.and(withInvestmentStatus(searchDTO.getInvestmentStatus()));
-            }
-        }
-        if (searchDTO.getDuration() != 0) {
-            specification = specification.and(withDuration(searchDTO.getDuration()));
-        }
-        if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
-            Specification<InvestmentEntity> temp = (root, query, criteriaBuilder) -> {
-                Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
-                return criteriaBuilder.like(criteriaBuilder.lower(accountJoin.get("name")), "%"+searchDTO.getCustomerName().toLowerCase()+"%");
-            };
-            specification = specification.and(temp);
-        }*/
-
         return repository.findAll(specification, pageable);
+    }
+
+    @Override
+    public List<SavingsMaturityStat> getInvestmentMaturityStatistics(LocalDateTime fromDate, LocalDateTime toDate) {
+        return repository.getInvestmentMaturityStatistics(fromDate, toDate);
     }
 
     @Override

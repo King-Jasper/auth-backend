@@ -2,8 +2,10 @@ package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentMaturityStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummary;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import io.swagger.annotations.Api;
@@ -40,6 +42,21 @@ import java.time.LocalDate;
 public class InvestmentAdminController {
 
     private final GetInvestmentUseCase getInvestmentUseCase;
+
+
+    @Secured("09") // Privilege: VIEW_DASHBOARD_STATISTICS
+    @ApiOperation(value = "Returns investment maturity statistics information.")
+    @GetMapping(value = "maturity-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<InvestmentMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate") LocalDate fromDate,
+                                                                                                       @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate") LocalDate toDate) {
+        if(fromDate == null || toDate == null) {
+            toDate = LocalDate.now();
+            fromDate = toDate.plusWeeks(1);
+        }
+        InvestmentMaturityStatSummary response = getInvestmentUseCase.getMaturityStatistics(fromDate, toDate);
+        ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
 
     @ApiOperation(value = "Returns paginated investment list.")
     @GetMapping(value = "completed", produces = MediaType.APPLICATION_JSON_VALUE)
