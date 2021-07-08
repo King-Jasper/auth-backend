@@ -51,7 +51,7 @@ public class InvestmentAdminController {
                                                                                                        @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate") LocalDate toDate) {
         if(fromDate == null || toDate == null) {
             toDate = LocalDate.now();
-            fromDate = toDate.plusWeeks(1);
+            fromDate = toDate.plusWeeks(1); // default
         }
         InvestmentMaturityStatSummary response = getInvestmentUseCase.getMaturityStatistics(fromDate, toDate);
         ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
