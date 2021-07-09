@@ -133,9 +133,12 @@ public class InvestmentController {
     static class LiquidateInvestmentJSON {
         @NotEmpty(message = "Investment code is required.")
         private String investmentCode;
+
         @NotEmpty(message = "Debit Account is required.")
         private String creditAccountId;
+
         private boolean fullLiquidation;
+
         @ApiModelProperty(notes = "The amount to be liquidated. Required if fullLiquidation is false")
         private BigDecimal liquidationAmount;
 
