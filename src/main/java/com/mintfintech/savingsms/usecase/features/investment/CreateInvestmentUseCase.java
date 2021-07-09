@@ -7,4 +7,6 @@ import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationRespons
 public interface CreateInvestmentUseCase {
 
     InvestmentCreationResponse createInvestment(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request);
+
+    InvestmentCreationResponse createInvestmentByAdmin(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request);
 }

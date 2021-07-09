@@ -115,6 +115,72 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         return response;
     }
 
+    @Override
+    @Transactional
+    public InvestmentCreationResponse createInvestmentByAdmin(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request) {
+
+        AppUserEntity owner = appUserEntityDao.findAppUserByUserId(request.getUserId()).orElseThrow(() -> new BadRequestException("Invalid user Id."));
+
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), owner.getPrimaryAccount())
+                .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
+
+        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
+                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+
+        debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+
+        BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
+
+        if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
+            InvestmentCreationResponse response = new InvestmentCreationResponse();
+            response.setInvestment(null);
+            response.setCreated(false);
+            response.setMessage("Insufficient Funds");
+            return response;
+        }
+
+        InvestmentEntity investment = InvestmentEntity.builder()
+                .amountInvested(investAmount)
+                .code(investmentEntityDao.generateCode())
+                .creator(owner)
+                .investmentStatus(InvestmentStatusConstant.INACTIVE)
+                .investmentTenor(investmentTenor)
+                .durationInMonths(request.getDurationInMonths())
+                .maturityDate(LocalDateTime.now().plusMonths(request.getDurationInMonths()))
+                .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
+                .owner(debitAccount.getMintAccount())
+                .totalAmountInvested(investAmount)
+                .interestRate(investmentTenor.getInterestRate())
+                .managedByUser(authenticatedUser.getName())
+                .managedByUserId(authenticatedUser.getUserId())
+                .build();
+
+        investment = investmentEntityDao.saveRecord(investment);
+
+        InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investment, debitAccount, investAmount);
+
+        InvestmentCreationResponse response = new InvestmentCreationResponse();
+        if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
+            investment.setRecordStatus(RecordStatusConstant.DELETED);
+            investmentEntityDao.saveRecord(investment);
+            response.setInvestment(null);
+            response.setCreated(false);
+            response.setMessage("Sorry, account debit for investment funding failed.");
+            return response;
+        }
+        investment.setRecordStatus(RecordStatusConstant.ACTIVE);
+        investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
+        investment.setTotalAmountInvested(investAmount);
+        investmentEntityDao.saveRecord(investment);
+
+        sendInvestmentCreationEmail(investment, owner);
+
+        response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
+        response.setCreated(true);
+        response.setMessage("Investment Created Successfully");
+        return response;
+    }
+
     private void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
 
         InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
@@ -127,6 +193,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_CREATION, new EventModel<>(event));
+
+
     }
 
 }

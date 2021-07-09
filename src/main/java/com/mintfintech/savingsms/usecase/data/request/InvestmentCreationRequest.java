@@ -14,4 +14,6 @@ public class InvestmentCreationRequest {
     private String debitAccountId;
 
     private String transactionPin;
+
+    private String userId;
 }
