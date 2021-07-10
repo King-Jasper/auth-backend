@@ -90,7 +90,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
 
         loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .build();
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
