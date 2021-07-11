@@ -371,6 +371,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     private void validateEmploymentLetter(MultipartFile employmentLetter) {
+        System.out.println("original file name - "+employmentLetter.getOriginalFilename());
+        System.out.println("file name - "+employmentLetter.getName());
         double sizeInMb = employmentLetter.getSize() * 1.0 / (1024 * 1024);
         if (sizeInMb > applicationProperty.getFileUploadMaximumSize()) {
             throw new BadRequestException("Maximum file size is " + applicationProperty.getFileUploadMaximumSize() + "MB.");
