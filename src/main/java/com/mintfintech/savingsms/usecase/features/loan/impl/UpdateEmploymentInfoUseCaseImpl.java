@@ -44,7 +44,6 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
     @Override
     public void updateCustomerEmploymentInformation(EmploymentInfoUpdateEvent updateEvent) {
 
-
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(updateEvent.getUserId());
 
         Optional<CustomerLoanProfileEntity> customerLoanProfileEntityOpt = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
@@ -81,7 +80,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         }
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .customerName(appUser.getName())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_UPDATE_ADMIN, new EventModel<>(loanEmailEvent));

@@ -125,7 +125,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         publishEmploymentDetails(appUser, employeeInfo);
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .customerName(appUser.getName())
                 .build();
 
@@ -342,9 +342,6 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .build();
 
         EmployeeInformationEntity informationEntity = employeeInformationEntityDao.saveRecord(employeeInformationEntity);
-
-
-
         return informationEntity;
     }
 
