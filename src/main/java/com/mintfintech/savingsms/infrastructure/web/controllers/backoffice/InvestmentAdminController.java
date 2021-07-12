@@ -48,11 +48,11 @@ public class InvestmentAdminController {
     @Secured("09") // Privilege: VIEW_DASHBOARD_STATISTICS
     @ApiOperation(value = "Returns investment maturity statistics information.")
     @GetMapping(value = "/maturity-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<InvestmentMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate") LocalDate fromDate,
-                                                                                                       @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate") LocalDate toDate) {
+    public ResponseEntity<ApiResponseJSON<InvestmentMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+                                                                                                       @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate", required = false) LocalDate toDate) {
         if(fromDate == null || toDate == null) {
-            toDate = LocalDate.now();
-            fromDate = toDate.plusWeeks(1); // default
+            fromDate = LocalDate.now();
+            toDate = fromDate.plusWeeks(1); // default
         }
         InvestmentMaturityStatSummary response = getInvestmentUseCase.getMaturityStatistics(fromDate, toDate);
         ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
@@ -102,6 +102,7 @@ public class InvestmentAdminController {
                                                                                                  @ApiParam(value = "No. of records per page. Min:1, Max:500") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                  @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
+
 
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .startToDate(startToDate)
