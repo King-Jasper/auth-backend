@@ -19,6 +19,7 @@ import lombok.AccessLevel;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -130,6 +131,9 @@ public class LoanAdminController {
                                                                                                                 @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
+        if(StringUtils.isNotEmpty(verificationStatus) && verificationStatus.equalsIgnoreCase("REJECTED")) {
+            verificationStatus = "DECLINED";
+        }
         CustomerProfileSearchRequest searchRequest = CustomerProfileSearchRequest.builder()
                 .verificationStatus(verificationStatus)
                 .fromDate(fromDate)
