@@ -51,9 +51,13 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
         int minimumDaysForWithdrawal = applicationProperty.savingsMinimumNumberOfDaysForWithdrawal();
         if(remainingDays >= minimumDaysForWithdrawal) {
             double percentageDeduction = applicationProperty.savingsInterestPercentageDeduction() / 100.0;
-            BigDecimal interestDeduction = savingsGoalEntity.getAccruedInterest().multiply(BigDecimal.valueOf(percentageDeduction));
-            BigDecimal availableInterest = savingsGoalEntity.getAccruedInterest().subtract(interestDeduction);
-            return savingsGoalEntity.getSavingsBalance().add(availableInterest);
+            double interestDeduction = savingsGoalEntity.getAccruedInterest().doubleValue() * percentageDeduction;
+           // BigDecimal interestDeduction = savingsGoalEntity.getAccruedInterest().multiply(BigDecimal.valueOf(percentageDeduction));
+            double availableInterest = savingsGoalEntity.getAccruedInterest().doubleValue() - interestDeduction;
+           // BigDecimal availableInterest = savingsGoalEntity.getAccruedInterest().subtract(interestDeduction);
+            BigDecimal availableForWithdrawal = BigDecimal.valueOf(savingsGoalEntity.getSavingsBalance().doubleValue() + availableInterest);
+           // return savingsGoalEntity.getSavingsBalance().add(availableInterest);
+            return availableForWithdrawal.setScale(2, BigDecimal.ROUND_FLOOR);
         }
         return BigDecimal.valueOf(0.00);
     }
