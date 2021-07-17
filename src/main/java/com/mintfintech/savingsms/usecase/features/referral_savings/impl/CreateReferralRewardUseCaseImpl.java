@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEv
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.savings_funding.ReferralGoalFundingUseCase;
+import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -89,6 +90,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
 
         Optional<AppUserEntity> appUserEntityOpt;
         if(StringUtils.isNotEmpty(phoneNumber)) {
+            if(!phoneNumber.startsWith("+")) {
+                phoneNumber = PhoneNumberUtils.toInternationalFormat(phoneNumber);
+            }
+            log.info("Phone Number - {}",phoneNumber);
             appUserEntityOpt = appUserEntityDao.findUserByPhoneNumber(phoneNumber);
         }else {
            appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
