@@ -82,12 +82,17 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
     }
 
-    public void processReferralByUser(String userId, int size, boolean overrideTime) {
+    public void processReferralByUser(String userId, String phoneNumber,  int size, boolean overrideTime) {
 
         LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
 
-        Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        Optional<AppUserEntity> appUserEntityOpt;
+        if(StringUtils.isNotEmpty(phoneNumber)) {
+            appUserEntityOpt = appUserEntityDao.findUserByPhoneNumber(phoneNumber);
+        }else {
+           appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        }
         if(!appUserEntityOpt.isPresent()) {
             log.info("User Id not found.");
             return;

@@ -11,6 +11,7 @@ import java.util.Optional;
  */
 public interface AppUserEntityDao extends CrudDao<AppUserEntity, Long> {
     Optional<AppUserEntity> findAppUserByUserId(String userId);
+    Optional<AppUserEntity> findUserByPhoneNumber(String phoneNumber);
     AppUserEntity getAppUserByUserId(String userId);
     Optional<AppUserEntity> findAccountOwner(MintAccountEntity mintAccountEntity);
 }

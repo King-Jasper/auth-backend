@@ -67,10 +67,11 @@ public class IndexController {
     @GetMapping(value = "/referral-reward", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
                                                                   @RequestParam(value = "userId", defaultValue = "", required = false) String userId,
+                                                                  @RequestParam(value = "phoneNumber", defaultValue = "", required = false) String phoneNumber,
                                                                   @RequestParam(value = "overridePeriod", defaultValue = "false", required = false) boolean overridePeriod) {
         new Thread(() -> {
               // System.out.println("user Id - "+userId);
-                createReferralRewardUseCase.processReferralByUser(userId, size, overridePeriod);
+                createReferralRewardUseCase.processReferralByUser(userId, phoneNumber, size, overridePeriod);
         }).start();
 
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed reward");
