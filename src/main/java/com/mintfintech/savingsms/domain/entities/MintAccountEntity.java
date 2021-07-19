@@ -32,6 +32,9 @@ public class MintAccountEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private AccountTypeConstant accountType = AccountTypeConstant.INDIVIDUAL;
 
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    private AppUserEntity creator;
+
     //@Builder.Default
     //private BigDecimal dailyTransactionLimit = BigDecimal.ZERO;
 

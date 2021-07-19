@@ -58,6 +58,21 @@ public class MoneyFormatterUtil {
 
     public static void main(String[] args) {
 
+        /*
+        BigDecimal savingsBalance = BigDecimal.valueOf(429913.18);
+        BigDecimal accrualInterest = BigDecimal.valueOf(3773.63);
+        double percentageDeduction = 50.0 / 100.0;
+        double interestDeduction = accrualInterest.doubleValue() * percentageDeduction;
+       // BigDecimal interestDeduction = accrualInterest.multiply(BigDecimal.valueOf(percentageDeduction));
+        double availableInterest = accrualInterest.doubleValue() - interestDeduction;
+       //  BigDecimal availableInterest = accrualInterest.subtract(interestDeduction);
+        BigDecimal availableForWithdrawal = BigDecimal.valueOf(savingsBalance.doubleValue() + availableInterest).setScale(2, BigDecimal.ROUND_FLOOR);
+      //  BigDecimal value =  savingsBalance.add(availableInterest).setScale(2, BigDecimal.ROUND_DOWN);
+        System.out.println(availableForWithdrawal);
+        */
+
+        //431799.995
+
        // BigDecimal temp = BigDecimal.valueOf(158.259999999);
        // System.out.println(temp);
        // temp = BigDecimal.valueOf(158.259999999).setScale(2, BigDecimal.ROUND_HALF_EVEN);

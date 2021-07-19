@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEv
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.savings_funding.ReferralGoalFundingUseCase;
+import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -82,12 +83,21 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
     }
 
-    public void processReferralByUser(String userId, int size, boolean overrideTime) {
+    public void processReferralByUser(String userId, String phoneNumber,  int size, boolean overrideTime) {
 
         LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
 
-        Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        Optional<AppUserEntity> appUserEntityOpt;
+        if(StringUtils.isNotEmpty(phoneNumber)) {
+            if(!phoneNumber.startsWith("+")) {
+                phoneNumber = PhoneNumberUtils.toInternationalFormat(phoneNumber);
+            }
+            log.info("Phone Number - {}",phoneNumber);
+            appUserEntityOpt = appUserEntityDao.findUserByPhoneNumber(phoneNumber);
+        }else {
+           appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        }
         if(!appUserEntityOpt.isPresent()) {
             log.info("User Id not found.");
             return;

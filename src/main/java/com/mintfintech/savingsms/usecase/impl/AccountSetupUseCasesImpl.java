@@ -7,9 +7,11 @@ import com.mintfintech.savingsms.usecase.AccountSetupUseCases;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.*;
 import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.scheduling.annotation.Async;
 
 import javax.inject.Named;
 import javax.transaction.Transactional;
@@ -33,7 +35,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     private AppUserEntityDao appUserEntityDao;
     private CurrencyEntityDao currencyEntityDao;
     private TierLevelEntityDao tierLevelEntityDao;
-    private CreateSavingsGoalUseCase createSavingsGoalUseCase;
+    private CorporateUserEntityDao corporateUserEntityDao;
 
     @Transactional
     @Override
@@ -48,21 +50,17 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
             mintAccountEntity.setDateCreated(dateCreated);
             mintAccountEntity = mintAccountEntityDao.saveRecord(mintAccountEntity);
             log.info("mint account created successfully: {}", mintAccountEntity.getAccountId());
+
             UserCreationEvent userCreationEvent = mintAccountCreationEvent.getUserCreationEvent();
-            dateCreated = LocalDateTime.parse(userCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
-            String name = String.format("%s %s", userCreationEvent.getFirstName(), userCreationEvent.getLastName());
-            AppUserEntity appUserEntity = AppUserEntity.builder()
-                    .userId(userCreationEvent.getUserId())
-                    .email(userCreationEvent.getEmail())
-                    .name(name).phoneNumber(userCreationEvent.getPhoneNumber())
-                    .primaryAccount(mintAccountEntity).build();
-            appUserEntity.setDateCreated(dateCreated);
-            appUserEntityDao.saveRecord(appUserEntity);
-            log.info("User created successfully: {}", appUserEntity.getUserId());
+            Optional<AppUserEntity> userOpt = appUserEntityDao.findAppUserByUserId(userCreationEvent.getUserId());
+            AppUserEntity appUserEntity = userOpt.orElseGet(() -> createUser(userCreationEvent));
+            mintAccountEntity.setCreator(appUserEntity);
+            mintAccountEntityDao.saveRecord(mintAccountEntity);
             if(mintAccountEntity.getAccountType() == AccountTypeConstant.INDIVIDUAL) {
-                //SavingsGoalEntity  savingsGoalEntity = createSavingsGoalUseCase.createDefaultSavingsGoal(mintAccountEntity, appUserEntity);
-                //log.info("Customer Default saving goal created by Id: {}", savingsGoalEntity.getId());
+                appUserEntity.setPrimaryAccount(mintAccountEntity);
+                appUserEntityDao.saveRecord(appUserEntity);
             }
+            log.info("User created successfully: {}", appUserEntity.getUserId());
         }
     }
 
@@ -173,5 +171,53 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         appUserEntity.setEmail(updateEvent.getEmail());
         appUserEntity.setPhoneNumber(updateEvent.getPhoneNumber());
         appUserEntityDao.saveRecord(appUserEntity);
+    }
+
+    private AppUserEntity createUser(UserCreationEvent userCreationEvent) {
+        String name = String.format("%s %s", StringUtils.capitalize(userCreationEvent.getFirstName().toLowerCase()), StringUtils.capitalize(userCreationEvent.getLastName().toLowerCase()));
+        LocalDateTime dateCreated = LocalDateTime.parse(userCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+        AppUserEntity appUserEntity = AppUserEntity.builder()
+                .userId(userCreationEvent.getUserId())
+                .email(userCreationEvent.getEmail())
+                .name(name)
+                .phoneNumber(userCreationEvent.getPhoneNumber())
+                .build();
+        appUserEntity.setDateCreated(dateCreated);
+        return appUserEntityDao.saveRecord(appUserEntity);
+    }
+
+    @Async
+    @SneakyThrows
+    @Override
+    public void createOrUpdateCorporateUser(CorporateUserDetailEvent corporateUserDetailEvent) {
+        String accountId = corporateUserDetailEvent.getAccountId();
+        String userId = corporateUserDetailEvent.getUserId();
+        Optional<CorporateUserEntity> optional = corporateUserEntityDao.findRecordByAccountIdAndUserId(accountId, userId);
+        if(optional.isPresent()) {
+            CorporateUserEntity corporateUserEntity = optional.get();
+            corporateUserEntity.setDirector(corporateUserDetailEvent.isDirector());
+            corporateUserEntity.setRole(CorporateRoleTypeConstant.valueOf(corporateUserDetailEvent.getRoleName()));
+            corporateUserEntityDao.saveRecord(corporateUserEntity);
+        } else {
+            Optional<MintAccountEntity> accountEntityOpt = mintAccountEntityDao.findAccountByAccountId(accountId);
+            Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+            if(!accountEntityOpt.isPresent() || !appUserEntityOpt.isPresent()) {
+                Thread.sleep(1000);
+                accountEntityOpt = mintAccountEntityDao.findAccountByAccountId(accountId);
+                appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+                if(!accountEntityOpt.isPresent() || !appUserEntityOpt.isPresent()) {
+                    log.info("Missing record accountId - {} or userId - {}", accountId, userId);
+                    return;
+                }
+            }
+            AppUserEntity appUserEntity = appUserEntityOpt.get();
+            CorporateUserEntity corporateUserEntity = CorporateUserEntity.builder()
+                    .appUser(appUserEntity)
+                    .corporateAccount(accountEntityOpt.get())
+                    .director(corporateUserDetailEvent.isDirector())
+                    .role(CorporateRoleTypeConstant.valueOf(corporateUserDetailEvent.getRoleName()))
+                    .build();
+            corporateUserEntityDao.saveRecord(corporateUserEntity);
+        }
     }
 }
