@@ -15,4 +15,5 @@ public interface AccountSetupUseCases {
     void updateUserDeviceNotificationId(String userId, String gcmTokenId);
     void updateBankAccountStatus(BankAccountStatusUpdateEvent accountStatusUpdateEvent);
     void updateUserProfileDetails(UserDetailUpdateEvent updateEvent);
+    void createOrUpdateCorporateUser(CorporateUserDetailEvent corporateUserDetailEvent);
 }
