@@ -58,6 +58,12 @@ public class AccountMSEventListener {
         accountSetupUseCases.createIndividualBankAccount(event);
     }
 
+    @KafkaListener(topics = {MINT_CORPORATE_USER_DETAILS, MINT_CORPORATE_USER_DETAILS+".fund-transaction-service"})
+    public void listenForCorporateUserCreation(String payload) {
+        CorporateUserDetailEvent event = gson.fromJson(payload, CorporateUserDetailEvent.class);
+        accountSetupUseCases.createOrUpdateCorporateUser(event);
+    }
+
     @KafkaListener(topics = {MINT_NOTIFICATION_PREFERENCE_UPDATE_EVENT})
     public void listenForUserNotificationPreferenceUpdate(String payload) {
         //log.info("notification preference update: {}", payload);

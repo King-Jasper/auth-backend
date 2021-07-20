@@ -5,5 +5,7 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Thu, 06 Feb, 2020
  */
 public enum AccountTypeConstant {
-    INDIVIDUAL, CORPORATE
+    INDIVIDUAL,
+    STARTER_BUSINESS,
+    REGISTERED_BUSINESS;
 }
