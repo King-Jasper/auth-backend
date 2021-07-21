@@ -24,8 +24,7 @@ public class CorporateUserEntity extends AbstractBaseEntity<Long>{
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private AppUserEntity appUser;
 
-    @Enumerated(EnumType.STRING)
-    private CorporateRoleTypeConstant role;
+    private String userRole;
 
     private boolean director;
 }

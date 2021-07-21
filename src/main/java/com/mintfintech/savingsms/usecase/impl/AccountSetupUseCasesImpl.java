@@ -196,7 +196,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         if(optional.isPresent()) {
             CorporateUserEntity corporateUserEntity = optional.get();
             corporateUserEntity.setDirector(corporateUserDetailEvent.isDirector());
-            corporateUserEntity.setRole(CorporateRoleTypeConstant.valueOf(corporateUserDetailEvent.getRoleName()));
+            corporateUserEntity.setUserRole(corporateUserDetailEvent.getRoleName());
             corporateUserEntityDao.saveRecord(corporateUserEntity);
         } else {
             Optional<MintAccountEntity> accountEntityOpt = mintAccountEntityDao.findAccountByAccountId(accountId);
@@ -215,7 +215,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
                     .appUser(appUserEntity)
                     .corporateAccount(accountEntityOpt.get())
                     .director(corporateUserDetailEvent.isDirector())
-                    .role(CorporateRoleTypeConstant.valueOf(corporateUserDetailEvent.getRoleName()))
+                    .userRole(corporateUserDetailEvent.getRoleName())
                     .build();
             corporateUserEntityDao.saveRecord(corporateUserEntity);
         }
