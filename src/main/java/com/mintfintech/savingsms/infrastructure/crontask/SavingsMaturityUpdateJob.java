@@ -23,7 +23,6 @@ public class SavingsMaturityUpdateJob {
     @Scheduled(cron = "0 0 0/2 ? * *") // runs every 2 hours every day
     @SchedulerLock(name = "SavingsMaturityUpdateJob_processSavingsMaturityUpdate", lockAtMostForString = "PT30M")
     public void processSavingsMaturityUpdate() {
-        log.info("cron task processSavingsMaturityUpdate");
         updateSavingsGoalMaturityUseCase.updateStatusForMaturedSavingsGoal();
     }
 }

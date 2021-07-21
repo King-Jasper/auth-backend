@@ -21,7 +21,7 @@ public class SavingsInterestJob {
         this.applicationProperty = applicationProperty;
     }
 
-    @Scheduled(cron = "0 30 23 ? * *") // runs by 11:30PM every day 23
+    @Scheduled(cron = "0 30 22 ? * *") // runs by 11:30PM every day 23
     @SchedulerLock(name = "SavingsInterestJob_processInterestApplication")
     public void processInterestApplication() {
          if(!applicationProperty.isProductionEnvironment()){

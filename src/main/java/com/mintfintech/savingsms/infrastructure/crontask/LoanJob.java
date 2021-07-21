@@ -38,8 +38,7 @@ public class LoanJob {
     public void processApprovedLoans() {
         try {
             approvalUseCase.processApprovedLoans();
-        } catch (Exception ignored) {
-        }
+        } catch (Exception ignored) { }
     }
     //0 0/30 0 ? * *
     @Scheduled(cron = "0 0 9/3 ? * *") // runs every 3 hour starting from 9am daily
