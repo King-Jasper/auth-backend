@@ -250,10 +250,15 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
+        BigDecimal interestAmount = withdrawal.getInterest();
+        if(withdrawal.isMatured()){
+            interestAmount = withdrawal.getInterestBeforeWithdrawal(); //penalty charge will be on this.
+        }
+
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(withdrawal.getInvestment());
         transaction.setBankAccount(withdrawal.getCreditAccount());
-        transaction.setTransactionAmount(withdrawal.getInterest());
+        transaction.setTransactionAmount(interestAmount);
         transaction.setTransactionReference(reference);
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
