@@ -385,10 +385,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
+        BigDecimal taxAmount = withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1));
+
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(withdrawal.getInvestment());
         transaction.setBankAccount(withdrawal.getCreditAccount());
-        transaction.setTransactionAmount(withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1)));
+        transaction.setTransactionAmount(taxAmount);
         transaction.setTransactionReference(reference);
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
@@ -400,9 +402,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_TAX_PAYMENT);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
+        String narration = "Investment(" + investment.getCode() + ") withholding Tax Charge - " + reference;
+
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
-                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
                 .withdrawalStage(CBInvestmentWithdrawalStage.TAX_PAYMENT.name())
