@@ -251,7 +251,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
         BigDecimal interestAmount = withdrawal.getInterest();
-        if(withdrawal.isMatured()){
+        if(!withdrawal.isMatured()){
             interestAmount = withdrawal.getInterestBeforeWithdrawal(); //penalty charge will be on this.
         }
 
