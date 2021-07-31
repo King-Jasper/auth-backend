@@ -196,12 +196,13 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         BigDecimal accruedInterest = investment.getAccruedInterest();
 
         BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
-        BigDecimal amountToWithdraw = amountInvested.add(accruedInterest.subtract(interestCharge));
+        BigDecimal principalToWithdraw = amountInvested;
+        BigDecimal totalWithdrawalAmount = principalToWithdraw.add(accruedInterest.subtract(interestCharge));
 
         BigDecimal interestToWithdraw = accruedInterest.subtract(interestCharge);
 
         InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
-                .amount(amountToWithdraw)
+                .amount(principalToWithdraw)
                 .amountCharged(interestCharge)
                 .balanceBeforeWithdrawal(amountInvested)
                 .interestBeforeWithdrawal(accruedInterest)
@@ -213,7 +214,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_TO_CUSTOMER)
                 .withdrawalType(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
-                .totalAmount(amountToWithdraw)
+                .totalAmount(totalWithdrawalAmount)
                 .build();
         investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
 
@@ -221,7 +222,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setAccruedInterest(BigDecimal.ZERO);
         investment.setInvestmentStatus(InvestmentStatusConstant.LIQUIDATED);
         investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(interestToWithdraw));
-        investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
+        investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(totalWithdrawalAmount));
         investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
 
