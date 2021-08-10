@@ -2,13 +2,13 @@ package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
-
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -73,9 +73,15 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     @Column(columnDefinition = "TEXT")
     private String rejectionReason;
 
+    private LocalDateTime dateRejected;
+
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private LoanRepaymentStatusConstant repaymentStatus = LoanRepaymentStatusConstant.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private LoanReviewStageConstant reviewStage = LoanReviewStageConstant.FIRST_REVIEW;
 
     @Enumerated(EnumType.STRING)
     private LoanTypeConstant loanType;

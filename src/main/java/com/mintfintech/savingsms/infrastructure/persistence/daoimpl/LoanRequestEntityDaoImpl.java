@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
@@ -13,6 +14,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.LoanRequestRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -166,6 +168,22 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         if (searchDTO.getLoanType() != null){
             specification = specification.and(withLoanType(searchDTO.getLoanType()));
         }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+            String name = searchDTO.getCustomerName();
+            Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<LoanRequestEntity, AppUserEntity> appUserJoin = root.join("requestedBy");
+                return criteriaBuilder.like(criteriaBuilder.lower(appUserJoin.get("name")), "%"+name+"%");
+            };
+            specification = specification.and(temp);
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerPhone())) {
+            String phoneNumber = searchDTO.getCustomerPhone();
+            Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<LoanRequestEntity, AppUserEntity> appUserJoin = root.join("requestedBy");
+                return criteriaBuilder.equal(appUserJoin.get("phoneNumber"), phoneNumber);
+            };
+            specification = specification.and(temp);
+        }
         return repository.findAll(specification, pageable);
     }
 
@@ -190,8 +208,8 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         LocalDate inDaysTime = LocalDate.now().plusDays(days);
         LocalDateTime from = inDaysTime.atStartOfDay();
         LocalDateTime to = inDaysTime.atTime(LocalTime.MAX);
-        System.out.println("from = " + from);
-        System.out.println("to = " + to);
+       // System.out.println("from = " + from);
+       // System.out.println("to = " + to);
         return repository.getRepaymentPlansDueAtTime(from, to);
     }
 

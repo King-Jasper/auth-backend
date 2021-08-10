@@ -20,4 +20,6 @@ public class LoanSearchDTO {
     private ApprovalStatusConstant approvalStatus;
     private MintAccountEntity account;
     private LoanTypeConstant loanType;
+    private String customerName;
+    private String customerPhone;
 }

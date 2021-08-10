@@ -4,10 +4,13 @@ import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
+import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.models.CustomerLoanProfileSearchDTO;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CustomerLoanProfileRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -61,14 +64,40 @@ public class CustomerLoanProfileEntityDaoImpl implements CustomerLoanProfileEnti
             specification = specification.and(withVerificationStatus(searchDTO.getVerificationStatus()));
         }
 
+        if(searchDTO.getReviewStage() != null) {
+            specification = specification.and(withReviewStage(searchDTO.getReviewStage()));
+        }
+
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+            String name = searchDTO.getCustomerName();
+            Specification<CustomerLoanProfileEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<CustomerLoanProfileEntity, AppUserEntity> appUserJoin = root.join("appUser");
+                return criteriaBuilder.like(criteriaBuilder.lower(appUserJoin.get("name")), "%"+name+"%");
+            };
+            specification = specification.and(temp);
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerPhone())) {
+            String phoneNumber = searchDTO.getCustomerPhone();
+            Specification<CustomerLoanProfileEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<CustomerLoanProfileEntity, AppUserEntity> appUserJoin = root.join("appUser");
+                return criteriaBuilder.equal(appUserJoin.get("phoneNumber"), phoneNumber);
+            };
+            specification = specification.and(temp);
+        }
         return repository.findAll(specification, pageable);
     }
 
     private static Specification<CustomerLoanProfileEntity> withVerificationStatus(ApprovalStatusConstant verificationStatus) {
-
        return (root, criteriaQuery, criteriaBuilder) -> {
             Join<CustomerLoanProfileEntity, EmployeeInformationEntity> employeeInformationJoin = root.join("employeeInformation");
             return criteriaBuilder.equal(employeeInformationJoin.get("verificationStatus"), verificationStatus);
+        };
+    }
+
+    private static Specification<CustomerLoanProfileEntity> withReviewStage(LoanReviewStageConstant reviewStageConstant) {
+        return (root, criteriaQuery, criteriaBuilder) -> {
+            Join<CustomerLoanProfileEntity, EmployeeInformationEntity> employeeInformationJoin = root.join("employeeInformation");
+            return criteriaBuilder.equal(employeeInformationJoin.get("reviewStage"), reviewStageConstant);
         };
     }
 

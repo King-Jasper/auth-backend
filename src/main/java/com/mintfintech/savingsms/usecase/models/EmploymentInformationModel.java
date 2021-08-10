@@ -25,4 +25,6 @@ public class EmploymentInformationModel {
 
     private String rejectionReason;
 
+    private String dateRejected;
+
 }
