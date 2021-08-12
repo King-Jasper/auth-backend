@@ -452,6 +452,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         loanCustomerProfileModel.setRating(customerLoanProfileEntity.getRating());
         loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
         loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
 
