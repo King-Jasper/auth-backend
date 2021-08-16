@@ -9,5 +9,5 @@ public enum AccountTypeConstant {
     STARTER_BUSINESS,
     REGISTERED_BUSINESS,
     ENTERPRISE,
-    SOLE_PROPRIETOR;
+    SOLE_PROPRIETORSHIP;
 }
