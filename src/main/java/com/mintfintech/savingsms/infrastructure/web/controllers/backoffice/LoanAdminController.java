@@ -139,7 +139,7 @@ public class LoanAdminController {
     }
 
     @Secured("28") // CAN_VIEW_LOAN_RECORDS
-    @ApiOperation(value = "Returns paginated list of loan customers.")
+    @ApiOperation(value = "Returns paginated list of loan customers.") //
     @GetMapping(value = "customers-profile", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@ApiParam(value = "Verification Status: ALL, APPROVED, REJECTED, DECLINED, PENDING") @Valid @Pattern(regexp = "(ALL|APPROVED|REJECTED|PENDING|DECLINED)") @RequestParam(value = "verificationStatus", defaultValue = "ALL") String verificationStatus,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
