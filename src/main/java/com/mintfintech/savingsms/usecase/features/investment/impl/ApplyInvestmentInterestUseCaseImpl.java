@@ -18,6 +18,7 @@ import com.mintfintech.savingsms.usecase.features.investment.ApplyInvestmentInte
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 @Slf4j
@@ -116,7 +118,6 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
             log.info("NO ACCUMULATED INTEREST: {}", totalAccumulatedInterest);
             return;
         }
-
         String reference = accumulatedInterestEntityDao.generatedReference();
         AccumulatedInterestEntity accumulatedInterestEntity = AccumulatedInterestEntity.builder()
                 .interestDate(LocalDate.now())
@@ -126,11 +127,16 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
                 .interestCategory(InterestCategoryConstant.INVESTMENT)
                 .build();
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
+        processInterestPostingOnCBA(accumulatedInterestEntity);
+    }
 
+    private void processInterestPostingOnCBA(AccumulatedInterestEntity accumulatedInterestEntity) {
+
+        String reference = accumulatedInterestEntity.getReference();
         String narration = "IAI - " + reference + " Accumulated Interest";
 
         InterestAccruedUpdateRequestCBS updateRequestCBS = InterestAccruedUpdateRequestCBS.builder()
-                .interestAmount(totalAccumulatedInterest)
+                .interestAmount(accumulatedInterestEntity.getTotalInterest())
                 .reference(accumulatedInterestEntity.getReference())
                 .narration(narration)
                 .interestCategory(InterestCategoryConstant.INVESTMENT.name())
@@ -160,5 +166,24 @@ public class ApplyInvestmentInterestUseCaseImpl implements ApplyInvestmentIntere
         accumulatedInterestEntity.setResponseCode(responseCBS.getResponseCode());
         accumulatedInterestEntity.setExternalReference(responseCBS.getBankOneReference());
         accumulatedInterestEntityDao.saveRecord(accumulatedInterestEntity);
+    }
+
+    @Override
+    public void processFailedInterestPosting() {
+         LocalDate yesterday = LocalDate.now().minusDays(1);
+
+         LocalDateTime fromTime = yesterday.atStartOfDay();
+         LocalDateTime toTime = yesterday.atTime(LocalTime.MAX);
+
+         List<AccumulatedInterestEntity> failedInterests = accumulatedInterestEntityDao.getFailedInterestRecord(fromTime, toTime);
+         for(AccumulatedInterestEntity failedInterest: failedInterests) {
+             String code = StringUtils.defaultString(failedInterest.getResponseCode());
+             if(code.equalsIgnoreCase("91")) {
+                 continue;
+             }
+             failedInterest.setReference(accumulatedInterestEntityDao.generatedReference());
+             accumulatedInterestEntityDao.saveRecord(failedInterest);
+             processInterestPostingOnCBA(failedInterest);
+         }
     }
 }

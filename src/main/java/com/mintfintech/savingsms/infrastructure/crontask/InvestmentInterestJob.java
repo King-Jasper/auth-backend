@@ -21,4 +21,11 @@ public class InvestmentInterestJob {
         applyInvestmentInterestUseCase.processAndApplyInterest();
     }
 
+
+    @SchedulerLock(name = "InvestmentInterestJob_processRetryForFailedPosting", lockAtMostForString = "PT45M")
+    @Scheduled(cron = "0 0 21 1/1 * ?") // runs every day at 9:00am.
+    public void processRetryForFailedPosting() {
+        applyInvestmentInterestUseCase.processFailedInterestPosting();
+    }
+
 }
