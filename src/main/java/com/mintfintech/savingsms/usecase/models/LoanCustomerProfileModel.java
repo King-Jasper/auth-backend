@@ -13,6 +13,10 @@ public class LoanCustomerProfileModel {
 
     private String phoneNumber;
 
+    private String accountNumber;
+
+    private String accountTier;
+
     private String email;
 
     private boolean blacklistStatus;

@@ -47,6 +47,8 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 .approvalStatus(!searchRequest.getApprovalStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
+                .customerName(searchRequest.getCustomerName())
+                .customerPhone(searchRequest.getCustomerPhone())
                 .build();
 
         Page<LoanRequestEntity> goalEntityPage = loanRequestEntityDao.searchLoans(searchDTO, page, size);
@@ -81,6 +83,11 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
         loanModel.setRejectionReason(StringUtils.defaultString(loanRequestEntity.getRejectionReason()));
+        if(loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.DECLINED || loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.REJECTED) {
+            loanModel.setDateRejected(loanRequestEntity.getDateRejected() != null ?
+                    loanRequestEntity.getDateRejected().format(DateTimeFormatter.ISO_DATE_TIME) :
+                    loanRequestEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME));
+        }
 
         String loanStatus = "";
         if(approvalStatus == ApprovalStatusConstant.PENDING) {

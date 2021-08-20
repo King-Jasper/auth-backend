@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
+import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -57,7 +58,9 @@ public class LoanAdminController {
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final GetLoansUseCase getLoansUseCase;
     private final LoanApprovalUseCase loanApprovalUseCase;
+//
 
+    @Secured({"29", "30"}) // LOAN_PRODUCT_OFFICER | LOAN_RISK_OFFICER
     @ApiOperation(value = "Verify Loan Customer Employment Information.")
     @PutMapping(value = "{customerLoanProfileId}/verify/employment-details", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> verifyEmploymentInformation(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
@@ -69,6 +72,7 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured({"29", "30"}) // LOAN_PRODUCT_OFFICER | LOAN_RISK_OFFICER
     @ApiOperation(value = "Blacklist a customer.")
     @PutMapping(value = "{customerLoanProfileId}/blacklist", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> blackListCustomer(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
@@ -80,6 +84,7 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured({"31", "32"}) // LOAN_FINANCE_OFFICER | LOAN_BUSINESS_MANAGER
     @ApiOperation(value = "Approve/Reject Loan Request.")
     @PostMapping(value = "{loanId}/approve", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> approveLoan(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
@@ -91,6 +96,7 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured("28") // CAN_VIEW_LOAN_RECORDS
     @ApiOperation(value = "Returns list of loan transactions.")
     @GetMapping(value = "{loanId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<LoanTransactionModel>>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
@@ -100,21 +106,31 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured("28") // CAN_VIEW_LOAN_RECORDS
     @ApiOperation(value = "Returns paginated loan list.")
     @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: ALL, PAID, PARTIALLY_PAID, PENDING, FAILED, CANCELLED") @Valid @Pattern(regexp = "(ALL|PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam(value = "repaymentStatus", defaultValue = "ALL") String repaymentStatus,
                                                                                      @ApiParam(value = "Approval Status: ALL, APPROVED, DECLINED, PENDING, CANCELLED, DISBURSED") @Valid @Pattern(regexp = "(ALL|APPROVED|DECLINED|PENDING|CANCELLED|DISBURSED)") @RequestParam(value = "approvalStatus", defaultValue = "ALL") String approvalStatus,
+                                                                                     @ApiParam(value = "Review Stage: FIRST_REVIEW, SECOND_REVIEW") @Valid @Pattern(regexp = "(FIRST_REVIEW|SECOND_REVIEW)") @RequestParam(value = "reviewStage", defaultValue = "FIRST_REVIEW") String reviewStage,
+                                                                                     @RequestParam(value = "customerName", defaultValue = "", required = false) String customerName,
+                                                                                     @RequestParam(value = "customerPhone", defaultValue = "", required = false) String customerPhone,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
                                                                                      @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                      @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
+        if(StringUtils.isNotEmpty(customerPhone)){
+            customerPhone = PhoneNumberUtils.toInternationalFormat(customerPhone);
+        }
         LoanSearchRequest searchRequest = LoanSearchRequest.builder()
                 .repaymentStatus(repaymentStatus)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .approvalStatus(approvalStatus)
+                .reviewStage(reviewStage)
+                .customerName(customerName)
+                .customerPhone(customerPhone)
                 .build();
 
         PagedDataResponse<LoanModel> response = getLoansUseCase.getPagedLoans(searchRequest, page, size);
@@ -122,11 +138,15 @@ public class LoanAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
-    @ApiOperation(value = "Returns paginated list of loan customers.")
+    @Secured("28") // CAN_VIEW_LOAN_RECORDS
+    @ApiOperation(value = "Returns paginated list of loan customers.") //
     @GetMapping(value = "customers-profile", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>>> getLoanCustomerProfiles(@ApiParam(value = "Verification Status: ALL, APPROVED, REJECTED, DECLINED, PENDING") @Valid @Pattern(regexp = "(ALL|APPROVED|REJECTED|PENDING|DECLINED)") @RequestParam(value = "verificationStatus", defaultValue = "ALL") String verificationStatus,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
                                                                                                                 @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
+                                                                                                                @RequestParam(value = "customerName", defaultValue = "", required = false) String customerName,
+                                                                                                                @RequestParam(value = "customerPhone", defaultValue = "", required = false) String customerPhone,
+                                                                                                                @ApiParam(value = "Review Stage: FIRST_REVIEW, SECOND_REVIEW") @Valid @Pattern(regexp = "(FIRST_REVIEW|SECOND_REVIEW)") @RequestParam(value = "reviewStage", defaultValue = "FIRST_REVIEW") String reviewStage,
                                                                                                                 @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                                 @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
@@ -134,8 +154,14 @@ public class LoanAdminController {
         if(StringUtils.isNotEmpty(verificationStatus) && verificationStatus.equalsIgnoreCase("REJECTED")) {
             verificationStatus = "DECLINED";
         }
+        if(StringUtils.isNotEmpty(customerPhone)){
+            customerPhone = PhoneNumberUtils.toInternationalFormat(customerPhone);
+        }
         CustomerProfileSearchRequest searchRequest = CustomerProfileSearchRequest.builder()
                 .verificationStatus(verificationStatus)
+                .customerName(customerName)
+                .customerPhone(customerPhone)
+                .reviewStage(reviewStage)
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .build();
