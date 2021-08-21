@@ -6,8 +6,6 @@ package com.mintfintech.savingsms.domain.entities.enums;
  */
 public enum AccountTypeConstant {
     INDIVIDUAL,
-    STARTER_BUSINESS,
-    REGISTERED_BUSINESS,
     ENTERPRISE,
     SOLE_PROPRIETORSHIP;
 }
