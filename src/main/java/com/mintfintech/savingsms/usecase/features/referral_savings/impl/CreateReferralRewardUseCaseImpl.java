@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.referral_savings.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
+import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
@@ -83,7 +84,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
     }
 
-    public void processReferralByUser(String userId, String phoneNumber,  int size, boolean overrideTime) {
+    public String processReferralByUser(String userId, String phoneNumber,  int size, boolean overrideTime) {
 
         LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
@@ -100,7 +101,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         if(!appUserEntityOpt.isPresent()) {
             log.info("User Id not found.");
-            return;
+            return "User not found";
         }
         AppUserEntity appUserEntity = appUserEntityOpt.get();
         MintAccountEntity referral = appUserEntity.getPrimaryAccount();
@@ -108,19 +109,43 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
 
+        List<ReferralRewardStat> rewardStats = customerReferralEntityDao.getReferralRewardStatOnAccount(referral);
+        long totalProcessed = 0, totalUnProcessed = 0;
+        for(ReferralRewardStat rewardStat: rewardStats) {
+            if(rewardStat.isProcessed()) {
+                totalProcessed = rewardStat.getCount();
+            }else {
+                totalUnProcessed = rewardStat.getCount();
+            }
+        }
+        long totalRecords = totalProcessed + totalUnProcessed;
+        String beforeProcessing = String.format("BEFORE UPDATE - Total Referrals - %d, Total Processed - %d", totalRecords, totalProcessed);
 
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(referral, start, end, size);
         log.info("LIST PULLED - {}, start - {}, end - {}", referralList.size(), start, end);
         for(CustomerReferralEntity record : referralList) {
-
            boolean processed =  processReferralPayment(record, referralSavingsGoalEntity);
-
            if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
                referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
                referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
                savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
            }
         }
+
+        rewardStats = customerReferralEntityDao.getReferralRewardStatOnAccount(referral);
+        totalProcessed = 0; totalUnProcessed = 0;
+        for(ReferralRewardStat rewardStat: rewardStats) {
+            if(rewardStat.isProcessed()) {
+                totalProcessed = rewardStat.getCount();
+            }else {
+                totalUnProcessed = rewardStat.getCount();
+            }
+        }
+        totalRecords = totalProcessed + totalUnProcessed;
+
+        String afterProcessing = String.format("Total Referrals - %d, Total Processed - %d", totalRecords, totalProcessed);
+
+        return String.format("BEFORE UPDATE : %s | AFTER UPDATE : %s", beforeProcessing, afterProcessing);
     }
 
     private boolean processReferralPayment(CustomerReferralEntity record, SavingsGoalEntity referralSavingsGoalEntity) {

@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -35,4 +36,8 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
             "s.savingsBalance >= ?3 and s.mintAccount = c.referred and " +
             "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS) order by c.dateCreated asc")
     List<CustomerReferralEntity> getUnprocessedReferrals(LocalDateTime startDate, LocalDateTime endDate, BigDecimal savingsMinBalance, Pageable pageable);
+
+    @Query("select new com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat(c.referrerRewarded, count(c)) from CustomerReferralEntity c " +
+            "where c.referrer = ?1 group by c.referrerRewarded")
+    List<ReferralRewardStat> getReferralStatisticsForAccount(MintAccountEntity referral);
 }
