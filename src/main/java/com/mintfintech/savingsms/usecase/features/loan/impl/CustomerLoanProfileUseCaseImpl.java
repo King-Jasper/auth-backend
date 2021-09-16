@@ -181,6 +181,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .customerName(searchRequest.getCustomerName())
                 .customerPhone(searchRequest.getCustomerPhone())
                 .build();
+        System.out.println(searchDTO.toString());
         Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
 
         return new PagedDataResponse<>(loanProfileEntityPage.getTotalElements(), loanProfileEntityPage.getTotalPages(),

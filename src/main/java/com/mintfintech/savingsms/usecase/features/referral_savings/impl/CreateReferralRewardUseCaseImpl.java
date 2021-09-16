@@ -53,8 +53,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
 
-    private static final BigDecimal referralAmount = BigDecimal.valueOf(1000.00);
-    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal referralAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(250.00);
 
 
     @Async
@@ -166,7 +166,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
         SavingsGoalEntity temp = tempOpt.get();
 
-        LocalDateTime newProgramDate = LocalDate.of(2021, 6, 29).atTime(0, 0);
+        LocalDateTime newProgramDate = LocalDate.of(2021, 9, 17).atTime(0, 0);
         boolean newProgram = true;
         Optional<SavingsGoalTransactionEntity> transactionOpt = savingsGoalTransactionEntityDao.findFirstTransactionForSavings(temp);
         if(transactionOpt.isPresent()) {
@@ -180,8 +180,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         BigDecimal payoutAmount = referralAmount;
 
         if(!newProgram) {
-            minAmount = BigDecimal.valueOf(250.00);
-            payoutAmount = BigDecimal.valueOf(500.00);
+            minAmount = BigDecimal.valueOf(500.00);
+            payoutAmount = BigDecimal.valueOf(1000.00);
         }
 
         BigDecimal goalBalance = temp.getSavingsBalance();

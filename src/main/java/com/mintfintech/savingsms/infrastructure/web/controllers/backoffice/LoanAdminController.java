@@ -133,6 +133,7 @@ public class LoanAdminController {
                 .customerPhone(customerPhone)
                 .build();
 
+        System.out.println(searchRequest.toString());
         PagedDataResponse<LoanModel> response = getLoansUseCase.getPagedLoans(searchRequest, page, size);
         ApiResponseJSON<PagedDataResponse<LoanModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
