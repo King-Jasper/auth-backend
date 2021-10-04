@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
+import com.mintfintech.savingsms.usecase.data.response.LoanManager;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
@@ -23,12 +24,16 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.joda.time.DateTimeFieldType;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.time.temporal.Temporal;
+import java.util.Calendar;
 import java.util.List;
 
 @Service
@@ -47,10 +52,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     private final ApplicationEventService applicationEventService;
     private final LoanTransactionEntityDao loanTransactionEntityDao;
     private final SystemIssueLogService systemIssueLogService;
+    private final LoanReviewLogEntityDao loanReviewLogEntityDao;
 
     @Transactional
     @Override
     public LoanModel approveLoanRequest(AuthenticatedUser authenticatedUser, String loanId, String reason, boolean approved) {
+
+        LoanManager loanManager = LoanManager.getManager(authenticatedUser);
 
         LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
                 .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
@@ -61,11 +69,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
 
         if (approved) {
-
-            processLoanApproval(loanRequestEntity, appUser, authenticatedUser);
+            processLoanApproval(loanManager, loanRequestEntity, appUser);
         } else {
-
-            processLoanDecline(loanRequestEntity, appUser, authenticatedUser, reason);
+            processLoanDecline(loanManager, loanRequestEntity, appUser, reason);
         }
 
         return getLoansUseCase.toLoanModel(loanRequestEntity);
@@ -100,7 +106,8 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         }
     }
 
-    private void processLoanApproval(LoanRequestEntity loanRequest, AppUserEntity appUser, AuthenticatedUser authenticatedUser) {
+    private void processLoanApproval(LoanManager loanManager, LoanRequestEntity loanRequest, AppUserEntity appUser) {
+
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
 
@@ -110,6 +117,35 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 throw new BadRequestException("Employment Information have not been verified for this user");
             }
         }
+
+        LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
+                .reviewerName(loanManager.getReviewerName())
+                .entityId(loanRequest.getId())
+                .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .build();
+
+        String description = "";
+        if(loanRequest.getReviewStage() == null || loanRequest.getReviewStage() == LoanReviewStageConstant.FIRST_REVIEW) {
+            if(!loanManager.isFinanceOfficer()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a finance officer can approve this request.");
+            }
+            description = "Loan approved by Finance officer";
+            loanRequest.setReviewStage(LoanReviewStageConstant.SECOND_REVIEW);
+            loanRequestEntityDao.saveRecord(loanRequest);
+
+            reviewLogEntity.setDescription(description);
+            loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+            return;
+        }
+
+        if(loanRequest.getReviewStage() == LoanReviewStageConstant.SECOND_REVIEW) {
+            if(!loanManager.isBusinessManager()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
+            }
+        }
+        description = "Loan approved by business manager";
+        reviewLogEntity.setDescription(description);
+        loanReviewLogEntityDao.saveRecord(reviewLogEntity);
 
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(loanRequest.getBankAccount().getId());
 
@@ -128,12 +164,21 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         ) {
             LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
 
+            LocalDateTime repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
+
+            DayOfWeek dayOfWeek = repaymentDate.getDayOfWeek();
+            if(dayOfWeek == DayOfWeek.SATURDAY) {
+                repaymentDate = repaymentDate.plusDays(3);
+            }else if(dayOfWeek == DayOfWeek.SUNDAY) {
+                repaymentDate = repaymentDate.plusDays(2);
+            }
+
             loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequest.setApprovedDate(LocalDateTime.now());
-            loanRequest.setApproveByName(authenticatedUser.getUsername());
-            loanRequest.setApproveByUserId(authenticatedUser.getUserId());
+            loanRequest.setApproveByName(loanManager.getReviewerName());
+            loanRequest.setApproveByUserId(loanManager.getReviewerUserId());
             loanRequest.setTrackingReference(responseCBS.getTrackingReference());
-            loanRequest.setRepaymentDueDate(LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor()));
+            loanRequest.setRepaymentDueDate(repaymentDate);
             loanRequestEntityDao.saveRecord(loanRequest);
 
             MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
@@ -150,15 +195,36 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         }
     }
 
-    private void processLoanDecline(LoanRequestEntity loanRequest,
-                                    AppUserEntity appUser,
-                                    AuthenticatedUser authenticatedUser,
-                                    String reason
-    ) {
+    private void processLoanDecline(LoanManager loanManager, LoanRequestEntity loanRequest, AppUserEntity appUser, String reason) {
+
+        LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
+                .reviewerName(loanManager.getReviewerName())
+                .entityId(loanRequest.getId())
+                .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .build();
+
+        String description = "";
+        if(loanRequest.getReviewStage() == null || loanRequest.getReviewStage() == LoanReviewStageConstant.FIRST_REVIEW) {
+            if (!loanManager.isFinanceOfficer()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a finance officer can decline this request at the current stage.");
+            }
+            description = "Loan declined by Finance officer";
+        }else if(loanRequest.getReviewStage() == LoanReviewStageConstant.SECOND_REVIEW) {
+            if (!loanManager.isBusinessManager()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a business manager can decline this request at the current stage.");
+            }
+            description = "Loan declined by Business manager";
+        }
+
+        reviewLogEntity.setDescription(description);
+        loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+
+
         loanRequest.setApprovalStatus(ApprovalStatusConstant.DECLINED);
         loanRequest.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
-        loanRequest.setApproveByName(authenticatedUser.getUsername());
-        loanRequest.setApproveByUserId(authenticatedUser.getUserId());
+        loanRequest.setApproveByName(loanManager.getReviewerName());
+        loanRequest.setApproveByUserId(loanManager.getReviewerUserId());
+        loanRequest.setActiveLoan(false);
         loanRequest.setRejectionReason(reason);
 
         loanRequestEntityDao.saveRecord(loanRequest);

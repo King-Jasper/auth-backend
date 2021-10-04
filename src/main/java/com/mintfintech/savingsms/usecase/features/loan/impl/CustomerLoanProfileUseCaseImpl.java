@@ -1,17 +1,8 @@
 package com.mintfintech.savingsms.usecase.features.loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.CustomerLoanProfileEntityDao;
-import com.mintfintech.savingsms.domain.dao.EmployeeInformationEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.ResourceFileEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
-import com.mintfintech.savingsms.domain.entities.EmployeeInformationEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.ResourceFileEntity;
-import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.CustomerLoanProfileSearchDTO;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -21,6 +12,8 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
+import com.mintfintech.savingsms.usecase.data.response.LoanManager;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
@@ -32,7 +25,9 @@ import com.mintfintech.savingsms.usecase.models.CustomerLoanProfileDashboard;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.domain.Page;
@@ -40,6 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,6 +54,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final AuditTrailService auditTrailService;
     private final LoanRequestEntityDao loanRequestEntityDao;
     private final ApplicationEventService applicationEventService;
+    private final LoanReviewLogEntityDao loanReviewLogEntityDao;
+    private final MintBankAccountEntityDao mintBankAccountEntityDao;
 
     @Override
     @Transactional
@@ -125,7 +124,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         publishEmploymentDetails(appUser, employeeInfo);
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .customerName(appUser.getName())
                 .build();
 
@@ -147,7 +146,6 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfile));
             loanCustomerProfileModel.setHasActivePayDayLoan(loanRequestEntityDao.countActivePayDayLoan(appUser) > 0);
         }
-
         return loanCustomerProfileModel;
     }
 
@@ -179,8 +177,11 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59) : null)
                 .verificationStatus(!searchRequest.getVerificationStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getVerificationStatus()) : null)
+                .reviewStage(StringUtils.isNotEmpty(searchRequest.getReviewStage()) ? LoanReviewStageConstant.valueOf(searchRequest.getReviewStage()): null)
+                .customerName(searchRequest.getCustomerName())
+                .customerPhone(searchRequest.getCustomerPhone())
                 .build();
-
+        System.out.println(searchDTO.toString());
         Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
 
         return new PagedDataResponse<>(loanProfileEntityPage.getTotalElements(), loanProfileEntityPage.getTotalPages(),
@@ -204,57 +205,117 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     @Transactional
     public LoanCustomerProfileModel verifyEmploymentInformation(AuthenticatedUser currentUser, long customerLoanProfileId, boolean isVerified, String reason) {
 
+        LoanManager loanManager = LoanManager.getManager(currentUser);
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao
                 .findById(customerLoanProfileId)
                 .orElseThrow(() -> new BadRequestException("The Customer Loan Profile was not found for this id " + customerLoanProfileId));
 
         EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-
-        EmployeeInformationEntity oldState = new EmployeeInformationEntity();
-        BeanUtils.copyProperties(employeeInformationEntity, oldState);
-
-        employeeInformationEntity.setVerificationStatus(isVerified ? ApprovalStatusConstant.APPROVED : ApprovalStatusConstant.DECLINED);
-        employeeInformationEntity.setRejectionReason(isVerified ? null : reason);
-        employeeInformationEntityDao.saveRecord(employeeInformationEntity);
-
-        AppUserEntity appUserEntity = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
-
-        if (!isVerified) {
-            List<LoanRequestEntity> loans = loanRequestEntityDao.getLoansByAppUser(appUserEntity, LoanTypeConstant.PAYDAY.name());
-
-            for (LoanRequestEntity loanRequestEntity : loans) {
-                if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING) {
-                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
-                    loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
-                    loanRequestEntityDao.saveRecord(loanRequestEntity);
-                }
-            }
-
-            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
-                    .customerName(appUserEntity.getName())
-                    .recipient(appUserEntity.getEmail())
-                    .reason(reason)
-                    .build();
-
-            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_DECLINED, new EventModel<>(event));
-
-        } else {
-            LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-                    .customerName(appUserEntity.getName())
-                    .recipient(appUserEntity.getEmail())
-                    .build();
-
-            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_APPROVED, new EventModel<>(loanEmailEvent));
-
+        LoanReviewStageConstant reviewStage = employeeInformationEntity.getReviewStage();
+        if(reviewStage == null || reviewStage == LoanReviewStageConstant.FIRST_REVIEW) {
+           handleVerificationByLoanOfficer(loanManager, employeeInformationEntity, customerLoanProfileEntity, isVerified, reason);
+        }else if(reviewStage == LoanReviewStageConstant.SECOND_REVIEW) {
+            handleVerificationByRiskManager(loanManager, employeeInformationEntity, customerLoanProfileEntity, isVerified, reason);
         }
-
-        String description = String.format("Verified the Employment information for this loan customer: %s", oldState.getId());
-        auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);
 
         LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
+
+    private void handleVerificationByRiskManager(LoanManager loanManager, EmployeeInformationEntity employeeInformationEntity, CustomerLoanProfileEntity customerLoanProfileEntity, boolean isVerified, String reason) {
+        if(!loanManager.isRiskOfficer()) {
+            throw new BusinessLogicConflictException("Sorry, review request can only be accepted by a risk management officer.");
+        }
+        AppUserEntity appUserEntity = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
+        String description;
+        if(!isVerified) {
+            employeeInformationEntity.setVerificationStatus(ApprovalStatusConstant.DECLINED);
+            employeeInformationEntity.setDateRejected(LocalDateTime.now());
+            employeeInformationEntity.setRejectionReason(reason);
+            employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+
+            List<LoanRequestEntity> loans = loanRequestEntityDao.getLoansByAppUser(appUserEntity, LoanTypeConstant.PAYDAY.name());
+            for (LoanRequestEntity loanRequestEntity : loans) {
+                if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING) {
+                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
+                    loanRequestEntity.setDateRejected(LocalDateTime.now());
+                    loanRequestEntity.setActiveLoan(false);
+                    loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
+                    loanRequestEntityDao.saveRecord(loanRequestEntity);
+                }
+            }
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .customerName(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .reason(reason)
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_DECLINED, new EventModel<>(event));
+            description = "Declined with reason - "+reason;
+        }else {
+            employeeInformationEntity.setVerificationStatus(ApprovalStatusConstant.APPROVED);
+            employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+
+            LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                    .customerName(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_APPROVED, new EventModel<>(loanEmailEvent));
+            description = "Detail final verification.";
+        }
+        LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
+                .reviewLogType(LoanReviewLogType.EMPLOYMENT_INFORMATION)
+                .entityId(employeeInformationEntity.getId())
+                .description(description)
+                .reviewerName(loanManager.getReviewerName())
+                .build();
+        loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+    }
+
+    private void handleVerificationByLoanOfficer(LoanManager loanManager, EmployeeInformationEntity employeeInformationEntity, CustomerLoanProfileEntity customerLoanProfileEntity, boolean isVerified, String reason) {
+        if(!loanManager.isRiskOfficer()) {
+            throw new BusinessLogicConflictException("Sorry, review request can only be accepted by a risk management officer.");
+        }
+        String description;
+        if(!isVerified) {
+            employeeInformationEntity.setVerificationStatus(ApprovalStatusConstant.DECLINED);
+            employeeInformationEntity.setDateRejected(LocalDateTime.now());
+            employeeInformationEntity.setRejectionReason(reason);
+            employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+
+            AppUserEntity appUserEntity = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
+            List<LoanRequestEntity> loans = loanRequestEntityDao.getLoansByAppUser(appUserEntity, LoanTypeConstant.PAYDAY.name());
+            for (LoanRequestEntity loanRequestEntity : loans) {
+                if (loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.PENDING) {
+                    loanRequestEntity.setApprovalStatus(ApprovalStatusConstant.DECLINED);
+                    loanRequestEntity.setActiveLoan(false);
+                    loanRequestEntity.setDateRejected(LocalDateTime.now());
+                    loanRequestEntity.setRejectionReason("Customer Employment Profile was rejected");
+                    loanRequestEntityDao.saveRecord(loanRequestEntity);
+                }
+            }
+            LoanDeclineEmailEvent event = LoanDeclineEmailEvent.builder()
+                    .customerName(appUserEntity.getName())
+                    .recipient(appUserEntity.getEmail())
+                    .reason(reason)
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_DECLINED, new EventModel<>(event));
+            description = "Declined with reason - "+reason;
+        }else {
+            employeeInformationEntity.setReviewStage(LoanReviewStageConstant.SECOND_REVIEW);
+            employeeInformationEntityDao.saveRecord(employeeInformationEntity);
+            description = "Detail verified and moved to next review stage";
+        }
+
+        LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
+                .reviewLogType(LoanReviewLogType.EMPLOYMENT_INFORMATION)
+                .entityId(employeeInformationEntity.getId())
+                .description(description)
+                .reviewerName(loanManager.getReviewerName())
+                .build();
+        loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+    }
+
 
     @Override
     public LoanCustomerProfileModel blackListCustomer(AuthenticatedUser currentUser, long customerLoanProfileId, boolean blacklist, String reason) {
@@ -341,9 +402,6 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 .build();
 
         EmployeeInformationEntity informationEntity = employeeInformationEntityDao.saveRecord(employeeInformationEntity);
-
-
-
         return informationEntity;
     }
 
@@ -370,6 +428,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     private void validateEmploymentLetter(MultipartFile employmentLetter) {
+        System.out.println("original file name - "+employmentLetter.getOriginalFilename());
+        System.out.println("file name - "+employmentLetter.getName());
         double sizeInMb = employmentLetter.getSize() * 1.0 / (1024 * 1024);
         if (sizeInMb > applicationProperty.getFileUploadMaximumSize()) {
             throw new BadRequestException("Maximum file size is " + applicationProperty.getFileUploadMaximumSize() + "MB.");
@@ -381,6 +441,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         AppUserEntity appUser = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
 
+        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(appUser.getPrimaryAccount(), BankAccountTypeConstant.CURRENT);
+        TierLevelEntity tierLevelEntity = mintAccount.getAccountTierLevel();
         LoanCustomerProfileModel loanCustomerProfileModel = new LoanCustomerProfileModel();
         loanCustomerProfileModel.setCustomerName(appUser.getName());
         loanCustomerProfileModel.setEmail(appUser.getEmail());
@@ -389,7 +451,9 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         loanCustomerProfileModel.setId(customerLoanProfileEntity.getId());
         loanCustomerProfileModel.setPhoneNumber(appUser.getPhoneNumber());
         loanCustomerProfileModel.setRating(customerLoanProfileEntity.getRating());
-
+        loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
+        loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
+        loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
 
@@ -412,9 +476,15 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             employmentInformationModel.setOrganizationName(employeeInformationEntity.getOrganizationName());
             employmentInformationModel.setOrganizationUrl(employeeInformationEntity.getOrganizationUrl());
             employmentInformationModel.setWorkEmail(employeeInformationEntity.getWorkEmail());
-            employmentInformationModel.setRejectionReason(employeeInformationEntity.getRejectionReason());
+            employmentInformationModel.setRejectionReason(StringUtils.defaultString(employeeInformationEntity.getRejectionReason()));
+            if(employeeInformationEntity.getVerificationStatus() == ApprovalStatusConstant.REJECTED || employeeInformationEntity.getVerificationStatus() == ApprovalStatusConstant.DECLINED){
+                 employmentInformationModel.setDateRejected(employeeInformationEntity.getDateRejected() != null ?
+                         employeeInformationEntity.getDateRejected().format(DateTimeFormatter.ISO_DATE_TIME) : employeeInformationEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME));
+            }
         }
 
         return employmentInformationModel;
     }
+
+
 }

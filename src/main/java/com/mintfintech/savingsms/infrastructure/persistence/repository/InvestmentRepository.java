@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -54,4 +55,20 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
             "i.owner =:owner " +
             "group by i.investmentStatus")
     List<InvestmentStat> getStatisticsForCompletedInvestment(@Param("owner") MintAccountEntity accountEntity);
+
+    /*
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat(DAY(s.maturityDate), MONTH(s.maturityDate), count(s), sum(s.accruedInterest), sum(s.savingsBalance)) " +
+            "from SavingsGoalEntity s where s.maturityDate is not null and s.maturityDate between :startDate and :endDate and" +
+            " s.creationSource = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant.CUSTOMER and " +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            "group by DAY(s.maturityDate), MONTH(s.maturityDate)")
+    List<SavingsMaturityStat> getSavingsMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+     */
+
+    @Query(value = "select new com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat(DAY(i.maturityDate), MONTH(i.maturityDate), count(i), sum(i.accruedInterest), sum(i.amountInvested)) " +
+            "from InvestmentEntity i where i.maturityDate between :startDate and :endDate and" +
+            " i.investmentStatus = com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant.ACTIVE and " +
+            " i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
+            "group by DAY(i.maturityDate), MONTH(i.maturityDate)")
+    List<SavingsMaturityStat> getInvestmentMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 }

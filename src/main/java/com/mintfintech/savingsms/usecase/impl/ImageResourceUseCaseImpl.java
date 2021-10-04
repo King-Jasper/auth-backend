@@ -29,6 +29,11 @@ public class ImageResourceUseCaseImpl implements ImageResourceUseCase {
         } catch (Exception ex) {
             throw new BadRequestException("Unable to extract image file.");
         }
+        /*
+        if(fileName != null && !fileName.endsWith(".pdf")) {
+            fileName = fileName+".pdf";
+        }
+        */
 
         FileStorageRequest storageRequest = FileStorageRequest.builder()
                 .fileData(imageByteArray)

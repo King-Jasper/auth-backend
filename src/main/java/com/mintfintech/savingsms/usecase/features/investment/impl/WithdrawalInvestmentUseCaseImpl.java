@@ -196,12 +196,13 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         BigDecimal accruedInterest = investment.getAccruedInterest();
 
         BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
-        BigDecimal amountToWithdraw = amountInvested.add(accruedInterest.subtract(interestCharge));
+        BigDecimal principalToWithdraw = amountInvested;
+        BigDecimal totalWithdrawalAmount = principalToWithdraw.add(accruedInterest.subtract(interestCharge));
 
         BigDecimal interestToWithdraw = accruedInterest.subtract(interestCharge);
 
         InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
-                .amount(amountToWithdraw)
+                .amount(principalToWithdraw)
                 .amountCharged(interestCharge)
                 .balanceBeforeWithdrawal(amountInvested)
                 .interestBeforeWithdrawal(accruedInterest)
@@ -213,7 +214,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_TO_CUSTOMER)
                 .withdrawalType(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
-                .totalAmount(amountToWithdraw)
+                .totalAmount(totalWithdrawalAmount)
                 .build();
         investmentWithdrawalEntityDao.saveRecord(withdrawalEntity);
 
@@ -221,7 +222,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         investment.setAccruedInterest(BigDecimal.ZERO);
         investment.setInvestmentStatus(InvestmentStatusConstant.LIQUIDATED);
         investment.setTotalInterestWithdrawn(investment.getTotalInterestWithdrawn().add(interestToWithdraw));
-        investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(amountToWithdraw));
+        investment.setTotalAmountWithdrawn(investment.getTotalAmountWithdrawn().add(totalWithdrawalAmount));
         investment.setDateWithdrawn(LocalDateTime.now());
         investmentEntityDao.saveRecord(investment);
 
@@ -250,10 +251,15 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
+        BigDecimal interestAmount = withdrawal.getInterest();
+        if(!withdrawal.isMatured()){
+            interestAmount = withdrawal.getInterestBeforeWithdrawal(); //penalty charge will be on this.
+        }
+
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(withdrawal.getInvestment());
         transaction.setBankAccount(withdrawal.getCreditAccount());
-        transaction.setTransactionAmount(withdrawal.getInterest());
+        transaction.setTransactionAmount(interestAmount);
         transaction.setTransactionReference(reference);
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
@@ -380,10 +386,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
+        BigDecimal taxAmount = withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1));
+
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(withdrawal.getInvestment());
         transaction.setBankAccount(withdrawal.getCreditAccount());
-        transaction.setTransactionAmount(withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1)));
+        transaction.setTransactionAmount(taxAmount);
         transaction.setTransactionReference(reference);
         transaction.setTransactionType(TransactionTypeConstant.DEBIT);
         transaction.setTransactionStatus(TransactionStatusConstant.PENDING);
@@ -395,9 +403,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_TAX_PAYMENT);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
 
+        String narration = "Investment(" + investment.getCode() + ") withholding Tax Charge - " + reference;
+
         InvestmentWithdrawalRequestCBS request = InvestmentWithdrawalRequestCBS.builder()
                 .accountNumber(bankAccount.getAccountNumber())
-                .narration(constructInvestmentNarration(investment.getCode(), reference))
+                .narration(narration)
                 .transactionAmount(transaction.getTransactionAmount().doubleValue())
                 .transactionReference(reference)
                 .withdrawalStage(CBInvestmentWithdrawalStage.TAX_PAYMENT.name())

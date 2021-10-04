@@ -70,4 +70,8 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @Builder.Default
     private BigDecimal totalInterestWithdrawn = BigDecimal.ZERO;
 
+    private String managedByUser;
+
+    private String managedByUserId;
+
 }

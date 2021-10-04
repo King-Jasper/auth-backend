@@ -67,6 +67,10 @@ public class ApplicationProperty {
         return environmentService.getVariable("mint.email.system-admin");
     }
 
+    public String getLoanAdminEmail() {
+        return environmentService.getVariable("mint.email.loan-admin", "justin.nwanya@bankwithmint.com");
+    }
+
 
     public boolean isDevelopmentEnvironment() {
         return Arrays.stream(environmentService.getActiveProfiles()).anyMatch(evn -> evn.equalsIgnoreCase("dev"));

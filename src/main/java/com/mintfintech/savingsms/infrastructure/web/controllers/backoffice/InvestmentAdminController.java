@@ -1,9 +1,12 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationAdminRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.*;
+import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import io.swagger.annotations.Api;
@@ -18,11 +21,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -35,14 +37,31 @@ import java.time.LocalDate;
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Api(tags = "Investment Admin Endpoints")
 @RestController
-@RequestMapping(value = "/api/v1/admin/investment/", headers = {"x-request-client-key", "Authorization"})
+@RequestMapping(value = "/api/v1/admin/investment", headers = {"x-request-client-key", "Authorization"})
 @RequiredArgsConstructor
 public class InvestmentAdminController {
 
     private final GetInvestmentUseCase getInvestmentUseCase;
+    private final CreateInvestmentUseCase createInvestmentUseCase;
 
+
+    @Secured("09") // Privilege: VIEW_DASHBOARD_STATISTICS
+    @ApiOperation(value = "Returns investment maturity statistics information.")
+    @GetMapping(value = "/maturity-statistics", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<InvestmentMaturityStatSummary>> getSavingsMaturityStatistics(@ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+                                                                                                       @ApiParam(value="Format: dd/MM/yyyy") @DateTimeFormat(pattern="dd/MM/yyyy")  @RequestParam(value = "toDate", required = false) LocalDate toDate) {
+        if(fromDate == null || toDate == null) {
+            fromDate = LocalDate.now();
+            toDate = fromDate.plusWeeks(1); // default
+        }
+        InvestmentMaturityStatSummary response = getInvestmentUseCase.getMaturityStatistics(fromDate, toDate);
+        ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @Secured("19") // Privilege: CAN_VIEW_INVESTMENT
     @ApiOperation(value = "Returns paginated investment list.")
-    @GetMapping(value = "completed", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/completed", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getCompletedInvestments(@ApiParam(value = "Investment Status: ALL, COMPLETED, LIQUIDATED") @Valid @Pattern(regexp = "(ALL|COMPLETED|LIQUIDATED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
                                                                                                  @ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
@@ -71,8 +90,9 @@ public class InvestmentAdminController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Secured("19") // Privilege: CAN_VIEW_INVESTMENT
     @ApiOperation(value = "Returns paginated investment list.")
-    @GetMapping(value = "active", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/active", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getAllInvestments(@ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startToDate", required = false) LocalDate startToDate,
@@ -82,6 +102,7 @@ public class InvestmentAdminController {
                                                                                                  @ApiParam(value = "No. of records per page. Min:1, Max:500") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
                                                                                                  @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
+
 
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .startToDate(startToDate)
@@ -97,6 +118,17 @@ public class InvestmentAdminController {
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
 
         ApiResponseJSON<PagedDataResponse<InvestmentModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response.getInvestments());
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+
+    @Secured("20") // Privilege: CAN_CREATE_INVESTMENT
+    @ApiOperation(value = "Creates a new investment.")
+    @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<InvestmentCreationResponse>> createInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                        @RequestBody @Valid InvestmentCreationAdminRequestJSON requestJSON) {
+        InvestmentCreationResponse response = createInvestmentUseCase.createInvestmentByAdmin(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<InvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

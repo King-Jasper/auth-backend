@@ -84,6 +84,10 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
             return;
         }
         SavingsGoalEntity roundUpSavings = roundUpSavingsOpt.get();
+        if(roundUpSavings.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {
+            log.info("savings goal is no longer active");
+            return;
+        }
         RoundUpSavingsTransactionEntity savingsTransactionEntity = RoundUpSavingsTransactionEntity.builder()
                 .savingsGoal(roundUpSavings)
                 .savingsRoundUpType(roundUpType)

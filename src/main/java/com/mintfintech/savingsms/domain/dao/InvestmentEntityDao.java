@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
@@ -36,5 +37,7 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     List<InvestmentStat> getInvestmentStatOnAccount(MintAccountEntity mintAccountEntity);
 
     List<InvestmentStat> getStatsForCompletedInvestment(MintAccountEntity mintAccountEntity);
+
+    List<SavingsMaturityStat> getInvestmentMaturityStatistics(LocalDateTime fromDate, LocalDateTime toDate);
 
 }

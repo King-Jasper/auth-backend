@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
@@ -13,6 +14,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.LoanRequestRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -54,7 +56,15 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     }
 
     private static Specification<LoanRequestEntity> withRepaymentStatus(LoanRepaymentStatusConstant loanStatus) {
-        return ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus));
+
+        return ((root, criteriaQuery, criteriaBuilder) -> {
+            if(loanStatus == LoanRepaymentStatusConstant.PAID) {
+                return criteriaBuilder.or(criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus),
+                        criteriaBuilder.equal(root.get("repaymentStatus"), LoanRepaymentStatusConstant.COMPLETED));
+            }else {
+                return criteriaBuilder.equal(root.get("repaymentStatus"), loanStatus);
+            }
+        });
     }
 
     private static Specification<LoanRequestEntity> withApprovalStatus(ApprovalStatusConstant approvalStatus) {
@@ -135,7 +145,16 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
             specification = specification.and(temp);
         }
         if (searchDTO.getRepaymentStatus() != null) {
-            specification = specification.and(withRepaymentStatus(searchDTO.getRepaymentStatus()));
+            if(searchDTO.getAccount() != null && searchDTO.getRepaymentStatus() == LoanRepaymentStatusConstant.PAID) {
+                Specification<LoanRequestEntity> temp =  (root, query, criteriaBuilder) -> {
+                    return criteriaBuilder.or(criteriaBuilder.equal(root.get("repaymentStatus"), searchDTO.getRepaymentStatus()),
+                            criteriaBuilder.equal(root.get("repaymentStatus"), LoanRepaymentStatusConstant.COMPLETED));
+                };
+                specification = specification.and(temp);
+            }else {
+                Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get("repaymentStatus"), searchDTO.getRepaymentStatus());
+                specification = specification.and(temp);
+            }
         }
         if (searchDTO.getApprovalStatus() != null) {
             if(searchDTO.getApprovalStatus() == ApprovalStatusConstant.APPROVED || searchDTO.getApprovalStatus() == ApprovalStatusConstant.DISBURSED) {
@@ -148,6 +167,22 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         }
         if (searchDTO.getLoanType() != null){
             specification = specification.and(withLoanType(searchDTO.getLoanType()));
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
+            String name = searchDTO.getCustomerName();
+            Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<LoanRequestEntity, AppUserEntity> appUserJoin = root.join("requestedBy");
+                return criteriaBuilder.like(criteriaBuilder.lower(appUserJoin.get("name")), "%"+name+"%");
+            };
+            specification = specification.and(temp);
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getCustomerPhone())) {
+            String phoneNumber = searchDTO.getCustomerPhone();
+            Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {
+                Join<LoanRequestEntity, AppUserEntity> appUserJoin = root.join("requestedBy");
+                return criteriaBuilder.equal(appUserJoin.get("phoneNumber"), phoneNumber);
+            };
+            specification = specification.and(temp);
         }
         return repository.findAll(specification, pageable);
     }
@@ -173,8 +208,8 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         LocalDate inDaysTime = LocalDate.now().plusDays(days);
         LocalDateTime from = inDaysTime.atStartOfDay();
         LocalDateTime to = inDaysTime.atTime(LocalTime.MAX);
-        System.out.println("from = " + from);
-        System.out.println("to = " + to);
+       // System.out.println("from = " + from);
+       // System.out.println("to = " + to);
         return repository.getRepaymentPlansDueAtTime(from, to);
     }
 
@@ -197,6 +232,7 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
 
     @Override
     public List<LoanRequestEntity> getPendingDebitLoans() {
-        return repository.getPendingDebitLoans();
+        LocalDateTime startTime = LocalDateTime.now();
+        return repository.getPendingDebitLoans(startTime);
     }
 }

@@ -33,6 +33,8 @@ public class LoanModel {
 
     private String rejectionReason;
 
+    private String dateRejected;
+
     private String clientLoanStatus;
 
     private LoanCustomerProfileModel owner;

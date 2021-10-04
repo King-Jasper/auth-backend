@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +16,7 @@ import javax.persistence.FetchType;
 import javax.persistence.OneToOne;
 import javax.persistence.Table;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Entity
 @Getter
@@ -53,7 +55,13 @@ public class EmployeeInformationEntity extends AbstractBaseEntity<Long>{
     @Builder.Default
     private ApprovalStatusConstant verificationStatus = ApprovalStatusConstant.PENDING;
 
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private LoanReviewStageConstant reviewStage = LoanReviewStageConstant.FIRST_REVIEW;
+
     @Column(columnDefinition = "TEXT")
     private String rejectionReason;
+
+    private LocalDateTime dateRejected;
 
 }

@@ -25,6 +25,7 @@ import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRe
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -68,7 +69,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         BigDecimal loanAmount = BigDecimal.valueOf(amount);
 
         if (loanAmount.compareTo(maxLoanAmount) > 0) {
-            throw new BadRequestException("Loan amount is higher than the maximum allowed for this user");
+            throw new BadRequestException("Loan amount is higher than the maximum amount("+ MoneyFormatterUtil.priceWithoutDecimal(maxLoanAmount)+" allowed for this user.");
         }
 
         if (loanRequestEntityDao.countActivePayDayLoan(appUser) > 0) {
@@ -89,7 +90,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
 
         loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .build();
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
@@ -113,6 +114,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
                 .interestRate(applicationProperty.getPayDayLoanInterestRate())
                 .loanAmount(loanAmount)
                 .repaymentAmount(loanAmount.add(loanInterest))
+                .activeLoan(true)
                 .requestedBy(appUser)
                 .loanInterest(loanInterest)
                 .loanType(LoanTypeConstant.PAYDAY)

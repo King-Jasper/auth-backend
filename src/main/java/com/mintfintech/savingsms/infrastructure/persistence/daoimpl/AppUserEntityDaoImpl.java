@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.AppUserRepository;
 
 import javax.inject.Named;
@@ -36,4 +37,8 @@ public class AppUserEntityDaoImpl extends CrudDaoImpl<AppUserEntity, Long> imple
         return repository.findFirstByPrimaryAccount(mintAccountEntity);
     }
 
+    @Override
+    public Optional<AppUserEntity> findUserByPhoneNumber(String phoneNumber) {
+        return repository.findTopByPhoneNumberAndRecordStatus(phoneNumber, RecordStatusConstant.ACTIVE);
+    }
 }

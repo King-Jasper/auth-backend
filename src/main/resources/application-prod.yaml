@@ -3,6 +3,7 @@ savings-goal:
 mint:
   email:
     system-admin: devops@bankwithmint.com
+    loan-admin: loanadmin@bankwithmint.com
 sentry:
   dsn: https://970446a3125a46c5a6f8afdacc007764@o555418.ingest.sentry.io/5693117
   attach-server-name: true

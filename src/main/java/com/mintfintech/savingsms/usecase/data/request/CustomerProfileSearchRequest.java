@@ -12,4 +12,7 @@ public class CustomerProfileSearchRequest {
     private LocalDate fromDate;
     private LocalDate toDate;
     private String verificationStatus;
+    private String reviewStage;
+    private String customerName;
+    private String customerPhone;
 }

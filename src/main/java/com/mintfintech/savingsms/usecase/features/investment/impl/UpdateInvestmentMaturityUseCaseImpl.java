@@ -82,13 +82,13 @@ public class UpdateInvestmentMaturityUseCaseImpl implements UpdateInvestmentMatu
 
             MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(investment.getOwner(), BankAccountTypeConstant.CURRENT);
 
-            BigDecimal amountInvested = investment.getAmountInvested();
+            BigDecimal principalAmount = investment.getAmountInvested();
             BigDecimal accruedInterest = investment.getAccruedInterest();
-            BigDecimal amountToWithdraw = amountInvested.add(accruedInterest);
+            BigDecimal amountToWithdraw = principalAmount.add(accruedInterest);
 
             InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
-                    .amount(amountToWithdraw)
-                    .balanceBeforeWithdrawal(amountInvested)
+                    .amount(principalAmount)
+                    .balanceBeforeWithdrawal(principalAmount)
                     .interestBeforeWithdrawal(accruedInterest)
                     .dateForWithdrawal(DateUtil.addWorkingDays(LocalDate.now(), 2))
                     .interest(accruedInterest)

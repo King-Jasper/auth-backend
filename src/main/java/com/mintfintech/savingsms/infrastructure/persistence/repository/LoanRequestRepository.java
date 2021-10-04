@@ -30,6 +30,7 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
             " s.amountPaid < s.repaymentAmount")
     long countActiveCustomerLoanOnAccount(AppUserEntity requestedBy);
 
+    /*
     @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
             " s.loanType = com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant.PAYDAY and" +
@@ -37,6 +38,14 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
             " s.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.PENDING or" +
             " s.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.DISBURSED) and" +
             " s.amountPaid < s.repaymentAmount")
+    long countActiveCustomerPayDayLoan(AppUserEntity requestedBy);
+    */
+
+
+    @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.loanType = com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant.PAYDAY and " +
+            " s.activeLoan = true")
     long countActiveCustomerPayDayLoan(AppUserEntity requestedBy);
 
     List<LoanRequestEntity> getAllByRequestedByAndRecordStatus(AppUserEntity requestedBy, RecordStatusConstant recordStatus);
@@ -55,7 +64,7 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
     long countTotalLoansPastRepaymentDueDate(AppUserEntity requestedBy);
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " r.repaymentStatus != com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.COMPLETED and" +
+            " r.repaymentStatus <> com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.COMPLETED and" +
             " r.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.DISBURSED and" +
             " r.repaymentDueDate between :start and :end")
     List<LoanRequestEntity> getRepaymentPlansDueAtTime(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
@@ -68,10 +77,10 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
     List<LoanRequestEntity> getOverdueLoanRepayment(MintBankAccountEntity mintBankAccountEntity);
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " r.repaymentStatus != com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.COMPLETED and" +
+            " r.repaymentStatus <> com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant.COMPLETED and" +
             " r.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.DISBURSED and" +
-            " r.repaymentDueDate < NOW()")
-    List<LoanRequestEntity> getPendingDebitLoans();
+            " r.repaymentDueDate < ?1")
+    List<LoanRequestEntity> getPendingDebitLoans(LocalDateTime now);
 
 
     @Query(value = "select r from LoanRequestEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +

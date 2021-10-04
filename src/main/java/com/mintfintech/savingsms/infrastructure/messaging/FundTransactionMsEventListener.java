@@ -21,27 +21,18 @@ public class FundTransactionMsEventListener {
     private final Gson gson;
     private final ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase;
     private final ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase;
-    private final LoanRepaymentUseCase loanRepaymentUseCase;
 
 
     private final String INTEREST_NIP_TRANSACTION = "com.mintfintech.savings-service.events.interest-nip-transaction";
     private final String TRANSACTION_LOG_TOPIC = "com.mintfintech.fund-transaction-service.events.transaction-log";
     private final String ACCOUNT_CREDIT = "com.mintfintech.fund-transaction-service.events.account-credit";
 
-    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase, ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase, LoanRepaymentUseCase loanRepaymentUseCase) {
+    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase, ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase) {
         this.gson = gson;
         this.applyNipTransactionInterestUseCase = applyNipTransactionInterestUseCase;
         this.processRoundUpSavingsUseCase = processRoundUpSavingsUseCase;
-        this.loanRepaymentUseCase = loanRepaymentUseCase;
     }
 
-
-/*@KafkaListener(topics = {INTEREST_NIP_TRANSACTION})
-    public void listenForInterestEligibleNipTransaction(String payload) {
-        log.info("mint account creation: {}", payload);
-        NipTransactionInterestEvent nipTransactionInterestEvent = gson.fromJson(payload, NipTransactionInterestEvent.class);
-        applyNipTransactionInterestUseCase.processNipInterest(nipTransactionInterestEvent);
-    }*/
 
     @KafkaListener(topics = {TRANSACTION_LOG_TOPIC})
     public void listenerForTransactionLog(String payload) {

@@ -34,6 +34,7 @@ mint:
   support-phonenumber: 08067507490
   email:
     system-admin: justin.nwanya@bankwithmint.com
+    loan-admin: justin.nwanya@bankwithmint.com
   referral-reward-amount: 1000
   referred-reward-amount: 500
 
@@ -66,7 +67,7 @@ file-upload-maximum-size-in-mb: 2
 
 loan:
   pay-day:
-    interest-rate: 1.88
+    interest-rate: 5.0
     max-percent-amount: 70
     max-tenor-days: 30
 

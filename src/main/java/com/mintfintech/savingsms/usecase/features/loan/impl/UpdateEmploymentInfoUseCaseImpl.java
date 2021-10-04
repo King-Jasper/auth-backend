@@ -44,7 +44,6 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
     @Override
     public void updateCustomerEmploymentInformation(EmploymentInfoUpdateEvent updateEvent) {
 
-
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(updateEvent.getUserId());
 
         Optional<CustomerLoanProfileEntity> customerLoanProfileEntityOpt = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser);
@@ -59,12 +58,7 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         }
 
         EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
-        /*
-        if (request.getEmploymentLetter() != null) {
-            ResourceFileEntity employmentLetter = imageResourceUseCase.createImage("employment-letters", request.getEmploymentLetter());
-            info.setEmploymentLetter(employmentLetter);
-        }
-        */
+
         employeeInfo.setVerificationStatus(ApprovalStatusConstant.PENDING);
         employeeInfo.setEmployerEmail(updateEvent.getEmployerEmail());
         employeeInfo.setEmployerAddress(updateEvent.getEmployerAddress());
@@ -75,17 +69,18 @@ public class UpdateEmploymentInfoUseCaseImpl implements UpdateEmploymentInfoUseC
         employeeInfo.setOrganizationUrl(updateEvent.getOrganizationUrl());
         employeeInformationEntityDao.saveRecord(employeeInfo);
 
-        ResourceFileEntity fileEntity = ResourceFileEntity.builder()
-                .fileId(updateEvent.getEmploymentLetterFileId())
-                .fileName(updateEvent.getEmploymentLetterFileName())
-                .fileSizeInKB(updateEvent.getEmploymentLetterFileSize())
-                .remoteResource(true)
-                .url(updateEvent.getEmploymentLetterFileUrl())
-                .build();
-        resourceFileEntityDao.saveRecord(fileEntity);
+        if(updateEvent.getEmploymentLetterFileSize() > 0) {
+            ResourceFileEntity employmentLetter = resourceFileEntityDao.getRecordById(employeeInfo.getEmploymentLetter().getId());
+            employmentLetter.setFileId(updateEvent.getEmploymentLetterFileId());
+            employmentLetter.setFileName(updateEvent.getEmploymentLetterFileName());
+            employmentLetter.setFileSizeInKB(updateEvent.getEmploymentLetterFileSize());
+            employmentLetter.setRemoteResource(true);
+            employmentLetter.setUrl(updateEvent.getEmploymentLetterFileUrl());
+            resourceFileEntityDao.saveRecord(employmentLetter);
+        }
 
         LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
-                .recipient(applicationProperty.getSystemAdminEmail())
+                .recipient(applicationProperty.getLoanAdminEmail())
                 .customerName(appUser.getName())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_UPDATE_ADMIN, new EventModel<>(loanEmailEvent));

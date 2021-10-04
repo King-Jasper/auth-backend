@@ -22,8 +22,8 @@ import java.util.Optional;
 @Component
 public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider {
 
-    private JWTService jwtService;
-    private ApplicationProperty applicationProperty;
+    private final JWTService jwtService;
+    private final ApplicationProperty applicationProperty;
     public JwtTokenProvider(JWTService jwtService, ApplicationProperty applicationProperty) {
         this.jwtService = jwtService;
         this.applicationProperty = applicationProperty;
@@ -31,7 +31,7 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
 
     @Override
     protected void additionalAuthenticationChecks(UserDetails userDetails, UsernamePasswordAuthenticationToken authentication) throws AuthenticationException {
-        log.info("additionalAuthenticationChecks called");
+       // log.info("additionalAuthenticationChecks called");
     }
 
     @Override
@@ -51,7 +51,7 @@ public class JwtTokenProvider extends AbstractUserDetailsAuthenticationProvider 
         String userId = attributes.get("userId");
         String accountId = attributes.get("accountId");
         String clientType = attributes.get("client");
-        log.info("accountId: {}, userId: {} client: {}", accountId, userId, clientType);
+       // log.info("accountId: {}, userId: {} client: {}", accountId, userId, clientType);
         String systemGroup = attributes.getOrDefault("system_group", "");
         String privilegeCodes = attributes.getOrDefault("privilege_codes", "");
         String platform = "MOBILE";
