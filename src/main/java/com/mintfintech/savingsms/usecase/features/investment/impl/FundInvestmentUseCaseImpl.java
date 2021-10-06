@@ -113,6 +113,54 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         return response;
     }
 
+    @Override
+    public InvestmentFundingResponse fundInvestmentByAdmin(InvestmentFundingRequest request) {
+        InvestmentEntity investmentEntity = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(request.getAccountId());
+
+        if (!investmentEntity.getOwner().getId().equals(accountEntity.getId())) {
+            throw new BusinessLogicConflictException("Sorry, request cannot be processed.");
+        }
+        BigDecimal amount = request.getAmount();
+        if (amount.compareTo(BigDecimal.ZERO) == 0) {
+            throw new BadRequestException("Invalid amount.");
+        }
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), accountEntity)
+                .orElseThrow(() -> new BadRequestException("Invalid debit account."));
+        debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+
+        if (debitAccount.getAvailableBalance().compareTo(amount) < 0) {
+            throw new BusinessLogicConflictException("Sorry, you have insufficient balance to fund your investment.");
+        }
+        if (investmentEntity.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
+            throw new BusinessLogicConflictException("Sorry is no longer active. Current status - " + investmentEntity.getInvestmentStatus());
+        }
+        LocalDateTime maturityDate = investmentEntity.getMaturityDate();
+        if (LocalDateTime.now().compareTo(maturityDate) >= 0) {
+            throw new BusinessLogicConflictException("Sorry, your investment has already matured.");
+        }
+
+
+        InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, amount);
+        InvestmentFundingResponse response = new InvestmentFundingResponse();
+        String responseCode = "00";
+        if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
+            responseCode = transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING ? "01" : "02";
+            response.setResponseCode(responseCode);
+            response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
+            return response;
+        }
+        investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(amount));
+        investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(amount));
+        investmentEntityDao.saveRecord(investmentEntity);
+
+        sendInvestmentFundingSuccessEmail(investmentEntity, transactionEntity.getTransactionAmount());
+
+        response.setResponseCode(responseCode);
+        response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
+        return response;
+    }
+
     private void processDebit(InvestmentTransactionEntity transaction, InvestmentEntity investment, String accountNumber) {
 
         String narration = constructInvestmentNarration(investment.getCode(), transaction.getTransactionReference());

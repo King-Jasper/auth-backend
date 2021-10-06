@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentMaturityStatSummary;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
+import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
 
@@ -16,4 +17,5 @@ public interface GetInvestmentUseCase {
     InvestmentModel toInvestmentModel(InvestmentEntity investment);
     InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size);
     InvestmentMaturityStatSummary getMaturityStatistics(LocalDate fromDate,LocalDate toDate);
+    InvestmentStatSummary getPagedInvestmentsByAdmin(InvestmentSearchRequest searchRequest, int page, int size);
 }

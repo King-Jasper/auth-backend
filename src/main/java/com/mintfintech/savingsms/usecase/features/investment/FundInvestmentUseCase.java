@@ -17,4 +17,5 @@ public interface FundInvestmentUseCase {
     InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount);
     InvestmentFundingResponse fundInvestment(AuthenticatedUser authenticatedUser, InvestmentFundingRequest request);
 
+    InvestmentFundingResponse fundInvestmentByAdmin(InvestmentFundingRequest request);
 }

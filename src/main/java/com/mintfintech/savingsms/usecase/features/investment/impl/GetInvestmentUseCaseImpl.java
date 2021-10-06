@@ -116,6 +116,40 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
     }
 
     @Override
+    public InvestmentStatSummary getPagedInvestmentsByAdmin(InvestmentSearchRequest searchRequest, int page, int size) {
+        Optional<MintAccountEntity> mintAccount = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId());
+        InvestmentStatusConstant status = null;
+        if (StringUtils.isNotEmpty(searchRequest.getInvestmentStatus())) {
+            status = InvestmentStatusConstant.valueOf(searchRequest.getInvestmentStatus());
+        }
+
+        InvestmentSearchDTO searchDTO = InvestmentSearchDTO.builder()
+                .startFromDate(searchRequest.getStartFromDate() != null ? searchRequest.getStartFromDate().atStartOfDay() : null)
+                .startToDate(searchRequest.getStartToDate() != null ? searchRequest.getStartToDate().atTime(23, 59) : null)
+                .duration(searchRequest.getDuration())
+                .customerName(searchRequest.getCustomerName())
+                .matureFromDate(searchRequest.getMatureFromDate() != null ? searchRequest.getMatureFromDate().atStartOfDay() : null)
+                .matureToDate(searchRequest.getMatureToDate() != null ? searchRequest.getMatureToDate().atTime(23, 59) : null)
+                .investmentStatus(status)
+                .account(mintAccount.orElse(null))
+                .completedRecords(searchRequest.isCompletedRecords())
+                .build();
+
+        Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
+        BigDecimal totalInvestmentAmount = investmentEntityDao.sumSearchedInvestments(searchDTO);
+
+        InvestmentStatSummary summary = new InvestmentStatSummary();
+        summary.setInvestments(new PagedDataResponse<>(
+                investmentEntityPage.getTotalElements(),
+                investmentEntityPage.getTotalPages(),
+                totalInvestmentAmount,
+                investmentEntityPage.get().map(this::toInvestmentModel)
+                        .collect(Collectors.toList())));
+
+        return summary;
+    }
+
+    @Override
     public InvestmentModel toInvestmentModel(InvestmentEntity investment) {
 
         if (!Hibernate.isInitialized(investment)) {
