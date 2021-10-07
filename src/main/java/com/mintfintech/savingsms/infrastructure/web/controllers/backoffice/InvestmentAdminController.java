@@ -192,7 +192,7 @@ public class InvestmentAdminController {
 
     @Secured("20") // Privilege: CAN_CREATE_INVESTMENT
     @ApiOperation(value = "Creates a new investment.")
-    @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/customer", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentCreationResponse>> createInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @RequestBody @Valid InvestmentCreationAdminRequestJSON requestJSON) {
         InvestmentCreationResponse response = createInvestmentUseCase.createInvestmentByAdmin(authenticatedUser, requestJSON.toRequest());
