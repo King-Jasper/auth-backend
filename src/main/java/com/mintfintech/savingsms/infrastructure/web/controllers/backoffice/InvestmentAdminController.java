@@ -126,7 +126,7 @@ public class InvestmentAdminController {
 
     @Secured("06") // Privilege: CAN_VIEW_CUSTOMER_INVESTMENT
     @ApiOperation(value = "Returns paginated investment list.")
-    @GetMapping(value = "customer/{accountId}/completed", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/customer/{accountId}/completed", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getCustomerCompletedInvestments(@PathVariable(value = "accountId") String accountId,
                                                                                               @ApiParam(value = "Investment Status: ALL, COMPLETED, LIQUIDATED") @Valid
                                                                                               @Pattern(regexp = "(ALL|COMPLETED|LIQUIDATED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
@@ -160,7 +160,7 @@ public class InvestmentAdminController {
 
     @Secured("06") // Privilege: CAN_VIEW_CUSTOMER_INVESTMENT
     @ApiOperation(value = "Returns paginated investment list.")
-    @GetMapping(value = "customer/{accountId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/customer/{accountId}/active", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getCustomerActiveInvestments(@PathVariable(value = "accountId") String accountId,
                                                                                               @ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
                                                                                               @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
@@ -202,7 +202,7 @@ public class InvestmentAdminController {
 
     @Secured("20")
     @ApiOperation(value = "Fund an investment.")
-    @PostMapping(value = "/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @PostMapping(value = "/customer/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@RequestBody @Valid FundInvestmentByAdminJSON requestJSON) {
         InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestmentByAdmin(requestJSON.toRequest());
         ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
