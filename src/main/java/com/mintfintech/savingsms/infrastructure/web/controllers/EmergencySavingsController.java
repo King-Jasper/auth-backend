@@ -43,7 +43,7 @@ public class EmergencySavingsController {
     public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
         EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoal(authenticatedUser, creationRequestJSON.toRequest());
-        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -51,7 +51,7 @@ public class EmergencySavingsController {
     @GetMapping(value = v2BaseUrl+ "/emergency-savings", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         EmergencySavingModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
-        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency savings returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

@@ -52,7 +52,7 @@ public class SavingsGoalTransactionController {
                                                                                        @RequestBody @Valid SavingFundingRequestJSON requestJSON) {
 
         SavingsGoalFundingResponse response = fundSavingsGoalUseCase.fundSavingGoal(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<SavingsGoalFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Updated successfully.", response);
+        ApiResponseJSON<SavingsGoalFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Savings goal funded successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -86,7 +86,7 @@ public class SavingsGoalTransactionController {
                 .paymentGateway(request.getPaymentGateway()).build();
         ReferenceGenerationResponse response = onlineFundingUseCase.createFundingRequest(authenticatedUser, fundingRequest);
         response.setAmount(response.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, BigDecimal.ROUND_DOWN));
-        ApiResponseJSON<ReferenceGenerationResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<ReferenceGenerationResponse> apiResponseJSON = new ApiResponseJSON<>("Funding request processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -95,7 +95,7 @@ public class SavingsGoalTransactionController {
     public ResponseEntity<ApiResponseJSON<OnlineFundingResponse>> verifyTransactionReference(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                              @PathVariable("reference") String reference) {
         OnlineFundingResponse fundingResponse = onlineFundingUseCase.verifyFundingRequest(authenticatedUser, reference);
-        ApiResponseJSON<OnlineFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", fundingResponse);
+        ApiResponseJSON<OnlineFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Funding request status processed successfully.", fundingResponse);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

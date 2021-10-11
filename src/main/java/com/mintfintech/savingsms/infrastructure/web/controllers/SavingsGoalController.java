@@ -56,7 +56,7 @@ public class SavingsGoalController {
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSONV1 goalCreationRequestJSON) {
 
         SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
-        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Savings goal created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -65,7 +65,7 @@ public class SavingsGoalController {
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> createSavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                @RequestBody @Valid SavingsGoalCreationRequestJSON goalCreationRequestJSON) {
         SavingsGoalModel response = createSavingsGoalUseCase.createNewSavingsGoal(authenticatedUser, goalCreationRequestJSON.toRequest());
-        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Savings goal created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -78,14 +78,14 @@ public class SavingsGoalController {
         AccountSavingsGoalResponse response = getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser);
         RoundUpSavingResponse roundUpSavingResponse = getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser);
         response.setRoundUpSaving(roundUpSavingResponse);
-        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Savings goals processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
     @ApiOperation(value = "Returns a list of savings goals created by account user.")
     @GetMapping(value = v1BaseUrl, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsGoalModel>>> getAccountSavingsGoalList(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        ApiResponseJSON<List<SavingsGoalModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getSavingsGoalList(authenticatedUser));
+        ApiResponseJSON<List<SavingsGoalModel>> apiResponseJSON = new ApiResponseJSON<>("Savings goals processed successfully.", getSavingsGoalUseCase.getSavingsGoalList(authenticatedUser));
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -93,7 +93,7 @@ public class SavingsGoalController {
     @GetMapping(value = v1BaseUrl + "/{goalId}", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SavingsGoalModel>> getSavingsGoalDetail(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                          @PathVariable String goalId) {
-        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", getSavingsGoalUseCase.getSavingsGoalByGoalId(authenticatedUser, goalId));
+        ApiResponseJSON<SavingsGoalModel> apiResponseJSON = new ApiResponseJSON<>("Savings goals processed successfully.", getSavingsGoalUseCase.getSavingsGoalByGoalId(authenticatedUser, goalId));
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -123,7 +123,7 @@ public class SavingsGoalController {
                                                                                                               @RequestParam(value = "size", defaultValue = "20", required = false) int size,
                                                                                                               @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
         PagedDataResponse<SavingsTransactionModel> response = getSavingsGoalUseCase.getSavingsTransactions(goalId, page, size);
-        ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        ApiResponseJSON<PagedDataResponse<SavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Transactions returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -132,7 +132,7 @@ public class SavingsGoalController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsInterestModel>>> getSavingsInterest(@PathVariable String goalId, @RequestParam(value = "size", defaultValue = "20", required = false) int size,
                                                                                                        @RequestParam(value = "page", defaultValue = "0", required = false) int page) {
         PagedDataResponse<SavingsInterestModel> response = getSavingsGoalUseCase.getSavingsInterest(goalId, page, size);
-        ApiResponseJSON<PagedDataResponse<SavingsInterestModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        ApiResponseJSON<PagedDataResponse<SavingsInterestModel>> apiResponseJSON = new ApiResponseJSON<>("Accrued interest on savings processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
