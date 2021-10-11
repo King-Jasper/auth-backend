@@ -53,7 +53,7 @@ public class RoundUpSavingsController {
     @GetMapping(value = v2BaseUrl+ "/roundup-savings", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<RoundUpSavingResponse>> getRoundUpSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         RoundUpSavingResponse response = getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser);
-        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Roundup savings processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -63,7 +63,7 @@ public class RoundUpSavingsController {
     public ResponseEntity<ApiResponseJSON<RoundUpSavingResponse>> setupRoundUpSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                       @RequestBody @Valid RoundUpSavingsSetup roundUpSavingsSetup) {
         RoundUpSavingResponse response = createRoundUpSavingsUseCase.setupRoundUpSavings(authenticatedUser, roundUpSavingsSetup.toRequest());
-        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Roundup savings setup successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -74,7 +74,7 @@ public class RoundUpSavingsController {
                                                                                       @PathVariable Long id,
                                                                                       @RequestBody @Valid RoundUpTypeSetup roundUpTypeSetup) {
         RoundUpSavingResponse response = updateRoundUpSavingsUseCase.updateRoundUpType(authenticatedUser, id , roundUpTypeSetup.toRequest());
-        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Roundup type updated successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -85,7 +85,7 @@ public class RoundUpSavingsController {
                                                                                     @PathVariable Long id,
                                                                                     @RequestBody @Valid RoundUpStatusUpdate statusUpdate) {
         RoundUpSavingResponse response = updateRoundUpSavingsUseCase.updateRoundUpSavingsStatus(authenticatedUser, id , statusUpdate.statusValue());
-        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Roundup savings updated successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -95,7 +95,7 @@ public class RoundUpSavingsController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<RoundUpSavingsTransactionModel>>> getRoundUpSavingsTransaction(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                                            @PathVariable Long id, @RequestParam("size") int size, @RequestParam("page") int page) {
         PagedDataResponse<RoundUpSavingsTransactionModel> response = getRoundUpSavingsUseCase.getRoundUpSavingsTransaction(authenticatedUser, id, page, size);
-        ApiResponseJSON<PagedDataResponse<RoundUpSavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<PagedDataResponse<RoundUpSavingsTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Roundup savings transaction processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

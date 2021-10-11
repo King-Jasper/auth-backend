@@ -57,7 +57,7 @@ public class InvestmentController {
     public ResponseEntity<ApiResponseJSON<InvestmentCreationResponse>> createInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @RequestBody @Valid InvestmentCreationRequestJSON requestJSON) {
         InvestmentCreationResponse response = createInvestmentUseCase.createInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<InvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>("Investment created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -80,7 +80,7 @@ public class InvestmentController {
         //System.out.println(searchRequest.toString());
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
-        ApiResponseJSON<InvestmentStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<InvestmentStatSummary> apiResponseJSON = new ApiResponseJSON<>("Customer investment returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -89,7 +89,7 @@ public class InvestmentController {
     public ResponseEntity<ApiResponseJSON<List<InvestmentTransactionModel>>> getInvestmentTransactions(@PathVariable(value = "investmentId") String investmentId) {
 
         List<InvestmentTransactionModel> response = getInvestmentUseCase.getInvestmentTransactions(investmentId);
-        ApiResponseJSON<List<InvestmentTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<List<InvestmentTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Investment history returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
     
@@ -98,7 +98,7 @@ public class InvestmentController {
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @RequestBody @Valid FundInvestmentJSON requestJSON) {
         InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
+        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Investment funded successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -107,7 +107,7 @@ public class InvestmentController {
     public ResponseEntity<ApiResponseJSON<InvestmentModel>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
         InvestmentModel response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
+        ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Investment liquidated successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

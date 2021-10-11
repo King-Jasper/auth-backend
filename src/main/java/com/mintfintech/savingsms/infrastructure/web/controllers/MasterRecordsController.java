@@ -46,7 +46,7 @@ public class MasterRecordsController {
     @GetMapping(value = "/v1/common/savings-plans", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsPlanDModel>>> getSavingsPlanDeprecatedList() {
         List<SavingsPlanDModel> responseList = savingsPlanUseCases.savingsPlanDeprecatedList();
-        ApiResponseJSON<List<SavingsPlanDModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        ApiResponseJSON<List<SavingsPlanDModel>> apiResponseJSON = new ApiResponseJSON<>("Saving plans processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -54,7 +54,7 @@ public class MasterRecordsController {
     @GetMapping(value = "/v2/common/savings-plans", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsPlanModel>>> getSavingsPlanList() {
         List<SavingsPlanModel> responseList = savingsPlanUseCases.savingsPlanList();
-        ApiResponseJSON<List<SavingsPlanModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        ApiResponseJSON<List<SavingsPlanModel>> apiResponseJSON = new ApiResponseJSON<>("Saving plans processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -62,7 +62,7 @@ public class MasterRecordsController {
     @GetMapping(value = "/v1/common/savings-tenors", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsPlanTenorModel>>> getSavingsTenorList() {
         List<SavingsPlanTenorModel> responseList = savingsPlanUseCases.savingsTenorList();
-        ApiResponseJSON<List<SavingsPlanTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        ApiResponseJSON<List<SavingsPlanTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Saving tenors processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -70,7 +70,7 @@ public class MasterRecordsController {
     @GetMapping(value = "/v1/common/savings-goal-categories", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<SavingsGoalCategoryModel>>> getSavingsGoalCategoryList() {
         List<SavingsGoalCategoryModel> responseList = savingsGoalCategoryUseCase.savingsGoalCategoryList();
-        ApiResponseJSON<List<SavingsGoalCategoryModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        ApiResponseJSON<List<SavingsGoalCategoryModel>> apiResponseJSON = new ApiResponseJSON<>("Saving goal categories processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -78,7 +78,7 @@ public class MasterRecordsController {
     @GetMapping(value = "/v1/common/investment-tenors", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<InvestmentTenorModel>>> getInvestmentTenorList() {
         List<InvestmentTenorModel> responseList = investmentPlanUseCase.investmentTenorList();
-        ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", responseList);
+        ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Investment tenors processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }

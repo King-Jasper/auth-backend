@@ -65,7 +65,7 @@ public class LoanController {
                                                                                                 @ApiParam(value = "Loan Type: PAYDAY") @Pattern(regexp = "(PAYDAY)") @NotEmpty @RequestParam("loanType") String loanType) {
 
         CustomerLoanProfileDashboard response = customerLoanProfileUseCase.getLoanCustomerProfileDashboard(authenticatedUser, loanType);
-        ApiResponseJSON<CustomerLoanProfileDashboard> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<CustomerLoanProfileDashboard> apiResponseJSON = new ApiResponseJSON<>("Customer profile returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -100,7 +100,7 @@ public class LoanController {
                 .build();
 
         PagedDataResponse<LoanModel> response = getLoansUseCase.getPagedLoans(searchRequest, page, size);
-        ApiResponseJSON<PagedDataResponse<LoanModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<PagedDataResponse<LoanModel>> apiResponseJSON = new ApiResponseJSON<>("Loan history returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -128,7 +128,7 @@ public class LoanController {
                 .build();
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.createPaydayCustomerLoanProfile(authenticatedUser, request);
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Customer loan profile created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -156,7 +156,7 @@ public class LoanController {
                 .build();
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.updateCustomerEmploymentInformation(authenticatedUser, request);
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Customer Employment Information updated successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -167,7 +167,7 @@ public class LoanController {
                                                                   @RequestBody @Valid LoanRequest request) {
 
         LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType(), request.getCreditAccountId());
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan request processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -177,7 +177,7 @@ public class LoanController {
                                                                 @RequestBody @Valid LoanPayBackRequest request) {
 
         LoanModel response = loanRepaymentUseCase.repayment(authenticatedUser, request.getAmount(), request.getLoanId());
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan repayment processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -186,7 +186,7 @@ public class LoanController {
     public ResponseEntity<ApiResponseJSON<List<LoanTransactionModel>>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
 
         List<LoanTransactionModel> response = getLoansUseCase.getLoanTransactions(loanId);
-        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Loan transactions processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

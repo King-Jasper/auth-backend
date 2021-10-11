@@ -57,7 +57,7 @@ public class InvestmentAdminController {
             toDate = fromDate.plusWeeks(1); // default
         }
         InvestmentMaturityStatSummary response = getInvestmentUseCase.getMaturityStatistics(fromDate, toDate);
-        ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<InvestmentMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Investment maturity statistics processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -119,7 +119,7 @@ public class InvestmentAdminController {
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
 
-        ApiResponseJSON<PagedDataResponse<InvestmentModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response.getInvestments());
+        ApiResponseJSON<PagedDataResponse<InvestmentModel>> apiResponseJSON = new ApiResponseJSON<>("Investment list returned successfully.", response.getInvestments());
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -205,7 +205,7 @@ public class InvestmentAdminController {
     @PostMapping(value = "/customer/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@RequestBody @Valid FundInvestmentByAdminJSON requestJSON) {
         InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestmentByAdmin(requestJSON.toRequest());
-        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Completed successfully.", response);
+        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Investment funded successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

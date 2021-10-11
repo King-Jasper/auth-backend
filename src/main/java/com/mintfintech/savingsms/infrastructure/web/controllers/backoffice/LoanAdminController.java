@@ -68,7 +68,7 @@ public class LoanAdminController {
                                                                                                  @RequestBody @Valid ProfileVerificationRequest request) {
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.verifyEmploymentInformation(authenticatedUser, Long.parseLong(customerLoanProfileId), Boolean.parseBoolean(request.getVerified()), request.getReason());
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Loan Customer Employment Information verified successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -80,7 +80,7 @@ public class LoanAdminController {
                                                                                        @RequestBody @Valid BlacklistRequest request) {
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.blackListCustomer(authenticatedUser, Long.parseLong(customerLoanProfileId), Boolean.parseBoolean(request.getBlacklist()), request.getReason());
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Customer blacklisted successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -92,7 +92,7 @@ public class LoanAdminController {
                                                                   @RequestBody @Valid LoanApprovalRequest request) {
 
         LoanModel response = loanApprovalUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), Boolean.parseBoolean(request.getApproved()));
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Request completed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -102,7 +102,7 @@ public class LoanAdminController {
     public ResponseEntity<ApiResponseJSON<List<LoanTransactionModel>>> getLoanTransactions(@PathVariable(value = "loanId") String loanId) {
 
         List<LoanTransactionModel> response = getLoansUseCase.getLoanTransactions(loanId);
-        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Loan transactions processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -135,7 +135,7 @@ public class LoanAdminController {
 
         System.out.println(searchRequest.toString());
         PagedDataResponse<LoanModel> response = getLoansUseCase.getPagedLoans(searchRequest, page, size);
-        ApiResponseJSON<PagedDataResponse<LoanModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<PagedDataResponse<LoanModel>> apiResponseJSON = new ApiResponseJSON<>("Loan transactions processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -168,7 +168,7 @@ public class LoanAdminController {
                 .build();
 
         PagedDataResponse<LoanCustomerProfileModel> response = customerLoanProfileUseCase.getPagedLoanCustomerProfiles(searchRequest, page, size);
-        ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<PagedDataResponse<LoanCustomerProfileModel>> apiResponseJSON = new ApiResponseJSON<>("Loan customers processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -177,7 +177,7 @@ public class LoanAdminController {
     public ResponseEntity<ApiResponseJSON<LoanCustomerProfileModel>> getLoanCustomerEmployerInfo(@PathVariable(value = "customerLoanProfileId") String profileId) {
 
         LoanCustomerProfileModel response = customerLoanProfileUseCase.getCustomerEmployerInfo(Long.parseLong(profileId));
-        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Processed successfully.", response);
+        ApiResponseJSON<LoanCustomerProfileModel> apiResponseJSON = new ApiResponseJSON<>("Employment details processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
