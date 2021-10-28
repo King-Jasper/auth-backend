@@ -50,9 +50,9 @@ public class CorporateInvestmentUseCaseImpl implements CorporateInvestmentUseCas
 
     @Override
     public CorporateInvestmentCreationResponse createInvestment(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request) {
-        AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId("1234567");
+        AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
-        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId("246890");
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), mintAccount)
                 .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
