@@ -40,7 +40,8 @@ public interface ApplicationEventService {
         INVESTMENT_CREATION("com.mintfintech.saving-service.events.notification.email.investment-creation"),
         INVESTMENT_LIQUIDATION_SUCCESS("com.mintfintech.saving-service.events.notification.email.investment-liquidation"),
         INVESTMENT_MATURITY("com.mintfintech.saving-service.events.notification.email.investment-maturity"),
-        INVESTMENT_FUNDING_SUCCESS("com.mintfintech.saving-service.events.notification.email.investment-funding-success");
+        INVESTMENT_FUNDING_SUCCESS("com.mintfintech.saving-service.events.notification.email.investment-funding-success"),
+        CORPORATE_INVESTMENT_CREATION("com.mintfintech.saving-service.events.corporate-investment-creation");
         private final String topic;
 
         EventType(String topic) {

@@ -181,7 +181,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         return response;
     }
 
-    private void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
+    @Override
+    public void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
 
         InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
                 .duration(investment.getDurationInMonths())

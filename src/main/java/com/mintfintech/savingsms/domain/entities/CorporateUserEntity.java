@@ -27,4 +27,8 @@ public class CorporateUserEntity extends AbstractBaseEntity<Long>{
     private String userRole;
 
     private boolean director;
+
+    public CorporateRoleTypeConstant getRoleType() {
+        return CorporateRoleTypeConstant.valueOf(userRole);
+    }
 }

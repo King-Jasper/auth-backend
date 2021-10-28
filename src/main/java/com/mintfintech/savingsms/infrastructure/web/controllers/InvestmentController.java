@@ -1,22 +1,20 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.CorporateInvestmentCreationRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
-import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
+import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
+import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
-import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
-import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.features.investment.*;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
-import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -51,6 +49,7 @@ public class InvestmentController {
     private final FundInvestmentUseCase fundInvestmentUseCase;
     private final GetInvestmentUseCase getInvestmentUseCase;
     private final WithdrawalInvestmentUseCase withdrawalInvestmentUseCase;
+    private final CorporateInvestmentUseCase corporateInvestmentUseCase;
 
     @ApiOperation(value = "Creates a new investment.")
     @PostMapping(value = "", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -108,6 +107,15 @@ public class InvestmentController {
                                                                                 @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
         InvestmentModel response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Investment liquidated successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Creates a new corporate investment.")
+    @PostMapping(value = "/corporate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<CorporateInvestmentCreationResponse>> createCorporateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                          @RequestBody @Valid CorporateInvestmentCreationRequestJSON requestJSON) {
+        CorporateInvestmentCreationResponse response = corporateInvestmentUseCase.createInvestment(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<CorporateInvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>("Investment created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

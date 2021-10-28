@@ -2,8 +2,11 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 
 import com.mintfintech.savingsms.domain.dao.CorporateUserEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CorporateUserRepository;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 
 import javax.inject.Named;
 import java.util.Optional;
@@ -24,5 +27,16 @@ public class CorporateUserEntityDaoImpl extends CrudDaoImpl<CorporateUserEntity,
     @Override
     public Optional<CorporateUserEntity> findRecordByAccountIdAndUserId(String accountId, String userId) {
         return repository.findTopByAppUser_UserIdAndCorporateAccount_AccountId(accountId, userId);
+    }
+
+    @Override
+    public CorporateUserEntity getRecordByAccountIdAndUserId(MintAccountEntity corporateAccount, AppUserEntity user) {
+        return findRecordByAccountAndUser(corporateAccount, user)
+                .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
+    }
+
+    @Override
+    public Optional<CorporateUserEntity> findRecordByAccountAndUser(MintAccountEntity corporateAccount, AppUserEntity user) {
+        return repository.findTopByAppUserAndCorporateAccount(user, corporateAccount);
     }
 }

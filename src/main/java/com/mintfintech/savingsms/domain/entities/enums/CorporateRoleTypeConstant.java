@@ -5,5 +5,8 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Sun, 18 Jul, 2021
  */
 public enum CorporateRoleTypeConstant {
-    ADMINISTRATOR
+    ADMINISTRATOR,
+    INITIATOR,
+    APPROVER,
+    INITIATOR_AND_APPROVER
 }
