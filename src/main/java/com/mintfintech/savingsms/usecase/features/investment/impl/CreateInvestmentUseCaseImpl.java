@@ -2,9 +2,7 @@ package com.mintfintech.savingsms.usecase.features.investment.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -12,9 +10,11 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
@@ -42,6 +42,9 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final FundInvestmentUseCase fundInvestmentUseCase;
     private final ApplicationProperty applicationProperty;
     private final ApplicationEventService applicationEventService;
+    private final CorporateUserEntityDao corporateUserEntityDao;
+    private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
+    private final CorporateTransactionEntityDao corporateTransactionEntityDao;
 
     @Override
     @Transactional
@@ -51,17 +54,102 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), mintAccount)
-                .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
+        accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+        InvestmentCreationResponse response;
+        if (mintAccount.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
+            response = processInvestment(appUser, mintAccount, request);
+        } else if (mintAccount.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
+            throw new BusinessLogicConflictException(("Account type " + mintAccount.getAccountType() + " not currently supported for this service"));
+        } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+            throw new BusinessLogicConflictException("Unrecognised account type.");
+        } else {
+            CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser)
+                    .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
+            CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+            if (userRole == CorporateRoleTypeConstant.APPROVER) {
+                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
+            } else {
+                response = createTransactionRequest(mintAccount, appUser, request);
+            }
+
+        }
+        return response;
+    }
+
+    private InvestmentCreationResponse createTransactionRequest(MintAccountEntity mintAccount, AppUserEntity appUser, InvestmentCreationRequest request) {
+        BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
 
         InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
 
+        InvestmentEntity investment = InvestmentEntity.builder()
+                .amountInvested(investAmount)
+                .code(investmentEntityDao.generateCode())
+                .creator(appUser)
+                .investmentStatus(InvestmentStatusConstant.INACTIVE)
+                .investmentTenor(investmentTenor)
+                .durationInMonths(request.getDurationInMonths())
+                .maturityDate(LocalDateTime.now().plusMonths(request.getDurationInMonths()))
+                .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
+                .owner(mintAccount)
+                .totalAmountInvested(investAmount)
+                .interestRate(investmentTenor.getInterestRate())
+                .build();
+
+        investment = investmentEntityDao.saveRecord(investment);
+
+        CorporateTransactionRequestEntity transactionRequestEntity = CorporateTransactionRequestEntity.builder()
+                .debitAccountId(request.getDebitAccountId())
+                .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT)
+                .transactionType(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT)
+                .approvalStatus(TransactionApprovalStatusConstant.PENDING)
+                .corporate(mintAccount)
+                .initiator(appUser)
+                .totalAmount(investAmount)
+                .transactionDescription("")
+                .requestId(transactionRequestEntityDao.generateRequestId())
+                .build();
+        transactionRequestEntity = transactionRequestEntityDao.saveRecord(transactionRequestEntity);
+
+        CorporateTransactionEntity transactionEntity = CorporateTransactionEntity.builder()
+                .transactionRecordId(investment.getId())
+                .transactionRequest(transactionRequestEntity)
+                .corporate(mintAccount)
+                .transactionType(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT)
+                .build();
+        corporateTransactionEntityDao.saveRecord(transactionEntity);
+        InvestmentCreationResponse response = new InvestmentCreationResponse();
+
+        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+                .approvalStatus(transactionRequestEntity.getApprovalStatus().name())
+                .transactionCategory(transactionRequestEntity.getTransactionCategory().name())
+                .debitAccountId(transactionRequestEntity.getDebitAccountId())
+                .requestId(transactionRequestEntity.getRequestId())
+                .totalAmount(transactionRequestEntity.getTotalAmount())
+                .transactionType(transactionRequestEntity.getTransactionType().name())
+                .transactionDescription(transactionRequestEntity.getTransactionDescription())
+                .mintAccountId(transactionRequestEntity.getCorporate().getAccountId())
+                .userId(transactionRequestEntity.getInitiator().getUserId())
+                .build();
+
+        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        response.setMessage("Your investment has been logged for approval.");
+        return response;
+    }
+
+    private InvestmentCreationResponse processInvestment(AppUserEntity appUser, MintAccountEntity mintAccount, InvestmentCreationRequest request) {
+
+
+        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
+                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), mintAccount)
+                .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
+
         if (!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");
         }
-
-        accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
 
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
 
@@ -90,7 +178,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
 
         investment = investmentEntityDao.saveRecord(investment);
-
         InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investment, debitAccount, investAmount);
 
         InvestmentCreationResponse response = new InvestmentCreationResponse();

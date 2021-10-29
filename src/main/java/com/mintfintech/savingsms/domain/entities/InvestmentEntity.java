@@ -25,7 +25,7 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
     @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private MintAccountEntity owner;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private AppUserEntity creator;
 
     @Builder.Default

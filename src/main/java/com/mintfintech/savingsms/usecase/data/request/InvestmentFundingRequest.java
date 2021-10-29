@@ -16,4 +16,5 @@ public class InvestmentFundingRequest {
     private String debitAccountId;
     private BigDecimal amount;
     private String accountId;
+    private String transactionPin;
 }

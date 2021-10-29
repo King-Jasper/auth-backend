@@ -10,4 +10,5 @@ import lombok.Data;
 public class InvestmentFundingResponse {
     private String responseCode;
     private InvestmentModel investment;
+    private String responseMessage;
 }
