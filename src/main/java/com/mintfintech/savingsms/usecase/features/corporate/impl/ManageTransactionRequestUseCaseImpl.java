@@ -1,25 +1,27 @@
 package com.mintfintech.savingsms.usecase.features.corporate.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
-import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.*;
-import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.CorporateTransactionRequestEntity;
+import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.CorporateRoleTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionCategoryConstant;
+import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.features.corporate.ManageTransactionRequestUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.features.corporate.ManageTransactionRequestUseCase;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -78,77 +80,13 @@ public class ManageTransactionRequestUseCaseImpl implements ManageTransactionReq
 
         accountAuthorisationUseCase.validationTransactionPin(transactionPin);
 
-        if (!approved) {
-            requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
-            requestEntity.setStatusUpdateReason(request.getReason());
-            requestEntity.setReviewer(user);
-            requestEntity.setDateReviewed(LocalDateTime.now());
-            transactionRequestEntityDao.saveRecord(requestEntity);
-
-            CorporateTransactionEntity declinedTransaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-            if(declinedTransaction.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_TOPUP)){
-                publishTransactionEvent(requestEntity);
-                return "Investment top up declined.";
-            }
-            InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(declinedTransaction.getTransactionRecordId());
-            investmentEntity.setInvestmentStatus(InvestmentStatusConstant.CANCELLED);
-            investmentEntityDao.saveRecord(investmentEntity);
-            publishTransactionEvent(requestEntity);
-            return "Investment declined successfully.";
+        String response = "";
+        if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT)) {
+            response = createInvestmentUseCase.approveCorporateInvestment(requestEntity, request, user, corporateAccount);
+        } else if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_TOPUP)) {
+            response = fundInvestmentUseCase.approveCorporateInvestmentTopUp(requestEntity, request, user, corporateAccount);
         }
 
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
-                .orElseThrow(() -> new BusinessLogicConflictException("Debit account not found"));
-        debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
-
-        BigDecimal investAmount = requestEntity.getTotalAmount();
-        if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
-            throw new BadRequestException("Sorry, your account has insufficient balance");
-        }
-
-        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
-
-        InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investmentEntity, debitAccount, investAmount);
-
-        if (transaction.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_TOPUP)) {
-            if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
-                return "Sorry, account debit for investment funding failed.";
-            }
-            investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount()));
-            investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(requestEntity.getTotalAmount()));
-
-        } else {
-            if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
-                investmentEntity.setRecordStatus(RecordStatusConstant.DELETED);
-                investmentEntityDao.saveRecord(investmentEntity);
-                return "Sorry, account debit for investment funding failed.";
-            }
-            investmentEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
-            investmentEntity.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
-            investmentEntity.setTotalAmountInvested(investAmount);
-
-        }
-        investmentEntityDao.saveRecord(investmentEntity);
-        requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
-        requestEntity.setReviewer(user);
-        requestEntity.setDateReviewed(LocalDateTime.now());
-        transactionRequestEntityDao.saveRecord(requestEntity);
-        publishTransactionEvent(requestEntity);
-
-        createInvestmentUseCase.sendInvestmentCreationEmail(investmentEntity, user);
-        return "Approved successfully, details have been sent to your mail";
-    }
-
-    private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
-        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
-                .approvalStatus(requestEntity.getApprovalStatus().name())
-                .dateReviewed(requestEntity.getDateReviewed())
-                .userId(requestEntity.getReviewer().getUserId())
-                .statusUpdateReason(requestEntity.getStatusUpdateReason())
-                .build();
-
-        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        return response;
     }
 }

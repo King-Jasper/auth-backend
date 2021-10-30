@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
+import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -59,7 +60,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         if (mintAccount.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
             response = processInvestment(appUser, mintAccount, request);
         } else if (mintAccount.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
-            throw new BusinessLogicConflictException(("Account type " + mintAccount.getAccountType() + " not currently supported for this service"));
+            response = processInvestment(appUser, mintAccount, request);
         } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
@@ -89,13 +90,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .investmentStatus(InvestmentStatusConstant.INACTIVE)
                 .investmentTenor(investmentTenor)
                 .durationInMonths(request.getDurationInMonths())
-                .maturityDate(LocalDateTime.now().plusMonths(request.getDurationInMonths()))
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
                 .owner(mintAccount)
                 .totalAmountInvested(investAmount)
                 .interestRate(investmentTenor.getInterestRate())
                 .build();
-
+        investment.setRecordStatus(RecordStatusConstant.INACTIVE);
         investment = investmentEntityDao.saveRecord(investment);
 
         CorporateTransactionRequestEntity transactionRequestEntity = CorporateTransactionRequestEntity.builder()
@@ -268,8 +268,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         return response;
     }
 
-    @Override
-    public void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
+    private void sendInvestmentCreationEmail(InvestmentEntity investment, AppUserEntity appUser) {
 
         InvestmentCreationEmailEvent event = InvestmentCreationEmailEvent.builder()
                 .duration(investment.getDurationInMonths())
@@ -283,6 +282,70 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_CREATION, new EventModel<>(event));
 
 
+    }
+
+    @Override
+    public String approveCorporateInvestment(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+        boolean approved = request.isApproved();
+        if (!approved) {
+            requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
+            requestEntity.setStatusUpdateReason(request.getReason());
+            requestEntity.setReviewer(user);
+            requestEntity.setDateReviewed(LocalDateTime.now());
+            transactionRequestEntityDao.saveRecord(requestEntity);
+
+            CorporateTransactionEntity declinedTransaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+            InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(declinedTransaction.getTransactionRecordId());
+            investmentEntity.setInvestmentStatus(InvestmentStatusConstant.CANCELLED);
+            investmentEntityDao.saveRecord(investmentEntity);
+
+            publishTransactionEvent(requestEntity);
+            return "Investment declined successfully.";
+        }
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
+                .orElseThrow(() -> new BusinessLogicConflictException("Debit account not found"));
+        debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+
+        BigDecimal investAmount = requestEntity.getTotalAmount();
+        if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
+            throw new BadRequestException("Sorry, your account has insufficient balance");
+        }
+
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
+
+        int durationInMonths = investmentEntity.getDurationInMonths();
+        InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investmentEntity, debitAccount, investAmount);
+
+        if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
+            return "Sorry, account debit for investment funding failed. Please try again";
+        }
+        investmentEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+        investmentEntity.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
+        investmentEntity.setTotalAmountInvested(investAmount);
+        investmentEntity.setMaturityDate(LocalDateTime.now().plusMonths(durationInMonths));
+
+        investmentEntityDao.saveRecord(investmentEntity);
+        requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
+        requestEntity.setReviewer(user);
+        requestEntity.setDateReviewed(LocalDateTime.now());
+        transactionRequestEntityDao.saveRecord(requestEntity);
+
+        publishTransactionEvent(requestEntity);
+        sendInvestmentCreationEmail(investmentEntity, user);
+        return "Approved successfully, details have been sent to your mail";
+    }
+
+    private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+                .approvalStatus(requestEntity.getApprovalStatus().name())
+                .dateReviewed(requestEntity.getDateReviewed())
+                .userId(requestEntity.getReviewer().getUserId())
+                .statusUpdateReason(requestEntity.getStatusUpdateReason())
+                .build();
+
+        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 
 }

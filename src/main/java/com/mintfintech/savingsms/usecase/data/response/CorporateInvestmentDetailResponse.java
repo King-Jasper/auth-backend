@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Builder
 @Data
-public class CorporateTransactionDetailResponse {
+public class CorporateInvestmentDetailResponse {
 
     private double amount;
 
