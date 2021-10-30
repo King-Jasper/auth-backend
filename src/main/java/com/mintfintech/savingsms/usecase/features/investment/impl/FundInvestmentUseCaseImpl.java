@@ -163,7 +163,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
         response.setResponseCode("01");
-        response.setResponseMessage("Investment top up has been logged for approval");
+        response.setResponseMessage("Investment top-Up has been logged for approval");
         return response;
     }
 
