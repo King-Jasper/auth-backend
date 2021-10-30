@@ -71,7 +71,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             } else {
                 response = createTransactionRequest(mintAccount, appUser, request);
             }
-
         }
         return response;
     }

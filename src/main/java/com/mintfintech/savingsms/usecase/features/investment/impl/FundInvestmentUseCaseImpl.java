@@ -23,6 +23,7 @@ import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCa
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -158,7 +159,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
         response.setResponseCode("01");
-        response.setResponseMessage("Investment top up has been logged for approval");
+        response.setResponseMessage("Investment Top-Up has been logged for approval");
         return response;
     }
 

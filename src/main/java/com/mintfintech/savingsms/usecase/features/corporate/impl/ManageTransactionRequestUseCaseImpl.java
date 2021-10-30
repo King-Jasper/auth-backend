@@ -78,6 +78,8 @@ public class ManageTransactionRequestUseCaseImpl implements ManageTransactionReq
 
         accountAuthorisationUseCase.validationTransactionPin(transactionPin);
 
+
+
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(request.getReason());
