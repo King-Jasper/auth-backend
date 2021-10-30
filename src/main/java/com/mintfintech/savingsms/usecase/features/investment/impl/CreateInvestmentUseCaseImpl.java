@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
@@ -21,12 +22,14 @@ import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUse
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -126,14 +129,15 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .requestId(transactionRequestEntity.getRequestId())
                 .totalAmount(transactionRequestEntity.getTotalAmount())
                 .transactionType(transactionRequestEntity.getTransactionType().name())
-                .transactionDescription(transactionRequestEntity.getTransactionDescription())
+                .transactionDescription(StringUtils.defaultString(transactionRequestEntity.getTransactionDescription()))
                 .mintAccountId(transactionRequestEntity.getCorporate().getAccountId())
                 .userId(transactionRequestEntity.getInitiator().getUserId())
                 .build();
 
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
-        response.setMessage("Your investment has been logged for approval.");
+        sendCorporateInvestmentCreationEmail(investment, transactionRequestEntity);
+        response.setMessage("Your investment has been logged for approval. Details have been sent to your mail");
         return response;
     }
 
@@ -283,14 +287,58 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     }
 
+
+    private void sendCorporateInvestmentCreationEmail(InvestmentEntity investment, CorporateTransactionRequestEntity requestEntity) {
+
+        if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.PENDING)) {
+            CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
+                    .initiator(requestEntity.getInitiator().getName())
+                    .initiatorEmail(requestEntity.getInitiator().getEmail())
+                    .approvalStatus(requestEntity.getApprovalStatus().name())
+                    .requestId(requestEntity.getRequestId())
+                    .amount(requestEntity.getTotalAmount())
+                    .duration(investment.getDurationInMonths())
+                    .interestRate(investment.getInterestRate())
+                    .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
+                    .transactionType(requestEntity.getTransactionType().name())
+                    .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
+            return;
+        }
+        CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
+                .initiator(requestEntity.getInitiator().getName())
+                .initiatorEmail(requestEntity.getInitiator().getEmail())
+                .approvalStatus(requestEntity.getApprovalStatus().name())
+                .requestId(requestEntity.getRequestId())
+                .dateReviewed(requestEntity.getDateReviewed())
+                .reviewer(requestEntity.getReviewer().getName())
+                .reviewerEmail(requestEntity.getReviewer().getEmail())
+                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
+                .amount(requestEntity.getTotalAmount())
+                .duration(investment.getDurationInMonths())
+                .interestRate(investment.getInterestRate())
+                .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
+                .transactionType(requestEntity.getTransactionType().name())
+                .build();
+
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
+    }
+
     @Override
-    public String approveCorporateInvestment(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+    public String approveCorporateInvestment(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+        String requestId = request.getRequestId();
         boolean approved = request.isApproved();
         CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
+
+        Optional<CorporateTransactionRequestEntity> requestEntityOptional = transactionRequestEntityDao.findByRequestId(requestId);
+        if (!requestEntityOptional.isPresent()) {
+            throw new BadRequestException("Invalid request Id.");
+        }
+        CorporateTransactionRequestEntity requestEntity = requestEntityOptional.get();
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
-            requestEntity.setStatusUpdateReason(request.getReason());
+            requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
@@ -300,7 +348,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             investmentEntityDao.saveRecord(investmentEntity);
 
             publishTransactionEvent(requestEntity);
-            return "Investment declined successfully.";
+            sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
+            return "Investment declined successfully. Details have been sent to your mail";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
                 .orElseThrow(() -> new BusinessLogicConflictException("Debit account not found"));
@@ -329,7 +378,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         transactionRequestEntityDao.saveRecord(requestEntity);
 
         publishTransactionEvent(requestEntity);
-        sendInvestmentCreationEmail(investmentEntity, user);
+        sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
         return "Approved successfully, details have been sent to your mail";
     }
 
@@ -338,7 +387,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
-                .statusUpdateReason(requestEntity.getStatusUpdateReason())
+                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
                 .build();
 
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);

@@ -16,5 +16,5 @@ public interface FundInvestmentUseCase {
     InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount);
     InvestmentFundingResponse fundInvestment(AuthenticatedUser authenticatedUser, InvestmentFundingRequest request);
     InvestmentFundingResponse fundInvestmentByAdmin(InvestmentFundingRequest request);
-    String approveCorporateInvestmentTopUp(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount);
+    String approveCorporateInvestmentTopUp(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount);
 }

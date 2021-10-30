@@ -49,7 +49,6 @@ public class ManageTransactionRequestUseCaseImpl implements ManageTransactionReq
         MintAccountEntity corporateAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
         String requestId = request.getRequestId();
-        boolean approved = request.isApproved();
         String transactionPin = request.getTransactionPin();
 
         Optional<CorporateTransactionRequestEntity> requestEntityOptional = transactionRequestEntityDao.findByRequestId(requestId);
@@ -82,9 +81,9 @@ public class ManageTransactionRequestUseCaseImpl implements ManageTransactionReq
 
         String response = "";
         if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT)) {
-            response = createInvestmentUseCase.approveCorporateInvestment(requestEntity, request, user, corporateAccount);
+            response = createInvestmentUseCase.approveCorporateInvestment(request, user, corporateAccount);
         } else if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_TOPUP)) {
-            response = fundInvestmentUseCase.approveCorporateInvestmentTopUp(requestEntity, request, user, corporateAccount);
+            response = fundInvestmentUseCase.approveCorporateInvestmentTopUp(request, user, corporateAccount);
         }
 
         return response;
