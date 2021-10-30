@@ -286,6 +286,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     @Override
     public String approveCorporateInvestment(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
         boolean approved = request.isApproved();
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(request.getReason());
@@ -293,9 +295,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
 
-            CorporateTransactionEntity declinedTransaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-            InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(declinedTransaction.getTransactionRecordId());
             investmentEntity.setInvestmentStatus(InvestmentStatusConstant.CANCELLED);
+            investmentEntity.setRecordStatus(RecordStatusConstant.DELETED);
             investmentEntityDao.saveRecord(investmentEntity);
 
             publishTransactionEvent(requestEntity);
@@ -310,9 +311,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             throw new BadRequestException("Sorry, your account has insufficient balance");
         }
 
-        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
-
         int durationInMonths = investmentEntity.getDurationInMonths();
         InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investmentEntity, debitAccount, investAmount);
 
@@ -323,8 +321,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         investmentEntity.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
         investmentEntity.setTotalAmountInvested(investAmount);
         investmentEntity.setMaturityDate(LocalDateTime.now().plusMonths(durationInMonths));
-
         investmentEntityDao.saveRecord(investmentEntity);
+
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());
