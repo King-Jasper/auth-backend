@@ -1,9 +1,8 @@
 package com.mintfintech.savingsms.usecase.features.investment;
 
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
 
@@ -16,6 +15,6 @@ import java.math.BigDecimal;
 public interface FundInvestmentUseCase {
     InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount);
     InvestmentFundingResponse fundInvestment(AuthenticatedUser authenticatedUser, InvestmentFundingRequest request);
-
     InvestmentFundingResponse fundInvestmentByAdmin(InvestmentFundingRequest request);
+    String approveCorporateInvestmentTopUp(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount);
 }

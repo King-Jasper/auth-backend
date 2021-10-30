@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentFundingEmailEvent;
+import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -23,7 +24,6 @@ import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCa
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -99,7 +99,11 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         if (accountEntity.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
             response = processInvestmentTopUp(request, investmentEntity, accountEntity);
         } else if (accountEntity.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
-            throw new BusinessLogicConflictException(("Account type " + accountEntity.getAccountType() + " not currently supported for this service"));
+            if (StringUtils.isEmpty(request.getTransactionPin())) {
+                throw new BadRequestException("Transaction pin is required");
+            }
+            accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+            response = processInvestmentTopUp(request, investmentEntity, accountEntity);
         } else if (accountEntity.getAccountType() != AccountTypeConstant.ENTERPRISE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
@@ -159,7 +163,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
         response.setResponseCode("01");
-        response.setResponseMessage("Investment Top-Up has been logged for approval");
+        response.setResponseMessage("Investment top-Up has been logged for approval");
         return response;
     }
 
@@ -241,6 +245,52 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         return response;
     }
 
+    @Override
+    public String approveCorporateInvestmentTopUp(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+
+        boolean approved = request.isApproved();
+        if (!approved) {
+            requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
+            requestEntity.setStatusUpdateReason(request.getReason());
+            requestEntity.setReviewer(user);
+            requestEntity.setDateReviewed(LocalDateTime.now());
+            transactionRequestEntityDao.saveRecord(requestEntity);
+
+            CorporateTransactionEntity declinedTransaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+            InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(declinedTransaction.getTransactionRecordId());
+            publishTransactionEvent(requestEntity);
+            //sendInvestmentFundingSuccessEmail(investmentEntity, requestEntity.getTotalAmount());
+            return "Investment declined successfully.";
+        }
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
+                .orElseThrow(() -> new BusinessLogicConflictException("Debit account not found"));
+        debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+
+        BigDecimal investAmount = requestEntity.getTotalAmount();
+        if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
+            throw new BadRequestException("Sorry, your account has insufficient balance");
+        }
+
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
+
+        InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, investAmount);
+        if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {
+            return "Sorry, account debit for investment funding failed. Please try again";
+        }
+        investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount()));
+        investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(requestEntity.getTotalAmount()));
+        investmentEntityDao.saveRecord(investmentEntity);
+        requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
+        requestEntity.setReviewer(user);
+        requestEntity.setDateReviewed(LocalDateTime.now());
+        transactionRequestEntityDao.saveRecord(requestEntity);
+
+        publishTransactionEvent(requestEntity);
+        sendInvestmentFundingSuccessEmail(investmentEntity, requestEntity.getTotalAmount());
+        return "Approved successfully, details have been sent to your mail";
+    }
+
     private void processDebit(InvestmentTransactionEntity transaction, InvestmentEntity investment, String accountNumber) {
 
         String narration = constructInvestmentNarration(investment.getCode(), transaction.getTransactionReference());
@@ -296,5 +346,17 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .build();
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_FUNDING_SUCCESS, new EventModel<>(event));
+    }
+
+    private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+                .approvalStatus(requestEntity.getApprovalStatus().name())
+                .dateReviewed(requestEntity.getDateReviewed())
+                .userId(requestEntity.getReviewer().getUserId())
+                .statusUpdateReason(requestEntity.getStatusUpdateReason())
+                .build();
+
+        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 }
