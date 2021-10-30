@@ -288,8 +288,8 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     }
 
-    @Override
-    public void sendCorporateInvestmentCreationEmail(InvestmentEntity investment, CorporateTransactionRequestEntity requestEntity) {
+
+    private void sendCorporateInvestmentCreationEmail(InvestmentEntity investment, CorporateTransactionRequestEntity requestEntity) {
 
         if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.PENDING)) {
             CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
