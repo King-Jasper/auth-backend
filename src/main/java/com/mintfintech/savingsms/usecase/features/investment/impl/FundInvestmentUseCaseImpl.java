@@ -20,6 +20,7 @@ import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.AllArgsConstructor;
@@ -30,6 +31,7 @@ import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -53,6 +55,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     private final CorporateUserEntityDao corporateUserEntityDao;
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
+    private final CreateInvestmentUseCase createInvestmentUseCase;
 
     @Override
     public InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount) {
@@ -162,6 +165,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         InvestmentFundingResponse response = new InvestmentFundingResponse();
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        createInvestmentUseCase.sendCorporateInvestmentCreationEmail(investmentEntity, transactionRequestEntity);
         response.setResponseCode("01");
         response.setResponseMessage("Investment top-Up has been logged for approval");
         return response;
@@ -246,12 +250,20 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     }
 
     @Override
-    public String approveCorporateInvestmentTopUp(CorporateTransactionRequestEntity requestEntity, CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+    public String approveCorporateInvestmentTopUp(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
 
+        String requestId = request.getRequestId();
         boolean approved = request.isApproved();
+
+        Optional<CorporateTransactionRequestEntity> requestEntityOptional = transactionRequestEntityDao.findByRequestId(requestId);
+        if (!requestEntityOptional.isPresent()) {
+            throw new BadRequestException("Invalid request Id.");
+        }
+        CorporateTransactionRequestEntity requestEntity = requestEntityOptional.get();
+
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
-            requestEntity.setStatusUpdateReason(request.getReason());
+            requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
@@ -259,7 +271,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             CorporateTransactionEntity declinedTransaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
             InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(declinedTransaction.getTransactionRecordId());
             publishTransactionEvent(requestEntity);
-            //sendInvestmentFundingSuccessEmail(investmentEntity, requestEntity.getTotalAmount());
+            createInvestmentUseCase.sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -287,7 +299,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         transactionRequestEntityDao.saveRecord(requestEntity);
 
         publishTransactionEvent(requestEntity);
-        sendInvestmentFundingSuccessEmail(investmentEntity, requestEntity.getTotalAmount());
+        createInvestmentUseCase.sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
         return "Approved successfully, details have been sent to your mail";
     }
 
@@ -353,7 +365,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
-                .statusUpdateReason(requestEntity.getStatusUpdateReason())
+                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
                 .build();
 
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
