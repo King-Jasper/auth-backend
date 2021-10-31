@@ -3,11 +3,13 @@ package com.mintfintech.savingsms.usecase.data.response;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Builder
 @Data
 public class CorporateInvestmentTopUpDetailResponse {
 
-    private double initialAmount;
+    private BigDecimal initialAmount;
 
     private int investmentDuration;
 
@@ -21,7 +23,7 @@ public class CorporateInvestmentTopUpDetailResponse {
 
     private String transactionCategory;
 
-    private double topUpAmount;
+    private BigDecimal topUpAmount;
 
     private double interestAccrued;
 

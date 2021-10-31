@@ -259,6 +259,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             throw new BadRequestException("Invalid request Id.");
         }
         CorporateTransactionRequestEntity requestEntity = requestEntityOptional.get();
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
 
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
@@ -278,9 +280,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
             throw new BadRequestException("Sorry, your account has insufficient balance");
         }
-
-        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
 
         InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, investAmount);
         if (transactionEntity.getTransactionStatus() != TransactionStatusConstant.SUCCESSFUL) {

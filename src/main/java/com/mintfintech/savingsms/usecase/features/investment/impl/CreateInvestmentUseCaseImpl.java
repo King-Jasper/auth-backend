@@ -22,7 +22,7 @@ import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUse
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -328,14 +328,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     public String approveCorporateInvestment(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
         String requestId = request.getRequestId();
         boolean approved = request.isApproved();
-        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
 
         Optional<CorporateTransactionRequestEntity> requestEntityOptional = transactionRequestEntityDao.findByRequestId(requestId);
         if (!requestEntityOptional.isPresent()) {
             throw new BadRequestException("Invalid request Id.");
         }
         CorporateTransactionRequestEntity requestEntity = requestEntityOptional.get();
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
         if (!approved) {
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));

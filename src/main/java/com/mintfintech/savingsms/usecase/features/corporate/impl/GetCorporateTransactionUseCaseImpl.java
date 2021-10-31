@@ -89,13 +89,13 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
         return CorporateInvestmentTopUpDetailResponse.builder()
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
-                .initialAmount(investmentEntity.getAmountInvested().subtract(requestEntity.getTotalAmount()).doubleValue())
+                .initialAmount(investmentEntity.getAmountInvested())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ofPattern("MMM, dd yyyy")))
                 .initiator(investmentEntity.getCreator().getName())
                 .interestRate(investmentEntity.getInterestRate())
                 .investmentDuration(investmentEntity.getDurationInMonths())
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ofPattern("MMM, dd yyyy")))
-                .topUpAmount(requestEntity.getTotalAmount().doubleValue())
+                .topUpAmount(requestEntity.getTotalAmount())
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .build();
     }
