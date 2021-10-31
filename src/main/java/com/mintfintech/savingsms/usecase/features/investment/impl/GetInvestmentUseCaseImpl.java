@@ -169,8 +169,14 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
             BigDecimal totalAccruedInterest = investmentInterestEntityDao.getTotalInterestAmountOnInvestment(investment);
             model.setAmountInvested(investment.getInvestmentStatus() == InvestmentStatusConstant.ACTIVE ? investment.getAmountInvested() : investment.getTotalAmountInvested());
             model.setTotalAccruedInterest(totalAccruedInterest.setScale(2, BigDecimal.ROUND_HALF_UP));
-            model.setTotalExpectedReturn(calculateTotalExpectedReturn(investment));
-            model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(investment).add(investment.getAccruedInterest()));
+
+            BigDecimal amountInvested = investment.getAmountInvested();
+            double rate = investment.getInterestRate();
+            BigDecimal accruedInterest = investment.getAccruedInterest();
+            LocalDateTime maturityTime = investment.getMaturityDate();
+
+            model.setTotalExpectedReturn(calculateTotalExpectedReturn(amountInvested, accruedInterest, rate, maturityTime));
+            model.setEstimatedProfitAtMaturity(calculateOutstandingInterest(amountInvested, rate, maturityTime).add(accruedInterest));
         }
 
         model.setStatus(investment.getInvestmentStatus().name());
@@ -277,7 +283,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 for (InvestmentEntity investment : investments) {
                     totalInvestment = totalInvestment.add(investment.getAmountInvested());
                     accruedInterest = accruedInterest.add(investment.getAccruedInterest());
-                    outstandingInterest = outstandingInterest.add(calculateOutstandingInterest(investment));
+                    outstandingInterest = outstandingInterest.add(calculateOutstandingInterest(investment.getAmountInvested(), investment.getInterestRate(), investment.getMaturityDate()));
                 }
 
                 summary.setTotalInvestments(totalRecords);
@@ -290,13 +296,14 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         return summary;
     }
 
-    private BigDecimal calculateOutstandingInterest(InvestmentEntity investment) {
+    private BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate,  LocalDateTime maturityTime) {
 
-        double interestPerAnum = investment.getInterestRate() * 0.01 * investment.getAmountInvested().doubleValue();
+        double interestPerAnum = interestRate * 0.01 * amountInvested.doubleValue();
 
         double dailyInterest = interestPerAnum / 365.0;
 
-        LocalDate maturityDate = investment.getMaturityDate().toLocalDate();
+        LocalDate maturityDate = maturityTime.toLocalDate();
+
         LocalDate today = LocalDate.now();
 
         long remainingDaysToMaturity = ChronoUnit.DAYS.between(today, maturityDate);
@@ -306,9 +313,12 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         return BigDecimal.valueOf(outstandingInterest).setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }
 
-    private BigDecimal calculateTotalExpectedReturn(InvestmentEntity investment) {
+    @Override
+    public BigDecimal calculateTotalExpectedReturn(BigDecimal amountInvested, BigDecimal currentAccruedInterest, double interestRate,  LocalDateTime maturityTime) {
 
-        BigDecimal totalExpectedReturns = investment.getAmountInvested().add(investment.getAccruedInterest()).add(calculateOutstandingInterest(investment));
+        BigDecimal interestToAccumulate = calculateOutstandingInterest(amountInvested, interestRate, maturityTime);
+
+        BigDecimal totalExpectedReturns = amountInvested.add(currentAccruedInterest).add(interestToAccumulate);
 
         return totalExpectedReturns.setScale(2, BigDecimal.ROUND_HALF_EVEN);
     }

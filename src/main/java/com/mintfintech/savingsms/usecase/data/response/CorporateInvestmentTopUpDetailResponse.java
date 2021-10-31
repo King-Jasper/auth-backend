@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 public class CorporateInvestmentTopUpDetailResponse {
 
-    private BigDecimal initialAmount;
+    private BigDecimal amountInvested;
 
     private int investmentDuration;
 
@@ -26,5 +26,7 @@ public class CorporateInvestmentTopUpDetailResponse {
     private BigDecimal topUpAmount;
 
     private double interestAccrued;
+
+    private BigDecimal totalExpectedReturns;
 
 }
