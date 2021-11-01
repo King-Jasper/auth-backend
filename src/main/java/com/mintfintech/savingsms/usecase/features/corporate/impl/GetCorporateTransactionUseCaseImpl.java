@@ -17,7 +17,6 @@ import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCas
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
