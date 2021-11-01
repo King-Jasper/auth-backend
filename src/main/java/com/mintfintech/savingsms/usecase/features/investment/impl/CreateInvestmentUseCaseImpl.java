@@ -9,7 +9,6 @@ import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
@@ -136,8 +135,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
-        sendCorporateInvestmentCreationEmail(investment, transactionRequestEntity);
-        response.setMessage("Your investment has been logged for approval. Details have been sent to your mail");
+        response.setMessage("Your investment has been logged for approval.");
         return response;
     }
 
@@ -287,43 +285,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     }
 
-
-    private void sendCorporateInvestmentCreationEmail(InvestmentEntity investment, CorporateTransactionRequestEntity requestEntity) {
-
-        if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.PENDING)) {
-            CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
-                    .initiator(requestEntity.getInitiator().getName())
-                    .initiatorEmail(requestEntity.getInitiator().getEmail())
-                    .approvalStatus(requestEntity.getApprovalStatus().name())
-                    .requestId(requestEntity.getRequestId())
-                    .amount(requestEntity.getTotalAmount())
-                    .duration(investment.getDurationInMonths())
-                    .interestRate(investment.getInterestRate())
-                    .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
-                    .transactionType(requestEntity.getTransactionType().name())
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
-            return;
-        }
-        CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
-                .initiator(requestEntity.getInitiator().getName())
-                .initiatorEmail(requestEntity.getInitiator().getEmail())
-                .approvalStatus(requestEntity.getApprovalStatus().name())
-                .requestId(requestEntity.getRequestId())
-                .dateReviewed(requestEntity.getDateReviewed())
-                .reviewer(requestEntity.getReviewer().getName())
-                .reviewerEmail(requestEntity.getReviewer().getEmail())
-                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
-                .amount(requestEntity.getTotalAmount())
-                .duration(investment.getDurationInMonths())
-                .interestRate(investment.getInterestRate())
-                .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
-                .transactionType(requestEntity.getTransactionType().name())
-                .build();
-
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
-    }
-
     @Override
     public String approveCorporateInvestment(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
         String requestId = request.getRequestId();
@@ -348,8 +309,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             investmentEntityDao.saveRecord(investmentEntity);
 
             publishTransactionEvent(requestEntity);
-            sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
-            return "Investment declined successfully. Details have been sent to your mail";
+            return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
                 .orElseThrow(() -> new BusinessLogicConflictException("Debit account not found"));
@@ -378,7 +338,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         transactionRequestEntityDao.saveRecord(requestEntity);
 
         publishTransactionEvent(requestEntity);
-        sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
+        sendInvestmentCreationEmail(investmentEntity, requestEntity.getInitiator());
         return "Approved successfully, details have been sent to your mail";
     }
 
