@@ -13,7 +13,6 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentFundingEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
@@ -164,7 +163,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         InvestmentFundingResponse response = new InvestmentFundingResponse();
         EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
-        sendCorporateInvestmentCreationEmail(investmentEntity, transactionRequestEntity);
         response.setResponseCode("01");
         response.setResponseMessage("Investment top-Up has been logged for approval");
         return response;
@@ -269,7 +267,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
             publishTransactionEvent(requestEntity);
-            sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -294,7 +291,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         transactionRequestEntityDao.saveRecord(requestEntity);
 
         publishTransactionEvent(requestEntity);
-        sendCorporateInvestmentCreationEmail(investmentEntity, requestEntity);
+        sendInvestmentFundingSuccessEmail(investmentEntity, transactionEntity.getTransactionAmount());
         return "Approved successfully, details have been sent to your mail";
     }
 
@@ -367,39 +364,4 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 
-    private void sendCorporateInvestmentCreationEmail(InvestmentEntity investment, CorporateTransactionRequestEntity requestEntity) {
-
-        if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.PENDING)) {
-            CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
-                    .initiator(requestEntity.getInitiator().getName())
-                    .initiatorEmail(requestEntity.getInitiator().getEmail())
-                    .approvalStatus(requestEntity.getApprovalStatus().name())
-                    .requestId(requestEntity.getRequestId())
-                    .amount(requestEntity.getTotalAmount())
-                    .duration(investment.getDurationInMonths())
-                    .interestRate(investment.getInterestRate())
-                    .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
-                    .transactionType(requestEntity.getTransactionType().name())
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
-            return;
-        }
-        CorporateInvestmentCreationEmailEvent event = CorporateInvestmentCreationEmailEvent.builder()
-                .initiator(requestEntity.getInitiator().getName())
-                .initiatorEmail(requestEntity.getInitiator().getEmail())
-                .approvalStatus(requestEntity.getApprovalStatus().name())
-                .requestId(requestEntity.getRequestId())
-                .dateReviewed(requestEntity.getDateReviewed())
-                .reviewer(requestEntity.getReviewer().getName())
-                .reviewerEmail(requestEntity.getReviewer().getEmail())
-                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
-                .amount(requestEntity.getTotalAmount())
-                .duration(investment.getDurationInMonths())
-                .interestRate(investment.getInterestRate())
-                .maturityDate(StringUtils.defaultString(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE)))
-                .transactionType(requestEntity.getTransactionType().name())
-                .build();
-
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, new EventModel<>(event));
-    }
 }
