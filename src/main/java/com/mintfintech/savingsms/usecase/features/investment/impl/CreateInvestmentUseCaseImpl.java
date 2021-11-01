@@ -338,7 +338,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         transactionRequestEntityDao.saveRecord(requestEntity);
 
         publishTransactionEvent(requestEntity);
-        sendInvestmentCreationEmail(investmentEntity, user);
+        sendInvestmentCreationEmail(investmentEntity, requestEntity.getInitiator());
         return "Approved successfully, details have been sent to your mail";
     }
 
