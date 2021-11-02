@@ -13,7 +13,6 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentFundingEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
