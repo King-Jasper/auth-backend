@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.configs;
 
+import com.google.common.base.Predicates;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.boot.info.GitProperties;
@@ -41,6 +42,17 @@ public class SwaggerConfig {
         this.buildProperties = buildProperties;
     }
 
+
+    final List<ResponseMessage> globalResponses = Arrays.asList(
+            new ResponseMessageBuilder().code(HttpStatus.OK.value()).message("Request processed successfully").build(),
+            new ResponseMessageBuilder().code(HttpStatus.BAD_REQUEST.value()).message("Bad Request, Check request details").build(),
+            new ResponseMessageBuilder().code(HttpStatus.UNAUTHORIZED.value()).message("Unauthorised request, invalid credential").build(),
+            new ResponseMessageBuilder().code(HttpStatus.NOT_FOUND.value()).message("Requested resource not found.").build(),
+            new ResponseMessageBuilder().code(HttpStatus.FORBIDDEN.value()).message("Forbidden access to a resource.").build(),
+            new ResponseMessageBuilder().code(HttpStatus.CONFLICT.value()).message("Business Logic Conflict. Error due to unfulfilled business rules").build(),
+            new ResponseMessageBuilder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).message("Oops, Internal Server Error").build()
+    );
+
     @Bean
     public Docket api() {
         String version = "1.0";
@@ -48,8 +60,7 @@ public class SwaggerConfig {
             GitProperties gitProperties = gitInfo.get();
             version = String.format("%s - %s - %s - %s", buildProperties.getVersion(), gitProperties.getShortCommitId(), gitProperties.getBranch(), buildProperties.getTime().toString());
         }
-
-        final List<ResponseMessage> globalResponses = Arrays.asList(
+        /*final List<ResponseMessage> globalResponses = Arrays.asList(
                 new ResponseMessageBuilder().code(HttpStatus.OK.value()).message("Request processed successfully").build(),
                 new ResponseMessageBuilder().code(HttpStatus.BAD_REQUEST.value()).message("Bad Request, Check request details").build(),
                 new ResponseMessageBuilder().code(HttpStatus.UNAUTHORIZED.value()).message("Unauthorised request, invalid credential").build(),
@@ -59,8 +70,9 @@ public class SwaggerConfig {
                 new ResponseMessageBuilder().code(HttpStatus.PRECONDITION_FAILED.value()).message("Indicates a condition for fulfilling a request failed " +
                         "even though the request is successful. Eg Login on an unregistered device.").build(),
                 new ResponseMessageBuilder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).message("Oops, Internal Server Error").build()
-        );
+        );*/
         return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("CLIENT-SERVICE V1")
                 .useDefaultResponseMessages(false)
                 .globalResponseMessage(RequestMethod.GET, globalResponses)
                 .globalResponseMessage(RequestMethod.POST, globalResponses)
@@ -71,7 +83,9 @@ public class SwaggerConfig {
                 .select()
                 .apis(RequestHandlerSelectors.basePackage("com.mintfintech.savingsms.infrastructure.web.controllers"))
                 .apis(RequestHandlerSelectors.any())
-                .paths(PathSelectors.ant("/api/v*/**"))
+                .paths(Predicates.not(PathSelectors.ant("/api/v1/admin/**")))
+                .paths(Predicates.not(PathSelectors.ant("/admin/report/**")))
+                .paths(Predicates.not(PathSelectors.ant("/*")))
                 .build();
 
     }
@@ -86,5 +100,33 @@ public class SwaggerConfig {
     public UiConfiguration uiConfig() {
         return new UiConfiguration(true, false, 1, 1, ModelRendering.MODEL, false, DocExpansion.LIST, false, null,
                 OperationsSorter.ALPHA, false, TagsSorter.ALPHA, UiConfiguration.Constants.DEFAULT_SUBMIT_METHODS, null);
+    }
+
+    @Bean
+    public Docket portalSwaggerApi() {
+
+        String version = "1.0";
+        if(gitInfo.isPresent()) {
+            version = String.format("%s - %s - %s - %s", buildProperties.getVersion(), gitInfo.get().getShortCommitId(), gitInfo.get().getBranch(), buildProperties.getTime().toString());
+        }
+
+        return new Docket(DocumentationType.SWAGGER_2)
+                .groupName("PORTAL-SERVICE V1")
+                .useDefaultResponseMessages(false)
+                .globalResponseMessage(RequestMethod.GET, globalResponses)
+                .globalResponseMessage(RequestMethod.POST, globalResponses)
+                .globalResponseMessage(RequestMethod.DELETE, globalResponses)
+                .globalResponseMessage(RequestMethod.PATCH, globalResponses)
+                .globalResponseMessage(RequestMethod.PUT, globalResponses)
+                .select()
+                .apis(RequestHandlerSelectors.basePackage("com.mintfintech.savingsms.infrastructure.web.controllers.backoffice"))
+                //.paths(PathSelectors.ant("/api/v1/admin/**"))
+                //.paths(PathSelectors.ant("/admin/report/**"))
+                .build()
+                .apiInfo(new ApiInfoBuilder()
+                        .version(version)
+                        .description("API services for managing transaction on Portal.")
+                        .title("Savings Service Microservice").build());
+
     }
 }
