@@ -53,5 +53,7 @@ public class CorporateTransactionRequestEntity extends AbstractBaseEntity<Long>{
 
     private String transactionDescription;
 
+    private boolean isFullLiquidation;
+
 
 }

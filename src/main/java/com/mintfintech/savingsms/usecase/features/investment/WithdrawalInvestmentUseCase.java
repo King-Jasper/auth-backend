@@ -1,6 +1,9 @@
 package com.mintfintech.savingsms.usecase.features.investment;
 
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 
@@ -18,4 +21,5 @@ public interface WithdrawalInvestmentUseCase {
     void processWithholdingTaxPayout();
 
     void processPrincipalPayout();
+    String approveInvestmentWithdrawal(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount);
 }

@@ -1,6 +1,9 @@
 package com.mintfintech.savingsms.usecase.features.corporate.impl;
 
-import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
+import com.mintfintech.savingsms.domain.dao.CorporateTransactionRequestEntityDao;
+import com.mintfintech.savingsms.domain.dao.CorporateUserEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CorporateTransactionRequestEntity;
 import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
@@ -9,16 +12,15 @@ import com.mintfintech.savingsms.domain.entities.enums.CorporateRoleTypeConstant
 import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionCategoryConstant;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
-import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.corporate.ManageTransactionRequestUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -29,17 +31,13 @@ import java.util.Optional;
 public class ManageTransactionRequestUseCaseImpl implements ManageTransactionRequestUseCase {
 
     private final AppUserEntityDao appUserEntityDao;
-    private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
-    private final CorporateTransactionEntityDao corporateTransactionEntityDao;
-    private final InvestmentEntityDao investmentEntityDao;
     private final CorporateUserEntityDao corporateUserEntityDao;
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final AccountAuthorisationUseCase accountAuthorisationUseCase;
-    private final UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private final FundInvestmentUseCase fundInvestmentUseCase;
     private final CreateInvestmentUseCase createInvestmentUseCase;
-    private final ApplicationEventService applicationEventService;
+    private final WithdrawalInvestmentUseCase withdrawalInvestmentUseCase;
 
 
     @Override
@@ -84,6 +82,8 @@ public class ManageTransactionRequestUseCaseImpl implements ManageTransactionReq
             response = createInvestmentUseCase.approveCorporateInvestment(request, user, corporateAccount);
         } else if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_TOPUP)) {
             response = fundInvestmentUseCase.approveCorporateInvestmentTopUp(request, user, corporateAccount);
+        } else if (requestEntity.getTransactionType().equals(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_LIQUIDATION)) {
+            response = withdrawalInvestmentUseCase.approveInvestmentWithdrawal(request, user, corporateAccount);
         }
 
         return response;

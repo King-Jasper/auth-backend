@@ -146,6 +146,9 @@ public class InvestmentController {
         @ApiModelProperty(notes = "The amount to be liquidated. Required if fullLiquidation is false")
         private BigDecimal liquidationAmount;
 
+        @ApiModelProperty(value = "Transaction pin")
+        private String transactionPin;
+
         public InvestmentWithdrawalRequest toRequest() {
             if(!fullLiquidation && (liquidationAmount == null || liquidationAmount.compareTo(BigDecimal.ZERO) == 0)) {
                 throw new BadRequestException("Liquidation amount must be provided.");
@@ -155,6 +158,7 @@ public class InvestmentController {
                     .creditAccountId(creditAccountId)
                     .fullLiquidation(fullLiquidation)
                     .amount(liquidationAmount)
+                    .transactionPin(transactionPin)
                     .build();
         }
     }
