@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
@@ -22,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentLiquidationInfo;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
@@ -64,6 +66,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
     private final AccountAuthorisationUseCase accountAuthorisationUseCase;
+    private final Gson gson;
 
 
     @Override
@@ -155,6 +158,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 throw new BusinessLogicConflictException(errorMessage);
             }
         }
+        InvestmentLiquidationInfo liquidationInfo = InvestmentLiquidationInfo.builder()
+                .fullLiquidation(isFullLiquidation)
+                .amountToWithdraw(amountToWithdraw)
+                .build();
+        String transactionMetaData = gson.toJson(liquidationInfo, InvestmentLiquidationInfo.class);
 
         CorporateTransactionRequestEntity transactionRequestEntity = CorporateTransactionRequestEntity.builder()
                 .debitAccountId(request.getCreditAccountId())
@@ -166,7 +174,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .totalAmount(amountToWithdraw)
                 .transactionDescription("")
                 .requestId(transactionRequestEntityDao.generateRequestId())
-                .isFullLiquidation(isFullLiquidation)
+                .transactionMetaData(transactionMetaData)
                 .build();
         transactionRequestEntity = transactionRequestEntityDao.saveRecord(transactionRequestEntity);
 
@@ -272,7 +280,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
-        if (requestEntity.isFullLiquidation()) {
+        String metaData = requestEntity.getTransactionMetaData();
+        InvestmentLiquidationInfo liquidationInfo = gson.fromJson(metaData, InvestmentLiquidationInfo.class);
+
+        BigDecimal amount = liquidationInfo.getAmountToWithdraw();
+        boolean isFullLiquidation = liquidationInfo.isFullLiquidation();
+        if (isFullLiquidation && amount.compareTo(investmentEntity.getAmountInvested()) == 0) {
             processFullLiquidation(investmentEntity, creditAccount);
         } else {
             processPartialLiquidation(investmentEntity, creditAccount, requestEntity.getTotalAmount());
