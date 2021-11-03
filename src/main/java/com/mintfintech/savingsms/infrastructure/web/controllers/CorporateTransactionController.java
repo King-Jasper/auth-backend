@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.ApprovalRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentDetailResponse;
+import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentLiquidationDetailResponse;
 import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentTopUpDetailResponse;
 import com.mintfintech.savingsms.usecase.features.corporate.GetCorporateTransactionUseCase;
 import com.mintfintech.savingsms.usecase.features.corporate.ManageTransactionRequestUseCase;
@@ -55,6 +56,16 @@ public class CorporateTransactionController {
 
         CorporateInvestmentTopUpDetailResponse response = getCorporateTransactionUseCase.getInvestmentTopUpRequestDetail(authenticatedUser, requestId);
         ApiResponseJSON<CorporateInvestmentTopUpDetailResponse> apiResponseJSON = new ApiResponseJSON<>("Transactions request processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns transaction request.")
+    @GetMapping(value = "/{requestId}/investment-liquidation", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<CorporateInvestmentLiquidationDetailResponse>> fetchCorporateInvestmentLiquidationDetail(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                                       @PathVariable String requestId) {
+
+        CorporateInvestmentLiquidationDetailResponse response = getCorporateTransactionUseCase.getInvestmentLiquidationRequestDetail(authenticatedUser, requestId);
+        ApiResponseJSON<CorporateInvestmentLiquidationDetailResponse> apiResponseJSON = new ApiResponseJSON<>("Transactions request processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

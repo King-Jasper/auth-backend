@@ -16,4 +16,5 @@ public class InvestmentWithdrawalRequest {
     private BigDecimal amount;
     private boolean fullLiquidation;
     private String creditAccountId;
+    private String transactionPin;
 }

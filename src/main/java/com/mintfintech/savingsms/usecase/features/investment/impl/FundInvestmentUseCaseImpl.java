@@ -13,7 +13,7 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentFundingEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentFundingRequest;
@@ -148,7 +148,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .build();
         corporateTransactionEntityDao.saveRecord(transactionEntity);
 
-        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(transactionRequestEntity.getApprovalStatus().name())
                 .transactionCategory(transactionRequestEntity.getTransactionCategory().name())
                 .debitAccountId(transactionRequestEntity.getDebitAccountId())
@@ -161,7 +161,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .build();
 
         InvestmentFundingResponse response = new InvestmentFundingResponse();
-        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
         response.setResponseCode("01");
         response.setResponseMessage("Investment top-Up has been logged for approval");
@@ -353,14 +353,14 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     }
 
     private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
-        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
                 .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
                 .build();
 
-        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 

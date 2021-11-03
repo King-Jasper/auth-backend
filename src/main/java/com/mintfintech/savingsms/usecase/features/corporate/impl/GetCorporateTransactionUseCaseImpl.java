@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionCategoryConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentDetailResponse;
+import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentLiquidationDetailResponse;
 import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentTopUpDetailResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -34,23 +35,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
     @Override
     public CorporateInvestmentDetailResponse getInvestmentRequestDetail(AuthenticatedUser currentUser, String requestId) {
-        MintAccountEntity mintAccountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
-
-        Optional<CorporateTransactionRequestEntity> requestEntityOpt = corporateTransactionRequestEntityDao.findByRequestId(requestId);
-
-        if(!requestEntityOpt.isPresent()) {
-            throw new BadRequestException("Invalid request Id.");
-        }
-
-        CorporateTransactionRequestEntity requestEntity = requestEntityOpt.get();
-        if(!requestEntity.getCorporate().getId().equals(mintAccountEntity.getId())) {
-            log.info("Request Id does not belong to same corporate account");
-            throw new UnauthorisedException("Request aborted.");
-        }
-
-        if(requestEntity.getTransactionCategory() != CorporateTransactionCategoryConstant.INVESTMENT) {
-            throw new BusinessLogicConflictException("Sorry, transaction record does not exist on this service.");
-        }
+        CorporateTransactionRequestEntity requestEntity = getCorporateTransactionRequest(currentUser, requestId);
 
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
 
@@ -72,28 +57,9 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
     @Override
     public CorporateInvestmentTopUpDetailResponse getInvestmentTopUpRequestDetail(AuthenticatedUser currentUser, String requestId) {
 
-        MintAccountEntity mintAccountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
-
-        Optional<CorporateTransactionRequestEntity> requestEntityOpt = corporateTransactionRequestEntityDao.findByRequestId(requestId);
-
-        if(!requestEntityOpt.isPresent()) {
-            throw new BadRequestException("Invalid request Id.");
-        }
-
-        CorporateTransactionRequestEntity requestEntity = requestEntityOpt.get();
-        if(!requestEntity.getCorporate().getId().equals(mintAccountEntity.getId())) {
-            log.info("Request Id does not belong to same corporate account");
-            throw new UnauthorisedException("Request aborted.");
-        }
-
-        if(requestEntity.getTransactionCategory() != CorporateTransactionCategoryConstant.INVESTMENT) {
-            throw new BusinessLogicConflictException("Sorry, transaction record does not exist on this service.");
-        }
+        CorporateTransactionRequestEntity requestEntity = getCorporateTransactionRequest(currentUser, requestId);
 
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
-
-
-
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
 
         BigDecimal amount = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
@@ -112,5 +78,55 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .totalExpectedReturns(expectedReturns)
                 .build();
+    }
+
+    @Override
+    public CorporateInvestmentLiquidationDetailResponse getInvestmentLiquidationRequestDetail(AuthenticatedUser currentUser, String requestId) {
+
+        CorporateTransactionRequestEntity requestEntity = getCorporateTransactionRequest(currentUser, requestId);
+
+        CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
+
+        BigDecimal amount = investmentEntity.getAmountInvested();
+        BigDecimal expectedReturns = BigDecimal.ZERO;
+
+        if (amount.compareTo(BigDecimal.ZERO) > 0) {
+            expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+        }
+
+        return CorporateInvestmentLiquidationDetailResponse.builder()
+                .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
+                .amountInvested(investmentEntity.getAmountInvested())
+                .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
+                .initiator(investmentEntity.getCreator().getName())
+                .interestRate(investmentEntity.getInterestRate())
+                .investmentDuration(investmentEntity.getDurationInMonths())
+                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .liquidationAmount(requestEntity.getTotalAmount())
+                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .totalExpectedReturns(expectedReturns)
+                .build();
+    }
+
+    private CorporateTransactionRequestEntity getCorporateTransactionRequest(AuthenticatedUser currentUser, String requestId) {
+        MintAccountEntity mintAccountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+
+        Optional<CorporateTransactionRequestEntity> requestEntityOpt = corporateTransactionRequestEntityDao.findByRequestId(requestId);
+
+        if (!requestEntityOpt.isPresent()) {
+            throw new BadRequestException("Invalid request Id.");
+        }
+
+        CorporateTransactionRequestEntity requestEntity = requestEntityOpt.get();
+        if (!requestEntity.getCorporate().getId().equals(mintAccountEntity.getId())) {
+            log.info("Request Id does not belong to same corporate account");
+            throw new UnauthorisedException("Request aborted.");
+        }
+
+        if (requestEntity.getTransactionCategory() != CorporateTransactionCategoryConstant.INVESTMENT) {
+            throw new BusinessLogicConflictException("Sorry, transaction record does not exist on this service.");
+        }
+        return requestEntity;
     }
 }

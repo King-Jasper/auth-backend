@@ -8,7 +8,7 @@ import java.time.LocalDateTime;
 
 @Builder
 @Data
-public class InvestmentCreationEvent {
+public class CorporateInvestmentEvent {
 
     private String requestId;
 

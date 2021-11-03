@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
@@ -13,19 +14,22 @@ import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
+import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentLiquidationEmailEvent;
+import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentLiquidationInfo;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -35,6 +39,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -57,6 +62,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final SystemIssueLogService systemIssueLogService;
     private final ApplicationEventService applicationEventService;
     private final AppUserEntityDao appUserEntityDao;
+    private final CorporateUserEntityDao corporateUserEntityDao;
+    private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
+    private final CorporateTransactionEntityDao corporateTransactionEntityDao;
+    private final AccountAuthorisationUseCase accountAuthorisationUseCase;
+    private final Gson gson;
 
 
     @Override
@@ -67,6 +77,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         if (investment.getInvestmentStatus() != InvestmentStatusConstant.ACTIVE) {
             throw new BadRequestException("Investment is not active. Current status - " + investment.getInvestmentStatus());
         }
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         MintAccountEntity account = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         if (!account.getId().equals(investment.getOwner().getId())) {
             throw new BusinessLogicConflictException("Sorry, request cannot be processed.");
@@ -74,7 +85,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 
-       // int minimumLiquidationPeriodInDays = 15;
+        // int minimumLiquidationPeriodInDays = 15;
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
             minimumLiquidationPeriodInDays = 2;
@@ -85,12 +96,110 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of " + minimumLiquidationPeriodInDays + " days before liquidation.");
         }
 
+        if (account.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
+            processLiquidation(request, investment, creditAccount);
+        } else if (account.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
+            if (StringUtils.isEmpty(request.getTransactionPin())) {
+                throw new BadRequestException("Transaction pin is required");
+            }
+            accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+            processLiquidation(request, investment, creditAccount);
+        } else if (account.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+            throw new BusinessLogicConflictException("Unrecognised account type.");
+        } else {
+            if (StringUtils.isEmpty(request.getTransactionPin())) {
+                throw new BadRequestException("Transaction pin is required");
+            }
+            accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+
+            CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(account, appUser)
+                    .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
+            CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+            if (userRole == CorporateRoleTypeConstant.APPROVER) {
+                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
+            } else {
+                createTransactionRequest(account, investment, request, appUser);
+            }
+        }
+
+        return getInvestmentUseCase.toInvestmentModel(investment);
+    }
+
+    private void processLiquidation(InvestmentWithdrawalRequest request, InvestmentEntity investment, MintBankAccountEntity creditAccount) {
         if (request.isFullLiquidation()) {
             processFullLiquidation(investment, creditAccount);
         } else {
             processPartialLiquidation(investment, creditAccount, request.getAmount());
         }
-        return getInvestmentUseCase.toInvestmentModel(investment);
+    }
+
+    private void createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
+
+        BigDecimal amountToWithdraw;
+        boolean isFullLiquidation = false;
+        if (request.isFullLiquidation()) {
+            InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
+            double interestPenaltyRate = tenorEntity.getPenaltyRate();
+            BigDecimal amountInvested = investment.getAmountInvested();
+            BigDecimal accruedInterest = investment.getAccruedInterest();
+            BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
+            amountToWithdraw = amountInvested.add(accruedInterest.subtract(interestCharge));
+
+            isFullLiquidation = true;
+        } else {
+            amountToWithdraw = request.getAmount();
+            double percentWithdrawal = 70;
+            BigDecimal amountInvest = investment.getAmountInvested();
+            BigDecimal maximumWithdrawalAmount = amountInvest.subtract(BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal / 100.0)));
+
+            if (amountToWithdraw.compareTo(maximumWithdrawalAmount) > 0) {
+                String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %s percent of investment amount.",
+                        MoneyFormatterUtil.priceWithDecimal(maximumWithdrawalAmount), MoneyFormatterUtil.priceWithoutDecimal(percentWithdrawal));
+                throw new BusinessLogicConflictException(errorMessage);
+            }
+        }
+        InvestmentLiquidationInfo liquidationInfo = InvestmentLiquidationInfo.builder()
+                .fullLiquidation(isFullLiquidation)
+                .amountToWithdraw(amountToWithdraw)
+                .build();
+        String transactionMetaData = gson.toJson(liquidationInfo, InvestmentLiquidationInfo.class);
+
+        CorporateTransactionRequestEntity transactionRequestEntity = CorporateTransactionRequestEntity.builder()
+                .debitAccountId(request.getCreditAccountId())
+                .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT)
+                .transactionType(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_LIQUIDATION)
+                .approvalStatus(TransactionApprovalStatusConstant.PENDING)
+                .corporate(account)
+                .initiator(appUser)
+                .totalAmount(amountToWithdraw)
+                .transactionDescription("")
+                .requestId(transactionRequestEntityDao.generateRequestId())
+                .transactionMetaData(transactionMetaData)
+                .build();
+        transactionRequestEntity = transactionRequestEntityDao.saveRecord(transactionRequestEntity);
+
+        CorporateTransactionEntity transactionEntity = CorporateTransactionEntity.builder()
+                .transactionRecordId(investment.getId())
+                .transactionRequest(transactionRequestEntity)
+                .corporate(account)
+                .transactionType(CorporateTransactionTypeConstant.MUTUAL_INVESTMENT_LIQUIDATION)
+                .build();
+        corporateTransactionEntityDao.saveRecord(transactionEntity);
+
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
+                .approvalStatus(transactionRequestEntity.getApprovalStatus().name())
+                .transactionCategory(transactionRequestEntity.getTransactionCategory().name())
+                .debitAccountId(transactionRequestEntity.getDebitAccountId())
+                .requestId(transactionRequestEntity.getRequestId())
+                .totalAmount(transactionRequestEntity.getTotalAmount())
+                .transactionType(transactionRequestEntity.getTransactionType().name())
+                .transactionDescription(StringUtils.defaultString(transactionRequestEntity.getTransactionDescription()))
+                .mintAccountId(transactionRequestEntity.getCorporate().getAccountId())
+                .userId(transactionRequestEntity.getInitiator().getUserId())
+                .build();
+
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 
     @Override
@@ -143,6 +252,64 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         for (InvestmentWithdrawalEntity withdrawal : withdrawals) {
             processPrincipalPayment(withdrawal);
         }
+    }
+
+    @Override
+    public String approveInvestmentWithdrawal(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount) {
+
+        String requestId = request.getRequestId();
+        boolean approved = request.isApproved();
+
+        Optional<CorporateTransactionRequestEntity> requestEntityOptional = transactionRequestEntityDao.findByRequestId(requestId);
+        if (!requestEntityOptional.isPresent()) {
+            throw new BadRequestException("Invalid request Id.");
+        }
+        CorporateTransactionRequestEntity requestEntity = requestEntityOptional.get();
+        CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
+        InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
+
+        if (!approved) {
+            requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
+            requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
+            requestEntity.setReviewer(user);
+            requestEntity.setDateReviewed(LocalDateTime.now());
+            transactionRequestEntityDao.saveRecord(requestEntity);
+            publishTransactionEvent(requestEntity);
+            return "Investment withdrawal declined successfully.";
+        }
+        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
+                .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
+
+        String metaData = requestEntity.getTransactionMetaData();
+        InvestmentLiquidationInfo liquidationInfo = gson.fromJson(metaData, InvestmentLiquidationInfo.class);
+
+        BigDecimal amount = liquidationInfo.getAmountToWithdraw();
+        boolean isFullLiquidation = liquidationInfo.isFullLiquidation();
+        if (isFullLiquidation) {
+            processFullLiquidation(investmentEntity, creditAccount);
+        } else {
+            processPartialLiquidation(investmentEntity, creditAccount, requestEntity.getTotalAmount());
+        }
+        requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
+        requestEntity.setReviewer(user);
+        requestEntity.setDateReviewed(LocalDateTime.now());
+        transactionRequestEntityDao.saveRecord(requestEntity);
+
+        publishTransactionEvent(requestEntity);
+        return "Approved successfully, details have been sent to the initiator";
+    }
+
+    private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
+                .approvalStatus(requestEntity.getApprovalStatus().name())
+                .dateReviewed(requestEntity.getDateReviewed())
+                .userId(requestEntity.getReviewer().getUserId())
+                .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
+                .build();
+
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+
     }
 
     private void processPartialLiquidation(InvestmentEntity investment, MintBankAccountEntity creditAccount, BigDecimal amountToWithdraw) {
@@ -252,7 +419,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
         BigDecimal interestAmount = withdrawal.getInterest();
-        if(!withdrawal.isMatured()){
+        if (!withdrawal.isMatured()) {
             interestAmount = withdrawal.getInterestBeforeWithdrawal(); //penalty charge will be on this.
         }
 

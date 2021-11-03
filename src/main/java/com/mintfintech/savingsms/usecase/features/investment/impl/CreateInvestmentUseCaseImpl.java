@@ -10,7 +10,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
@@ -122,7 +122,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         corporateTransactionEntityDao.saveRecord(transactionEntity);
         InvestmentCreationResponse response = new InvestmentCreationResponse();
 
-        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(transactionRequestEntity.getApprovalStatus().name())
                 .transactionCategory(transactionRequestEntity.getTransactionCategory().name())
                 .debitAccountId(transactionRequestEntity.getDebitAccountId())
@@ -134,7 +134,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .userId(transactionRequestEntity.getInitiator().getUserId())
                 .build();
 
-        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
         response.setMessage("Your investment has been logged for approval.");
         return response;
@@ -344,14 +344,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     }
 
     private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
-        InvestmentCreationEvent event = InvestmentCreationEvent.builder()
+        CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
                 .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
                 .build();
 
-        EventModel<InvestmentCreationEvent> eventModel = new EventModel<>(event);
+        EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
     }
 
