@@ -30,6 +30,7 @@ import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -300,10 +301,16 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     }
 
     private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+        MintAccountEntity mintAccountEntity = requestEntity.getCorporate();
+        if(!Hibernate.isInitialized(mintAccountEntity)) {
+            mintAccountEntity = mintAccountEntityDao.getRecordById(mintAccountEntity.getId());
+        }
         CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
+                .mintAccountId(mintAccountEntity.getAccountId())
+                .requestId(requestEntity.getRequestId())
                 .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
                 .build();
 

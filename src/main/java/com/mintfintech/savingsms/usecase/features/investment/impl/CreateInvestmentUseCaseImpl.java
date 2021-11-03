@@ -309,7 +309,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             investmentEntity.setRecordStatus(RecordStatusConstant.DELETED);
             investmentEntityDao.saveRecord(investmentEntity);
 
-            publishTransactionEvent(requestEntity);
+            publishTransactionEvent(corporateAccount, requestEntity);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -338,13 +338,15 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         requestEntity.setDateReviewed(LocalDateTime.now());
         transactionRequestEntityDao.saveRecord(requestEntity);
 
-        publishTransactionEvent(requestEntity);
+        publishTransactionEvent(corporateAccount, requestEntity);
         sendInvestmentCreationEmail(investmentEntity, requestEntity.getInitiator());
         return "Approved successfully, details have been sent to your mail";
     }
 
-    private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+    private void publishTransactionEvent(MintAccountEntity accountEntity, CorporateTransactionRequestEntity requestEntity) {
         CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
+                .mintAccountId(accountEntity.getAccountId())
+                .requestId(requestEntity.getRequestId())
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
