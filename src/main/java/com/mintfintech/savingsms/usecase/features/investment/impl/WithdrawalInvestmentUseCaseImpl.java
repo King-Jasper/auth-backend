@@ -285,7 +285,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         BigDecimal amount = liquidationInfo.getAmountToWithdraw();
         boolean isFullLiquidation = liquidationInfo.isFullLiquidation();
-        if (isFullLiquidation && amount.compareTo(investmentEntity.getAmountInvested()) == 0) {
+        if (isFullLiquidation) {
             processFullLiquidation(investmentEntity, creditAccount);
         } else {
             processPartialLiquidation(investmentEntity, creditAccount, requestEntity.getTotalAmount());
