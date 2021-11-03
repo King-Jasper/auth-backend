@@ -290,7 +290,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         } else {
             processPartialLiquidation(investmentEntity, creditAccount, requestEntity.getTotalAmount());
         }
-
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());
