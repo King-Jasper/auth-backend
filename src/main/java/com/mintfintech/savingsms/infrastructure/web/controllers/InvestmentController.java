@@ -72,6 +72,10 @@ public class InvestmentController {
                                                                            @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page
     ) {
 
+        if ("ALL".equalsIgnoreCase(investmentStatus)) {
+            investmentStatus = "";
+        }
+
         InvestmentSearchRequest searchRequest = InvestmentSearchRequest.builder()
                 .accountId(authenticatedUser.getAccountId())
                 .investmentStatus(investmentStatus)
