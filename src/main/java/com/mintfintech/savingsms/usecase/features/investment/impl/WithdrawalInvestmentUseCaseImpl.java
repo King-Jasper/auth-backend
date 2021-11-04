@@ -89,7 +89,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         // int minimumLiquidationPeriodInDays = 15;
         int minimumLiquidationPeriodInDays = applicationProperty.investmentMinimumLiquidationDays();
         if (!applicationProperty.isLiveEnvironment()) {
-            minimumLiquidationPeriodInDays = 2;
+            minimumLiquidationPeriodInDays = 1;
         }
 
         long daysPast = investment.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
