@@ -8,9 +8,11 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
+import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentCreationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentCreationRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
@@ -48,6 +50,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final CorporateUserEntityDao corporateUserEntityDao;
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
+    private final PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
 
     @Override
     @Transactional
@@ -134,7 +137,9 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
+        sendCorporateEmailNotification(mintAccount, investment, transactionRequestEntity);
+
         response.setMessage("Your investment has been logged for approval.");
         return response;
     }
@@ -309,6 +314,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             investmentEntityDao.saveRecord(investmentEntity);
 
             publishTransactionEvent(requestEntity);
+            publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(corporateAccount, requestEntity);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -351,7 +357,21 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
     }
 
+    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+
+        CorporateInvestmentCreationEmailEvent emailEvent = CorporateInvestmentCreationEmailEvent.builder()
+                .recipient(transactionRequestEntity.getInitiator().getEmail())
+                .name(transactionRequestEntity.getInitiator().getName())
+                .investmentAmount(investment.getAmountInvested().doubleValue())
+                .investmentInterest(investment.getInterestRate())
+                .investmentDuration(investment.getDurationInMonths())
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .build();
+        EventModel<CorporateInvestmentCreationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, emailEventModel);
+        publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(mintAccount, transactionRequestEntity);
+    }
 }

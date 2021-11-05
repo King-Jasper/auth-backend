@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -15,4 +16,6 @@ public interface CorporateUserEntityDao extends CrudDao<CorporateUserEntity, Lon
     Optional<CorporateUserEntity> findRecordByAccountIdAndUserId(String accountId, String userId);
     CorporateUserEntity getRecordByAccountIdAndUserId(MintAccountEntity corporateAccount, AppUserEntity user);
     Optional<CorporateUserEntity> findRecordByAccountAndUser(MintAccountEntity corporateAccount, AppUserEntity user);
+
+    List<CorporateUserEntity> findRecordByAccount(MintAccountEntity mintAccount);
 }

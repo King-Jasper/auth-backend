@@ -15,7 +15,9 @@ import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
+import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentLiquidationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentLiquidationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
@@ -66,6 +68,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
     private final AccountAuthorisationUseCase accountAuthorisationUseCase;
+    private final PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
     private final Gson gson;
 
 
@@ -199,7 +202,41 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .build();
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
+        sendCorporateEmailNotification(account, investment, transactionRequestEntity);
+    }
+
+    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+
+        InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
+        double interestPenaltyRate = tenorEntity.getPenaltyRate();
+
+        CorporateInvestmentLiquidationEmailEvent emailEvent = CorporateInvestmentLiquidationEmailEvent.builder()
+                .recipient(transactionRequestEntity.getInitiator().getEmail())
+                .name(transactionRequestEntity.getInitiator().getName())
+                .investmentAmount(investment.getAmountInvested())
+                .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .penaltyRate(interestPenaltyRate)
+                .build();
+        String metaData = transactionRequestEntity.getTransactionMetaData();
+        BigDecimal amountInvested = investment.getAmountInvested();
+        BigDecimal accruedInterest = investment.getAccruedInterest();
+
+        BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
+        BigDecimal totalWithdrawalAmount = amountInvested.add(accruedInterest.subtract(interestCharge));
+        InvestmentLiquidationInfo liquidationInfo = gson.fromJson(metaData, InvestmentLiquidationInfo.class);
+        if (liquidationInfo.isFullLiquidation()) {
+            emailEvent.setInvestmentBalance(BigDecimal.ZERO);
+            emailEvent.setLiquidatedAmount(totalWithdrawalAmount);
+
+        } else {
+            emailEvent.setLiquidatedAmount(transactionRequestEntity.getTotalAmount());
+            emailEvent.setInvestmentBalance(investment.getAmountInvested().subtract(transactionRequestEntity.getTotalAmount()));
+        }
+
+        EventModel<CorporateInvestmentLiquidationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_TOP_UP, emailEventModel);
+        publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(mintAccount, transactionRequestEntity);
     }
 
     @Override
@@ -275,6 +312,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
             publishTransactionEvent(requestEntity);
+            publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(corporateAccount, requestEntity);
             return "Investment withdrawal declined successfully.";
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -283,7 +321,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         String metaData = requestEntity.getTransactionMetaData();
         InvestmentLiquidationInfo liquidationInfo = gson.fromJson(metaData, InvestmentLiquidationInfo.class);
 
-        BigDecimal amount = liquidationInfo.getAmountToWithdraw();
         boolean isFullLiquidation = liquidationInfo.isFullLiquidation();
         if (isFullLiquidation) {
             processFullLiquidation(investmentEntity, creditAccount);
@@ -309,7 +346,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .build();
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
 
     }
 

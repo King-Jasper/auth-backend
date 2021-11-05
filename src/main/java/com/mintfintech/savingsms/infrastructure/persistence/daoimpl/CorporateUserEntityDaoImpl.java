@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.infrastructure.persistence.repository.Corporate
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 
 import javax.inject.Named;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -38,5 +39,10 @@ public class CorporateUserEntityDaoImpl extends CrudDaoImpl<CorporateUserEntity,
     @Override
     public Optional<CorporateUserEntity> findRecordByAccountAndUser(MintAccountEntity corporateAccount, AppUserEntity user) {
         return repository.findTopByAppUserAndCorporateAccount(user, corporateAccount);
+    }
+
+    @Override
+    public List<CorporateUserEntity> findRecordByAccount(MintAccountEntity mintAccount) {
+        return repository.findAllByCorporateAccount(mintAccount);
     }
 }
