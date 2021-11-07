@@ -62,9 +62,15 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
 
-        BigDecimal amount = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
+        BigDecimal toBeAmountInvested = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
 
-        BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+        BigDecimal expectedInterest = getInvestmentUseCase.calculateOutstandingInterest(toBeAmountInvested, investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+
+        BigDecimal currentAccruedInterest = investmentEntity.getAccruedInterest();
+
+        BigDecimal expectedReturns = toBeAmountInvested.add(expectedInterest).add(currentAccruedInterest);
+
+        //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
         return CorporateInvestmentTopUpDetailResponse.builder()
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())

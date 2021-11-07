@@ -296,7 +296,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
         return summary;
     }
 
-    private BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate,  LocalDateTime maturityTime) {
+    @Override
+    public BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate,  LocalDateTime maturityTime) {
 
         double interestPerAnum = interestRate * 0.01 * amountInvested.doubleValue();
 

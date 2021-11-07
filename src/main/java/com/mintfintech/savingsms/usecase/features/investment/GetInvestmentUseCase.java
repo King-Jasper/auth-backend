@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public interface GetInvestmentUseCase {
-
     List<InvestmentTransactionModel> getInvestmentTransactions(String investmentId);
     InvestmentModel toInvestmentModel(InvestmentEntity investment);
     InvestmentStatSummary getPagedInvestments(InvestmentSearchRequest searchRequest, int page, int size);
     InvestmentMaturityStatSummary getMaturityStatistics(LocalDate fromDate,LocalDate toDate);
     InvestmentStatSummary getPagedInvestmentsByAdmin(InvestmentSearchRequest searchRequest, int page, int size);
     BigDecimal calculateTotalExpectedReturn(BigDecimal amountInvested, BigDecimal currentAccruedInterest, double interestRate, LocalDateTime maturityTime);
+    BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate,  LocalDateTime maturityTime);
 }
