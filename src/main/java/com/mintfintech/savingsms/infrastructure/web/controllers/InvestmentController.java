@@ -110,10 +110,10 @@ public class InvestmentController {
 
     @ApiOperation(value = "Liquidate an investment.")
     @PostMapping(value = "/liquidate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<InvestmentLiquidationResponse>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<InvestmentModel>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
         InvestmentLiquidationResponse response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentLiquidationResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully.", response);
+        ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>(response.getMessage(), response.getInvestmentModel());
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
