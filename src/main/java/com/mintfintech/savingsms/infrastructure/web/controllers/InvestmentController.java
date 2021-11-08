@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentFundingResponse;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentLiquidationResponse;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.corporate.ManageTransactionRequestUseCase;
@@ -109,10 +110,10 @@ public class InvestmentController {
 
     @ApiOperation(value = "Liquidate an investment.")
     @PostMapping(value = "/liquidate", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<InvestmentModel>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<InvestmentLiquidationResponse>> liquidateInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                 @RequestBody @Valid LiquidateInvestmentJSON requestJSON) {
-        InvestmentModel response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentModel> apiResponseJSON = new ApiResponseJSON<>("Investment liquidated successfully.", response);
+        InvestmentLiquidationResponse response = withdrawalInvestmentUseCase.liquidateInvestment(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<InvestmentLiquidationResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

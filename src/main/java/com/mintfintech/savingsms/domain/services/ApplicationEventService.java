@@ -45,6 +45,7 @@ public interface ApplicationEventService {
         CORPORATE_INVESTMENT_CREATION("com.mintfintech.savings-services.events.notification.email.corporate-investment-creation"),
         PENDING_CORPORATE_INVESTMENT("com.mintfintech.savings-services.events.notification.email.pending-corporate-investment"),
         CORPORATE_INVESTMENT_TOP_UP("com.mintfintech.savings-services.events.notification.email.corporate-investment-top-up"),
+        CORPORATE_INVESTMENT_LIQUIDATION("com.mintfintech.savings-services.events.notification.email.corporate-investment-liquidation"),
         DECLINED_CORPORATE_INVESTMENT("com.mintfintech.savings-services.events.notification.email.declined-corporate-investment");
         private final String topic;
 

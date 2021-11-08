@@ -21,12 +21,12 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmen
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentLiquidationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentLiquidationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentLiquidationInfo;
-import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
@@ -73,7 +73,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
 
     @Override
-    public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
+    public InvestmentLiquidationResponse liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
         InvestmentEntity investment = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
 
@@ -99,14 +99,20 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of " + minimumLiquidationPeriodInDays + " days before liquidation.");
         }
 
+        InvestmentLiquidationResponse response = new InvestmentLiquidationResponse();
+        String responseMessage = "Investment liquidated successfully.";
         if (account.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
             processLiquidation(request, investment, creditAccount);
+            response.setMessage(responseMessage);
+            response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));
         } else if (account.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
             if (StringUtils.isEmpty(request.getTransactionPin())) {
                 throw new BadRequestException("Transaction pin is required");
             }
             accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
             processLiquidation(request, investment, creditAccount);
+            response.setMessage(responseMessage);
+            response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));
         } else if (account.getAccountType() != AccountTypeConstant.ENTERPRISE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
@@ -121,11 +127,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
             } else {
-                createTransactionRequest(account, investment, request, appUser);
+                responseMessage = createTransactionRequest(account, investment, request, appUser);
+                response.setMessage(responseMessage);
+                response.setInvestmentModel(null);
             }
         }
-
-        return getInvestmentUseCase.toInvestmentModel(investment);
+        return response;
     }
 
     private void processLiquidation(InvestmentWithdrawalRequest request, InvestmentEntity investment, MintBankAccountEntity creditAccount) {
@@ -136,7 +143,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
     }
 
-    private void createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
+    private String createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
 
         BigDecimal amountToWithdraw;
         boolean isFullLiquidation = false;
@@ -204,6 +211,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
         sendCorporateEmailNotification(account, investment, transactionRequestEntity);
+        return "Investment liquidation logged for approval";
     }
 
     private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
@@ -235,8 +243,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
 
         EventModel<CorporateInvestmentLiquidationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
-        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_TOP_UP, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(mintAccount, transactionRequestEntity);
+        applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_LIQUIDATION, emailEventModel);
+        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 
     @Override
@@ -312,7 +320,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
             publishTransactionEvent(requestEntity);
-            publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(corporateAccount, requestEntity);
+            publishTransactionNotificationUseCase.sendDeclinedCorporateInvestmentNotification(corporateAccount);
             return "Investment withdrawal declined successfully.";
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)

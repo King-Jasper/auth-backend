@@ -195,7 +195,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         EventModel<CorporateInvestmentTopUpEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_TOP_UP, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(mintAccount, transactionRequestEntity);
+        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 
     private InvestmentFundingResponse processInvestmentTopUp(InvestmentFundingRequest request, InvestmentEntity investmentEntity, MintAccountEntity accountEntity) {
@@ -297,7 +297,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
             publishTransactionEvent(requestEntity);
-            publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(corporateAccount, requestEntity);
+            publishTransactionNotificationUseCase.sendDeclinedCorporateInvestmentNotification(corporateAccount);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)

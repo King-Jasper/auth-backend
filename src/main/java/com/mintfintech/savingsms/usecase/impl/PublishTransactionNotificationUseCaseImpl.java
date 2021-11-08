@@ -3,7 +3,6 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateRoleTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -133,7 +132,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     }
 
     @Override
-    public void sendPendingAndDeclinedCorporateInvestmentNotification(MintAccountEntity mintAccount, CorporateTransactionRequestEntity requestEntity) {
+    public void sendPendingCorporateInvestmentNotification(MintAccountEntity mintAccount) {
 
         CorporateUserInfo userInfo;
         List<CorporateUserInfo> userInfoList = new ArrayList<>();
@@ -143,8 +142,8 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
                 if (userRole != CorporateRoleTypeConstant.INITIATOR) {
                     userInfo = CorporateUserInfo.builder()
-                            .userEmail(corporateUser.getAppUser().getEmail())
-                            .userName(corporateUser.getAppUser().getName())
+                            .recipient(corporateUser.getAppUser().getEmail())
+                            .name(corporateUser.getAppUser().getName())
                             .build();
                     userInfoList.add(userInfo);
                 }
@@ -152,12 +151,30 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
         }
 
         CorporateInvestmentEmailEvent investmentEmailEvent = CorporateInvestmentEmailEvent.builder()
-                .userInfo(userInfoList)
+                .recipients(userInfoList)
                 .build();
-        if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.PENDING)) {
             applicationEventService.publishEvent(ApplicationEventService.EventType.PENDING_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
-        } else if (requestEntity.getApprovalStatus().equals(TransactionApprovalStatusConstant.DECLINED)) {
-            applicationEventService.publishEvent(ApplicationEventService.EventType.DECLINED_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
+    }
+
+    @Override
+    public void sendDeclinedCorporateInvestmentNotification(MintAccountEntity mintAccount) {
+
+        CorporateUserInfo userInfo;
+        List<CorporateUserInfo> userInfoList = new ArrayList<>();
+        List<CorporateUserEntity> corporateUserList = corporateUserEntityDao.findRecordByAccount(mintAccount);
+        if (!corporateUserList.isEmpty()) {
+            for (CorporateUserEntity corporateUser : corporateUserList) {
+                    userInfo = CorporateUserInfo.builder()
+                            .recipient(corporateUser.getAppUser().getEmail())
+                            .name(corporateUser.getAppUser().getName())
+                            .build();
+                    userInfoList.add(userInfo);
+            }
         }
+
+        CorporateInvestmentEmailEvent investmentEmailEvent = CorporateInvestmentEmailEvent.builder()
+                .recipients(userInfoList)
+                .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.DECLINED_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
     }
 }

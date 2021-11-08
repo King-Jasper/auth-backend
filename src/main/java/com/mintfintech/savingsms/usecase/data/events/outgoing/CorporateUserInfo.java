@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class CorporateUserInfo {
 
-    private String userEmail;
+    private String recipient;
 
-    private String userName;
+    private String name;
 }

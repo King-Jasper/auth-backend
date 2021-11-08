@@ -314,7 +314,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             investmentEntityDao.saveRecord(investmentEntity);
 
             publishTransactionEvent(requestEntity);
-            publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(corporateAccount, requestEntity);
+            publishTransactionNotificationUseCase.sendDeclinedCorporateInvestmentNotification(corporateAccount);
             return "Investment declined successfully.";
         }
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(requestEntity.getDebitAccountId(), corporateAccount)
@@ -372,6 +372,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
         EventModel<CorporateInvestmentCreationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingAndDeclinedCorporateInvestmentNotification(mintAccount, transactionRequestEntity);
+        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 }

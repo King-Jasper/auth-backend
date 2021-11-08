@@ -9,5 +9,5 @@ import java.util.List;
 @Data
 public class CorporateInvestmentEmailEvent {
 
-    private List<CorporateUserInfo> userInfo;
+    private List<CorporateUserInfo> recipients;
 }
