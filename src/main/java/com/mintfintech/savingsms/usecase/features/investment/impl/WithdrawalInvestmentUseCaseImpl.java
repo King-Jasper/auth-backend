@@ -25,7 +25,6 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentLiquidationInfo;
-import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;

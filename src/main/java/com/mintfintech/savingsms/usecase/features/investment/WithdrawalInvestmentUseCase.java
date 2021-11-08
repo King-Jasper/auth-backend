@@ -6,7 +6,6 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentLiquidationResponse;
-import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 
 /**
  * Created by jnwanya on
