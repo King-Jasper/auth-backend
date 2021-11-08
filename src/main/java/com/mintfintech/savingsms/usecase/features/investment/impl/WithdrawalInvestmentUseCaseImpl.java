@@ -72,7 +72,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
 
     @Override
-    public InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
+    public InvestmentLiquidationResponse liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request) {
 
         InvestmentEntity investment = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
 
@@ -132,7 +132,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             }
         }
 
-        return getInvestmentUseCase.toInvestmentModel(investment);
+        return response;
     }
 
     private void processLiquidation(InvestmentWithdrawalRequest request, InvestmentEntity investment, MintBankAccountEntity creditAccount) {

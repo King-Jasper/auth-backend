@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentLiquidationResponse;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 
 /**
@@ -12,7 +13,7 @@ import com.mintfintech.savingsms.usecase.models.InvestmentModel;
  * Thu, 20 May, 2021
  */
 public interface WithdrawalInvestmentUseCase {
-    InvestmentModel liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request);
+    InvestmentLiquidationResponse liquidateInvestment(AuthenticatedUser authenticatedUser, InvestmentWithdrawalRequest request);
 
     void processInterestPayout();
 
