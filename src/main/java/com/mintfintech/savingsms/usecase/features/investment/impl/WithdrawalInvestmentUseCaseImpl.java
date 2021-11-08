@@ -19,6 +19,7 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmen
 import com.mintfintech.savingsms.usecase.data.events.outgoing.InvestmentLiquidationEmailEvent;
 import com.mintfintech.savingsms.usecase.data.request.CorporateApprovalRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentWithdrawalRequest;
+import com.mintfintech.savingsms.usecase.data.response.InvestmentLiquidationResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
@@ -97,14 +98,20 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             throw new BusinessLogicConflictException("Sorry, your investment has to reach a minimum of " + minimumLiquidationPeriodInDays + " days before liquidation.");
         }
 
+        InvestmentLiquidationResponse response = new InvestmentLiquidationResponse();
+        String responseMessage = "Investment liquidated successfully.";
         if (account.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
             processLiquidation(request, investment, creditAccount);
+            response.setMessage(responseMessage);
+            response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));
         } else if (account.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
             if (StringUtils.isEmpty(request.getTransactionPin())) {
                 throw new BadRequestException("Transaction pin is required");
             }
             accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
             processLiquidation(request, investment, creditAccount);
+            response.setMessage(responseMessage);
+            response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));
         } else if (account.getAccountType() != AccountTypeConstant.ENTERPRISE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
@@ -119,7 +126,9 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
             } else {
-                createTransactionRequest(account, investment, request, appUser);
+                responseMessage = createTransactionRequest(account, investment, request, appUser);
+                response.setMessage(responseMessage);
+                response.setInvestmentModel(null);
             }
         }
 
@@ -134,7 +143,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
     }
 
-    private void createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
+    private String createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
 
         BigDecimal amountToWithdraw;
         boolean isFullLiquidation = false;
@@ -201,6 +210,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, eventModel);
+        return "Investment liquidation logged for approval";
     }
 
     @Override
