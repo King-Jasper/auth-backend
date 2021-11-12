@@ -365,7 +365,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         CorporateInvestmentCreationEmailEvent emailEvent = CorporateInvestmentCreationEmailEvent.builder()
                 .recipient(transactionRequestEntity.getInitiator().getEmail())
                 .name(transactionRequestEntity.getInitiator().getName())
-                .investmentAmount(investment.getAmountInvested().doubleValue())
+                .investmentAmount(investment.getAmountInvested())
                 .investmentInterest(investment.getInterestRate())
                 .investmentDuration(investment.getDurationInMonths())
                 .maturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_DATE))

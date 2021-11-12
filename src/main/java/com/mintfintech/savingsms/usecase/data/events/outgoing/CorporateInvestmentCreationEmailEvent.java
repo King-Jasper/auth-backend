@@ -3,6 +3,8 @@ package com.mintfintech.savingsms.usecase.data.events.outgoing;
 import lombok.Builder;
 import lombok.Data;
 
+import java.math.BigDecimal;
+
 @Builder
 @Data
 public class CorporateInvestmentCreationEmailEvent {
@@ -11,7 +13,7 @@ public class CorporateInvestmentCreationEmailEvent {
 
     private String name;
 
-    private double investmentAmount;
+    private BigDecimal investmentAmount;
 
     private int investmentDuration;
 
