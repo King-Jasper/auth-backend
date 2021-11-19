@@ -16,7 +16,7 @@ import javax.persistence.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "corporate_user")
-public class CorporateUserEntity extends AbstractBaseEntity<Long>{
+public class CorporateUserEntity extends AbstractBaseEntity<Long> {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private MintAccountEntity corporateAccount;

@@ -26,6 +26,7 @@ import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCa
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
 import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
@@ -384,8 +385,14 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     }
 
     private void publishTransactionEvent(CorporateTransactionRequestEntity requestEntity) {
+        MintAccountEntity mintAccountEntity = requestEntity.getCorporate();
+        if(!Hibernate.isInitialized(mintAccountEntity)) {
+            mintAccountEntity = mintAccountEntityDao.getRecordById(mintAccountEntity.getId());
+        }
         CorporateInvestmentEvent event = CorporateInvestmentEvent.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
+                .requestId(requestEntity.getRequestId())
+                .mintAccountId(mintAccountEntity.getAccountId())
                 .dateReviewed(requestEntity.getDateReviewed())
                 .userId(requestEntity.getReviewer().getUserId())
                 .statusUpdateReason(StringUtils.defaultString(requestEntity.getStatusUpdateReason()))
