@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -14,4 +15,5 @@ import java.util.Optional;
 public interface CorporateUserRepository extends JpaRepository<CorporateUserEntity, Long> {
     Optional<CorporateUserEntity> findTopByAppUser_UserIdAndCorporateAccount_AccountId(String userId, String accountId);
     Optional<CorporateUserEntity> findTopByAppUserAndCorporateAccount(AppUserEntity user, MintAccountEntity corporateAccount);
+    List<CorporateUserEntity> findAllByCorporateAccount(MintAccountEntity mintAccount);
 }

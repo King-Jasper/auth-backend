@@ -1,32 +1,25 @@
 package com.mintfintech.savingsms.usecase.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsGoalTransactionEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.CorporateRoleTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.MintTransactionEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingEvent;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalFundingFailureEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.*;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.hibernate.Hibernate;
 import org.springframework.scheduling.annotation.Async;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by jnwanya on
@@ -42,6 +35,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     private final ApplicationEventService applicationEventService;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
+    private final CorporateUserEntityDao corporateUserEntityDao;
 
     @Async
     @Override
@@ -135,5 +129,52 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .transactionDate(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE_TIME))
                 .recipient(appUserEntity.getEmail()).build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_SAVINGS_GOAL_FUNDING_FAILURE, new EventModel<>(failureEvent));
+    }
+
+    @Override
+    public void sendPendingCorporateInvestmentNotification(MintAccountEntity mintAccount) {
+
+        CorporateUserInfo userInfo;
+        List<CorporateUserInfo> userInfoList = new ArrayList<>();
+        List<CorporateUserEntity> corporateUserList = corporateUserEntityDao.findRecordByAccount(mintAccount);
+        if (!corporateUserList.isEmpty()) {
+            for (CorporateUserEntity corporateUser : corporateUserList) {
+                CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+                if (userRole != CorporateRoleTypeConstant.INITIATOR) {
+                    userInfo = CorporateUserInfo.builder()
+                            .recipient(corporateUser.getAppUser().getEmail())
+                            .name(corporateUser.getAppUser().getName())
+                            .build();
+                    userInfoList.add(userInfo);
+                }
+            }
+        }
+
+        CorporateInvestmentEmailEvent investmentEmailEvent = CorporateInvestmentEmailEvent.builder()
+                .recipients(userInfoList)
+                .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.PENDING_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
+    }
+
+    @Override
+    public void sendDeclinedCorporateInvestmentNotification(MintAccountEntity mintAccount) {
+
+        CorporateUserInfo userInfo;
+        List<CorporateUserInfo> userInfoList = new ArrayList<>();
+        List<CorporateUserEntity> corporateUserList = corporateUserEntityDao.findRecordByAccount(mintAccount);
+        if (!corporateUserList.isEmpty()) {
+            for (CorporateUserEntity corporateUser : corporateUserList) {
+                    userInfo = CorporateUserInfo.builder()
+                            .recipient(corporateUser.getAppUser().getEmail())
+                            .name(corporateUser.getAppUser().getName())
+                            .build();
+                    userInfoList.add(userInfo);
+            }
+        }
+
+        CorporateInvestmentEmailEvent investmentEmailEvent = CorporateInvestmentEmailEvent.builder()
+                .recipients(userInfoList)
+                .build();
+            applicationEventService.publishEvent(ApplicationEventService.EventType.DECLINED_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
     }
 }
