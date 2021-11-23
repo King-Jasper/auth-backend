@@ -23,6 +23,7 @@ import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUse
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,6 +33,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
@@ -69,8 +71,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
-            CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser)
-                    .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
+            Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);
+            if(!opt.isPresent()) {
+                  log.info("User Id - {}, account Id - {}", appUser.getUserId(), mintAccount.getAccountId());
+                  throw new BusinessLogicConflictException("Sorry, user not found for corporate account");
+            }
+            CorporateUserEntity corporateUser = opt.get();
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
