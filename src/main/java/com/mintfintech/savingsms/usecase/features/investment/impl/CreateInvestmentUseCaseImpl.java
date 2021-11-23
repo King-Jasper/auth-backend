@@ -103,6 +103,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .maxLiquidateRate(applicationProperty.getMaxLiquidateRate())
                 .owner(mintAccount)
                 .totalAmountInvested(investAmount)
+                .maturityDate(LocalDateTime.now().plusMonths(request.getDurationInMonths()))
                 .interestRate(investmentTenor.getInterestRate())
                 .build();
         investment.setRecordStatus(RecordStatusConstant.INACTIVE);
