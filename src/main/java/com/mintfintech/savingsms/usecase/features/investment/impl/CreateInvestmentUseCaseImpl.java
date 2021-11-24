@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.AccountAuthorisationUseCase;
+import com.mintfintech.savingsms.usecase.GetMintAccountUseCase;
 import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.CorporateInvestmentCreationEmailEvent;
@@ -53,14 +54,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
     private final PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
+    private final GetMintAccountUseCase getMintAccountUseCase;
 
     @Override
     @Transactional
     public InvestmentCreationResponse createInvestment(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request) {
 
+        MintAccountEntity mintAccount = getMintAccountUseCase.getMintAccount(authenticatedUser);
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
-
-        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
         accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
         InvestmentCreationResponse response;

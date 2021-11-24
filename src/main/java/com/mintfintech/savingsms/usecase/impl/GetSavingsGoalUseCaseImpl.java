@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
+import com.mintfintech.savingsms.usecase.GetMintAccountUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintAccountRecordRequestEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
@@ -59,6 +60,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private ApplicationProperty applicationProperty;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     private ApplicationEventService applicationEventService;
+    private final GetMintAccountUseCase getMintAccountUseCase;
 
     @Override
     public SavingsGoalModel fromSavingsGoalEntityToModel(SavingsGoalEntity savingsGoalEntity) {
@@ -197,26 +199,14 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
     @Override
     public List<SavingsGoalModel> getSavingsGoalList(AuthenticatedUser authenticatedUser) {
-        MintAccountEntity accountEntity = getMintAccount(authenticatedUser);
+        MintAccountEntity accountEntity = getMintAccountUseCase.getMintAccount(authenticatedUser);
         return getSavingsGoalList(accountEntity);
     }
 
-    private MintAccountEntity getMintAccount(AuthenticatedUser authenticatedUser) {
-        Optional<MintAccountEntity> accountEntityOptional = mintAccountEntityDao.findAccountByAccountId(authenticatedUser.getAccountId());
-        if(!accountEntityOptional.isPresent()) {
-            MintAccountRecordRequestEvent requestEvent = MintAccountRecordRequestEvent.builder()
-                    .topicNameSuffix("savings-service")
-                    .accountIds(Collections.singletonList(authenticatedUser.getAccountId()))
-                    .build();
-            applicationEventService.publishEvent(ApplicationEventService.EventType.MISSING_ACCOUNT_RECORD, new EventModel<>(requestEvent));
-            throw new UnauthorisedException("Invalid accountId.");
-        }
-        return accountEntityOptional.get();
-    }
 
     @Override
     public AccountSavingsGoalResponse getAccountSavingsGoals(AuthenticatedUser authenticatedUser) {
-        MintAccountEntity accountEntity = getMintAccount(authenticatedUser);
+        MintAccountEntity accountEntity = getMintAccountUseCase.getMintAccount(authenticatedUser);
         List<MintSavingsGoalModel> mintGoalsList = new ArrayList<>();
         List<SavingsGoalModel> savingsGoalList = new ArrayList<>();
         List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getAccountSavingGoals(accountEntity);
