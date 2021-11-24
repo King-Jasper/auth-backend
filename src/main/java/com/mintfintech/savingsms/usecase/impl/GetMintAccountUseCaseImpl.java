@@ -24,7 +24,7 @@ public class GetMintAccountUseCaseImpl implements GetMintAccountUseCase {
 
     private final MintAccountEntityDao mintAccountEntityDao;
     private final ApplicationEventService applicationEventService;
-    
+
     @Override
     public MintAccountEntity getMintAccount(AuthenticatedUser authenticatedUser) {
         Optional<MintAccountEntity> accountEntityOptional = mintAccountEntityDao.findAccountByAccountId(authenticatedUser.getAccountId());

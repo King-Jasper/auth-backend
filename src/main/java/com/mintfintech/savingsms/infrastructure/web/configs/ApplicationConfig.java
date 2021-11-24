@@ -41,6 +41,9 @@ public class ApplicationConfig {
     @Value("${database.password}")
     private String databasePassword;
 
+    @Value("${database.connection:10}")
+    private int databaseConnection;
+
     @Value("${database.driver-class-name}")
     private String databaseDriverName;
 
@@ -49,7 +52,7 @@ public class ApplicationConfig {
         HikariConfig config = new HikariConfig();
         config.addDataSourceProperty("autoReconnect",true);
         config.addDataSourceProperty("maxReconnects",5);
-        //config.setMaximumPoolSize(10); // DEFAULT IS 10
+        config.setMaximumPoolSize(databaseConnection); // DEFAULT IS 10
         //config.setConnectionTimeout(60000);
         //config.setLeakDetectionThreshold(120000);
         //config.setMaxLifetime(300000);
