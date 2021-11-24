@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.error_handler;
 
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -7,7 +8,6 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import io.sentry.Sentry;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,9 +29,18 @@ import javax.validation.ConstraintViolationException;
 @ControllerAdvice(basePackages = "com.mintfintech.savingsms.infrastructure.web.controllers")
 public class GlobalErrorHandler {
 
+    private final ApplicationProperty applicationProperty;
+    public GlobalErrorHandler(ApplicationProperty applicationProperty) {
+        this.applicationProperty = applicationProperty;
+    }
+
     @ExceptionHandler(value = {RuntimeException.class, Exception.class})
     public ResponseEntity<ApiResponseJSON<String>> handleException(Exception exception) {
-        Sentry.captureException(exception);
+        if(applicationProperty.isLiveEnvironment()) {
+            Sentry.captureException(exception);
+        }else {
+            exception.printStackTrace();
+        }
         ApiResponseJSON<String> apiResponse = new ApiResponseJSON<>("Sorry, currently unable to process request at the moment.");
         return new ResponseEntity<>(apiResponse, HttpStatus.INTERNAL_SERVER_ERROR);
     }

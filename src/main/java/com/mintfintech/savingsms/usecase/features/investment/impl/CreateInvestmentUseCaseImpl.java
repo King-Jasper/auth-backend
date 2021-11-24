@@ -91,7 +91,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
 
         InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
-                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration."));
 
         InvestmentEntity investment = InvestmentEntity.builder()
                 .amountInvested(investAmount)
