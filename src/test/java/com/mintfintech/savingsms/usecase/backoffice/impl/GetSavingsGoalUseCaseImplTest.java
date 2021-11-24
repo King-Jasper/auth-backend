@@ -35,6 +35,7 @@ import java.util.List;
  * Created by Wilson on
  * Aug. 23, 2020
  */
+/*
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DataJpaTest
 @AutoConfigureTestDatabase(connection = EmbeddedDatabaseConnection.H2,replace = AutoConfigureTestDatabase.Replace.ANY)
@@ -235,3 +236,4 @@ private SavingsGoalCategoryEntity getSavingsGoalCategoryEntity(){
     }
 
 }
+ */
