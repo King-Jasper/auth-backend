@@ -1,10 +1,7 @@
 package com.mintfintech.savingsms.usecase.features.corporate.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
-import com.mintfintech.savingsms.domain.entities.CorporateTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.CorporateTransactionRequestEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionCategoryConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.CorporateInvestmentDetailResponse;
@@ -37,6 +34,8 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
     public CorporateInvestmentDetailResponse getInvestmentRequestDetail(AuthenticatedUser currentUser, String requestId) {
         CorporateTransactionRequestEntity requestEntity = getCorporateTransactionRequest(currentUser, requestId);
 
+        AppUserEntity initiator = requestEntity.getInitiator();
+
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
 
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
@@ -45,6 +44,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         return CorporateInvestmentDetailResponse.builder()
                 .amount(investmentEntity.getAmountInvested())
+                .initiator(initiator.getName())
                 .expectedReturns(expectedReturns)
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
