@@ -158,8 +158,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
 
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), mintAccount)
-                .orElseThrow(() -> new BadRequestException("Invalid debit account Id"));
+        MintBankAccountEntity debitAccount = getMintAccountUseCase.getMintBankAccount(mintAccount, request.getDebitAccountId());
 
         if (!mintAccount.getId().equals(debitAccount.getMintAccount().getId())) {
             throw new UnauthorisedException("Request denied.");

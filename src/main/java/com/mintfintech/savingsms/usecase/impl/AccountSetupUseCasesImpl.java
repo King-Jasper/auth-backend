@@ -90,7 +90,8 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
                     .accountTierLevel(accountTier)
                     .dailyTransactionLimit(BigDecimal.valueOf(accountCreationEvent.getDailyTransactionLimit()))
                     .mintAccount(mintAccountEntity)
-                    .currency(currencyEntity).build();
+                    .currency(currencyEntity)
+                    .build();
             bankAccountEntity.setDateCreated(dateCreated);
             mintBankAccountEntityDao.saveRecord(bankAccountEntity);
         }
