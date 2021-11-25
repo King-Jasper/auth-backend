@@ -45,6 +45,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         return CorporateInvestmentDetailResponse.builder()
                 .amount(investmentEntity.getAmountInvested())
                 .investmentDuration(investmentEntity.getDurationInMonths())
+                .approvalStatus(requestEntity.getApprovalStatus().name())
                 .initiator(initiator.getName())
                 .expectedReturns(expectedReturns)
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
@@ -74,6 +75,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
         return CorporateInvestmentTopUpDetailResponse.builder()
+                .approvalStatus(requestEntity.getApprovalStatus().name())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
                 .amountInvested(investmentEntity.getAmountInvested())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
@@ -113,6 +115,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
                 .liquidationAmount(requestEntity.getTotalAmount())
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .totalExpectedReturns(expectedReturns)
+                .approvalStatus(requestEntity.getApprovalStatus().name())
                 .build();
     }
 

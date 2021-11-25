@@ -28,4 +28,6 @@ public class CorporateInvestmentLiquidationDetailResponse {
     private double interestAccrued;
 
     private BigDecimal totalExpectedReturns;
+
+    private String approvalStatus;
 }
