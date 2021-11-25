@@ -126,7 +126,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 response = createTransactionRequest(accountEntity, investmentEntity, request, appUser);
             }
         }
-
         return response;
     }
 
