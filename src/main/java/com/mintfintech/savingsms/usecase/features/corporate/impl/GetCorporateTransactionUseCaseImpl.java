@@ -44,6 +44,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         return CorporateInvestmentDetailResponse.builder()
                 .amount(investmentEntity.getAmountInvested())
+                .investmentDuration(investmentEntity.getDurationInMonths())
                 .initiator(initiator.getName())
                 .expectedReturns(expectedReturns)
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
