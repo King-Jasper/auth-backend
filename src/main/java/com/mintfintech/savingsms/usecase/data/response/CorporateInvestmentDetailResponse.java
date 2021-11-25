@@ -25,4 +25,6 @@ public class CorporateInvestmentDetailResponse {
 
     private BigDecimal expectedReturns;
 
+    private String approvalStatus;
+
 }
