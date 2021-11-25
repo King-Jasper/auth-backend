@@ -226,6 +226,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         response.setResponseCode(responseCode);
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investmentEntity));
+        response.setResponseMessage("Investment funded successfully.");
         return response;
     }
 

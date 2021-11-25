@@ -104,7 +104,7 @@ public class InvestmentController {
     public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                         @RequestBody @Valid FundInvestmentJSON requestJSON) {
         InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestment(authenticatedUser, requestJSON.toRequest());
-        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Investment funded successfully.", response);
+        ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>(response.getResponseMessage(), response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
