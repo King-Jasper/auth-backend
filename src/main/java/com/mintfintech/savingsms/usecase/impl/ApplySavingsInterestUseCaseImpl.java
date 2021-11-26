@@ -49,7 +49,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
 
     @Override
     public void processInterestAndUpdateGoals() {
-        int size = 50;
+        int size = 1000;
         BigDecimal totalAccumulatedInterest = BigDecimal.valueOf(0.00);
         PagedResponse<SavingsGoalEntity> pagedResponse = savingsGoalEntityDao.getPagedEligibleInterestSavingsGoal(0, size);
         totalAccumulatedInterest = totalAccumulatedInterest.add(processInterestComputation(pagedResponse.getRecords()));

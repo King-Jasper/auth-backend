@@ -82,6 +82,7 @@ public class InvestmentController {
                 .investmentStatus(investmentStatus)
                 .startFromDate(fromDate)
                 .startToDate(toDate)
+                .completedRecords("COMPLETED".equalsIgnoreCase(investmentStatus))
                 .build();
         //System.out.println(searchRequest.toString());
 
