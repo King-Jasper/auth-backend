@@ -31,4 +31,8 @@ public class CorporateInvestmentTopUpDetailResponse {
 
     private String approvalStatus;
 
+    private String dateReviewed;
+
+    private String reviewedBy;
+
 }

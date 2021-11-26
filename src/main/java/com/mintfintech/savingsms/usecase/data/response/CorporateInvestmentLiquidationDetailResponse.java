@@ -30,4 +30,8 @@ public class CorporateInvestmentLiquidationDetailResponse {
     private BigDecimal totalExpectedReturns;
 
     private String approvalStatus;
+
+    private String dateReviewed;
+
+    private String reviewedBy;
 }

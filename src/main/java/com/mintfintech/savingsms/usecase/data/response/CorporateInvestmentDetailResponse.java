@@ -27,4 +27,8 @@ public class CorporateInvestmentDetailResponse {
 
     private String approvalStatus;
 
+    private String dateReviewed;
+
+    private String reviewedBy;
+
 }

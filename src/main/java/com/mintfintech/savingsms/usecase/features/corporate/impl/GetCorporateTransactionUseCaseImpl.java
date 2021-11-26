@@ -42,7 +42,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
-        return CorporateInvestmentDetailResponse.builder()
+        CorporateInvestmentDetailResponse response = CorporateInvestmentDetailResponse.builder()
                 .amount(investmentEntity.getAmountInvested())
                 .investmentDuration(investmentEntity.getDurationInMonths())
                 .approvalStatus(requestEntity.getApprovalStatus().name())
@@ -53,6 +53,13 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
                 .interestRate(investmentEntity.getInterestRate())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();
+
+        if(requestEntity.getDateReviewed() != null) {
+            response.setDateReviewed(requestEntity.getDateReviewed().format(DateTimeFormatter.ISO_DATE_TIME));
+            response.setReviewedBy(requestEntity.getReviewer().getName());
+        }
+
+        return response;
 
     }
 
@@ -74,7 +81,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
-        return CorporateInvestmentTopUpDetailResponse.builder()
+        CorporateInvestmentTopUpDetailResponse response = CorporateInvestmentTopUpDetailResponse.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
                 .amountInvested(investmentEntity.getAmountInvested())
@@ -87,6 +94,13 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .totalExpectedReturns(expectedReturns)
                 .build();
+
+        if(requestEntity.getDateReviewed() != null) {
+            response.setDateReviewed(requestEntity.getDateReviewed().format(DateTimeFormatter.ISO_DATE_TIME));
+            response.setReviewedBy(requestEntity.getReviewer().getName());
+        }
+
+        return response;
     }
 
     @Override
@@ -104,7 +118,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
             expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
         }
 
-        return CorporateInvestmentLiquidationDetailResponse.builder()
+        CorporateInvestmentLiquidationDetailResponse response = CorporateInvestmentLiquidationDetailResponse.builder()
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
                 .amountInvested(investmentEntity.getAmountInvested())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
@@ -117,6 +131,13 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
                 .totalExpectedReturns(expectedReturns)
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .build();
+
+        if(requestEntity.getDateReviewed() != null) {
+            response.setDateReviewed(requestEntity.getDateReviewed().format(DateTimeFormatter.ISO_DATE_TIME));
+            response.setReviewedBy(requestEntity.getReviewer().getName());
+        }
+
+        return response;
     }
 
     private CorporateTransactionRequestEntity getCorporateTransactionRequest(AuthenticatedUser currentUser, String requestId) {
