@@ -129,9 +129,11 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
         }
 
         if (searchDTO.getInvestmentStatus() != null) {
-            whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), searchDTO.getInvestmentStatus()));
             if (searchDTO.getAccount() != null && searchDTO.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
-                whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED));
+                whereClause = cb.and(whereClause, cb.or(cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED),
+                        cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.COMPLETED)));
+            }else {
+                whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), searchDTO.getInvestmentStatus()));
             }
         }else if(searchDTO.isCompletedRecords()) {
             whereClause = cb.and(whereClause, cb.or(cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED),
