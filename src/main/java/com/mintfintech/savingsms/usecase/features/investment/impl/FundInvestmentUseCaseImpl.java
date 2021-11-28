@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
@@ -24,6 +25,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentDetailsInfo;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
@@ -58,6 +60,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
     private final CorporateTransactionRequestEntityDao transactionRequestEntityDao;
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
     private final PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
+    private final Gson gson;
 
     @Override
     public InvestmentTransactionEntity fundInvestment(InvestmentEntity investmentEntity, MintBankAccountEntity debitAccount, BigDecimal amount) {
@@ -291,7 +294,23 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
 
+        BigDecimal toBeAmountInvested = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
+        BigDecimal expectedInterest = getInvestmentUseCase.calculateOutstandingInterest(toBeAmountInvested, investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+        BigDecimal currentAccruedInterest = investmentEntity.getAccruedInterest();
+        BigDecimal expectedReturns = toBeAmountInvested.add(expectedInterest).add(currentAccruedInterest);
+
+        InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
+                .amountInvested(investmentEntity.getAmountInvested())
+                .topUpAmount(requestEntity.getTotalAmount())
+                .interestRate(investmentEntity.getInterestRate())
+                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .totalExpectedReturns(expectedReturns)
+                .build();
+        String transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
+
         if (!approved) {
+            requestEntity.setTransactionMetaData(transactionMetaData);
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
@@ -317,6 +336,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         investmentEntity.setAmountInvested(investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount()));
         investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(requestEntity.getTotalAmount()));
         investmentEntityDao.saveRecord(investmentEntity);
+
+        requestEntity.setTransactionMetaData(transactionMetaData);
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());

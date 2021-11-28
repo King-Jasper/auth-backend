@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.corporate.impl;
 
+import com.google.gson.Gson;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateTransactionCategoryConstant;
@@ -12,6 +13,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictExcepti
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import com.mintfintech.savingsms.usecase.features.corporate.GetCorporateTransactionUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentDetailsInfo;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
     private final CorporateTransactionEntityDao corporateTransactionEntityDao;
     private final InvestmentEntityDao investmentEntityDao;
     private final GetInvestmentUseCase getInvestmentUseCase;
+    private final Gson gson;
 
     @Override
     public CorporateInvestmentDetailResponse getInvestmentRequestDetail(AuthenticatedUser currentUser, String requestId) {
@@ -40,17 +43,19 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
 
-        BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+        //BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
 
         CorporateInvestmentDetailResponse response = CorporateInvestmentDetailResponse.builder()
-                .amount(investmentEntity.getAmountInvested())
+                .amount(investmentDetailsInfo.getAmountInvested())
                 .investmentDuration(investmentEntity.getDurationInMonths())
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .initiator(initiator.getName())
-                .expectedReturns(expectedReturns)
-                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .expectedReturns(investmentDetailsInfo.getTotalExpectedReturns())
+                .maturityDate(investmentDetailsInfo.getMaturityDate())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
-                .interestRate(investmentEntity.getInterestRate())
+                .interestRate(investmentDetailsInfo.getInterestRate())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
@@ -71,28 +76,29 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
 
-        BigDecimal toBeAmountInvested = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
+        //BigDecimal toBeAmountInvested = investmentEntity.getAmountInvested().add(requestEntity.getTotalAmount());
 
-        BigDecimal expectedInterest = getInvestmentUseCase.calculateOutstandingInterest(toBeAmountInvested, investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+        //BigDecimal expectedInterest = getInvestmentUseCase.calculateOutstandingInterest(toBeAmountInvested, investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
-        BigDecimal currentAccruedInterest = investmentEntity.getAccruedInterest();
+        //BigDecimal currentAccruedInterest = investmentEntity.getAccruedInterest();
 
-        BigDecimal expectedReturns = toBeAmountInvested.add(expectedInterest).add(currentAccruedInterest);
+        //BigDecimal expectedReturns = toBeAmountInvested.add(expectedInterest).add(currentAccruedInterest);
 
         //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
         CorporateInvestmentTopUpDetailResponse response = CorporateInvestmentTopUpDetailResponse.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
-                .amountInvested(investmentEntity.getAmountInvested())
+                .amountInvested(investmentDetailsInfo.getAmountInvested())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .initiator(investmentEntity.getCreator().getName())
-                .interestRate(investmentEntity.getInterestRate())
+                .interestRate(investmentDetailsInfo.getInterestRate())
                 .investmentDuration(investmentEntity.getDurationInMonths())
-                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
-                .topUpAmount(requestEntity.getTotalAmount())
-                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
-                .totalExpectedReturns(expectedReturns)
+                .maturityDate(investmentDetailsInfo.getMaturityDate())
+                .topUpAmount(investmentDetailsInfo.getTopUpAmount())
+                .interestAccrued(investmentDetailsInfo.getInterestAccrued())
+                .totalExpectedReturns(investmentDetailsInfo.getTotalExpectedReturns())
                 .build();
 
         if(requestEntity.getDateReviewed() != null) {
@@ -111,24 +117,26 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         CorporateTransactionEntity transactionEntity = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transactionEntity.getTransactionRecordId());
 
-        BigDecimal amount = investmentEntity.getAmountInvested();
-        BigDecimal expectedReturns = BigDecimal.ZERO;
+        //BigDecimal amount = investmentEntity.getAmountInvested();
+        //BigDecimal expectedReturns = BigDecimal.ZERO;
 
-        if (amount.compareTo(BigDecimal.ZERO) > 0) {
-            expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
-        }
+        //if (amount.compareTo(BigDecimal.ZERO) > 0) {
+//            expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+//        }
+        
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
 
         CorporateInvestmentLiquidationDetailResponse response = CorporateInvestmentLiquidationDetailResponse.builder()
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
-                .amountInvested(investmentEntity.getAmountInvested())
+                .amountInvested(investmentDetailsInfo.getAmountInvested())
                 .dateInitiated(investmentEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .initiator(investmentEntity.getCreator().getName())
-                .interestRate(investmentEntity.getInterestRate())
+                .interestRate(investmentDetailsInfo.getInterestRate())
                 .investmentDuration(investmentEntity.getDurationInMonths())
-                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
-                .liquidationAmount(requestEntity.getTotalAmount())
-                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
-                .totalExpectedReturns(expectedReturns)
+                .maturityDate(investmentDetailsInfo.getMaturityDate())
+                .liquidationAmount(investmentDetailsInfo.getLiquidatedAmount())
+                .interestAccrued(investmentDetailsInfo.getInterestAccrued())
+                .totalExpectedReturns(investmentDetailsInfo.getTotalExpectedReturns())
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .build();
 

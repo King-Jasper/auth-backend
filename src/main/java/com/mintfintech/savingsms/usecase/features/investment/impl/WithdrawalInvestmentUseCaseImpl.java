@@ -26,6 +26,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.WithdrawalInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentDetailsInfo;
 import com.mintfintech.savingsms.usecase.models.InvestmentLiquidationInfo;
 import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
@@ -314,7 +315,22 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         CorporateTransactionEntity transaction = corporateTransactionEntityDao.getByTransactionRequest(requestEntity);
         InvestmentEntity investmentEntity = investmentEntityDao.getRecordById(transaction.getTransactionRecordId());
 
+        BigDecimal amountInvested = investmentEntity.getAmountInvested();
+        BigDecimal expectedReturns;
+        String transactionMetaData;
+        InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
+                .amountInvested(amountInvested)
+                .liquidatedAmount(requestEntity.getTotalAmount())
+                .interestRate(investmentEntity.getInterestRate())
+                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .build();
+
         if (!approved) {
+            investmentDetailsInfo.setInterestAccrued(investmentEntity.getAccruedInterest().doubleValue());
+            investmentDetailsInfo.setTotalExpectedReturns(getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate()));
+            transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
+
+            requestEntity.setTransactionMetaData(transactionMetaData);
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
@@ -333,10 +349,18 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         boolean isFullLiquidation = liquidationInfo.isFullLiquidation();
         if (isFullLiquidation) {
             processFullLiquidation(investmentEntity, creditAccount);
+            expectedReturns = BigDecimal.ZERO;
         } else {
             processPartialLiquidation(investmentEntity, creditAccount, requestEntity.getTotalAmount());
+            expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(),
+                    investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
         }
 
+        investmentDetailsInfo.setInterestAccrued(investmentEntity.getAccruedInterest().doubleValue());
+        investmentDetailsInfo.setTotalExpectedReturns(expectedReturns);
+        transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
+
+        requestEntity.setTransactionMetaData(transactionMetaData);
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());
