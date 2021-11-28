@@ -322,15 +322,19 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .totalExpectedReturns(expectedReturns)
                 .build();
+
         String transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
 
         if (!approved) {
-            requestEntity.setTransactionMetaData(transactionMetaData);
+
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
             requestEntity.setDateReviewed(LocalDateTime.now());
             transactionRequestEntityDao.saveRecord(requestEntity);
+
+            transaction.setTransactionMetaData(transactionMetaData);
+            corporateTransactionEntityDao.saveRecord(transaction);
 
             investmentEntity.setInvestmentStatus(InvestmentStatusConstant.CANCELLED);
             investmentEntity.setRecordStatus(RecordStatusConstant.DELETED);
@@ -361,11 +365,13 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         investmentEntity.setMaturityDate(LocalDateTime.now().plusMonths(durationInMonths));
         investmentEntityDao.saveRecord(investmentEntity);
 
-        requestEntity.setTransactionMetaData(transactionMetaData);
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());
         transactionRequestEntityDao.saveRecord(requestEntity);
+
+        transaction.setTransactionMetaData(transactionMetaData);
+        corporateTransactionEntityDao.saveRecord(transaction);
 
         publishTransactionEvent(corporateAccount, requestEntity);
         sendInvestmentCreationEmail(investmentEntity, requestEntity.getInitiator());

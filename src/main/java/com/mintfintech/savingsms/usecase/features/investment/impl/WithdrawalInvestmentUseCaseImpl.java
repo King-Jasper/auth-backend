@@ -318,19 +318,21 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         BigDecimal amountInvested = investmentEntity.getAmountInvested();
         BigDecimal expectedReturns;
         String transactionMetaData;
+
         InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
                 .amountInvested(amountInvested)
                 .liquidatedAmount(requestEntity.getTotalAmount())
                 .interestRate(investmentEntity.getInterestRate())
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
+                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .totalExpectedReturns(getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate()))
                 .build();
+        transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
+        transaction.setTransactionMetaData(transactionMetaData);
+        corporateTransactionEntityDao.saveRecord(transaction);
 
         if (!approved) {
-            investmentDetailsInfo.setInterestAccrued(investmentEntity.getAccruedInterest().doubleValue());
-            investmentDetailsInfo.setTotalExpectedReturns(getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate()));
-            transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
 
-            requestEntity.setTransactionMetaData(transactionMetaData);
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);

@@ -87,6 +87,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
         //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
         InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(transactionEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
+
         CorporateInvestmentTopUpDetailResponse response = CorporateInvestmentTopUpDetailResponse.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
