@@ -301,10 +301,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
                 .amountInvested(investmentEntity.getAmountInvested())
-                .topUpAmount(requestEntity.getTotalAmount())
                 .interestRate(investmentEntity.getInterestRate())
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
-                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .interestAccrued(investmentEntity.getAccruedInterest())
                 .totalExpectedReturns(expectedReturns)
                 .build();
         String transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);

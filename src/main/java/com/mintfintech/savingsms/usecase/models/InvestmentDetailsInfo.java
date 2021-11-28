@@ -11,15 +11,11 @@ public class InvestmentDetailsInfo {
 
     private BigDecimal amountInvested;
 
-    private BigDecimal topUpAmount;
-
-    private BigDecimal liquidatedAmount;
-
     private double interestRate;
 
     private String maturityDate;
 
-    private double interestAccrued;
+    private BigDecimal interestAccrued;
 
     private BigDecimal totalExpectedReturns;
 }

@@ -321,10 +321,9 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
                 .amountInvested(amountInvested)
-                .liquidatedAmount(requestEntity.getTotalAmount())
                 .interestRate(investmentEntity.getInterestRate())
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
-                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .interestAccrued(investmentEntity.getAccruedInterest())
                 .totalExpectedReturns(getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate()))
                 .build();
         transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
@@ -358,7 +357,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                     investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
         }
 
-        investmentDetailsInfo.setInterestAccrued(investmentEntity.getAccruedInterest().doubleValue());
+        investmentDetailsInfo.setInterestAccrued(investmentEntity.getAccruedInterest());
         investmentDetailsInfo.setTotalExpectedReturns(expectedReturns);
         transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
 

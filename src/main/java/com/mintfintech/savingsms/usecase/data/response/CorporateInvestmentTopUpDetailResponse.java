@@ -25,7 +25,7 @@ public class CorporateInvestmentTopUpDetailResponse {
 
     private BigDecimal topUpAmount;
 
-    private double interestAccrued;
+    private BigDecimal interestAccrued;
 
     private BigDecimal totalExpectedReturns;
 

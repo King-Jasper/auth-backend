@@ -315,11 +315,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(),
                 investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
+
         InvestmentDetailsInfo investmentDetailsInfo = InvestmentDetailsInfo.builder()
                 .amountInvested(investmentEntity.getAmountInvested())
                 .interestRate(investmentEntity.getInterestRate())
                 .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
-                .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
+                .interestAccrued(investmentEntity.getAccruedInterest())
                 .totalExpectedReturns(expectedReturns)
                 .build();
 
