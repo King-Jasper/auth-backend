@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.CorporateTransactionRequestEntityDao;
 import com.mintfintech.savingsms.domain.entities.CorporateTransactionRequestEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CorporateTransactionRequestRepository;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -52,7 +53,7 @@ public class CorporateTransactionRequestEntityDaoImpl extends CrudDaoImpl<Corpor
 
     @Override
     public Optional<CorporateTransactionRequestEntity> findByRequestId(String requestId) {
-        return repository.findTopByRequestId(requestId);
+        return repository.findTopByRequestIdAndRecordStatus(requestId, RecordStatusConstant.ACTIVE);
     }
 
 
