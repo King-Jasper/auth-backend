@@ -45,7 +45,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         BigDecimal amountInvested = investmentEntity.getAmountInvested();
         BigDecimal expectedReturns;
-        if(transactionEntity.getTransactionMetaData() == null) {
+        if(transactionEntity.getTransactionMetaData() != null) {
             InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(transactionEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
             amountInvested = investmentDetailsInfo.getAmountInvested();
             expectedReturns = investmentDetailsInfo.getTotalExpectedReturns();
