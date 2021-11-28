@@ -322,7 +322,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .amountInvested(amountInvested)
                 .liquidatedAmount(requestEntity.getTotalAmount())
                 .interestRate(investmentEntity.getInterestRate())
-                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
                 .build();
 
         if (!approved) {

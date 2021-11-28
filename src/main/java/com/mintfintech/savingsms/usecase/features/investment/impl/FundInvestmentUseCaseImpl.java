@@ -303,7 +303,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .amountInvested(investmentEntity.getAmountInvested())
                 .topUpAmount(requestEntity.getTotalAmount())
                 .interestRate(investmentEntity.getInterestRate())
-                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE))
+                .maturityDate(investmentEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME))
                 .interestAccrued(investmentEntity.getAccruedInterest().doubleValue())
                 .totalExpectedReturns(expectedReturns)
                 .build();
