@@ -310,7 +310,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         String transactionMetaData = gson.toJson(investmentDetailsInfo, InvestmentDetailsInfo.class);
 
         if (!approved) {
-            requestEntity.setTransactionMetaData(transactionMetaData);
+            transaction.setTransactionMetaData(transactionMetaData);
+            corporateTransactionEntityDao.saveRecord(transaction);
+
             requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.DECLINED);
             requestEntity.setStatusUpdateReason(StringUtils.defaultString(request.getReason()));
             requestEntity.setReviewer(user);
@@ -337,7 +339,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         investmentEntity.setTotalAmountInvested(investmentEntity.getTotalAmountInvested().add(requestEntity.getTotalAmount()));
         investmentEntityDao.saveRecord(investmentEntity);
 
-        requestEntity.setTransactionMetaData(transactionMetaData);
+        transaction.setTransactionMetaData(transactionMetaData);
+        corporateTransactionEntityDao.saveRecord(transaction);
+
         requestEntity.setApprovalStatus(TransactionApprovalStatusConstant.APPROVED);
         requestEntity.setReviewer(user);
         requestEntity.setDateReviewed(LocalDateTime.now());

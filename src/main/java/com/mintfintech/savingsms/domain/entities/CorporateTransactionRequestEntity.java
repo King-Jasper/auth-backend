@@ -53,6 +53,7 @@ public class CorporateTransactionRequestEntity extends AbstractBaseEntity<Long>{
 
     private String transactionDescription;
 
+    @Column(nullable = true, columnDefinition = "TEXT")
     private String transactionMetaData;
 
 

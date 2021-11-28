@@ -45,7 +45,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         //BigDecimal expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(investmentEntity.getAmountInvested(), investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
-        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(transactionEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
 
         CorporateInvestmentDetailResponse response = CorporateInvestmentDetailResponse.builder()
                 .amount(investmentDetailsInfo.getAmountInvested())
@@ -86,7 +86,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 
         //getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 
-        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(transactionEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
         CorporateInvestmentTopUpDetailResponse response = CorporateInvestmentTopUpDetailResponse.builder()
                 .approvalStatus(requestEntity.getApprovalStatus().name())
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())
@@ -124,7 +124,7 @@ public class GetCorporateTransactionUseCaseImpl implements GetCorporateTransacti
 //            expectedReturns = getInvestmentUseCase.calculateTotalExpectedReturn(amount, investmentEntity.getAccruedInterest(), investmentEntity.getInterestRate(), investmentEntity.getMaturityDate());
 //        }
         
-        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(requestEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
+        InvestmentDetailsInfo investmentDetailsInfo = gson.fromJson(transactionEntity.getTransactionMetaData(), InvestmentDetailsInfo.class);
 
         CorporateInvestmentLiquidationDetailResponse response = CorporateInvestmentLiquidationDetailResponse.builder()
                 .transactionCategory(CorporateTransactionCategoryConstant.INVESTMENT.name())

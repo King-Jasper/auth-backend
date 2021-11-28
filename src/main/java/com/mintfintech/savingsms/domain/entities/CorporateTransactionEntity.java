@@ -24,4 +24,7 @@ public class CorporateTransactionEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private CorporateTransactionTypeConstant transactionType;
+
+    @Column(nullable = true, columnDefinition = "TEXT")
+    private String transactionMetaData;
 }
