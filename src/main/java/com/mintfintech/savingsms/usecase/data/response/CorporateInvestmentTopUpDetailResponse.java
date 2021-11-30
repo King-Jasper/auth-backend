@@ -9,6 +9,8 @@ import java.math.BigDecimal;
 @Data
 public class CorporateInvestmentTopUpDetailResponse {
 
+    private String requestId;
+
     private BigDecimal amountInvested;
 
     private int investmentDuration;
