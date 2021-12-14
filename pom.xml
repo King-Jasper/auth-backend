@@ -21,6 +21,7 @@
         <apache-common-lang.version>3.8.1</apache-common-lang.version>
         <swagger-version>2.9.2</swagger-version>
         <jwt.version>0.9.0</jwt.version>
+        <log4j2.version>2.15.0</log4j2.version>
     </properties>
 
     <dependencies>
