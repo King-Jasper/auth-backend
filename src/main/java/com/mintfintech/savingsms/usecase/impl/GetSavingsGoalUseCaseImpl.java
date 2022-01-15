@@ -125,7 +125,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             return  "";
         }
         if(savingsGoalEntity.isLockedSavings()) {
-            return "Sorry, your savings goal is not yet due matured for withdrawal.";
+            return "Sorry, your savings goal is not yet matured for withdrawal.";
         }
         long savingsDuration = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
         if(savingsDuration >=  applicationProperty.savingsMinimumNumberOfDaysForWithdrawal()) {
