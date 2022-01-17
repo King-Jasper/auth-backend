@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.AccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
@@ -132,10 +133,10 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
             if (searchDTO.getAccount() != null && searchDTO.getInvestmentStatus().equals(InvestmentStatusConstant.COMPLETED)) {
                 whereClause = cb.and(whereClause, cb.or(cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED),
                         cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.COMPLETED)));
-            }else {
+            } else {
                 whereClause = cb.and(whereClause, cb.equal(root.get("investmentStatus"), searchDTO.getInvestmentStatus()));
             }
-        }else if(searchDTO.isCompletedRecords()) {
+        } else if (searchDTO.isCompletedRecords()) {
             whereClause = cb.and(whereClause, cb.or(cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.LIQUIDATED),
                     cb.equal(root.get("investmentStatus"), InvestmentStatusConstant.COMPLETED)));
         }
@@ -143,9 +144,17 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
             whereClause = cb.and(whereClause, cb.equal(root.get("durationInMonths"), searchDTO.getDuration()));
         }
 
+        Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
         if (StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
-            Join<InvestmentEntity, MintAccountEntity> accountJoin = root.join("owner");
-            whereClause = cb.and(whereClause, cb.like(cb.lower(accountJoin.get("name")), "%"+searchDTO.getCustomerName().toLowerCase()+"%"));
+            whereClause = cb.and(whereClause, cb.like(cb.lower(accountJoin.get("name")), "%" + searchDTO.getCustomerName().toLowerCase() + "%"));
+        }
+
+        if (!StringUtils.isEmpty(searchDTO.getAccountType())) {
+            if ("INDIVIDUAL".equalsIgnoreCase(searchDTO.getAccountType())) {
+                whereClause = cb.and(whereClause, cb.equal(cb.lower(accountJoin.get("accountType")), "%" + AccountTypeConstant.INDIVIDUAL.name().toLowerCase() + "%"));
+            } else {
+                whereClause = cb.and(whereClause, cb.notEqual(cb.lower(accountJoin.get("accountType")), "%" + AccountTypeConstant.INDIVIDUAL.name().toLowerCase() + "%"));
+            }
         }
         return whereClause;
     }

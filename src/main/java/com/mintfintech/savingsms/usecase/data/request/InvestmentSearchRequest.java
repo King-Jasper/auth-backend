@@ -17,4 +17,5 @@ public class InvestmentSearchRequest {
     private LocalDate matureToDate;
     private boolean completedRecords;
     private int duration;
+    private String accountType;
 }
