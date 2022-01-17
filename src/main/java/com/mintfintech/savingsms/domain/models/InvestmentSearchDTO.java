@@ -22,4 +22,5 @@ public class InvestmentSearchDTO {
     private LocalDateTime matureToDate;
     private boolean completedRecords;
     private int duration;
+    private String accountType;
 }

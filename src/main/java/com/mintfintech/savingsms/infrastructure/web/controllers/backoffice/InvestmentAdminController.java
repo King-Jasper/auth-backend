@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
+import com.mintfintech.savingsms.domain.entities.enums.AccountTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.FundInvestmentByAdminJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationAdminRequestJSON;
@@ -66,6 +67,7 @@ public class InvestmentAdminController {
     @GetMapping(value = "/completed", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getCompletedInvestments(@ApiParam(value = "Investment Status: ALL, COMPLETED, LIQUIDATED") @Valid @Pattern(regexp = "(ALL|COMPLETED|LIQUIDATED)") @RequestParam(value = "investmentStatus", defaultValue = "ALL") String investmentStatus,
                                                                                                  @ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
+                                                                                                 @ApiParam(value = "Account Type: INDIVIDUAL|CORPORATE") @RequestParam(value = "accountType", required = false) String accountType,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startToDate", required = false) LocalDate startToDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureFromDate", required = false) LocalDate matureFromDate,
@@ -84,6 +86,7 @@ public class InvestmentAdminController {
                 .matureToDate(matureToDate)
                 .startFromDate(startFromDate)
                 .completedRecords(true)
+                .accountType(accountType)
                 .build();
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);
@@ -96,6 +99,7 @@ public class InvestmentAdminController {
     @ApiOperation(value = "Returns paginated investment list.")
     @GetMapping(value = "/active", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentModel>>> getAllInvestments(@ApiParam(value = "Customer first or last name") @RequestParam(value = "customerName", required = false) String customerName,
+                                                                                                 @ApiParam(value = "Account Type: INDIVIDUAL|CORPORATE") @RequestParam(value = "accountType", required = false) String accountType,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startFromDate", required = false) LocalDate startFromDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "startToDate", required = false) LocalDate startToDate,
                                                                                                  @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "matureFromDate", required = false) LocalDate matureFromDate,
@@ -115,6 +119,7 @@ public class InvestmentAdminController {
                 .startFromDate(startFromDate)
                 .investmentStatus("ACTIVE")
                 .completedRecords(false)
+                .accountType(accountType)
                 .build();
 
         InvestmentStatSummary response = getInvestmentUseCase.getPagedInvestments(searchRequest, page, size);

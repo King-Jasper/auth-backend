@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.AccountTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
@@ -230,6 +231,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
                 .investmentStatus(status)
                 .account(mintAccount.orElse(null))
                 .completedRecords(searchRequest.isCompletedRecords())
+                .accountType(searchRequest.getAccountType())
                 .build();
 
         Page<InvestmentEntity> investmentEntityPage = investmentEntityDao.searchInvestments(searchDTO, page, size);
