@@ -151,9 +151,9 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
 
         if (!StringUtils.isEmpty(searchDTO.getAccountType())) {
             if ("INDIVIDUAL".equalsIgnoreCase(searchDTO.getAccountType())) {
-                whereClause = cb.and(whereClause, cb.equal(cb.lower(accountJoin.get("accountType")), AccountTypeConstant.INDIVIDUAL.name()));
+                whereClause = cb.and(whereClause, cb.equal(accountJoin.get("accountType"), AccountTypeConstant.INDIVIDUAL));
             } else {
-                whereClause = cb.and(whereClause, cb.notEqual(cb.lower(accountJoin.get("accountType")), AccountTypeConstant.INDIVIDUAL.name()));
+                whereClause = cb.and(whereClause, cb.notEqual(accountJoin.get("accountType"), AccountTypeConstant.INDIVIDUAL));
             }
         }
         return whereClause;
