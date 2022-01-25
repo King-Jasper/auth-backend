@@ -8,4 +8,6 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPay
  */
 public interface ProcessRoundUpSavingsUseCase {
     void processTransactionForRoundUpSavings(MintTransactionPayload transactionPayload);
+
+    void processTransactionForSpendAndSave(MintTransactionPayload transactionPayload);
 }

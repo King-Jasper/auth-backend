@@ -35,7 +35,7 @@ public class FundTransactionMsEventListener {
 
 
     @KafkaListener(topics = {TRANSACTION_LOG_TOPIC})
-    public void listenerForTransactionLog(String payload) {
+    public void listenerForTransactionLogForRoundUpSavings(String payload) {
         // log.info("mint transaction log: {}", payload);
         MintTransactionPayload transactionPayload = gson.fromJson(payload, MintTransactionPayload.class);
         processRoundUpSavingsUseCase.processTransactionForRoundUpSavings(transactionPayload);
@@ -46,6 +46,13 @@ public class FundTransactionMsEventListener {
 //        log.info("account credit: {}", payload);
         AccountCreditEvent accountCreditEvent = gson.fromJson(payload, AccountCreditEvent.class);
 
+    }
+
+    @KafkaListener(topics = {TRANSACTION_LOG_TOPIC})
+    public void listenerForTransactionLogForSpendAndSave(String payload) {
+        // log.info("mint transaction log: {}", payload);
+        MintTransactionPayload transactionPayload = gson.fromJson(payload, MintTransactionPayload.class);
+        processRoundUpSavingsUseCase.processTransactionForSpendAndSave(transactionPayload);
     }
 
 }
