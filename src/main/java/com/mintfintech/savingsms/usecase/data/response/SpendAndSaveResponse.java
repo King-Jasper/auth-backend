@@ -9,7 +9,6 @@ import java.math.BigDecimal;
 
 @Data
 @Builder
-@NoArgsConstructor
 public class SpendAndSaveResponse {
 
     private boolean exist;

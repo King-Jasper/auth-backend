@@ -104,11 +104,13 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         spendAndSaveEntity.setSavings(savingsGoalEntity);
         spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
 
-        SpendAndSaveResponse response = new SpendAndSaveResponse();
-        response.setStatus(savingsGoalEntity.getGoalStatus().name());
-        response.setAmountSaved(savingsGoalEntity.getSavingsBalance());
-        response.setAccruedInterest(savingsGoalEntity.getAccruedInterest());
-        if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 ) {
+        SpendAndSaveResponse response = SpendAndSaveResponse.builder()
+                .amountSaved(savingsGoalEntity.getSavingsBalance())
+                .status(savingsGoalEntity.getGoalStatus().name())
+                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .build();
+
+        if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0) {
             response.setMaturityDate("");
         } else {
             response.setMaturityDate(savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));

@@ -37,7 +37,7 @@ public class SpendAndSaveTransactionEntity extends AbstractBaseEntity<Long> {
 
     private LocalDateTime transactionDate;
 
-    @OneToMany
+    @ManyToOne
     private SpendAndSaveEntity spendAndSaveSetting;
 
     @Column(nullable = false)
