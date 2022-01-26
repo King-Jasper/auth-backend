@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.CreateSpendAndSaveUseCase;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -42,8 +43,14 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
 
         int percentage = setUpRequest.getTransactionPercentage();
         int duration = setUpRequest.getDuration();
-        if (percentage < 1 || duration < 30) {
-            throw new BadRequestException("Minimum required percentage and duration is 1 and 30 respectively");
+        boolean isSavingsLocked = setUpRequest.isSavingsLocked();
+        if (percentage < 1) {
+            throw new BadRequestException("Minimum required percentage is 1");
+        }
+        if (isSavingsLocked) {
+            if (duration < 30) {
+                throw new BadRequestException("Minimum required duration is 30 days");
+            }
         }
 
         Optional<SpendAndSaveEntity> spendAndSaveSettingOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
@@ -55,7 +62,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                     .dateActivated(LocalDateTime.now())
                     .percentage(percentage)
                     .activated(true)
-                    .isSavingsLocked(setUpRequest.isSavingsLocked())
+                    .isSavingsLocked(isSavingsLocked)
                     .build();
             spendAndSaveEntity = spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
         }
@@ -66,18 +73,23 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
             systemIssueLogService.logIssue("Critical - Recreating Spend and save settings", "Recreating Spend and save settings", desc);
             throw new BusinessLogicConflictException("Spend and save has already been setup.");
         }
-
-        Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);
-        if(!planTenorOpt.isPresent()) {
-            throw new BadRequestException("Select savings duration is not supported");
+        LocalDateTime maturityDate = null;
+        SavingsPlanTenorEntity planTenorEntity = null;
+        double interestRate = 0.0;
+        if (isSavingsLocked) {
+            Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);
+            if (!planTenorOpt.isPresent()) {
+                throw new BadRequestException("Select savings duration is not supported");
+            }
+            planTenorEntity = planTenorOpt.get();
+            interestRate = planTenorEntity.getInterestRate();
+            maturityDate = LocalDateTime.now().plusDays(duration);
         }
-
-        LocalDateTime maturityDate = LocalDateTime.now().plusDays(duration);
 
         SavingsGoalCategoryEntity goalCategoryEntity = savingsGoalCategoryEntityDao.findCategoryByCode("08")
                 .orElseThrow(()-> new BusinessLogicConflictException("Savings goal category not found"));
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
-        SavingsPlanTenorEntity planTenorEntity = planTenorOpt.get();
+
         SavingsGoalEntity savingsGoalEntity  = SavingsGoalEntity.builder()
                 .savingsGoalType(SavingsGoalTypeConstant.SPEND_AND_SAVE)
                 .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
@@ -91,14 +103,14 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .mintAccount(mintAccount)
                 .name("Spend and save")
                 .savingsPlanTenor(planTenorEntity)
-                .interestRate(planTenorEntity.getInterestRate())
+                .interestRate(interestRate)
                 .maturityDate(maturityDate)
                 .selectedDuration(duration)
                 .creator(appUser)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(BigDecimal.ZERO)
                 .goalCategory(goalCategoryEntity)
-                .lockedSavings(setUpRequest.isSavingsLocked())
+                .lockedSavings(isSavingsLocked)
                 .build();
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         spendAndSaveEntity.setSavings(savingsGoalEntity);
@@ -110,7 +122,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .accruedInterest(savingsGoalEntity.getAccruedInterest())
                 .build();
 
-        if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0) {
+        if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 || savingsGoalEntity.getMaturityDate() == null) {
             response.setMaturityDate("");
         } else {
             response.setMaturityDate(savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));

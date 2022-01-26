@@ -161,7 +161,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .spendAndSaveSetting(settingEntity)
                 .build();
         saveTransactionEntity = spendAndSaveTransactionEntityDao.saveRecord(saveTransactionEntity);
-        processSavingFunding(saveTransactionEntity);
+        processSavingFunding(saveTransactionEntity, savingsGoal);
     }
 
     private BigDecimal getSaveAmount(int percentage, BigDecimal transactionAmount) {
@@ -215,8 +215,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         return false;
     }
 
-    private void processSavingFunding(SpendAndSaveTransactionEntity spendAndSaveTransactionEntity) {
-        SavingsGoalEntity goalEntity = spendAndSaveTransactionEntity.getSavingsGoal();
+    private void processSavingFunding(SpendAndSaveTransactionEntity spendAndSaveTransactionEntity, SavingsGoalEntity goalEntity) {
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(spendAndSaveTransactionEntity.getTransactionAccount().getId());
         BigDecimal amount = spendAndSaveTransactionEntity.getAmountSaved();
 

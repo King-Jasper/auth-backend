@@ -1,17 +1,12 @@
 package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
-import com.mintfintech.savingsms.domain.dao.SpendAndSaveEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.domain.entities.SpendAndSaveEntity;
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.EditSpendAndSaveRequest;
 import com.mintfintech.savingsms.usecase.data.request.SpendAndSaveSetUpRequest;
 import com.mintfintech.savingsms.usecase.data.response.SpendAndSaveResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -38,6 +33,7 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
     private final AuditTrailService auditTrailService;
     private final GetSpendAndSaveTransactionUseCase getSpendAndSaveTransactionUseCase;
     private final SavingsGoalEntityDao savingsGoalEntityDao;
+    private final SavingsPlanTenorEntityDao savingsPlanTenorEntityDao;
 
     @Override
     public SpendAndSaveResponse updateSpendAndSaveStatus(AuthenticatedUser authenticatedUser, boolean statusValue) {
@@ -84,7 +80,7 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
     }
 
     @Override
-    public String editSpendAndSaveSettings(AuthenticatedUser authenticatedUser, SpendAndSaveSetUpRequest request) {
+    public String editSpendAndSaveSettings(AuthenticatedUser authenticatedUser, EditSpendAndSaveRequest request) {
 
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
@@ -92,12 +88,37 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         if (percentage < 1) {
             throw new BadRequestException("Minimum required percentage is 1");
         }
+        boolean isSavingsLocked = request.isSavingsLocked();
+        int duration = request.getDuration();
 
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
         if (!spendAndSaveOptional.isPresent()) {
             throw new BadRequestException("Spend and save record not found");
         }
         SpendAndSaveEntity spendAndSave = spendAndSaveOptional.get();
+
+        if (isSavingsLocked) {
+            if (duration < 30) {
+                throw new BadRequestException("Minimum required duration is 30 days");
+            }
+            Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);
+            if (!planTenorOpt.isPresent()) {
+                throw new BadRequestException("Select savings duration is not supported");
+            }
+            SavingsPlanTenorEntity planTenorEntity = planTenorOpt.get();
+            double interestRate = planTenorEntity.getInterestRate();
+            LocalDateTime maturityDate = LocalDateTime.now().plusDays(duration);
+
+            SavingsGoalEntity savingsGoal = spendAndSave.getSavings();
+            savingsGoal.setSelectedDuration(duration);
+            savingsGoal.setMaturityDate(maturityDate);
+            savingsGoal.setSavingsPlanTenor(planTenorEntity);
+            savingsGoal.setInterestRate(interestRate);
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+            spendAndSave.setSavingsLocked(true);
+            spendAndSaveEntityDao.saveRecord(spendAndSave);
+        }
+
         spendAndSave.setPercentage(percentage);
         spendAndSaveEntityDao.saveRecord(spendAndSave);
         return "Your savings plan changed successfully";

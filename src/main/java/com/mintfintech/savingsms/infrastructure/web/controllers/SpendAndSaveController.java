@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.EditSpendAndSaveRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.SpendAndSaveSetUpRequest;
 import com.mintfintech.savingsms.usecase.data.request.SpendAndSaveWithdrawalRequest;
@@ -69,8 +70,8 @@ public class SpendAndSaveController {
     @ApiOperation("Edit spend and save percentage")
     @PostMapping(value = "/edit-savings", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<String>> editSpendAndSave(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                    @Valid @RequestBody SpendAndSaveSetUpRequest request) {
-        String response = updateSpendAndSaveUseCase.editSpendAndSaveSettings(authenticatedUser, request);
+                                                                    @Valid @RequestBody EditSpendAndSaveRequestJSON requestJSON) {
+        String response = updateSpendAndSaveUseCase.editSpendAndSaveSettings(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<String> apiResponseJSON = new ApiResponseJSON<>(response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -98,8 +99,7 @@ public class SpendAndSaveController {
         @NotBlank(message = "isSavingsLocked is mandatory")
         private boolean isSavingsLocked;
 
-        @ApiModelProperty(notes = "The duration of the savings", required = true)
-        @NotBlank(message = "duration is mandatory")
+        @ApiModelProperty(notes = "The duration of the savings")
         private int duration;
 
         public SpendAndSaveSetUpRequest toRequest() {
