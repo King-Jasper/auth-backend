@@ -9,8 +9,8 @@ public class SpendAndSaveSetUpRequest {
 
     private int transactionPercentage;
 
-    private boolean isSavingsLocked;
+   // private boolean isSavingsLocked;
 
-    private int duration;
+   // private int duration;
 
 }
