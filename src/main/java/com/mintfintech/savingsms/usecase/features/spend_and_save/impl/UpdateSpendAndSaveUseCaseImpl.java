@@ -45,13 +45,9 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
 
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveSettingByAccount(mintAccount);
         if(!spendAndSaveOptional.isPresent()) {
-            throw new BadRequestException("Invalid spend and save Id");
+            throw new BadRequestException("No Spend and Save setting exist for user.");
         }
         SpendAndSaveEntity spendAndSave = spendAndSaveOptional.get();
-        if(!spendAndSave.getAccount().getId().equals(mintAccount.getId())) {
-            log.info("SpendAndSaveEntity {} does not belong to account {}", spendAndSave.getId(), mintAccount.getId());
-            throw new BadRequestException("Invalid spend and save Id");
-        }
 
         SavingsGoalEntity goalEntity = spendAndSave.getSavings();
         if(goalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {

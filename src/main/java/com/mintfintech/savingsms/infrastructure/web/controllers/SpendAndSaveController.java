@@ -94,20 +94,22 @@ public class SpendAndSaveController {
         @NotBlank(message = "Transaction percentage is mandatory")
         private int transactionPercentage;
 
+        /*
         @ApiModelProperty(notes = "This checks whether savings is locked", required = true)
         @NotBlank(message = "isSavingsLocked is mandatory")
         private boolean isSavingsLocked;
 
         @ApiModelProperty(notes = "The duration of the savings", required = true)
         @NotBlank(message = "duration is mandatory")
-        private int duration;
+        private int duration;*/
 
         public SpendAndSaveSetUpRequest toRequest() {
             return SpendAndSaveSetUpRequest.builder()
                     .transactionPercentage(transactionPercentage)
-                    .isSavingsLocked(isSavingsLocked)
-                    .duration(duration)
                     .build();
+                    //.isSavingsLocked(isSavingsLocked)
+                    //.duration(duration)
+                   // .build();
         }
     }
 
