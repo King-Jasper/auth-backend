@@ -57,6 +57,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
                 .amountSaved(goalEntity.getSavingsBalance())
                 .status(goalEntity.getGoalStatus().name())
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
+                .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
                 .build();
     }
 

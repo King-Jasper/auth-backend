@@ -22,4 +22,6 @@ public class SpendAndSaveResponse {
     private String status;
 
     private PagedDataResponse<SpendAndSaveTransactionModel> savings;
+
+    private boolean isSavingsLocked;
 }

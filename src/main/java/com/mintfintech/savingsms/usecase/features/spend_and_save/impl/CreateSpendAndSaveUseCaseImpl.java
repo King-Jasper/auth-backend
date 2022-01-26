@@ -120,6 +120,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .amountSaved(savingsGoalEntity.getSavingsBalance())
                 .status(savingsGoalEntity.getGoalStatus().name())
                 .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
                 .build();
 
         if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 || savingsGoalEntity.getMaturityDate() == null) {
