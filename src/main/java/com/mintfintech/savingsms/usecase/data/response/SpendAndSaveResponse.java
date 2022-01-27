@@ -3,7 +3,6 @@ package com.mintfintech.savingsms.usecase.data.response;
 import com.mintfintech.savingsms.usecase.models.SpendAndSaveTransactionModel;
 import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 import java.math.BigDecimal;
 
@@ -24,4 +23,6 @@ public class SpendAndSaveResponse {
     private PagedDataResponse<SpendAndSaveTransactionModel> savings;
 
     private boolean isSavingsLocked;
+
+    private BigDecimal totalAmount;
 }

@@ -115,11 +115,15 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         spendAndSaveEntity.setSavings(savingsGoalEntity);
         spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
 
+        BigDecimal amountSaved = savingsGoalEntity.getSavingsBalance();
+        BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
+
         SpendAndSaveResponse response = SpendAndSaveResponse.builder()
-                .amountSaved(savingsGoalEntity.getSavingsBalance())
+                .amountSaved(amountSaved)
                 .status(savingsGoalEntity.getGoalStatus().name())
-                .accruedInterest(savingsGoalEntity.getAccruedInterest())
+                .accruedInterest(accruedInterest)
                 .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
+                .totalAmount(amountSaved.add(accruedInterest))
                 .build();
 
         if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 || savingsGoalEntity.getMaturityDate() == null) {

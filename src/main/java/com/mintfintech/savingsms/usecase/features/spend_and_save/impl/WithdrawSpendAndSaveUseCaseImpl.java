@@ -40,10 +40,9 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
 
         SavingsGoalEntity savingsGoal = spendAndSave.getSavings();
         if (spendAndSave.isSavingsLocked()) {
-            if (computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal)) {
-                throw new BusinessLogicConflictException("Your withdrawal is being processed");
+            if (!computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal)) {
+                throw new BusinessLogicConflictException("Your savings is not matured yet.");
             }
-            throw new BusinessLogicConflictException("Sorry, your savings is locked");
         }
         BigDecimal amount = BigDecimal.valueOf(withdrawalRequest.getAmount());
         String creditAccountId = withdrawalRequest.getCreditAccountId();
@@ -70,12 +69,19 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal remainingSavings = BigDecimal.valueOf(0.00), remainingInterest = BigDecimal.valueOf(0.00);
 
-        if (amount.compareTo(currentBalance) > 0) {
+        BigDecimal withdrawalAmount = currentBalance.add(accruedInterest);
+        if (amount.compareTo(withdrawalAmount) > 0) {
             throw new BusinessLogicConflictException("Sorry, amount is greater than the available amount");
         }
-        remainingSavings = currentBalance.subtract(amount);
+        if (amount.compareTo(accruedInterest) > 0 && amount.compareTo(withdrawalAmount) < 0) {
+            remainingSavings = withdrawalAmount.subtract(amount);
+        } else if (amount.compareTo(accruedInterest) < 0) {
+            remainingInterest = accruedInterest.subtract(amount);
+            remainingSavings = currentBalance;
+        }
 
         savingsGoal.setSavingsBalance(remainingSavings);
+        savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
@@ -90,6 +96,6 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
                 .dateForWithdrawal(dateForWithdrawal)
                 .build();
         savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequest);
-        return "Request queued successfully. Your account will be funded within the next 2 business days.";
+        return "Request queued successfully. Your account will be funded shortly.";
     }
 }

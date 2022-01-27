@@ -17,6 +17,7 @@ import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
@@ -50,14 +51,17 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
 
+        BigDecimal amountSaved = goalEntity.getSavingsBalance();
+        BigDecimal accruedInterest = goalEntity.getAccruedInterest();
         return SpendAndSaveResponse.builder()
                 .exist(true)
-                .accruedInterest(goalEntity.getAccruedInterest())
+                .accruedInterest(accruedInterest)
                 .maturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""))
-                .amountSaved(goalEntity.getSavingsBalance())
+                .amountSaved(amountSaved)
                 .status(goalEntity.getGoalStatus().name())
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
                 .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
+                .totalAmount(amountSaved.add(accruedInterest))
                 .build();
     }
 
