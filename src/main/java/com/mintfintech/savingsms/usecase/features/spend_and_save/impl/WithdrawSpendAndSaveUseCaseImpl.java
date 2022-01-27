@@ -2,25 +2,20 @@ package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
-import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.data.request.SpendAndSaveWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.WithdrawSpendAndSaveUseCase;
-import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Named
 @AllArgsConstructor
@@ -31,7 +26,6 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
     private final SpendAndSaveEntityDao spendAndSaveEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
-    private final ApplicationProperty applicationProperty;
     private final SavingsGoalEntityDao savingsGoalEntityDao;
     private final SavingsWithdrawalRequestEntityDao savingsWithdrawalRequestEntityDao;
 
@@ -46,7 +40,7 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
 
         SavingsGoalEntity savingsGoal = spendAndSave.getSavings();
         if (spendAndSave.isSavingsLocked()) {
-            if (savingsGoal.getGoalStatus().equals(SavingsGoalStatusConstant.MATURED)) {
+            if (computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoal)) {
                 throw new BusinessLogicConflictException("Your withdrawal is being processed");
             }
             throw new BusinessLogicConflictException("Sorry, your savings is locked");

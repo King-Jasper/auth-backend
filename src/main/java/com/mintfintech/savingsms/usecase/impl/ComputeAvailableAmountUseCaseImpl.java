@@ -92,7 +92,7 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
             }else {
                 matured = BigDecimal.valueOf(2000.00).compareTo(savingsGoalEntity.getSavingsBalance()) <= 0;
             }
-        }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+        }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.SPEND_AND_SAVE) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
             if(!applicationProperty.isLiveEnvironment()) {
                  long daysPassed = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);

@@ -11,7 +11,6 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.CreateSpendAndSaveUseCase;
 import lombok.AllArgsConstructor;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -95,7 +94,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
                 .savingsPlan(savingsPlanEntity)
                 .autoSave(false)
-                .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
+                .creationSource(SavingsGoalCreationSourceConstant.MINT)
                 .goalStatus(SavingsGoalStatusConstant.ACTIVE)
                 .targetAmount(BigDecimal.ZERO)
                 .savingsBalance(BigDecimal.ZERO)
