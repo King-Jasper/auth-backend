@@ -73,7 +73,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
             throw new BusinessLogicConflictException("Spend and save has already been setup.");
         }
         LocalDateTime maturityDate = null;
-        SavingsPlanTenorEntity planTenorEntity = null;
+        SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(30).get();
         double interestRate = 0.0;
         if (isSavingsLocked) {
             Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);
