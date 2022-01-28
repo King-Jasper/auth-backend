@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.usecase.models.InvestmentTenorModel;
 import io.micrometer.core.instrument.util.IOUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+@Slf4j
 @RequiredArgsConstructor
 @Service
 public class InvestmentPlanUseCaseImpl implements InvestmentPlanUseCase {
@@ -66,6 +68,7 @@ public class InvestmentPlanUseCaseImpl implements InvestmentPlanUseCase {
     private void createOrUpdateInvestmentTenor(InvestmentPlanUseCaseImpl.InvestmentTenor tenor) {
         Optional<InvestmentTenorEntity> planTenorOptional = investmentTenorEntityDao
                 .findInvestmentTenor(tenor.minimumDuration, tenor.maximumDuration);
+        log.info("min {} max - {} exist - {}", tenor.minimumDuration, tenor.maximumDuration, planTenorOptional.isPresent());
         InvestmentTenorEntity planTenor = planTenorOptional.orElseGet(InvestmentTenorEntity::new);
         planTenor.setMinimumDuration(tenor.minimumDuration);
         planTenor.setMaximumDuration(tenor.maximumDuration);

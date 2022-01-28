@@ -21,7 +21,7 @@
     "maximumDuration": 9,
     "description": "7 - 9 months",
     "interestRate": 13.00,
-    "penaltyRate": 30.00
+    "penaltyRate": 38.50
   },
   {
     "durationType": "MONTHS",
@@ -36,7 +36,7 @@
     "minimumDuration": 13,
     "maximumDuration": 24,
     "description": "13 - 24 months",
-    "interestRate": 16.00,
-    "penaltyRate": 50.00
+    "interestRate": 18.00,
+    "penaltyRate": 55.50
   }
 ]
