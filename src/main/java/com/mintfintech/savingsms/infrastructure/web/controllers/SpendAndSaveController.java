@@ -96,7 +96,6 @@ public class SpendAndSaveController {
         private int transactionPercentage;
 
         @ApiModelProperty(notes = "This checks whether savings is locked", required = true)
-        @NotBlank(message = "isSavingsLocked is mandatory")
         private boolean isSavingsLocked;
 
         @ApiModelProperty(notes = "The duration of the savings")
