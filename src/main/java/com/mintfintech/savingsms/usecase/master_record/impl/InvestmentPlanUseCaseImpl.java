@@ -8,7 +8,6 @@ import com.mintfintech.savingsms.domain.entities.InvestmentTenorEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsDurationTypeConstant;
 import com.mintfintech.savingsms.usecase.master_record.InvestmentPlanUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentTenorModel;
-import com.mintfintech.savingsms.usecase.models.SavingsPlanTenorModel;
 import io.micrometer.core.instrument.util.IOUtils;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;

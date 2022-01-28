@@ -1,0 +1,66 @@
+[
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 1,
+    "maximumDuration": 2,
+    "description": "1 - 2 months",
+    "interestRate": 12.00,
+    "penaltyRate": 20.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 3,
+    "maximumDuration": 5,
+    "description": "3 - 5 months",
+    "interestRate": 13.50,
+    "penaltyRate": 25.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 6,
+    "maximumDuration": 9,
+    "description": "6 - 9 months",
+    "interestRate": 14.50,
+    "penaltyRate": 30.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 10,
+    "maximumDuration": 12,
+    "description": "10 - 12 months",
+    "interestRate": 18.50,
+    "penaltyRate": 50.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 13,
+    "maximumDuration": 15,
+    "description": "13 - 15 months",
+    "interestRate": 22.50,
+    "penaltyRate": 55.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 16,
+    "maximumDuration": 18,
+    "description": "16 - 18 months",
+    "interestRate": 26.50,
+    "penaltyRate": 60.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 19,
+    "maximumDuration": 21,
+    "description": "19 - 21 months",
+    "interestRate": 30.50,
+    "penaltyRate": 65.00
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 22,
+    "maximumDuration": 24,
+    "description": "22 - 24 months",
+    "interestRate": 34.50,
+    "penaltyRate": 70.00
+  }
+]
