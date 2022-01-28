@@ -108,6 +108,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .creator(appUser)
                 .goalId(savingsGoalEntityDao.generateSavingGoalId())
                 .savingsAmount(BigDecimal.ZERO)
+                .totalAmountWithdrawn(BigDecimal.ZERO)
                 .goalCategory(goalCategoryEntity)
                 .lockedSavings(isSavingsLocked)
                 .build();
@@ -131,7 +132,6 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         } else {
             response.setMaturityDate(savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         }
-
         return response;
     }
 }

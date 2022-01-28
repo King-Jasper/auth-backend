@@ -49,7 +49,7 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         if (StringUtils.isEmpty(creditAccountId)) {
             throw new BadRequestException("Credit Account Id is required");
         }
-        if (amount.equals(BigDecimal.ZERO)) {
+        if (amount.compareTo(BigDecimal.ZERO) == 0) {
             throw new BadRequestException("Amount should be greater than 0.0");
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, mintAccount)
@@ -69,12 +69,12 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
         BigDecimal remainingSavings = BigDecimal.valueOf(0.00), remainingInterest = BigDecimal.valueOf(0.00);
 
-        BigDecimal withdrawalAmount = currentBalance.add(accruedInterest);
-        if (amount.compareTo(withdrawalAmount) > 0) {
+        BigDecimal totalAmount = currentBalance.add(accruedInterest);
+        if (amount.compareTo(totalAmount) > 0) {
             throw new BusinessLogicConflictException("Sorry, amount is greater than the available amount");
         }
-        if (amount.compareTo(accruedInterest) > 0 && amount.compareTo(withdrawalAmount) < 0) {
-            remainingSavings = withdrawalAmount.subtract(amount);
+        if (amount.compareTo(accruedInterest) > 0 && amount.compareTo(totalAmount) < 0) {
+            remainingSavings = totalAmount.subtract(amount);
         } else if (amount.compareTo(accruedInterest) < 0) {
             remainingInterest = accruedInterest.subtract(amount);
             remainingSavings = currentBalance;
