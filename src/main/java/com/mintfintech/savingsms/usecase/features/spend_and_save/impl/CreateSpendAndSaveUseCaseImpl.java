@@ -53,18 +53,10 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         }
 
         Optional<SpendAndSaveEntity> spendAndSaveSettingOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
-        SpendAndSaveEntity spendAndSaveEntity = new SpendAndSaveEntity();
-        if (!spendAndSaveSettingOptional.isPresent()) {
-            spendAndSaveEntity = SpendAndSaveEntity.builder()
-                    .creator(appUser)
-                    .account(mintAccount)
-                    .dateActivated(LocalDateTime.now())
-                    .percentage(percentage)
-                    .activated(true)
-                    .isSavingsLocked(isSavingsLocked)
-                    .build();
-            spendAndSaveEntity = spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
+        if (spendAndSaveSettingOptional.isPresent()) {
+            throw new BusinessLogicConflictException("You already have a spend and save record");
         }
+
 
         Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findFirstSavingsByType(mintAccount, SavingsGoalTypeConstant.SPEND_AND_SAVE);
         if (savingsGoalOptional.isPresent()) {
@@ -113,13 +105,24 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .lockedSavings(isSavingsLocked)
                 .build();
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
-        spendAndSaveEntity.setSavings(savingsGoalEntity);
-        spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
+
+        SpendAndSaveEntity spendAndSaveEntity = SpendAndSaveEntity.builder()
+                .creator(appUser)
+                .account(mintAccount)
+                .dateActivated(LocalDateTime.now())
+                .percentage(percentage)
+                .activated(true)
+                .isSavingsLocked(isSavingsLocked)
+                .savings(savingsGoalEntity)
+                .build();
+        spendAndSaveEntity = spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
+
 
         BigDecimal amountSaved = savingsGoalEntity.getSavingsBalance();
         BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
 
         SpendAndSaveResponse response = SpendAndSaveResponse.builder()
+                .exist(true)
                 .amountSaved(amountSaved)
                 .status(savingsGoalEntity.getGoalStatus().name())
                 .accruedInterest(accruedInterest)

@@ -3,11 +3,9 @@ package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.EditSpendAndSaveRequest;
-import com.mintfintech.savingsms.usecase.data.request.SpendAndSaveSetUpRequest;
 import com.mintfintech.savingsms.usecase.data.response.SpendAndSaveResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.GetSpendAndSaveTransactionUseCase;
@@ -40,13 +38,13 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
 
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveSettingByAccount(mintAccount);
-        if(!spendAndSaveOptional.isPresent()) {
+        if (!spendAndSaveOptional.isPresent()) {
             throw new BadRequestException("No Spend and Save setting exist for user.");
         }
         SpendAndSaveEntity spendAndSave = spendAndSaveOptional.get();
 
         SavingsGoalEntity goalEntity = spendAndSave.getSavings();
-        if(goalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+        if (goalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             throw new BadRequestException("Sorry, savings is not active.");
         }
 
@@ -56,9 +54,9 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         String newStatus = statusValue ? "ACTIVE" : "INACTIVE";
 
         spendAndSave.setActivated(statusValue);
-        if(statusValue) {
+        if (statusValue) {
             spendAndSave.setDateActivated(LocalDateTime.now());
-        }else {
+        } else {
             spendAndSave.setDateDeactivated(LocalDateTime.now());
         }
         spendAndSaveEntityDao.saveRecord(spendAndSave);
@@ -70,7 +68,8 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
                 .accruedInterest(goalEntity.getAccruedInterest())
                 .maturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""))
                 .amountSaved(goalEntity.getSavingsBalance())
-                .status(goalEntity.getGoalStatus().name())
+                .status(newStatus)
+                .isSavingsLocked(spendAndSave.isSavingsLocked())
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
                 .build();
     }
@@ -84,8 +83,6 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         if (percentage < 1) {
             throw new BadRequestException("Minimum required percentage is 1");
         }
-        boolean isSavingsLocked = request.isSavingsLocked();
-        int duration = request.getDuration();
 
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
         if (!spendAndSaveOptional.isPresent()) {
@@ -93,8 +90,9 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         }
         SpendAndSaveEntity spendAndSave = spendAndSaveOptional.get();
 
-        if (isSavingsLocked) {
-            if (duration < 30) {
+        if (!spendAndSave.isSavingsLocked() && request.isSavingsLocked()) {
+            int duration = request.getDuration();
+            if (duration< 30) {
                 throw new BadRequestException("Minimum required duration is 30 days");
             }
             Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);

@@ -13,10 +13,13 @@ import javax.inject.Named;
 import java.util.Optional;
 
 @Named
-@AllArgsConstructor
 public class SpendAndSaveTransactionEntityDaoImpl implements SpendAndSaveTransactionEntityDao {
 
     private final SpendAndSaveTransactionRepository repository;
+
+    public SpendAndSaveTransactionEntityDaoImpl(SpendAndSaveTransactionRepository repository) {
+        this.repository = repository;
+    }
 
     @Override
     public Optional<SpendAndSaveTransactionEntity> findById(Long aLong) {

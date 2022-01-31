@@ -1,9 +1,11 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.usecase.data.value_objects.RoundUpTransactionCategoryType;
 import lombok.*;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.OneToOne;
+import javax.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
@@ -29,9 +31,6 @@ public class SpendAndSaveEntity extends AbstractBaseEntity<Long> {
     private int percentage;
 
     private boolean isSavingsLocked;
-
-    @Enumerated(value = EnumType.STRING)
-    private RoundUpTransactionCategoryType transactionType;
 
     private LocalDateTime dateActivated;
 

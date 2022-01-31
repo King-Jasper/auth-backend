@@ -53,16 +53,22 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
 
         BigDecimal amountSaved = goalEntity.getSavingsBalance();
         BigDecimal accruedInterest = goalEntity.getAccruedInterest();
-        return SpendAndSaveResponse.builder()
+        SpendAndSaveResponse response = SpendAndSaveResponse.builder()
                 .exist(true)
                 .accruedInterest(accruedInterest)
-                .maturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""))
+                //.maturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""))
                 .amountSaved(amountSaved)
-                .status(goalEntity.getGoalStatus().name())
+                .status(spendAndSaveEntity.isActivated() ? "ACTIVE" : "INACTIVE")
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
                 .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
                 .totalAmount(amountSaved.add(accruedInterest))
                 .build();
+        if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
+            response.setMaturityDate("");
+        } else {
+            response.setMaturityDate(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME));
+        }
+        return response;
     }
 
 }
