@@ -1,6 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
-import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.SpendAndSaveTransactionEntity;
 import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;

@@ -1,6 +1,5 @@
-package com.mintfintech.savingsms.domain.dao;
+package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.usecase.data.value_objects.RoundUpTransactionCategoryType;
 import lombok.*;
 

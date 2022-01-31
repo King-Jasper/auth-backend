@@ -1,10 +1,9 @@
 package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
-import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.SpendAndSaveTransactionEntity;
 import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SpendAndSaveTransactionRepository;
-import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -13,11 +12,12 @@ import javax.inject.Named;
 import java.util.Optional;
 
 @Named
-public class SpendAndSaveTransactionEntityDaoImpl implements SpendAndSaveTransactionEntityDao {
+public class SpendAndSaveTransactionEntityDaoImpl extends CrudDaoImpl<SpendAndSaveTransactionEntity, Long> implements SpendAndSaveTransactionEntityDao {
 
     private final SpendAndSaveTransactionRepository repository;
 
     public SpendAndSaveTransactionEntityDaoImpl(SpendAndSaveTransactionRepository repository) {
+        super(repository);
         this.repository = repository;
     }
 
