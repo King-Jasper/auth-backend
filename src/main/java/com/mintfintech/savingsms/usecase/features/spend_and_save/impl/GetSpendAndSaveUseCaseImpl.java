@@ -62,6 +62,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
                 .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
                 .totalAmount(amountSaved.add(accruedInterest))
+                .percentage(spendAndSaveEntity.getPercentage())
                 .build();
         if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0 || goalEntity.getMaturityDate() == null) {
             response.setMaturityDate("");
