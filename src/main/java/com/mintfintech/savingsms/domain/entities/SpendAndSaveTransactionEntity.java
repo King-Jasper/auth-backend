@@ -43,5 +43,4 @@ public class SpendAndSaveTransactionEntity extends AbstractBaseEntity<Long> {
     @Enumerated(EnumType.STRING)
     private RoundUpTransactionCategoryType transactionType;
 
-
 }

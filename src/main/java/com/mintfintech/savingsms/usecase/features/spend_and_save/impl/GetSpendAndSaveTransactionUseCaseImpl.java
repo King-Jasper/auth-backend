@@ -1,7 +1,7 @@
 package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
+import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionDao;
 import com.mintfintech.savingsms.domain.entities.SpendAndSaveTransactionEntity;
-import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.GetSpendAndSaveTransactionUseCase;
@@ -18,11 +18,11 @@ import java.util.stream.Collectors;
 @AllArgsConstructor
 public class GetSpendAndSaveTransactionUseCaseImpl implements GetSpendAndSaveTransactionUseCase {
 
-    private final SpendAndSaveTransactionEntityDao spendAndSaveTransactionEntityDao;
+    private final SpendAndSaveTransactionDao spendAndSaveTransactionDao;
 
     @Override
     public PagedDataResponse<SpendAndSaveTransactionModel> getSpendAndSaveTransactions(SavingsGoalEntity savingsGoal) {
-        Page<SpendAndSaveTransactionEntity> spendAndSaveTransactionPage = spendAndSaveTransactionEntityDao.getTransactionsBySavingsGoal(savingsGoal, 1, 6);
+        Page<SpendAndSaveTransactionEntity> spendAndSaveTransactionPage = spendAndSaveTransactionDao.getTransactionsBySavingsGoal(savingsGoal, 1, 6);
 
         return new PagedDataResponse<>(spendAndSaveTransactionPage.getTotalElements(), spendAndSaveTransactionPage.getTotalElements(),
                 spendAndSaveTransactionPage.stream().map(this::fromTransactionEntityToModel).collect(Collectors.toList()));

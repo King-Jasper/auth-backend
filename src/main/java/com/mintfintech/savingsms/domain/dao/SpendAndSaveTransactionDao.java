@@ -6,8 +6,8 @@ import org.springframework.data.domain.Page;
 
 import java.util.Optional;
 
-public interface SpendAndSaveTransactionEntityDao extends CrudDao<SpendAndSaveTransactionEntity, Long> {
+public interface SpendAndSaveTransactionDao extends CrudDao<SpendAndSaveTransactionEntity, Long> {
 
     Optional<SpendAndSaveTransactionEntity> findByTransactionReference(String reference);
-    Page<SpendAndSaveTransactionEntity> getTransactionsBySavingsGoal(SavingsGoalEntity savingsGoal, int pageIndex, int size);
+    Page<SpendAndSaveTransactionEntity> getTransactionsBySavingsGoal(SavingsGoalEntity savingsGoal, int page, int size);
 }

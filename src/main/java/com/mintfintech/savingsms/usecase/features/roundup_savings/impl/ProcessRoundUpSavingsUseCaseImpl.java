@@ -43,8 +43,8 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     private UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
     private SavingsFundingUtil savingsFundingUtil;
-    private final SpendAndSaveTransactionEntityDao spendAndSaveTransactionEntityDao;
     private SpendAndSaveEntityDao spendAndSaveEntityDao;
+    private SpendAndSaveTransactionDao spendAndSaveTransactionDao;
 
     @Override
     public void processTransactionForRoundUpSavings(MintTransactionPayload transactionPayload) {
@@ -111,7 +111,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         String reference = transactionPayload.getInternalReference();
         String category = transactionPayload.getCategory();
 
-        if (spendAndSaveTransactionEntityDao.findByTransactionReference(reference).isPresent()) {
+        if (spendAndSaveTransactionDao.findByTransactionReference(reference).isPresent()) {
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
@@ -226,7 +226,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         transactionEntity.setTransactionReference(reference);
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
-        SpendAndSaveTransactionEntity saveTransactionEntity = SpendAndSaveTransactionEntity.builder()
+        SpendAndSaveTransactionEntity spendAndSaveTransaction = SpendAndSaveTransactionEntity.builder()
                 .transactionAccount(debitAccount)
                 .transactionDate(LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME))
                 .transactionAmount(transactionPayload.getTransactionAmount())
@@ -237,7 +237,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .spendAndSaveSetting(spendAndSave)
                 .savingsGoalTransaction(transactionEntity)
                 .build();
-        spendAndSaveTransactionEntityDao.saveRecord(saveTransactionEntity);
+        spendAndSaveTransactionDao.saveRecord(spendAndSaveTransaction);
 
 
         SavingsFundingRequestCBS fundingRequestCBS = SavingsFundingRequestCBS.builder()
