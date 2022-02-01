@@ -24,7 +24,7 @@ public class GetSpendAndSaveTransactionUseCaseImpl implements GetSpendAndSaveTra
     public PagedDataResponse<SpendAndSaveTransactionModel> getSpendAndSaveTransactions(SavingsGoalEntity savingsGoal) {
         Page<SpendAndSaveTransactionEntity> spendAndSaveTransactionPage = spendAndSaveTransactionDao.getTransactionsBySavingsGoal(savingsGoal, 0, 6);
 
-        return new PagedDataResponse<>(spendAndSaveTransactionPage.getTotalElements(), spendAndSaveTransactionPage.getTotalElements(),
+        return new PagedDataResponse<>(spendAndSaveTransactionPage.getTotalElements(), spendAndSaveTransactionPage.getTotalPages(),
                 spendAndSaveTransactionPage.stream().map(this::fromTransactionEntityToModel).collect(Collectors.toList()));
     }
 

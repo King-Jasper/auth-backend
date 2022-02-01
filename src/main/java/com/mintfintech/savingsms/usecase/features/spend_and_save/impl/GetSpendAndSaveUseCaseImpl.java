@@ -63,10 +63,10 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
                 .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
                 .totalAmount(amountSaved.add(accruedInterest))
                 .build();
-        if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
+        if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0 || goalEntity.getMaturityDate() == null) {
             response.setMaturityDate("");
         } else {
-            response.setMaturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""));
+            response.setMaturityDate(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME));
         }
         return response;
     }
