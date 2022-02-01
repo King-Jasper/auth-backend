@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.SpendAndSaveTransactionDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SpendAndSaveTransactionEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SpendAndSaveTransactionRepository;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -31,16 +32,16 @@ public class SpendAndSaveTransactionDaoImpl implements SpendAndSaveTransactionDa
 
     @Override
     public Optional<SpendAndSaveTransactionEntity> findById(Long aLong) {
-        return Optional.empty();
+        return repository.findById(aLong);
     }
 
     @Override
     public SpendAndSaveTransactionEntity getRecordById(Long aLong) throws RuntimeException {
-        return null;
+        return findById(aLong).orElseThrow(() -> new BadRequestException("Record with id "+ aLong+ " not found"));
     }
 
     @Override
     public SpendAndSaveTransactionEntity saveRecord(SpendAndSaveTransactionEntity record) {
-        return null;
+        return repository.saveAndFlush(record);
     }
 }
