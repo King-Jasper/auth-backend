@@ -66,7 +66,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
         if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
             response.setMaturityDate("");
         } else {
-            response.setMaturityDate(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME));
+            response.setMaturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""));
         }
         return response;
     }

@@ -22,7 +22,7 @@ public class GetSpendAndSaveTransactionUseCaseImpl implements GetSpendAndSaveTra
 
     @Override
     public PagedDataResponse<SpendAndSaveTransactionModel> getSpendAndSaveTransactions(SavingsGoalEntity savingsGoal) {
-        Page<SpendAndSaveTransactionEntity> spendAndSaveTransactionPage = spendAndSaveTransactionDao.getTransactionsBySavingsGoal(savingsGoal, 1, 6);
+        Page<SpendAndSaveTransactionEntity> spendAndSaveTransactionPage = spendAndSaveTransactionDao.getTransactionsBySavingsGoal(savingsGoal, 0, 6);
 
         return new PagedDataResponse<>(spendAndSaveTransactionPage.getTotalElements(), spendAndSaveTransactionPage.getTotalElements(),
                 spendAndSaveTransactionPage.stream().map(this::fromTransactionEntityToModel).collect(Collectors.toList()));
