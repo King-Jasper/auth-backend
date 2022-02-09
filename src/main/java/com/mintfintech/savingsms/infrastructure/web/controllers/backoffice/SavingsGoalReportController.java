@@ -45,7 +45,7 @@ public class SavingsGoalReportController {
     GetSavingsGoalUseCase getSavingsGoalUseCase;
     GetSavingsTransactionUseCase getSavingsTransactionUseCase;
 
-    @Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+    @Secured("39") // Privilege: CAN_VIEW_SAVINGS_TRANSACTION
     @ApiOperation(value = "Returns paginated list of savings goal.")
     @GetMapping(value = "savings-goals", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(@RequestParam(value = "accountId", required = false) String accountId, @RequestParam(value = "customerName", required = false) String customerName,
