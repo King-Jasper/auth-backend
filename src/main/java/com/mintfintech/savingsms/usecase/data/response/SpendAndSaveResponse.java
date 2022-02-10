@@ -25,4 +25,6 @@ public class SpendAndSaveResponse {
     private boolean isSavingsLocked;
 
     private BigDecimal totalAmount;
+
+    private int percentage;
 }

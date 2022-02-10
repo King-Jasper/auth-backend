@@ -71,6 +71,7 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
                 .status(newStatus)
                 .isSavingsLocked(spendAndSave.isSavingsLocked())
                 .savings(getSpendAndSaveTransactionUseCase.getSpendAndSaveTransactions(goalEntity))
+                .percentage(spendAndSave.getPercentage())
                 .build();
     }
 
