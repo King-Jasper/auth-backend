@@ -20,4 +20,5 @@ public class AccountSavingsGoalResponse {
     private List<MintSavingsGoalModel> mintGoals;
     private EmergencySavingModel emergencySaving;
     private RoundUpSavingResponse roundUpSaving;
+    private SpendAndSaveResponse spendAndSave;
 }
