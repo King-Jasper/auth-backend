@@ -66,7 +66,7 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         return SpendAndSaveResponse.builder()
                 .exist(true)
                 .accruedInterest(goalEntity.getAccruedInterest())
-                .maturityDate(StringUtils.defaultString(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME), ""))
+                .maturityDate(goalEntity.getMaturityDate() != null ? goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME): "")
                 .amountSaved(goalEntity.getSavingsBalance())
                 .status(newStatus)
                 .isSavingsLocked(spendAndSave.isSavingsLocked())
