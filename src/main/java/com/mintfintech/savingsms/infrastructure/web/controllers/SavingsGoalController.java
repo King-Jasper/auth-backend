@@ -9,7 +9,9 @@ import com.mintfintech.savingsms.usecase.UpdateSavingGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.RoundUpSavingResponse;
+import com.mintfintech.savingsms.usecase.data.response.SpendAndSaveResponse;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
+import com.mintfintech.savingsms.usecase.features.spend_and_save.GetSpendAndSaveUseCase;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 import io.swagger.annotations.Api;
@@ -42,11 +44,13 @@ public class SavingsGoalController {
     private GetSavingsGoalUseCase getSavingsGoalUseCase;
     private UpdateSavingGoalUseCase updateSavingGoalUseCase;
     private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
-    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase, GetRoundUpSavingsUseCase getRoundUpSavingsUseCase) {
+    private GetSpendAndSaveUseCase getSpendAndSaveUseCase;
+    public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase, GetRoundUpSavingsUseCase getRoundUpSavingsUseCase, GetSpendAndSaveUseCase getSpendAndSaveUseCase) {
         this.createSavingsGoalUseCase = createSavingsGoalUseCase;
         this.getSavingsGoalUseCase = getSavingsGoalUseCase;
         this.updateSavingGoalUseCase = updateSavingGoalUseCase;
         this.getRoundUpSavingsUseCase = getRoundUpSavingsUseCase;
+        this.getSpendAndSaveUseCase = getSpendAndSaveUseCase;
     }
 
     @Deprecated
@@ -77,6 +81,8 @@ public class SavingsGoalController {
 
         AccountSavingsGoalResponse response = getSavingsGoalUseCase.getAccountSavingsGoals(authenticatedUser);
         RoundUpSavingResponse roundUpSavingResponse = getRoundUpSavingsUseCase.getAccountRoundUpSavings(authenticatedUser);
+        SpendAndSaveResponse spendAndSaveResponse = getSpendAndSaveUseCase.getSpendAndSaveDashboard(authenticatedUser);
+        response.setSpendAndSave(spendAndSaveResponse);
         response.setRoundUpSaving(roundUpSavingResponse);
         ApiResponseJSON<AccountSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Savings goals processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);

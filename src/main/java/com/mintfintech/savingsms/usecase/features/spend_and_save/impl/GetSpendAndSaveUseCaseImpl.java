@@ -10,6 +10,7 @@ import com.mintfintech.savingsms.domain.entities.SpendAndSaveEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.data.response.SpendAndSaveResponse;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.GetSpendAndSaveTransactionUseCase;
 import com.mintfintech.savingsms.usecase.features.spend_and_save.GetSpendAndSaveUseCase;
@@ -29,6 +30,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
     private final AppUserEntityDao appUserEntityDao;
     private final SpendAndSaveEntityDao spendAndSaveEntityDao;
     private final GetSpendAndSaveTransactionUseCase getSpendAndSaveTransactionUseCase;
+    private final ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
 
 
     @Override
@@ -64,6 +66,10 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
                 .totalAmount(amountSaved.add(accruedInterest))
                 .percentage(spendAndSaveEntity.getPercentage())
                 .build();
+        if (spendAndSaveEntity.isSavingsLocked()) {
+            boolean isSavingsMature = computeAvailableAmountUseCase.isMaturedSavingsGoal(goalEntity);
+            response.setSavingsMature(isSavingsMature);
+        }
         if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0 || goalEntity.getMaturityDate() == null) {
             response.setMaturityDate("");
         } else {
