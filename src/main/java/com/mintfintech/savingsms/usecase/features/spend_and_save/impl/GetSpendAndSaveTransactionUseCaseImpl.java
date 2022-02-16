@@ -30,7 +30,7 @@ public class GetSpendAndSaveTransactionUseCaseImpl implements GetSpendAndSaveTra
 
     private SpendAndSaveTransactionModel fromTransactionEntityToModel(SpendAndSaveTransactionEntity transactionEntity) {
         return SpendAndSaveTransactionModel.builder()
-                .amountSaved(transactionEntity.getAmountSaved())
+                .transactionAmount(transactionEntity.getAmountSaved())
                 .dateCreated(transactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .transactionType(transactionEntity.getTransactionType().name())
                 .build();

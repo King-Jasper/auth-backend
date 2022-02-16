@@ -9,7 +9,7 @@ import java.math.BigDecimal;
 @Data
 public class SpendAndSaveTransactionModel {
 
-    private BigDecimal amountSaved;
+    private BigDecimal transactionAmount;
 
     private String dateCreated;
 
