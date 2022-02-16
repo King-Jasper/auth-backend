@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.AccountTypeConstant;
@@ -97,6 +98,11 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     @Override
     public List<SavingsMaturityStat> getInvestmentMaturityStatistics(LocalDateTime fromDate, LocalDateTime toDate) {
         return repository.getInvestmentMaturityStatistics(fromDate, toDate);
+    }
+
+    @Override
+    public boolean getByReferralCodeAndAppUser(String referralCode, AppUserEntity appUser) {
+        return repository.existsByAffiliateReferralCodeAndCreator(referralCode, appUser);
     }
 
     @Override

@@ -16,4 +16,6 @@ public class InvestmentCreationRequest {
     private String transactionPin;
 
     private String userId;
+
+    private String referralCode;
 }

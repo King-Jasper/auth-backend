@@ -205,10 +205,20 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             response.setMessage("Sorry, account debit for investment funding failed.");
             return response;
         }
+        if (request.getReferralCode() != null) {
+            if (!investmentEntityDao.getByReferralCodeAndAppUser(request.getReferralCode(),  appUser)) {
+                investment.setAffiliateReferralCode(request.getReferralCode());
+            }
+        }
+
         investment.setRecordStatus(RecordStatusConstant.ACTIVE);
         investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
         investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
+
+        if (investment.getAffiliateReferralCode() != null) {
+            publishTransactionNotificationUseCase.createAffiliateRecords(investment);
+        }
 
         sendInvestmentCreationEmail(investment, appUser);
 
