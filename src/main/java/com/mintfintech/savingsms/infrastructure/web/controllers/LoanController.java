@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
@@ -10,6 +11,7 @@ import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRe
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.*;
+import com.mintfintech.savingsms.utils.EmailUtils;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.annotations.ApiOperation;
@@ -112,10 +114,16 @@ public class LoanController {
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
-                                                                                @ApiParam(value = "Employer Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @ApiParam(value = "Employer Email", required = true)  @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("workEmail") String workEmail) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true)  @NotEmpty @RequestParam("workEmail") String workEmail) {
 
+        if(StringUtils.isNotEmpty(workEmail) && !EmailUtils.isValid(workEmail)) {
+            throw new BadRequestException("Invalid email address provided.");
+        }
+        if(StringUtils.isNotEmpty(employerEmail) && !EmailUtils.isValid(employerEmail)) {
+            throw new BadRequestException("Invalid email address provided.");
+        }
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
                 .employerAddress(employerAddress)
@@ -140,10 +148,16 @@ public class LoanController {
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
-                                                                                @ApiParam(value = "Employer Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @ApiParam(value = "Employer Email", required = true)  @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("workEmail") String workEmail) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true)  @NotEmpty @RequestParam("workEmail") String workEmail) {
 
+        if(StringUtils.isNotEmpty(workEmail) && !EmailUtils.isValid(workEmail)) {
+            throw new BadRequestException("Invalid email address provided.");
+        }
+        if(StringUtils.isNotEmpty(employerEmail) && !EmailUtils.isValid(employerEmail)) {
+            throw new BadRequestException("Invalid email address provided.");
+        }
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
                 .employerAddress(employerAddress)
