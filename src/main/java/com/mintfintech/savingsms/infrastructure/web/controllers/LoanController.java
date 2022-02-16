@@ -112,9 +112,9 @@ public class LoanController {
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
-                                                                                @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @ApiParam(value = "Employer Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)
@@ -140,9 +140,9 @@ public class LoanController {
                                                                                 @ApiParam(value = "Monthly net income. Min:1000", required = true) @RequestParam(value = "monthlyIncome", defaultValue = "0.0") double monthlyIncome,
                                                                                 @ApiParam(value = "Organization website", required = true) @NotEmpty @RequestParam("organizationWebsite") String organizationUrl,
                                                                                 @ApiParam(value = "Employer Address", required = true) @NotEmpty @RequestParam("employerAddress") String employerAddress,
-                                                                                @ApiParam(value = "Employer Email", required = true) @Email @NotEmpty @RequestParam("employerEmail") String employerEmail,
+                                                                                @ApiParam(value = "Employer Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("employerEmail") String employerEmail,
                                                                                 @ApiParam(value = "Employer Phone Number", required = true) @NotEmpty @RequestParam("employerPhoneNo") String employerPhoneNo,
-                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email @NotEmpty @RequestParam("workEmail") String workEmail) {
+                                                                                @ApiParam(value = "Customer Work Email", required = true) @Email(message = "Invalid email address provided.") @NotEmpty @RequestParam("workEmail") String workEmail) {
 
         EmploymentDetailCreationRequest request = EmploymentDetailCreationRequest.builder()
                 .employmentLetter(employmentLetter)

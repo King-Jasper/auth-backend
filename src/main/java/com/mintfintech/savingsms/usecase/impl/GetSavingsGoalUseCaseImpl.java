@@ -218,7 +218,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 emergencySaving.setSavingsGoal(fromSavingsGoalEntityToModel(savingsGoalEntity));
             }else if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
                  savingsGoalList.add(fromSavingsGoalEntityToModel(savingsGoalEntity));
-            }else {
+            }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS){
                 mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
                 /*if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
                     mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
