@@ -7,12 +7,11 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferRe
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
-import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
-import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.PublishTransactionNotificationUseCase;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
 import com.mintfintech.savingsms.usecase.data.value_objects.RoundUpTransactionCategoryType;
+import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.savings_funding.SavingsFundingUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -20,6 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 /**
@@ -41,6 +43,8 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     private UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
     private SavingsFundingUtil savingsFundingUtil;
+    private SpendAndSaveEntityDao spendAndSaveEntityDao;
+    private SpendAndSaveTransactionDao spendAndSaveTransactionDao;
 
     @Override
     public void processTransactionForRoundUpSavings(MintTransactionPayload transactionPayload) {
@@ -98,7 +102,60 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
                 .transactionType(transactionCategory)
                 .build();
         savingsTransactionEntity = roundUpSavingsTransactionEntityDao.saveRecord(savingsTransactionEntity);
-        processSavingFunding(savingsTransactionEntity);
+        //processSavingFunding(savingsTransactionEntity);
+    }
+
+    @Override
+    public void processTransactionForSpendAndSave(MintTransactionPayload transactionPayload) {
+
+        String reference = transactionPayload.getInternalReference();
+        String category = transactionPayload.getCategory();
+
+        if (spendAndSaveTransactionDao.findByTransactionReference(reference).isPresent()) {
+            return;
+        }
+        RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
+        if (transactionCategory == null || transactionCategory.equals(RoundUpTransactionCategoryType.CARD_PAYMENT)) {
+            return;
+        }
+        Optional<MintBankAccountEntity> debitAccountOpt = mintBankAccountEntityDao.findByAccountId(transactionPayload.getDebitAccountId());
+        if (!debitAccountOpt.isPresent()) {
+            return;
+        }
+        MintBankAccountEntity debitAccount = debitAccountOpt.get();
+        Optional<SpendAndSaveEntity> settingEntityOptional = spendAndSaveEntityDao.findSpendAndSaveSettingByAccount(debitAccount.getMintAccount());
+        if (!settingEntityOptional.isPresent() || !settingEntityOptional.get().isActivated()) {
+            return;
+        }
+
+        SpendAndSaveEntity settingEntity = settingEntityOptional.get();
+        BigDecimal transactionAmount = transactionPayload.getTransactionAmount();
+        BigDecimal amountToSave = getSaveAmount(settingEntity.getPercentage(), transactionAmount);
+        if (amountToSave.compareTo(BigDecimal.ZERO) <= 0) {
+            log.info("Amount to save is {}", amountToSave);
+            return;
+        }
+        if (!hasSufficientBalance(transactionPayload, amountToSave)) {
+            log.info("Insufficient balance to process roundup savings");
+            return;
+        }
+        MintAccountEntity accountEntity = debitAccount.getMintAccount();
+        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findFirstSavingsByType(accountEntity, SavingsGoalTypeConstant.SPEND_AND_SAVE);
+        if (!savingsGoalOptional.isPresent()) {
+            return;
+        }
+        SavingsGoalEntity savingsGoal = savingsGoalOptional.get();
+        if(savingsGoal.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {
+            log.info("savings goal is no longer active");
+            return;
+        }
+
+        processSavingFunding(settingEntity, savingsGoal, transactionPayload, amountToSave);
+    }
+
+    private BigDecimal getSaveAmount(int percentage, BigDecimal transactionAmount) {
+        BigDecimal percent = BigDecimal.valueOf(percentage);
+        return (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
     }
 
 
@@ -147,32 +204,44 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         return false;
     }
 
-    private void processSavingFunding(RoundUpSavingsTransactionEntity roundUpSavingsTransactionEntity) {
-        SavingsGoalEntity goalEntity = roundUpSavingsTransactionEntity.getSavingsGoal();
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(roundUpSavingsTransactionEntity.getTransactionAccount().getId());
-        BigDecimal amount = roundUpSavingsTransactionEntity.getAmountSaved();
+    private void processSavingFunding(SpendAndSaveEntity spendAndSave, SavingsGoalEntity goalEntity, MintTransactionPayload transactionPayload, BigDecimal amountToSave) {
 
+        Optional<MintBankAccountEntity> debitAccountOpt = mintBankAccountEntityDao.findByAccountId(transactionPayload.getDebitAccountId());
+        if (!debitAccountOpt.isPresent()) {
+            return;
+        }
+        MintBankAccountEntity debitAccount = debitAccountOpt.get();
         String reference = savingsGoalTransactionEntityDao.generateTransactionReference();
-
-        BigDecimal savingsNewBalance = goalEntity.getSavingsBalance().add(amount);
+        BigDecimal savingsNewBalance = goalEntity.getSavingsBalance().add(amountToSave);
 
         SavingsGoalTransactionEntity transactionEntity = new SavingsGoalTransactionEntity();
         transactionEntity.setTransactionStatus(TransactionStatusConstant.PENDING);
         transactionEntity.setTransactionType(TransactionTypeConstant.CREDIT);
         transactionEntity.setNewBalance(savingsNewBalance);
-        transactionEntity.setTransactionAmount(amount);
+        transactionEntity.setTransactionAmount(amountToSave);
         transactionEntity.setSavingsGoal(goalEntity);
         transactionEntity.setBankAccount(debitAccount);
         transactionEntity.setFundingSource(FundingSourceTypeConstant.MINT_ACCOUNT);
         transactionEntity.setCurrentBalance(goalEntity.getSavingsBalance());
         transactionEntity.setTransactionReference(reference);
-
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
-        roundUpSavingsTransactionEntity.setTransaction(transactionEntity);
-        roundUpSavingsTransactionEntityDao.saveRecord(roundUpSavingsTransactionEntity);
+
+        SpendAndSaveTransactionEntity spendAndSaveTransaction = SpendAndSaveTransactionEntity.builder()
+                .transactionAccount(debitAccount)
+                .transactionDate(LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME))
+                .transactionAmount(transactionPayload.getTransactionAmount())
+                .transactionType(RoundUpTransactionCategoryType.getByName(transactionPayload.getCategory()))
+                .transactionReference(transactionPayload.getInternalReference())
+                .amountSaved(amountToSave)
+                .savingsGoal(goalEntity)
+                .spendAndSaveSetting(spendAndSave)
+                .savingsGoalTransaction(transactionEntity)
+                .build();
+        spendAndSaveTransactionDao.saveRecord(spendAndSaveTransaction);
+
 
         SavingsFundingRequestCBS fundingRequestCBS = SavingsFundingRequestCBS.builder()
-                .amount(amount)
+                .amount(amountToSave)
                 .debitAccountNumber(debitAccount.getAccountNumber())
                 .goalId(goalEntity.getGoalId())
                 .goalName(goalEntity.getName())
@@ -183,7 +252,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         transactionEntity = savingsFundingUtil.processFundingTransactionResponse(transactionEntity, msClientResponse);
         if (transactionEntity.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
             goalEntity = savingsGoalEntityDao.getRecordById(goalEntity.getId());
-            goalEntity.setSavingsBalance(goalEntity.getSavingsBalance().add(amount));
+            goalEntity.setSavingsBalance(goalEntity.getSavingsBalance().add(amountToSave));
             savingsGoalEntityDao.saveRecord(goalEntity);
             transactionEntity.setNewBalance(goalEntity.getSavingsBalance());
             savingsGoalTransactionEntityDao.saveRecord(transactionEntity);

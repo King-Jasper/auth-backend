@@ -44,6 +44,20 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
 
     @Override
     public MsClientResponse<FundTransferResponseCBS> processSavingFunding(SavingsFundingRequestCBS transferRequestCBS) {
+        if (applicationProperty.isDevelopmentEnvironment()) {
+            FundTransferResponseCBS fund = new FundTransferResponseCBS();
+            fund.setBankOneReference("BOSpendAndSave");
+            fund.setResponseCode("00");
+            fund.setResponseMessage("SUCCESSFUL");
+            fund.setTransactionReference("A23U433");
+            fund.setReversed(false);
+            return MsClientResponse.<FundTransferResponseCBS>builder()
+                    .success(true)
+                    .message("success")
+                    .data(fund)
+                    .statusCode(200)
+                    .build();
+        }
         String baseUrl = getServiceBaseUrl();
         String serviceUrl = String.format("%s/api/v1/savings-transaction/fund-savings", baseUrl);
         String requestBody = gson.toJson(transferRequestCBS);

@@ -28,7 +28,7 @@ public class SavingsGoalTransactionEntity extends SavingsTransaction {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private MintBankAccountEntity bankAccount;
 
-    /*
+
     @Column(nullable = false)
     private BigDecimal transactionAmount;
 
@@ -61,6 +61,6 @@ public class SavingsGoalTransactionEntity extends SavingsTransaction {
     private String transactionResponseMessage;
 
     private String externalReference;
-    */
+
 
 }
