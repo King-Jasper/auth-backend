@@ -84,10 +84,16 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
+        BigDecimal interestWithdrawal = accruedInterest.subtract(remainingInterest);
+        WithdrawalRequestStatusConstant requestStatusConstant = WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT;
+        if(interestWithdrawal.compareTo(BigDecimal.ZERO) > 0) {
+            requestStatusConstant = WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT;
+        }
+
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
                 .amount(amount)
-                .withdrawalRequestStatus(WithdrawalRequestStatusConstant.PENDING_SAVINGS_CREDIT)
-                .interestWithdrawal(accruedInterest.subtract(remainingInterest))
+                .withdrawalRequestStatus(requestStatusConstant)
+                .interestWithdrawal(interestWithdrawal)
                 .savingsBalanceWithdrawal(amount)
                 .balanceBeforeWithdrawal(currentBalance)
                 .maturedGoal(true)
