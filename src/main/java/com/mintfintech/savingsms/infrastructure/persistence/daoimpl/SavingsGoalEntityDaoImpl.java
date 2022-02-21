@@ -157,7 +157,7 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         Predicate whereClause = cb.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE);
 
         if(searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
-            whereClause = cb.and(whereClause, cb.between(root.get("dateCreated"), searchDTO.getToDate(), searchDTO.getFromDate()));
+            whereClause = cb.and(whereClause, cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
         }
         if(searchDTO.getAccount() != null) {
             whereClause = cb.and(whereClause, cb.equal(root.get("mintAccount"), searchDTO.getAccount().getId()));

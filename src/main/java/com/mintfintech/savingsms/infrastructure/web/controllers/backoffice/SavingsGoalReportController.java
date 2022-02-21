@@ -62,7 +62,8 @@ public class SavingsGoalReportController {
                 .goalName(goalName)
                 .accountId(accountId)
                 .savingsType(savingsType)
-                .fromDate(fromDate).toDate(toDate)
+                .fromDate(fromDate)
+                .toDate(toDate)
                 .autoSavedStatus(autoSaveStatus)
                 .build();
         PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
