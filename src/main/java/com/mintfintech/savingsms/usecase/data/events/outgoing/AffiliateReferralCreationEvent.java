@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 @Data
 @Builder
-public class AffiliateRewardCreationEvent {
+public class AffiliateReferralCreationEvent {
 
     private String transactionDate;
 

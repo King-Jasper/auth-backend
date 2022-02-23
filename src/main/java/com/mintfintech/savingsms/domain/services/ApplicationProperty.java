@@ -125,6 +125,10 @@ public class ApplicationProperty {
         return environmentService.getVariable("amazon.region");
     }
 
+    public String getAffiliateServiceName() {
+        return environmentService.getVariable("microservices.affiliate.service-name", "");
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

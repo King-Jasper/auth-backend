@@ -24,7 +24,6 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
     private final AppUserEntityDao appUserEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
     private final SpendAndSaveEntityDao spendAndSaveEntityDao;
-    private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     private final SavingsGoalEntityDao savingsGoalEntityDao;
     private final SavingsWithdrawalRequestEntityDao savingsWithdrawalRequestEntityDao;
@@ -52,8 +51,6 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         if (amount.compareTo(BigDecimal.ZERO) == 0) {
             throw new BadRequestException("Amount should be greater than 0.0");
         }
-        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, mintAccount)
-                .orElseThrow(() -> new BadRequestException("Invalid credit account"));
 
         if (savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.SPEND_AND_SAVE) {
             throw new BusinessLogicConflictException("Sorry, your savings type is not Spend and Save");

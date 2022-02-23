@@ -17,5 +17,5 @@ public interface PublishTransactionNotificationUseCase {
     void sendSavingsFundingFailureNotification(SavingsGoalEntity goalEntity, BigDecimal savingsAmount, String failureMessage);
     void sendPendingCorporateInvestmentNotification(MintAccountEntity mintAccount);
     void sendDeclinedCorporateInvestmentNotification(MintAccountEntity mintAccount);
-    void createAffiliateRecords(InvestmentEntity investment);
+    void publishAffiliateReferral(InvestmentEntity investment);
 }

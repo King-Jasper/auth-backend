@@ -179,8 +179,8 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     }
 
     @Override
-    public void createAffiliateRecords(InvestmentEntity investment) {
-        AffiliateRewardCreationEvent affiliateRecords = AffiliateRewardCreationEvent.builder()
+    public void publishAffiliateReferral(InvestmentEntity investment) {
+        AffiliateReferralCreationEvent affiliateReferral = AffiliateReferralCreationEvent.builder()
                 .transactionDate(investment.getDateCreated().format(DateTimeFormatter.ISO_DATE))
                 .customerName(investment.getCreator().getName())
                 .transactionAmount(investment.getAmountInvested())
@@ -188,6 +188,6 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .referralCode(investment.getAffiliateReferralCode())
                 .investmentTenorDuration(investment.getInvestmentTenor().getMaximumDuration())
                 .build();
-        applicationEventService.publishEvent(ApplicationEventService.EventType.AFFILIATE_MARKETING, new EventModel<>(affiliateRecords));
+        applicationEventService.publishEvent(ApplicationEventService.EventType.AFFILIATE_MARKETING, new EventModel<>(affiliateReferral));
     }
 }
