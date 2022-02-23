@@ -99,7 +99,9 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                  matured = daysPassed > 4 && hasFund;
             }else {
                 LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
-                if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
+                if(maturityDate == null) {
+                    matured = hasFund;
+                }else if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
                     matured = hasFund;
                 }else {
                     matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
