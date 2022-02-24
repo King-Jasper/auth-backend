@@ -223,6 +223,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 /*if(savingsGoalEntity.getSavingsGoalType() != SavingsGoalTypeConstant.MINT_DEFAULT_SAVINGS){
                     mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
                 }*/
+            }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
+                mintGoalsList.add(fromSavingsGoalEntityToMintGoalModel(savingsGoalEntity));
             }
         }
         return AccountSavingsGoalResponse.builder()
