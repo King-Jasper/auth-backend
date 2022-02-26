@@ -108,6 +108,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         long count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
+        response.setBusinessLoanMaxMonthDuration(3);
         response.setBusinessLoanAvailable(true);
         response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
         response.setPaydayLoanAvailable(true);
