@@ -3,15 +3,19 @@ package com.mintfintech.savingsms.usecase.features.loan;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
+import com.mintfintech.savingsms.usecase.data.response.BusinessLoanInfo;
+import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanDashboardResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.models.CustomerLoanProfileDashboard;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 
 public interface CustomerLoanProfileUseCase {
+
+    LoanDashboardResponse getLoanDashboardInformation(AuthenticatedUser authenticatedUser);
 
     LoanCustomerProfileModel createPaydayCustomerLoanProfile(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request);
 

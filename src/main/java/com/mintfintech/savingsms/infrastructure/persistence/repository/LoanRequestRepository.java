@@ -44,9 +44,13 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
 
     @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
-            " s.loanType = com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant.PAYDAY and " +
-            " s.activeLoan = true")
-    long countActiveCustomerPayDayLoan(AppUserEntity requestedBy);
+            " s.loanType = ?2 and s.activeLoan = true")
+    long countActiveCustomerLoan(AppUserEntity requestedBy, LoanTypeConstant loanType);
+
+    @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.loanType = ?2 and s.approvalStatus = com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant.PENDING")
+    long countPendingCustomerLoan(AppUserEntity requestedBy, LoanTypeConstant loanType);
 
     List<LoanRequestEntity> getAllByRequestedByAndRecordStatus(AppUserEntity requestedBy, RecordStatusConstant recordStatus);
 

@@ -90,4 +90,6 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
 
     private String bankOneAccountNumber;
 
+    private Integer durationInMonths;
+
 }

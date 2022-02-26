@@ -137,12 +137,26 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanReviewLogEntityDao.saveRecord(reviewLogEntity);
             return;
         }
-
         if(loanRequest.getReviewStage() == LoanReviewStageConstant.SECOND_REVIEW) {
             if(!loanManager.isBusinessManager()) {
                 throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
             }
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+                description = "Loan approved by Business manager";
+                loanRequest.setReviewStage(LoanReviewStageConstant.THIRD_REVIEW);
+                loanRequestEntityDao.saveRecord(loanRequest);
+
+                reviewLogEntity.setDescription(description);
+                loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+                return;
+            }
         }
+        if(loanRequest.getReviewStage() == LoanReviewStageConstant.THIRD_REVIEW) {
+            if(!loanManager.isBusinessManager()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
+            }
+        }
+
         description = "Loan approved by business manager";
         reviewLogEntity.setDescription(description);
         loanReviewLogEntityDao.saveRecord(reviewLogEntity);
@@ -164,15 +178,18 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         ) {
             LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
 
-            LocalDateTime repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
-
+            LocalDateTime repaymentDate;
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+                repaymentDate = LocalDateTime.now().plusMonths(loanRequest.getDurationInMonths());
+            }else {
+                repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
+            }
             DayOfWeek dayOfWeek = repaymentDate.getDayOfWeek();
             if(dayOfWeek == DayOfWeek.SATURDAY) {
                 repaymentDate = repaymentDate.plusDays(3);
             }else if(dayOfWeek == DayOfWeek.SUNDAY) {
                 repaymentDate = repaymentDate.plusDays(2);
             }
-
             loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequest.setApprovedDate(LocalDateTime.now());
             loanRequest.setApproveByName(loanManager.getReviewerName());
