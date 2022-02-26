@@ -76,3 +76,7 @@ loan:
 investment:
   max-liquidate-rate: 80
   min-liquidation-days: 15
+
+swagger-security:
+  password: p@ssw0rd
+  username: developer@mintyn.com
