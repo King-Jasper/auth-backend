@@ -168,6 +168,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .accountNumber(bankAccount.getAccountNumber())
                 .amount(loanRequest.getLoanAmount().intValue())
                 .build();
+        if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+            request.setDurationInMonths(loanRequest.getDurationInMonths());
+        }
 
         MsClientResponse<LoanApplicationResponseCBS> msClientResponse = coreBankingServiceClient.createLoanApplication(request);
 
@@ -204,6 +207,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 mintAccountEntityDao.saveRecord(mintAccount);
             }
             sendLoanApprovalEmail(loanRequest, appUser);
+            //TODO implement sending of loan document.
         } else {
             String message = String.format("Loan Id: %s; message: %s", loanRequest.getLoanId(), msClientResponse.getMessage());
             systemIssueLogService.logIssue("Loan Creation Failure", "Loan Creation Failed", message);

@@ -9,4 +9,5 @@ public class LoanApplicationRequestCBS {
     private String accountNumber;
     private int amount;
     private String loanType;
+    private int durationInMonths;
 }
