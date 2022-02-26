@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.response.LoanManager;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -22,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeFieldType;
@@ -88,7 +90,6 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             if (msClientResponse.isSuccess() && StringUtils.isNotEmpty(msClientResponse.getData().getAccountNumber())) {
 
                 NewLoanAccountResponseCBS responseCBS = msClientResponse.getData();
-
                 loan.setBankOneAccountNumber(responseCBS.getAccountNumber());
                 loan.setApprovalStatus(ApprovalStatusConstant.DISBURSED);
                 loanRequestEntityDao.saveRecord(loan);
@@ -100,8 +101,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                         .transactionType(TransactionTypeConstant.CREDIT)
                         .transactionReference(loan.getTrackingReference())
                         .build();
-
                 loanTransactionEntityDao.saveRecord(transaction);
+
+                AppUserEntity debtor = appUserEntityDao.getRecordById(loan.getRequestedBy().getId());
+                String text = "Hi "+debtor.getFirstName()+", your loan request has been disbursed to your account. Thanks for choosing Mintyn.";
+                PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("New Savings", text, debtor.getDeviceGcmNotificationToken());
+                pushNotificationEvent.setUserId(debtor.getUserId());
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
             }
         }
     }
