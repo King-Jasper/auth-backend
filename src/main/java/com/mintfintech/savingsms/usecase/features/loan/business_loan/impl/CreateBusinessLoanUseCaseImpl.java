@@ -47,14 +47,16 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, accountEntity)
                 .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
 
-        long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
-        if(pendingLoanCount > 0) {
-            throw new BadRequestException("Sorry, you have a loan request pending review and approval.");
-        }
+        if(applicationProperty.isLiveEnvironment()) {
+            long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
+            if(pendingLoanCount > 0) {
+                throw new BadRequestException("Sorry, you have a loan request pending review and approval.");
+            }
 
-        long activeLoanCount = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
-        if(activeLoanCount > 0) {
-            throw new BadRequestException("Sorry, you already have an active loan running.");
+            long activeLoanCount = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+            if(activeLoanCount > 0) {
+                throw new BadRequestException("Sorry, you already have an active loan running.");
+            }
         }
 
         BigDecimal loanInterest = loanAmount.multiply(BigDecimal.valueOf(applicationProperty.getBusinessLoanInterestRate() / 100.0));
