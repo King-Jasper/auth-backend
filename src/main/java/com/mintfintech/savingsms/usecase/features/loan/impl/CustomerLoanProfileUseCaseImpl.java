@@ -36,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -115,6 +116,10 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         response.setMaximumDaysForReview(5);
         response.setMinimumDaysForReview(2);
         response.setPayDayLoanInterest(applicationProperty.getPayDayLoanInterestRate());
+        List<LoanDuration> durations = new ArrayList<>();
+        durations.add(new LoanDuration(1, "1 Month"));
+        durations.add(new LoanDuration(2, "2 Months"));
+        durations.add(new LoanDuration(3, "3 Months"));
         return response;
     }
 

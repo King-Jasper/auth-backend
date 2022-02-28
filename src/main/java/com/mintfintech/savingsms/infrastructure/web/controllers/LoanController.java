@@ -195,7 +195,7 @@ public class LoanController {
         ApiResponseJSON<LoanDashboardResponse> apiResponseJSON = new ApiResponseJSON<>("Loan dashboard retrieved.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
-    
+
     @ApiOperation(value = "Loan schedule.")
     @GetMapping(value = "business/loan-request-schedule", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanRequestScheduleResponse>> businessLoanRequestSchedule(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,

@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.usecase.data.response;
 
 import lombok.Data;
+import java.util.List;
 
 /**
  * Created by jnwanya on
@@ -12,8 +13,8 @@ public class LoanDashboardResponse {
     private double payDayLoanInterest;
     private boolean businessLoanAvailable;
     private double businessLoanMonthlyInterest;
-    private int businessLoanMaxMonthDuration;
     private boolean canRequestBusinessLoan;
     private int minimumDaysForReview;
     private int maximumDaysForReview;
+    private List<LoanDuration> businessLoanDurations;
 }
