@@ -114,10 +114,11 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
     private void processLoanApproval(LoanManager loanManager, LoanRequestEntity loanRequest, AppUserEntity appUser) {
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
-                .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
-
         if (loanRequest.getLoanType() == LoanTypeConstant.PAYDAY) {
+
+            CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
+                    .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
+
             EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
             if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED) {
                 throw new BadRequestException("Employment Information have not been verified for this user");
