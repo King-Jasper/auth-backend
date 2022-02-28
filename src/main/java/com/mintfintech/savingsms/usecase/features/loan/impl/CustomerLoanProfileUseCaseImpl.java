@@ -112,6 +112,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         response.setBusinessLoanAvailable(true);
         response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
         response.setPaydayLoanAvailable(true);
+        response.setMaximumDaysForReview(5);
+        response.setMinimumDaysForReview(2);
         response.setPayDayLoanInterest(applicationProperty.getPayDayLoanInterestRate());
         return response;
     }

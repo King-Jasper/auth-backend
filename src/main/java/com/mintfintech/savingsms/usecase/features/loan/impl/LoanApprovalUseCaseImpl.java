@@ -125,10 +125,16 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             }
         }
 
+        boolean userReviewed = loanReviewLogEntityDao.recordExistForUserIdAndEntityId(loanManager.getReviewerUserId(), loanRequest.getId());
+
+        if(userReviewed) {
+            throw new BusinessLogicConflictException("Sorry, you have already reviewed this loan.");
+        }
         LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
                 .reviewerName(loanManager.getReviewerName())
                 .entityId(loanRequest.getId())
                 .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .reviewerId(loanManager.getReviewerUserId())
                 .build();
 
         String description = "";

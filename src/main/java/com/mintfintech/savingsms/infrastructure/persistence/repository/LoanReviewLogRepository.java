@@ -12,4 +12,5 @@ import java.util.List;
  */
 public interface LoanReviewLogRepository extends JpaRepository<LoanReviewLogEntity, Long> {
     List<LoanReviewLogEntity> getAllByReviewLogTypeOrderByDateCreatedDesc(LoanReviewLogType reviewLogType);
+    boolean existsAllByEntityIdAndReviewerId(long entityId, String reviewerId);
 }

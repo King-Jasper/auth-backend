@@ -25,4 +25,9 @@ public class LoanReviewLogEntityDaoImpl extends CrudDaoImpl<LoanReviewLogEntity,
     public List<LoanReviewLogEntity> getRecordByReviewType(LoanReviewLogType reviewLogType) {
         return repository.getAllByReviewLogTypeOrderByDateCreatedDesc(reviewLogType);
     }
+
+    @Override
+    public boolean recordExistForUserIdAndEntityId(String userId, long entityId) {
+        return repository.existsAllByEntityIdAndReviewerId(entityId, userId);
+    }
 }

@@ -14,4 +14,6 @@ public class LoanDashboardResponse {
     private double businessLoanMonthlyInterest;
     private int businessLoanMaxMonthDuration;
     private boolean canRequestBusinessLoan;
+    private int minimumDaysForReview;
+    private int maximumDaysForReview;
 }
