@@ -217,7 +217,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 throw new BadRequestException("Referral code does not exist. Please ensure you entered the correct code or proceed without it.");
             }
             if (!investmentEntityDao.getByReferralCodeAndAppUser(request.getReferralCode(),  appUser)) {
-                investment.setAffiliateReferralCode(request.getReferralCode());
+                investment.setReferralCode(request.getReferralCode());
                 investmentEntityDao.saveRecord(investment);
                 publishTransactionNotificationUseCase.publishAffiliateReferral(investment);
             }

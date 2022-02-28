@@ -74,6 +74,6 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     private String managedByUserId;
 
-    private String affiliateReferralCode;
+    private String referralCode;
 
 }

@@ -185,7 +185,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .customerName(investment.getCreator().getName())
                 .transactionAmount(investment.getAmountInvested())
                 .transactionType("INVESTMENT")
-                .referralCode(investment.getAffiliateReferralCode())
+                .referralCode(investment.getReferralCode())
                 .investmentTenorDuration(investment.getInvestmentTenor().getMaximumDuration())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.AFFILIATE_MARKETING, new EventModel<>(affiliateReferral));
