@@ -181,7 +181,6 @@ public class LoanController {
     @PostMapping(value = "loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> loanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                   @RequestBody @Valid LoanRequest request) {
-
        throw new BadRequestException("Sorry, we are not currently disbursing any new loan.");
         // LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType(), request.getCreditAccountId());
        // ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan request processed successfully.", response);
