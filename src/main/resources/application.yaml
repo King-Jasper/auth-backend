@@ -29,6 +29,8 @@ microservices:
     service-name: core-banking-service
   accounts:
     service-name: account-service
+  affiliate:
+    service-name: affiliate-service
 mint:
   bank-code: 50304
   support-phonenumber: 08067507490

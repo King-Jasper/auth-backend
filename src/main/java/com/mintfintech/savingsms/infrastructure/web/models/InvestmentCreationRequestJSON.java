@@ -26,6 +26,9 @@ public class InvestmentCreationRequestJSON {
     @Pattern(regexp = "[0-9]{4}")
     private String transactionPin;
 
+    @ApiModelProperty(notes = "Referral code")
+    private String referralCode;
+
     public InvestmentCreationRequest toRequest() {
 
         return InvestmentCreationRequest.builder()
@@ -33,6 +36,7 @@ public class InvestmentCreationRequestJSON {
                 .investmentAmount(investmentAmount)
                 .durationInMonths(durationInMonths)
                 .transactionPin(transactionPin)
+                .referralCode(referralCode)
                 .build();
     }
 }

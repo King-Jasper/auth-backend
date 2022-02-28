@@ -177,4 +177,17 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .build();
             applicationEventService.publishEvent(ApplicationEventService.EventType.DECLINED_CORPORATE_INVESTMENT, new EventModel<>(investmentEmailEvent));
     }
+
+    @Override
+    public void publishAffiliateReferral(InvestmentEntity investment) {
+        AffiliateReferralCreationEvent affiliateReferral = AffiliateReferralCreationEvent.builder()
+                .transactionDate(investment.getDateCreated().format(DateTimeFormatter.ISO_DATE))
+                .customerName(investment.getCreator().getName())
+                .transactionAmount(investment.getAmountInvested())
+                .transactionType("INVESTMENT")
+                .referralCode(investment.getReferralCode())
+                .investmentTenorDuration(investment.getInvestmentTenor().getMaximumDuration())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.AFFILIATE_MARKETING, new EventModel<>(affiliateReferral));
+    }
 }
