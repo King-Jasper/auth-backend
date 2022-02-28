@@ -235,6 +235,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .reviewerName(loanManager.getReviewerName())
                 .entityId(loanRequest.getId())
                 .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .reviewerId(loanManager.getReviewerUserId())
                 .build();
 
         String description = "";
