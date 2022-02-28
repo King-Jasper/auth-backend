@@ -7,16 +7,24 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import lombok.AllArgsConstructor;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 /**
@@ -29,6 +37,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
 
     private final MintAccountEntityDao mintAccountEntityDao;
     private final LoanRequestEntityDao loanRequestEntityDao;
+    private final ApplicationProperty applicationProperty;
 
     @Override
     public PagedDataResponse<BusinessLoanResponse> getBusinessLoanDetails(AuthenticatedUser currentUser, int page, int size) {
@@ -40,6 +49,20 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
         Page<LoanRequestEntity> entityPage = loanRequestEntityDao.searchLoans(searchDTO, page, size);
         return new PagedDataResponse<>(entityPage.getTotalElements(), entityPage.getTotalPages(),
                 entityPage.get().map(this::fromEntityToResponse).collect(Collectors.toList()));
+    }
+
+    @Override
+    public LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration) {
+       // RepaymentSchedule schedule = new RepaymentSchedule(LocalDate.now().format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00));
+        List<RepaymentSchedule> schedules = new ArrayList<>();
+        schedules.add(new RepaymentSchedule(LocalDate.now().format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00)));
+        schedules.add(new RepaymentSchedule(LocalDate.now().plusDays(10).format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00)));
+        return LoanRequestScheduleResponse.builder()
+                .loanAmount(amount)
+                .interestRate(applicationProperty.getBusinessLoanInterestRate())
+                .repaymentAmount(amount.add(BigDecimal.valueOf(1000)))
+                .schedules(schedules)
+                .build();
     }
 
     @Override

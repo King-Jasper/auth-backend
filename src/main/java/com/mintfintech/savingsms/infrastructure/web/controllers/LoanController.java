@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
 import com.mintfintech.savingsms.usecase.data.response.LoanDashboardResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
@@ -195,7 +196,16 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
     @ApiOperation(value = "Request for Loan.")
-    @PostMapping(value = "business/loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "business/loan-request-schedule", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanRequestScheduleResponse>> businessLoanRequestSchedule(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                    @RequestParam("amount") double amount,@RequestParam("duration") int duration) {
+
+        LoanRequestScheduleResponse response = getBusinessLoanUseCase.getRepaymentSchedule(authenticatedUser, BigDecimal.valueOf(amount), duration);
+        ApiResponseJSON<LoanRequestScheduleResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    @ApiOperation(value = "Loan request schedule.")
+    @GetMapping(value = "business/loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<BusinessLoanResponse>> businessLoanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                      @RequestBody @Valid BusinessLoanRequest request) {
 
