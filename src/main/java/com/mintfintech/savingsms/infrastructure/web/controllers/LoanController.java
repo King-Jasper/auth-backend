@@ -208,7 +208,7 @@ public class LoanController {
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<BusinessLoanResponse>>> getBusinessRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                        @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
                                                                                                        @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page) {
-        PagedDataResponse<BusinessLoanResponse> response = getBusinessLoanUseCase.getBusinessLoanDetails(authenticatedUser, size, page);
+        PagedDataResponse<BusinessLoanResponse> response = getBusinessLoanUseCase.getBusinessLoanDetails(authenticatedUser, page, size);
         ApiResponseJSON<PagedDataResponse<BusinessLoanResponse>> apiResponseJSON = new ApiResponseJSON<>("Loan request retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }

@@ -64,7 +64,7 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
         LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
                 .bankAccount(creditAccount)
                 .loanId(loanRequestEntityDao.generateLoanId())
-                .interestRate(applicationProperty.getPayDayLoanInterestRate())
+                .interestRate(applicationProperty.getBusinessLoanInterestRate())
                 .loanAmount(loanAmount)
                 .repaymentAmount(loanAmount.add(loanInterest))
                 .activeLoan(true)
