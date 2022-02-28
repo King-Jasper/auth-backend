@@ -53,14 +53,19 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
 
     @Override
     public LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration) {
-       // RepaymentSchedule schedule = new RepaymentSchedule(LocalDate.now().format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00));
+        double interestRate = applicationProperty.getBusinessLoanInterestRate();
+        double monthlyInterest = amount.doubleValue() * (interestRate / 100.0);
+        BigDecimal monthlyPayment = amount.add(BigDecimal.valueOf(monthlyInterest));
         List<RepaymentSchedule> schedules = new ArrayList<>();
-        schedules.add(new RepaymentSchedule(LocalDate.now().format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00)));
-        schedules.add(new RepaymentSchedule(LocalDate.now().plusDays(10).format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(5000.00)));
+        LocalDate date = LocalDate.now();
+        for(int i = 0; i < duration; i++) {
+            date = date.plusDays(30);
+            schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE), monthlyPayment));
+        }
         return LoanRequestScheduleResponse.builder()
                 .loanAmount(amount)
                 .interestRate(applicationProperty.getBusinessLoanInterestRate())
-                .repaymentAmount(amount.add(BigDecimal.valueOf(1000)))
+                .repaymentAmount(monthlyPayment.multiply(BigDecimal.valueOf(duration)))
                 .schedules(schedules)
                 .build();
     }
