@@ -39,4 +39,6 @@ public class LoanModel {
 
     private LoanCustomerProfileModel owner;
 
+    private String reviewStage;
+
 }
