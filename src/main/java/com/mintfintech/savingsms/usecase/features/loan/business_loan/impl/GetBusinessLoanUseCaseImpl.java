@@ -95,6 +95,8 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
                 .build();
         if(loanRequest.getApprovalStatus() == ApprovalStatusConstant.APPROVED) {
             response.setDueDate(loanRequest.getRepaymentDueDate().format(DateTimeFormatter.ISO_DATE_TIME));
+        }else {
+            response.setDueDate(null);
         }
         return response;
     }
