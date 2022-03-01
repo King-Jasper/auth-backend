@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -55,17 +56,24 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
     public LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration) {
         double interestRate = applicationProperty.getBusinessLoanInterestRate();
         double monthlyInterest = amount.doubleValue() * (interestRate / 100.0);
+        double totalInterest = monthlyInterest * duration;
+        double totalRepaymentAmount = amount.doubleValue() + totalInterest;
+
+        BigDecimal monthlyPrincipal = amount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_EVEN);
+
         BigDecimal monthlyPayment = amount.add(BigDecimal.valueOf(monthlyInterest));
         List<RepaymentSchedule> schedules = new ArrayList<>();
         LocalDate date = LocalDate.now();
+
         for(int i = 0; i < duration; i++) {
             date = date.plusDays(30);
-            schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE), monthlyPayment));
+            schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE),
+                    monthlyPrincipal.add(BigDecimal.valueOf(monthlyInterest))));
         }
         return LoanRequestScheduleResponse.builder()
                 .loanAmount(amount)
                 .interestRate(applicationProperty.getBusinessLoanInterestRate())
-                .repaymentAmount(monthlyPayment.multiply(BigDecimal.valueOf(duration)))
+                .repaymentAmount(amount.add(BigDecimal.valueOf(totalInterest)))
                 .schedules(schedules)
                 .build();
     }
