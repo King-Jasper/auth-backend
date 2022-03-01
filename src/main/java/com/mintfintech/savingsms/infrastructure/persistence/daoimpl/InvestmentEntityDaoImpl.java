@@ -102,7 +102,7 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
 
     @Override
     public boolean getByReferralCodeAndAppUser(String referralCode, AppUserEntity appUser) {
-        return repository.existsByAffiliateReferralCodeAndCreator(referralCode, appUser);
+        return repository.existsByReferralCodeAndCreator(referralCode, appUser);
     }
 
     @Override

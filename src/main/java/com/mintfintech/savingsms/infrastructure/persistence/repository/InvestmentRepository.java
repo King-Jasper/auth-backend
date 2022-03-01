@@ -73,5 +73,5 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
             "group by DAY(i.maturityDate), MONTH(i.maturityDate)")
     List<SavingsMaturityStat> getInvestmentMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
-    boolean existsByAffiliateReferralCodeAndCreator(String referralCode, AppUserEntity appUser);
+    boolean existsByReferralCodeAndCreator(String referralCode, AppUserEntity appUser);
 }
