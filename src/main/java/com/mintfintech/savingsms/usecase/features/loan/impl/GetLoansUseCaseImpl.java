@@ -114,6 +114,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             }
         }
         loanModel.setClientLoanStatus(loanStatus);
+        loanModel.setReviewStage(loanRequestEntity.getReviewStage() != null ?  loanRequestEntity.getReviewStage().name() : "");
         return loanModel;
     }
 
