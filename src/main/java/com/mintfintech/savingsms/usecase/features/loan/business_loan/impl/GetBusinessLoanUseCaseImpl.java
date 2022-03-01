@@ -56,6 +56,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
     public LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration) {
         double interestRate = applicationProperty.getBusinessLoanInterestRate();
         double monthlyInterest = amount.doubleValue() * (interestRate / 100.0);
+
         double totalInterest = monthlyInterest * duration;
         double totalRepaymentAmount = amount.doubleValue() + totalInterest;
 
