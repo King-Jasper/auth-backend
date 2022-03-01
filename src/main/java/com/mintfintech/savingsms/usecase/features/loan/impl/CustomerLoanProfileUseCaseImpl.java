@@ -106,7 +106,10 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     public LoanDashboardResponse getLoanDashboardInformation(AuthenticatedUser authenticatedUser) {
 
         AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
-        long count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+        long count = 0;
+        if(applicationProperty.isLiveEnvironment()) {
+            count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+        }
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
         response.setBusinessLoanAvailable(true);
