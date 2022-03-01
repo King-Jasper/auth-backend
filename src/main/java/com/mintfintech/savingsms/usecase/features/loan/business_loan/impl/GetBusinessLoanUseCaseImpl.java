@@ -61,7 +61,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
 
         BigDecimal monthlyPrincipal = amount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_EVEN);
 
-        BigDecimal monthlyPayment = amount.add(BigDecimal.valueOf(monthlyInterest));
+       // BigDecimal monthlyPayment = amount.add(BigDecimal.valueOf(monthlyInterest));
         List<RepaymentSchedule> schedules = new ArrayList<>();
         LocalDate date = LocalDate.now();
 
