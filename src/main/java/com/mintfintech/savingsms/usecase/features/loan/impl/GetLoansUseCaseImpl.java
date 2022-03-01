@@ -70,6 +70,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
         List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
 
+
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
         loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
@@ -114,6 +115,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             }
         }
         loanModel.setClientLoanStatus(loanStatus);
+        loanModel.setReviewStage(loanRequestEntity.getReviewStage().name());
         return loanModel;
     }
 
