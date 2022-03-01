@@ -70,7 +70,13 @@ loan:
     interest-rate: 5.0
     max-percent-amount: 70
     max-tenor-days: 30
+  business-loan:
+    interest-rate: 4.0
 
 investment:
   max-liquidate-rate: 80
   min-liquidation-days: 15
+
+swagger-security:
+  password: p@ssw0rd
+  username: developer@mintyn.com

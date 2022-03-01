@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.CustomerLoanProfileSearchDTO;
 import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.AuditTrailService;
@@ -12,20 +13,18 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.EmploymentInfoUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
-import com.mintfintech.savingsms.usecase.data.response.LoanManager;
+import com.mintfintech.savingsms.usecase.data.response.*;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.ImageResourceUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.CustomerLoanProfileDashboard;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Hibernate;
@@ -37,6 +36,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -49,6 +49,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final EmployeeInformationEntityDao employeeInformationEntityDao;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final AppUserEntityDao appUserEntityDao;
+    private final MintAccountEntityDao mintAccountEntityDao;
     private final ImageResourceUseCase imageResourceUseCase;
     private final ResourceFileEntityDao resourceFileEntityDao;
     private final AuditTrailService auditTrailService;
@@ -102,6 +103,30 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     @Override
+    public LoanDashboardResponse getLoanDashboardInformation(AuthenticatedUser authenticatedUser) {
+
+        AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+        long count = 0;
+        if(applicationProperty.isLiveEnvironment()) {
+            count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+        }
+        LoanDashboardResponse response = new LoanDashboardResponse();
+        response.setCanRequestBusinessLoan(count == 0);
+        response.setBusinessLoanAvailable(true);
+        response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
+        response.setPaydayLoanAvailable(true);
+        response.setMaximumDaysForReview(5);
+        response.setMinimumDaysForReview(2);
+        response.setPayDayLoanInterest(applicationProperty.getPayDayLoanInterestRate());
+        List<LoanDuration> durations = new ArrayList<>();
+        durations.add(new LoanDuration(1, "1 Month"));
+        durations.add(new LoanDuration(2, "2 Months"));
+        durations.add(new LoanDuration(3, "3 Months"));
+        response.setBusinessLoanDurations(durations);
+        return response;
+    }
+
+    @Override
     public LoanCustomerProfileModel updateCustomerEmploymentInformation(AuthenticatedUser currentUser, EmploymentDetailCreationRequest request) {
 
         if (request.getEmploymentLetter() != null) {
@@ -144,7 +169,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
             loanCustomerProfileModel.setInterestRate(applicationProperty.getPayDayLoanInterestRate());
             loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfile));
-            loanCustomerProfileModel.setHasActivePayDayLoan(loanRequestEntityDao.countActivePayDayLoan(appUser) > 0);
+            loanCustomerProfileModel.setHasActivePayDayLoan(loanRequestEntityDao.countActiveLoan(appUser, LoanTypeConstant.PAYDAY) > 0);
         }
         return loanCustomerProfileModel;
     }
@@ -364,7 +389,6 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         CustomerLoanProfileEntity customerLoanProfile = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser).orElseThrow(
                 () -> new BadRequestException("No Customer Loan Profile exists for this")
         );
-
         return addEmployeeInformationToCustomerLoanProfile(customerLoanProfile);
     }
 
@@ -428,8 +452,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     private void validateEmploymentLetter(MultipartFile employmentLetter) {
-        System.out.println("original file name - "+employmentLetter.getOriginalFilename());
-        System.out.println("file name - "+employmentLetter.getName());
+       // System.out.println("original file name - "+employmentLetter.getOriginalFilename());
+       // System.out.println("file name - "+employmentLetter.getName());
         double sizeInMb = employmentLetter.getSize() * 1.0 / (1024 * 1024);
         if (sizeInMb > applicationProperty.getFileUploadMaximumSize()) {
             throw new BadRequestException("Maximum file size is " + applicationProperty.getFileUploadMaximumSize() + "MB.");
@@ -454,6 +478,25 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
         loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        return loanCustomerProfileModel;
+    }
+
+    @Override
+    public LoanCustomerProfileModel getLoanProfileForBusinessLoan(LoanRequestEntity loanRequestEntity) {
+        AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
+        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.getRecordById(loanRequestEntity.getBankAccount().getId());
+        TierLevelEntity tierLevelEntity = mintAccount.getAccountTierLevel();
+        LoanCustomerProfileModel loanCustomerProfileModel = new LoanCustomerProfileModel();
+        loanCustomerProfileModel.setCustomerName(appUser.getName());
+        loanCustomerProfileModel.setEmail(appUser.getEmail());
+        loanCustomerProfileModel.setBlacklistReason("");
+        loanCustomerProfileModel.setBlacklistStatus(false);
+        loanCustomerProfileModel.setId(loanRequestEntity.getId());
+        loanCustomerProfileModel.setPhoneNumber(appUser.getPhoneNumber());
+        loanCustomerProfileModel.setRating(5.0);
+        loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
+        loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
+       // loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
 
@@ -482,9 +525,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                          employeeInformationEntity.getDateRejected().format(DateTimeFormatter.ISO_DATE_TIME) : employeeInformationEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME));
             }
         }
-
         return employmentInformationModel;
     }
-
 
 }

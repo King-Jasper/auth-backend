@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.dao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import org.springframework.data.domain.Page;
 
@@ -11,15 +12,18 @@ import java.util.Optional;
 
 public interface LoanRequestEntityDao extends CrudDao<LoanRequestEntity, Long> {
 
-    long countActiveLoan(AppUserEntity appUserEntity);
+    long countActiveLoan(AppUserEntity appUserEntity, LoanTypeConstant loanType);
 
-    long countActivePayDayLoan(AppUserEntity appUserEntity);
+    long countPendingLoanRequest(AppUserEntity appUserEntity, LoanTypeConstant loanType);
+
+   // long countActivePayDayLoan(AppUserEntity appUserEntity);
 
     long countTotalLoans(AppUserEntity appUserEntity);
 
     long countTotalLoansPastRepaymentDueDate(AppUserEntity appUserEntity);
 
     String generateLoanId();
+
 
     String generateLoanTransactionRef();
 

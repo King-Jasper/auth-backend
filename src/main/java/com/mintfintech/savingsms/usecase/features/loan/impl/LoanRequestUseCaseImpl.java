@@ -72,7 +72,7 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             throw new BadRequestException("Loan amount is higher than the maximum amount("+ MoneyFormatterUtil.priceWithoutDecimal(maxLoanAmount)+" allowed for this user.");
         }
 
-        if (loanRequestEntityDao.countActivePayDayLoan(appUser) > 0) {
+        if (loanRequestEntityDao.countActiveLoan(appUser, LoanTypeConstant.PAYDAY) > 0) {
             throw new BadRequestException("There is an active loan for this user");
         }
 
@@ -86,13 +86,11 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
                 .customerName(appUser.getName())
                 .recipient(appUser.getEmail())
                 .build();
-
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
 
         loanEmailEvent = LoanEmailEvent.builder()
                 .recipient(applicationProperty.getLoanAdminEmail())
                 .build();
-
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
 
 
@@ -136,7 +134,6 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
             EmployeeInformationEntity employeeInformationEntity = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
 
             maxAmount = employeeInformationEntity.getMonthlyIncome().multiply(BigDecimal.valueOf(applicationProperty.getPayDayMaxLoanPercentAmount() / 100.0));
-
         }
 
         return maxAmount;

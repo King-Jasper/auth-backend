@@ -72,7 +72,7 @@ public class SwaggerConfig {
                 new ResponseMessageBuilder().code(HttpStatus.INTERNAL_SERVER_ERROR.value()).message("Oops, Internal Server Error").build()
         );*/
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("CLIENT-SERVICE V1")
+                .groupName("CLIENT_SERVICE_V1")
                 .useDefaultResponseMessages(false)
                 .globalResponseMessage(RequestMethod.GET, globalResponses)
                 .globalResponseMessage(RequestMethod.POST, globalResponses)
@@ -111,7 +111,7 @@ public class SwaggerConfig {
         }
 
         return new Docket(DocumentationType.SWAGGER_2)
-                .groupName("PORTAL-SERVICE V1")
+                .groupName("PORTAL_SERVICE_V1")
                 .useDefaultResponseMessages(false)
                 .globalResponseMessage(RequestMethod.GET, globalResponses)
                 .globalResponseMessage(RequestMethod.POST, globalResponses)

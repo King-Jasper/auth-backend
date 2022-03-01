@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.domain.entities;
 
 import lombok.*;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 
@@ -39,5 +40,9 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
     private boolean gcmNotificationEnabled = true;;
 
     private String deviceGcmNotificationToken;
+
+    public String getFirstName() {
+        return StringUtils.capitalize(name.split(" ", 2)[0].toLowerCase());
+    }
 
 }

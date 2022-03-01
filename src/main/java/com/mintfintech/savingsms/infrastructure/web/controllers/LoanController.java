@@ -2,6 +2,9 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanDashboardResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
@@ -10,6 +13,8 @@ import com.mintfintech.savingsms.usecase.features.loan.LoanRequestUseCase;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.features.loan.business_loan.CreateBusinessLoanUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.models.*;
 import com.mintfintech.savingsms.utils.EmailUtils;
 import io.swagger.annotations.Api;
@@ -38,12 +43,7 @@ import org.springframework.web.multipart.MultipartFile;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Email;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.*;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
@@ -60,6 +60,8 @@ public class LoanController {
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final LoanRequestUseCase loanRequestUseCase;
     private final LoanRepaymentUseCase loanRepaymentUseCase;
+    private final CreateBusinessLoanUseCase createBusinessLoanUseCase;
+    private final GetBusinessLoanUseCase getBusinessLoanUseCase;
 
     @ApiOperation(value = "Returns customer loan profile.")
     @GetMapping(value = "customer-profile", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -179,9 +181,46 @@ public class LoanController {
     @PostMapping(value = "loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> loanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                   @RequestBody @Valid LoanRequest request) {
+       throw new BadRequestException("Sorry, we are not currently disbursing any new loan.");
+        // LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType(), request.getCreditAccountId());
+       // ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan request processed successfully.", response);
+       // return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
 
-        LoanModel response = loanRequestUseCase.loanRequest(authenticatedUser, request.getAmount(), request.getLoanType(), request.getCreditAccountId());
-        ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan request processed successfully.", response);
+    @ApiOperation(value = "Returns list of loan transactions.")
+    @GetMapping(value = "dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanDashboardResponse>> getLoanDashboard(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        LoanDashboardResponse response = customerLoanProfileUseCase.getLoanDashboardInformation(authenticatedUser);
+        ApiResponseJSON<LoanDashboardResponse> apiResponseJSON = new ApiResponseJSON<>("Loan dashboard retrieved.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Loan schedule.")
+    @GetMapping(value = "business/loan-request-schedule", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<LoanRequestScheduleResponse>> businessLoanRequestSchedule(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                    @RequestParam("amount") double amount,@RequestParam("duration") int duration) {
+
+        LoanRequestScheduleResponse response = getBusinessLoanUseCase.getRepaymentSchedule(authenticatedUser, BigDecimal.valueOf(amount), duration);
+        ApiResponseJSON<LoanRequestScheduleResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    @ApiOperation(value = "Create a business loan.")
+    @PostMapping(value = "business/loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<BusinessLoanResponse>> businessLoanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                     @RequestBody @Valid BusinessLoanRequest request) {
+
+        BusinessLoanResponse response = createBusinessLoanUseCase.createRequest(authenticatedUser, request.amount, request.durationInMonths, request.creditAccountId);
+        String message = "Dear customer, your loan application is received and will be reviewed shortly. This will take between 2 - 5 days.";
+        ApiResponseJSON<BusinessLoanResponse> apiResponseJSON = new ApiResponseJSON<>(message, response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    @ApiOperation(value = "Returns list of business loan request.")
+    @GetMapping(value = "business/loan-request", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedDataResponse<BusinessLoanResponse>>> getBusinessRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                       @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 20) @RequestParam("size") int size,
+                                                                                                       @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page) {
+        PagedDataResponse<BusinessLoanResponse> response = getBusinessLoanUseCase.getBusinessLoanDetails(authenticatedUser, page, size);
+        ApiResponseJSON<PagedDataResponse<BusinessLoanResponse>> apiResponseJSON = new ApiResponseJSON<>("Loan request retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -189,7 +228,6 @@ public class LoanController {
     @PostMapping(value = "repayment", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<LoanModel>> repayment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                 @RequestBody @Valid LoanPayBackRequest request) {
-
         LoanModel response = loanRepaymentUseCase.repayment(authenticatedUser, request.getAmount(), request.getLoanId());
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Loan repayment processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
@@ -211,10 +249,24 @@ public class LoanController {
         @NotNull
         private double amount;
 
-        @ApiModelProperty(notes = " PAYDAY", required = true)
-        @Pattern(regexp = "(PAYDAY)")
+        @ApiModelProperty(notes = " PAYDAY | BUSINESS", required = true)
+        @Pattern(regexp = "(PAYDAY|BUSINESS)")
         @NotEmpty
         private String loanType;
+
+        @ApiModelProperty(notes = "The bank accountId to be credited", required = true)
+        @NotEmpty
+        private String creditAccountId;
+    }
+
+    @Data
+    private static class BusinessLoanRequest {
+        @ApiModelProperty(notes = "The loan amount to request. N10000 minimum", required = true)
+        @Min(value = 10000, message = "Minimum amount for loan is N10000")
+        @NotNull
+        private BigDecimal amount;
+
+        private int durationInMonths;
 
         @ApiModelProperty(notes = "The bank accountId to be credited", required = true)
         @NotEmpty

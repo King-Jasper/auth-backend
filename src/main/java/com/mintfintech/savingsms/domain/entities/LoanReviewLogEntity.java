@@ -23,6 +23,8 @@ public class LoanReviewLogEntity extends AbstractBaseEntity<Long> {
 
     private String reviewerName;
 
+    private String reviewerId;
+
     private long entityId;
 
     private String description;

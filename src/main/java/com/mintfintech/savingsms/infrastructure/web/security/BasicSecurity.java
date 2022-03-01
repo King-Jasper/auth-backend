@@ -1,5 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.security;
 
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -11,9 +13,18 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.authentication.www.BasicAuthenticationEntryPoint;
 
+
 @Order(1)
 @Configuration
 public class BasicSecurity extends WebSecurityConfigurerAdapter {
+
+    private final String swaggerUsername;
+    private final String swaggerPassword;
+    public BasicSecurity(@Value("${swagger-security.username}") String username,
+                         @Value("${swagger-security.password}") String password) {
+        this.swaggerUsername = username;
+        this.swaggerPassword = password;
+    }
 
     @Override
     protected void configure(HttpSecurity http) throws Exception {
@@ -29,9 +40,10 @@ public class BasicSecurity extends WebSecurityConfigurerAdapter {
 
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
+        System.out.println("username - "+swaggerUsername+" password - "+swaggerPassword);
         auth.inMemoryAuthentication()
-                .withUser("developer@mintyn.com")
-                .password(new BCryptPasswordEncoder().encode("password"))
+                .withUser(swaggerUsername)
+                .password(new BCryptPasswordEncoder().encode(swaggerPassword))
                 .roles("ADMIN");
     }
 

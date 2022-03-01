@@ -15,6 +15,7 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.response.LoanManager;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -22,6 +23,7 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.joda.time.DateTimeFieldType;
@@ -88,7 +90,6 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             if (msClientResponse.isSuccess() && StringUtils.isNotEmpty(msClientResponse.getData().getAccountNumber())) {
 
                 NewLoanAccountResponseCBS responseCBS = msClientResponse.getData();
-
                 loan.setBankOneAccountNumber(responseCBS.getAccountNumber());
                 loan.setApprovalStatus(ApprovalStatusConstant.DISBURSED);
                 loanRequestEntityDao.saveRecord(loan);
@@ -100,28 +101,40 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                         .transactionType(TransactionTypeConstant.CREDIT)
                         .transactionReference(loan.getTrackingReference())
                         .build();
-
                 loanTransactionEntityDao.saveRecord(transaction);
+
+                AppUserEntity debtor = appUserEntityDao.getRecordById(loan.getRequestedBy().getId());
+                String text = "Hi "+debtor.getFirstName()+", your loan request has been disbursed to your account. Thanks for choosing Mintyn.";
+                PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("New Savings", text, debtor.getDeviceGcmNotificationToken());
+                pushNotificationEvent.setUserId(debtor.getUserId());
+                applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
             }
         }
     }
 
     private void processLoanApproval(LoanManager loanManager, LoanRequestEntity loanRequest, AppUserEntity appUser) {
 
-        CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
-                .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
-
         if (loanRequest.getLoanType() == LoanTypeConstant.PAYDAY) {
+
+            CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
+                    .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
+
             EmployeeInformationEntity employeeInfo = employeeInformationEntityDao.getRecordById(customerLoanProfileEntity.getEmployeeInformation().getId());
             if (employeeInfo.getVerificationStatus() != ApprovalStatusConstant.APPROVED) {
                 throw new BadRequestException("Employment Information have not been verified for this user");
             }
         }
 
+        boolean userReviewed = loanReviewLogEntityDao.recordExistForUserIdAndEntityId(loanManager.getReviewerUserId(), loanRequest.getId());
+
+        if(userReviewed) {
+            throw new BusinessLogicConflictException("Sorry, you have already reviewed this loan.");
+        }
         LoanReviewLogEntity reviewLogEntity = LoanReviewLogEntity.builder()
                 .reviewerName(loanManager.getReviewerName())
                 .entityId(loanRequest.getId())
                 .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .reviewerId(loanManager.getReviewerUserId())
                 .build();
 
         String description = "";
@@ -137,12 +150,26 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanReviewLogEntityDao.saveRecord(reviewLogEntity);
             return;
         }
-
         if(loanRequest.getReviewStage() == LoanReviewStageConstant.SECOND_REVIEW) {
             if(!loanManager.isBusinessManager()) {
                 throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
             }
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+                description = "Loan approved by Business manager";
+                loanRequest.setReviewStage(LoanReviewStageConstant.THIRD_REVIEW);
+                loanRequestEntityDao.saveRecord(loanRequest);
+
+                reviewLogEntity.setDescription(description);
+                loanReviewLogEntityDao.saveRecord(reviewLogEntity);
+                return;
+            }
         }
+        if(loanRequest.getReviewStage() == LoanReviewStageConstant.THIRD_REVIEW) {
+            if(!loanManager.isBusinessManager()) {
+                throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
+            }
+        }
+
         description = "Loan approved by business manager";
         reviewLogEntity.setDescription(description);
         loanReviewLogEntityDao.saveRecord(reviewLogEntity);
@@ -154,6 +181,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .accountNumber(bankAccount.getAccountNumber())
                 .amount(loanRequest.getLoanAmount().intValue())
                 .build();
+        if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+            request.setDurationInMonths(loanRequest.getDurationInMonths());
+        }
 
         MsClientResponse<LoanApplicationResponseCBS> msClientResponse = coreBankingServiceClient.createLoanApplication(request);
 
@@ -164,15 +194,18 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         ) {
             LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
 
-            LocalDateTime repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
-
+            LocalDateTime repaymentDate;
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+                repaymentDate = LocalDateTime.now().plusMonths(loanRequest.getDurationInMonths());
+            }else {
+                repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
+            }
             DayOfWeek dayOfWeek = repaymentDate.getDayOfWeek();
             if(dayOfWeek == DayOfWeek.SATURDAY) {
                 repaymentDate = repaymentDate.plusDays(3);
             }else if(dayOfWeek == DayOfWeek.SUNDAY) {
                 repaymentDate = repaymentDate.plusDays(2);
             }
-
             loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequest.setApprovedDate(LocalDateTime.now());
             loanRequest.setApproveByName(loanManager.getReviewerName());
@@ -187,6 +220,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 mintAccountEntityDao.saveRecord(mintAccount);
             }
             sendLoanApprovalEmail(loanRequest, appUser);
+            //TODO implement sending of loan document.
         } else {
             String message = String.format("Loan Id: %s; message: %s", loanRequest.getLoanId(), msClientResponse.getMessage());
             systemIssueLogService.logIssue("Loan Creation Failure", "Loan Creation Failed", message);
@@ -201,6 +235,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .reviewerName(loanManager.getReviewerName())
                 .entityId(loanRequest.getId())
                 .reviewLogType(LoanReviewLogType.LOAN_REQUEST)
+                .reviewerId(loanManager.getReviewerUserId())
                 .build();
 
         String description = "";

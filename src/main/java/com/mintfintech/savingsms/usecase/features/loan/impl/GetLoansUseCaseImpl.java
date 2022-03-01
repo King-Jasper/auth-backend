@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
@@ -81,14 +82,18 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
+        if(loanRequestEntity.getLoanType() == LoanTypeConstant.BUSINESS) {
+            loanModel.setOwner(customerLoanProfileUseCase.getLoanProfileForBusinessLoan(loanRequestEntity));
+        }else{
+            loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
+        }
         loanModel.setRejectionReason(StringUtils.defaultString(loanRequestEntity.getRejectionReason()));
         if(loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.DECLINED || loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.REJECTED) {
             loanModel.setDateRejected(loanRequestEntity.getDateRejected() != null ?
                     loanRequestEntity.getDateRejected().format(DateTimeFormatter.ISO_DATE_TIME) :
                     loanRequestEntity.getDateModified().format(DateTimeFormatter.ISO_DATE_TIME));
         }
-
+        loanModel.setReviewStage(loanRequestEntity.getReviewStage() == null ? LoanReviewStageConstant.FIRST_REVIEW.name(): loanRequestEntity.getReviewStage().name());
         String loanStatus = "";
         if(approvalStatus == ApprovalStatusConstant.PENDING) {
             loanStatus = "PENDING";
@@ -109,6 +114,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
             }
         }
         loanModel.setClientLoanStatus(loanStatus);
+        loanModel.setReviewStage(loanRequestEntity.getReviewStage() != null ?  loanRequestEntity.getReviewStage().name() : "");
         return loanModel;
     }
 
