@@ -481,6 +481,25 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         return loanCustomerProfileModel;
     }
 
+    @Override
+    public LoanCustomerProfileModel getLoanProfileForBusinessLoan(LoanRequestEntity loanRequestEntity) {
+        AppUserEntity appUser = appUserEntityDao.getRecordById(loanRequestEntity.getRequestedBy().getId());
+        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.getRecordById(loanRequestEntity.getBankAccount().getId());
+        TierLevelEntity tierLevelEntity = mintAccount.getAccountTierLevel();
+        LoanCustomerProfileModel loanCustomerProfileModel = new LoanCustomerProfileModel();
+        loanCustomerProfileModel.setCustomerName(appUser.getName());
+        loanCustomerProfileModel.setEmail(appUser.getEmail());
+        loanCustomerProfileModel.setBlacklistReason("");
+        loanCustomerProfileModel.setBlacklistStatus(false);
+        loanCustomerProfileModel.setId(loanRequestEntity.getId());
+        loanCustomerProfileModel.setPhoneNumber(appUser.getPhoneNumber());
+        loanCustomerProfileModel.setRating(5.0);
+        loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
+        loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
+       // loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
+        return loanCustomerProfileModel;
+    }
+
     private EmploymentInformationModel addEmployeeInformationToCustomerLoanProfile(CustomerLoanProfileEntity customerLoanProfileEntity) {
 
         EmploymentInformationModel employmentInformationModel = null;
