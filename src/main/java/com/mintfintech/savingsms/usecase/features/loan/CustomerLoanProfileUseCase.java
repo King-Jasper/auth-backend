@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.features.loan;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerLoanProfileEntity;
+import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRequest;
@@ -32,6 +33,8 @@ public interface CustomerLoanProfileUseCase {
     LoanCustomerProfileModel getCustomerEmployerInfo(long customerLoanProfileId);
 
     LoanCustomerProfileModel toLoanCustomerProfileModel(CustomerLoanProfileEntity customerLoanProfileEntity);
+
+    LoanCustomerProfileModel getLoanProfileForBusinessLoan(LoanRequestEntity loanRequestEntity);
 
     void updateCustomerRating(AppUserEntity currentUser);
 

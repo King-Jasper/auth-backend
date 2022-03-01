@@ -82,7 +82,11 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setLastPaymentDate(debitTransactions.isEmpty() ? null : debitTransactions.get(0).getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
-        loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
+        if(loanRequestEntity.getLoanType() == LoanTypeConstant.BUSINESS) {
+            loanModel.setOwner(customerLoanProfileUseCase.getLoanProfileForBusinessLoan(loanRequestEntity));
+        }else{
+            loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
+        }
         loanModel.setRejectionReason(StringUtils.defaultString(loanRequestEntity.getRejectionReason()));
         if(loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.DECLINED || loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.REJECTED) {
             loanModel.setDateRejected(loanRequestEntity.getDateRejected() != null ?
