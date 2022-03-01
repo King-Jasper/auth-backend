@@ -210,7 +210,8 @@ public class LoanController {
                                                                                      @RequestBody @Valid BusinessLoanRequest request) {
 
         BusinessLoanResponse response = createBusinessLoanUseCase.createRequest(authenticatedUser, request.amount, request.durationInMonths, request.creditAccountId);
-        ApiResponseJSON<BusinessLoanResponse> apiResponseJSON = new ApiResponseJSON<>("Loan request processed successfully.", response);
+        String message = "Dear customer, your loan application is received and will be reviewed shortly. This will take between 2 - 5 days.";
+        ApiResponseJSON<BusinessLoanResponse> apiResponseJSON = new ApiResponseJSON<>(message, response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
     @ApiOperation(value = "Returns list of business loan request.")
