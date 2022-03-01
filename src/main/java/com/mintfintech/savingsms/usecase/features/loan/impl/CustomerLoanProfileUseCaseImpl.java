@@ -24,6 +24,7 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.CustomerLoanProfileDashboard;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
+import com.mintfintech.savingsms.utils.MintStringUtil;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -107,12 +108,15 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         long count = 0;
+        boolean accessBusinessLoan = true;
         if(applicationProperty.isLiveEnvironment()) {
             count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+            accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
         }
+
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
-        response.setBusinessLoanAvailable(true);
+        response.setBusinessLoanAvailable(accessBusinessLoan);
         response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
         response.setPaydayLoanAvailable(true);
         response.setMaximumDaysForReview(5);
