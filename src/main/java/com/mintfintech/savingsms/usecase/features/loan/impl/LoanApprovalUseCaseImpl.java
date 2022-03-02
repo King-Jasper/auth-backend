@@ -280,6 +280,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .loanDueDate(loanRequest.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
                 .loanRepaymentAmount(loanRequest.getRepaymentAmount())
                 .recipient(appUser.getEmail())
+                .loanType(loanRequest.getLoanType().name())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
     }

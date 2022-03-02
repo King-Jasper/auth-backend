@@ -115,6 +115,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
+        System.out.println("RoundUpTransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
         if (transactionCategory == null || transactionCategory.equals(RoundUpTransactionCategoryType.CARD_PAYMENT)) {
             return;
         }

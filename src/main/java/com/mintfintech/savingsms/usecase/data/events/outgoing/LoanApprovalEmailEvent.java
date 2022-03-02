@@ -13,4 +13,5 @@ public class LoanApprovalEmailEvent {
     private String recipient;
     private BigDecimal loanRepaymentAmount;
     private String loanDueDate;
+    private String loanType;
 }
