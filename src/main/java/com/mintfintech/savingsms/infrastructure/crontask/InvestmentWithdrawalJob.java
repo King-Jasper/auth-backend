@@ -17,8 +17,8 @@ public class InvestmentWithdrawalJob {
         this.withdrawalInvestmentUseCase = withdrawalInvestmentUseCase;
     }
 
-    @Scheduled(cron = "0 0/5 * ? * *") // runs by every 5 minutes
-    @SchedulerLock(name = "InvestmentWithdrawalJob_processInvestmentWithdrawal", lockAtMostForString = "PT6M")
+    @Scheduled(cron = "0 0/10 9-23 ? * *") // runs by every 10 minutes from 9am to 11pm
+    @SchedulerLock(name = "InvestmentWithdrawalJob_processInvestmentWithdrawal", lockAtMostForString = "PT10M")
     public void processInvestmentWithdrawal() {
         try {
             withdrawalInvestmentUseCase.processInterestPayout();
