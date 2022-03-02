@@ -16,6 +16,7 @@ import com.mintfintech.savingsms.usecase.features.savings_funding.SavingsFunding
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -227,9 +228,13 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         transactionEntity.setTransactionReference(reference);
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
+        LocalDateTime transactionDate = LocalDateTime.now();
+        if(StringUtils.isNotEmpty(transactionPayload.getDateCreated())) {
+            LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+        }
         SpendAndSaveTransactionEntity spendAndSaveTransaction = SpendAndSaveTransactionEntity.builder()
                 .transactionAccount(debitAccount)
-                .transactionDate(LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME))
+                .transactionDate(transactionDate)
                 .transactionAmount(transactionPayload.getTransactionAmount())
                 .transactionType(RoundUpTransactionCategoryType.getByName(transactionPayload.getCategory()))
                 .transactionReference(transactionPayload.getInternalReference())
