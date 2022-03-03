@@ -284,7 +284,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .loanRepaymentAmount(loanRequest.getRepaymentAmount())
                 .recipient(appUser.getEmail())
                 .loanType(loanRequest.getLoanType().name())
-                .address(appUser.getResidentialAddress())
+                .address(StringUtils.defaultString(appUser.getResidentialAddress()))
                 .accountType(mintAccount.getAccountType().name())
                 .accountNumber(bankAccount.getAccountNumber())
                 .currency("NGN")
