@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.AccountsRestClient;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.MsRestClientService;
+import com.mintfintech.savingsms.usecase.data.events.incoming.UserDetailUpdateEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cloud.client.ServiceInstance;
 import org.springframework.cloud.client.discovery.DiscoveryClient;
@@ -53,5 +54,21 @@ public class AccountsRestClientImpl implements AccountsRestClient {
             return list.get(0).getUri().toString();
         }
         return null;
+    }
+    @Override
+    public MsClientResponse<UserDetailUpdateEvent> getUserDetails(String userId) {
+        String baseUrl = getServiceBaseUrl();
+        String serviceUrl = String.format("%s/intranet/api/v1/user-details/%s", baseUrl, userId);
+        try{
+            ClientResponse clientResponse = msRestClientService.getRequest(serviceUrl);
+            MsClientResponse<UserDetailUpdateEvent> response;
+            Type type = new TypeToken<MsClientResponse<UserDetailUpdateEvent>>(){}.getType();
+            response = gson.fromJson(clientResponse.getResponseBody(), type);
+            response.setStatusCode(clientResponse.getStatusCode());
+            response.setSuccess(response.getData() != null);
+            return response;
+        }catch (Exception ex){
+            return MsClientResponse.<UserDetailUpdateEvent>builder().success(false).build();
+        }
     }
 }

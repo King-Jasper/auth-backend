@@ -41,6 +41,9 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
 
     private String deviceGcmNotificationToken;
 
+    private String residentialAddress;
+
+
     public String getFirstName() {
         return StringUtils.capitalize(name.split(" ", 2)[0].toLowerCase());
     }
