@@ -129,6 +129,13 @@ public class ApplicationProperty {
         return environmentService.getVariable("amazon.region");
     }
 
+    public String reactHQAccountNumber() {
+        return environmentService.getVariable("referral.reacthq.account-number");
+    }
+    public String getMintBusinessDevelopmentAccountNumber() {
+        return environmentService.getVariable("referral.business-development.account-number");
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

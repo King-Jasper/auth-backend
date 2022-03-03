@@ -36,4 +36,8 @@ public class ReactHQReferralEntity extends AbstractBaseEntity<Long> {
     private String debitResponseMessage;
 
     private String registrationPlatform;
+
+    private int debitTrialCount;
+
+    private int creditTrialCount;
 }

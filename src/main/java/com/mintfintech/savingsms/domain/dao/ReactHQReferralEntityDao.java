@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.ReactHQReferralEntity;
 
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -10,4 +11,6 @@ import java.util.Optional;
  */
 public interface ReactHQReferralEntityDao extends CrudDao<ReactHQReferralEntity, Long>{
     Optional<ReactHQReferralEntity> findCustomerForDebit(String accountNumber);
+    long countCustomerSupported();
+    List<ReactHQReferralEntity> getCustomerForFundSupport(int size);
 }

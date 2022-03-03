@@ -51,7 +51,6 @@ public class FundTransactionMsEventListener {
 //        log.info("account credit: {}", payload);
         AccountCreditEvent accountCreditEvent = gson.fromJson(payload, AccountCreditEvent.class);
         reachHQTransactionUseCase.processCustomerDebit(accountCreditEvent);
-
     }
 
 
