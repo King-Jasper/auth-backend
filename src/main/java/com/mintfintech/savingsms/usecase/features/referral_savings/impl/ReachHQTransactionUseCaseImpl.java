@@ -90,7 +90,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
     @Override
     public void processCustomerCredit() {
         long count = reactHQReferralEntityDao.countCustomerSupported();
-        if(count >= 300) {
+        if(count >= 300 || count == 0) {
             return;
         }
         int size = 10;
