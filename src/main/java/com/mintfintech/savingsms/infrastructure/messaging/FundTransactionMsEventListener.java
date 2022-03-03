@@ -2,9 +2,9 @@ package com.mintfintech.savingsms.infrastructure.messaging;
 
 import com.google.gson.Gson;
 import com.mintfintech.savingsms.usecase.ApplyNipTransactionInterestUseCase;
-import com.mintfintech.savingsms.usecase.features.loan.LoanRepaymentUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
 import com.mintfintech.savingsms.usecase.data.events.incoming.MintTransactionPayload;
+import com.mintfintech.savingsms.usecase.features.referral_savings.ReachHQTransactionUseCase;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.ProcessRoundUpSavingsUseCase;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -21,16 +21,17 @@ public class FundTransactionMsEventListener {
     private final Gson gson;
     private final ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase;
     private final ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase;
-
+    private final ReachHQTransactionUseCase reachHQTransactionUseCase;
 
     private final String INTEREST_NIP_TRANSACTION = "com.mintfintech.savings-service.events.interest-nip-transaction";
     private final String TRANSACTION_LOG_TOPIC = "com.mintfintech.fund-transaction-service.events.transaction-log";
     private final String ACCOUNT_CREDIT = "com.mintfintech.fund-transaction-service.events.account-credit";
 
-    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase, ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase) {
+    public FundTransactionMsEventListener(Gson gson, ApplyNipTransactionInterestUseCase applyNipTransactionInterestUseCase, ProcessRoundUpSavingsUseCase processRoundUpSavingsUseCase, ReachHQTransactionUseCase reachHQTransactionUseCase) {
         this.gson = gson;
         this.applyNipTransactionInterestUseCase = applyNipTransactionInterestUseCase;
         this.processRoundUpSavingsUseCase = processRoundUpSavingsUseCase;
+        this.reachHQTransactionUseCase = reachHQTransactionUseCase;
     }
 
 
@@ -49,6 +50,7 @@ public class FundTransactionMsEventListener {
     public void listenForAccountCredit(String payload) {
 //        log.info("account credit: {}", payload);
         AccountCreditEvent accountCreditEvent = gson.fromJson(payload, AccountCreditEvent.class);
+        reachHQTransactionUseCase.processCustomerDebit(accountCreditEvent);
 
     }
 
