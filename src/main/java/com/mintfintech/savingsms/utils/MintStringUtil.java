@@ -9,7 +9,7 @@ import java.util.Arrays;
 public class MintStringUtil {
 
     private static final String[] businessLoanAccountId =
-            {"800000000227", "300001862123", "400000000609", "700000225472", "700000000592"};
+            {"800000000227", "300001862123", "400000000609", "700000225472", "700000000592", "000001171200", "500000011553"};
 
     public static boolean enableBusinessLoanFeature(String accountId) {
         return Arrays.stream(businessLoanAccountId).anyMatch(data -> data.equalsIgnoreCase(accountId));
