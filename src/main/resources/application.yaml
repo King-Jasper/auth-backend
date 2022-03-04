@@ -71,7 +71,7 @@ loan:
     max-percent-amount: 70
     max-tenor-days: 30
   business-loan:
-    interest-rate: 4.0
+    interest-rate: 3.5
 
 investment:
   max-liquidate-rate: 80
