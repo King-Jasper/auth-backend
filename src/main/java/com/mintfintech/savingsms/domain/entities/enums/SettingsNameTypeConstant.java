@@ -5,5 +5,6 @@ package com.mintfintech.savingsms.domain.entities.enums;
  * Wed, 16 Dec, 2020
  */
 public enum SettingsNameTypeConstant {
-    REFERRAL_REWARD_ENABLED
+    REFERRAL_REWARD_ENABLED,
+    BUSINESS_LOAN_RATE
 }

@@ -58,6 +58,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final ApplicationEventService applicationEventService;
     private final LoanReviewLogEntityDao loanReviewLogEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final SettingsEntityDao settingsEntityDao;
 
     @Override
     @Transactional
@@ -114,10 +115,13 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
         }
 
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
         response.setBusinessLoanAvailable(accessBusinessLoan);
-        response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
+        response.setBusinessLoanMonthlyInterest(businessRate);
         response.setPaydayLoanAvailable(true);
         response.setMaximumDaysForReview(5);
         response.setMinimumDaysForReview(2);
