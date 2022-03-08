@@ -18,7 +18,7 @@ public interface ReactHQReferralRepository extends JpaRepository<ReactHQReferral
             "mb.accountNumber = ?1 and r.customerDebited = false and r.debitTrialCount = 0")
     List<ReactHQReferralEntity> getCustomerForDebit(String accountNumber);
 
-    @Query("select count(r) from ReactHQReferralEntity r where r.customerCredited = false")
+    @Query("select count(r) from ReactHQReferralEntity r where r.customerCredited = false and r.customerDebited = true")
     long countCustomerAlreadySupported();
 
     List<ReactHQReferralEntity> getAllByCustomerCreditedAndCustomerDebitedOrderByDateCreatedAsc(boolean credited, boolean debited, Pageable pageable);
