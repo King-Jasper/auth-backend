@@ -64,7 +64,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
             if(createRecord) {
                reactHQReferral = createRecord(accountNumber);
             }else {
-                log.info("Record not found - "+accountNumber);
+                System.out.println("RECORD NOT FOUND - "+accountNumber);
                 return;
             }
         }else {
@@ -78,7 +78,8 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(customer, BankAccountTypeConstant.CURRENT);
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
         if(amountForDebit.compareTo(debitAccount.getAvailableBalance()) > 0) {
-            log.info("Not enough balance");
+            System.out.println("INSUFFICIENT BALANCE - "+accountNumber);
+            return;
         }
         reactHQReferral.setDebitTrialCount(1);
         reactHQReferralEntityDao.saveRecord(reactHQReferral);
