@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.domain.entities;
 
 import lombok.*;
 
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * Created by jnwanya on
@@ -20,7 +17,7 @@ import javax.persistence.Table;
 @Table(name = "reacthq_referral")
 public class ReactHQReferralEntity extends AbstractBaseEntity<Long> {
 
-    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @OneToOne(fetch = FetchType.EAGER, optional = false)
     private MintAccountEntity customer;
 
     private boolean customerCredited;

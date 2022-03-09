@@ -21,5 +21,7 @@ public interface ReactHQReferralRepository extends JpaRepository<ReactHQReferral
     @Query("select count(r) from ReactHQReferralEntity r where r.customerCredited = false and r.customerDebited = true")
     long countCustomerAlreadySupported();
 
+    Optional<ReactHQReferralEntity> findTopByCustomer(MintAccountEntity mintAccountEntity);
+
     List<ReactHQReferralEntity> getAllByCustomerCreditedAndCustomerDebitedOrderByDateCreatedAsc(boolean credited, boolean debited, Pageable pageable);
 }

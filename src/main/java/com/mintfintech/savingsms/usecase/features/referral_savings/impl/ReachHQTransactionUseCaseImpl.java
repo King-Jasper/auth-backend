@@ -1,21 +1,29 @@
 package com.mintfintech.savingsms.usecase.features.referral_savings.impl;
 
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.ReactHQReferralEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalTransactionEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.ReactHQReferralEntity;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
+import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.BalanceEnquiryResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.referral_savings.ReachHQTransactionUseCase;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -39,25 +47,35 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
     private final CoreBankingServiceClient coreBankingServiceClient;
     private final SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
     private final SystemIssueLogService systemIssueLogService;
+    private final AppUserEntityDao appUserEntityDao;
+    private final ApplicationEventService applicationEventService;
 
     @Override
     public void processCustomerDebit(AccountCreditEvent accountCreditEvent) {
         String accountNumber = accountCreditEvent.getAccountNumber();
-        processCustomerDebit(accountNumber);
+        processCustomerDebit(accountNumber, false);
     }
 
     @Override
-    public void processCustomerDebit(String accountNumber) {
+    public void processCustomerDebit(String accountNumber, boolean createRecord) {
+        ReactHQReferralEntity reactHQReferral;
         Optional<ReactHQReferralEntity> optional =  reactHQReferralEntityDao.findCustomerForDebit(accountNumber);
         if(!optional.isPresent()) {
-            return;
+            if(createRecord) {
+               reactHQReferral = createRecord(accountNumber);
+            }else {
+                log.info("Record not found - "+accountNumber);
+                return;
+            }
+        }else {
+            reactHQReferral = optional.get();
         }
-        ReactHQReferralEntity reactHQReferral = optional.get();
-        if(!reactHQReferral.isCustomerDebited()) {
+        if(reactHQReferral.isCustomerDebited()) {
             return;
         }
         BigDecimal amountForDebit = BigDecimal.valueOf(1000.00);
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(reactHQReferral.getCustomer(), BankAccountTypeConstant.CURRENT);
+        MintAccountEntity customer = reactHQReferral.getCustomer();
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(customer, BankAccountTypeConstant.CURRENT);
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
         if(amountForDebit.compareTo(debitAccount.getAvailableBalance()) > 0) {
             log.info("Not enough balance");
@@ -85,6 +103,29 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
             systemIssueLogService.logIssue("REACTHQ DEBIT FAILURE", "CUSTOMER DEBIT FAILURE",responseCBS.toString());
         }
         reactHQReferralEntityDao.saveRecord(reactHQReferral);
+
+        if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
+            AppUserEntity user = appUserEntityDao.getRecordById(customer.getCreator().getId());
+            String text = "Hi "+user.getFirstName()+", You have been debited N"+ MoneyFormatterUtil.priceWithDecimal(amountForDebit)+" for ReactHQ Course. Thanks for choosing Mintyn.";
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("ReactHQ Debit", text, user.getDeviceGcmNotificationToken());
+            pushNotificationEvent.setUserId(user.getUserId());
+            applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
+        }
+    }
+
+    private ReactHQReferralEntity createRecord(String accountNumber) {
+        Optional<MintBankAccountEntity> optional = mintBankAccountEntityDao.findByAccountNumber(accountNumber);
+        if(!optional.isPresent()) {
+            throw new BadRequestException("Bank account not found.");
+        }
+        MintBankAccountEntity bankAccount = optional.get();
+        ReactHQReferralEntity referralEntity = ReactHQReferralEntity.builder()
+                .customer(bankAccount.getMintAccount())
+                .customerCredited(false)
+                .registrationPlatform("")
+                .customerDebited(false)
+                .build();
+        return reactHQReferralEntityDao.saveRecord(referralEntity);
     }
 
     @Override

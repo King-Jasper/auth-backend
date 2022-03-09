@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.ReactHQReferralEntityDao;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.ReactHQReferralEntity;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.ReactHQReferralRepository;
 import org.springframework.data.domain.PageRequest;
@@ -42,5 +43,10 @@ public class ReactHQReferralEntityDaoImpl extends CrudDaoImpl<ReactHQReferralEnt
     public List<ReactHQReferralEntity> getCustomerForFundSupport(int size) {
         Pageable pageable = PageRequest.of(0, size);
         return repository.getAllByCustomerCreditedAndCustomerDebitedOrderByDateCreatedAsc(false, true, pageable);
+    }
+
+    @Override
+    public Optional<ReactHQReferralEntity> findRecordByCustomer(MintAccountEntity mintAccount) {
+        return repository.findTopByCustomer(mintAccount);
     }
 }

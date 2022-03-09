@@ -419,6 +419,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             return;
         }
         MintAccountEntity mintAccount = mintAccountOpt.get();
+        if(reactHQReferralEntityDao.findRecordByCustomer(mintAccount).isPresent()) {
+            return;
+        }
         String platform = referralEvent.getRegistrationPlatform();
         ReactHQReferralEntity referralEntity = ReactHQReferralEntity.builder()
                 .customer(mintAccount)

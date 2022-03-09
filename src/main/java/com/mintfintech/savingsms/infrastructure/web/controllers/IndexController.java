@@ -1,12 +1,12 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
-import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
+import com.mintfintech.savingsms.usecase.features.referral_savings.ReachHQTransactionUseCase;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -31,6 +30,7 @@ public class IndexController {
     private CreateReferralRewardUseCase createReferralRewardUseCase;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private CoreBankingServiceClient coreBankingServiceClient;
+    private ReachHQTransactionUseCase reachHQTransactionUseCase;
 
 
     @Autowired
@@ -86,6 +86,13 @@ public class IndexController {
     @GetMapping(value = "/interest-update", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> interestUpdate() {
         createSavingsGoalUseCase.runInterestUpdate();
+        ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Process initiated successfully.");
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/react-hq-debit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> reactHQDebit(@RequestParam("accountNumber") String accountNumber, @RequestParam("create") boolean createRecord) {
+        reachHQTransactionUseCase.processCustomerDebit(accountNumber, createRecord);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Process initiated successfully.");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
