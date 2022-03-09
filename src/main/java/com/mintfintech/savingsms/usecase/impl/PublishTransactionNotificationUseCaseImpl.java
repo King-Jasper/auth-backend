@@ -181,7 +181,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     @Override
     public void publishAffiliateReferral(InvestmentEntity investment) {
         AffiliateReferralCreationEvent affiliateReferral = AffiliateReferralCreationEvent.builder()
-                .transactionDate(investment.getDateCreated().format(DateTimeFormatter.ISO_DATE))
+                .transactionDate(investment.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                 .customerName(investment.getCreator().getName())
                 .transactionAmount(investment.getAmountInvested())
                 .transactionType("INVESTMENT")
