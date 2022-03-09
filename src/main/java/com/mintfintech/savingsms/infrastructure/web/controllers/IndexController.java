@@ -45,6 +45,10 @@ public class IndexController {
     public void setCoreBankingServiceClient(CoreBankingServiceClient coreBankingServiceClient) {
         this.coreBankingServiceClient = coreBankingServiceClient;
     }
+    @Autowired
+    public void setReachHQTransactionUseCase(ReachHQTransactionUseCase reachHQTransactionUseCase) {
+        this.reachHQTransactionUseCase = reachHQTransactionUseCase;
+    }
 
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> indexPage() {
