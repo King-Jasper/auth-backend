@@ -132,6 +132,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         durations.add(new LoanDuration(3, "3 Months"));
         durations.add(new LoanDuration(4, "4 Months"));
         durations.add(new LoanDuration(5, "5 Months"));
+        durations.add(new LoanDuration(6, "6 Months"));
         response.setBusinessLoanDurations(durations);
         return response;
     }
