@@ -108,9 +108,9 @@ public class ApplicationProperty {
         return Long.parseLong(environmentService.getVariable("loan.pay-day.max-tenor-days"));
     }
 
-    public double getBusinessLoanInterestRate() {
+    /*public double getBusinessLoanInterestRate() {
         return Double.parseDouble(environmentService.getVariable("loan.business-loan.interest-rate"));
-    }
+    }*/
 
     public String getAmazonS3AccessKey(){
         return environmentService.getVariable("amazon.accessKey");

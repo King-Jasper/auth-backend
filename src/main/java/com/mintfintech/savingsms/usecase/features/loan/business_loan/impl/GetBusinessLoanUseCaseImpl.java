@@ -2,10 +2,12 @@ package com.mintfintech.savingsms.usecase.features.loan.business_loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.SettingsEntityDao;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SettingsNameTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -39,6 +41,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
     private final MintAccountEntityDao mintAccountEntityDao;
     private final LoanRequestEntityDao loanRequestEntityDao;
     private final ApplicationProperty applicationProperty;
+    private final SettingsEntityDao settingsEntityDao;
 
     @Override
     public PagedDataResponse<BusinessLoanResponse> getBusinessLoanDetails(AuthenticatedUser currentUser, int page, int size) {
@@ -54,8 +57,9 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
 
     @Override
     public LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration) {
-        double interestRate = applicationProperty.getBusinessLoanInterestRate();
-        double monthlyInterest = amount.doubleValue() * (interestRate / 100.0);
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+        double monthlyInterest = amount.doubleValue() * (businessRate / 100.0);
         double totalInterest = monthlyInterest * duration;
         double totalRepaymentAmount = amount.doubleValue() + totalInterest;
 
@@ -72,7 +76,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
         }
         return LoanRequestScheduleResponse.builder()
                 .loanAmount(amount)
-                .interestRate(applicationProperty.getBusinessLoanInterestRate())
+                .interestRate(businessRate)
                 .repaymentAmount(amount.add(BigDecimal.valueOf(totalInterest)))
                 .schedules(schedules)
                 .build();

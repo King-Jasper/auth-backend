@@ -25,6 +25,7 @@ import com.mintfintech.savingsms.usecase.data.request.EmploymentDetailCreationRe
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
+import com.mintfintech.savingsms.utils.MintStringUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -54,6 +55,10 @@ public class LoanRequestUseCaseImpl implements LoanRequestUseCase {
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, mintAccount)
                 .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
+
+        if(!MintStringUtil.enablePayDayLoanFeature(creditAccount.getAccountNumber())) {
+            throw new BadRequestException("Sorry, we are not currently disbursing any new loan.");
+        }
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new BadRequestException("No Loan Profile exist for this user"));
