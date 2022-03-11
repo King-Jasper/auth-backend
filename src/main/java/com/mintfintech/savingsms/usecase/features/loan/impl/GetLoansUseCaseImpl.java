@@ -47,6 +47,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 .repaymentStatus(!searchRequest.getRepaymentStatus().equals("ALL") ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
                 .approvalStatus(!searchRequest.getApprovalStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
+                .reviewStage(searchRequest.getReviewStage() != null? LoanReviewStageConstant.valueOf(searchRequest.getReviewStage()): null)
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
                 .customerName(searchRequest.getCustomerName())
                 .customerPhone(searchRequest.getCustomerPhone())
