@@ -17,6 +17,7 @@ import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.CreateBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
+import com.mintfintech.savingsms.utils.MintStringUtil;
 import lombok.AllArgsConstructor;
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -45,6 +46,10 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, accountEntity)
                 .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
+
+        if(!MintStringUtil.enableBusinessLoanFeature(accountEntity.getAccountId())) {
+            throw new BadRequestException("Sorry, you are not yet qualified for a business loan.");
+        }
 
         if(applicationProperty.isLiveEnvironment()) {
             long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
