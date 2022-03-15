@@ -9,7 +9,8 @@ import java.util.Arrays;
 public class MintStringUtil {
 
     private static final String[] businessLoanAccountId =
-            {"800000000227", "300001862123", "400000000609", "700000225472", "700000000592", "000001171200", "500000011553"};
+            {"800000000227", "300001862123", "400000000609", "700000225472", "700000000592", "000001171200", "500000011553",
+            "700001875063", "700001875197"};
     private static final String[] payDayLoanAccountNumber =
             {"1101146487"};
 
