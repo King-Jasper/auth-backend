@@ -95,8 +95,8 @@ public class IndexController {
     }
 
     @GetMapping(value = "/react-hq-debit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<Object>> reactHQDebit(@RequestParam("accountNumber") String accountNumber, @RequestParam("create") boolean createRecord) {
-        reachHQTransactionUseCase.processCustomerDebit(accountNumber, createRecord);
+    public ResponseEntity<ApiResponseJSON<Object>> reactHQDebit(@RequestParam("accountNumber") String accountNumber, @RequestParam("create") boolean createRecord, @RequestParam("canBeCredited") boolean canBeCredited) {
+        reachHQTransactionUseCase.processCustomerDebit(accountNumber, createRecord, canBeCredited);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Process initiated successfully.");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }

@@ -53,16 +53,16 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
     @Override
     public void processCustomerDebit(AccountCreditEvent accountCreditEvent) {
         String accountNumber = accountCreditEvent.getAccountNumber();
-        processCustomerDebit(accountNumber, false);
+        processCustomerDebit(accountNumber, false,  true);
     }
 
     @Override
-    public void processCustomerDebit(String accountNumber, boolean createRecord) {
+    public void processCustomerDebit(String accountNumber, boolean createRecord, boolean canBeCredited) {
         ReactHQReferralEntity reactHQReferral;
         Optional<ReactHQReferralEntity> optional =  reactHQReferralEntityDao.findCustomerForDebit(accountNumber);
         if(!optional.isPresent()) {
             if(createRecord) {
-               reactHQReferral = createRecord(accountNumber);
+               reactHQReferral = createRecord(accountNumber, canBeCredited);
             }else {
                 System.out.println("RECORD NOT FOUND - "+accountNumber);
                 return;
@@ -114,7 +114,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
         }
     }
 
-    private ReactHQReferralEntity createRecord(String accountNumber) {
+    private ReactHQReferralEntity createRecord(String accountNumber, boolean canBeCredited) {
         Optional<MintBankAccountEntity> optional = mintBankAccountEntityDao.findByAccountNumber(accountNumber);
         if(!optional.isPresent()) {
             throw new BadRequestException("Bank account not found.");
@@ -125,6 +125,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
                 .customerCredited(false)
                 .registrationPlatform("")
                 .customerDebited(false)
+                .canBeCredited(canBeCredited)
                 .build();
         return reactHQReferralEntityDao.saveRecord(referralEntity);
     }
@@ -160,6 +161,9 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
 
     private void processRefund(ReactHQReferralEntity referralEntity) {
         if(referralEntity.isCustomerCredited()) {
+            return;
+        }
+        if(referralEntity.getCanBeCredited() != null && !referralEntity.getCanBeCredited()) {
             return;
         }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(referralEntity.getCustomer(), BankAccountTypeConstant.CURRENT);

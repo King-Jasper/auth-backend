@@ -55,7 +55,7 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
         if(StringUtils.isNotEmpty(accounts)) {
             accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
         }
-        if(accessBusinessLoan) {
+        if(!accessBusinessLoan) {
             throw new BadRequestException("Sorry, you are not yet qualified for a business loan.");
         }
 

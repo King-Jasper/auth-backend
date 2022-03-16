@@ -22,6 +22,8 @@ public class ReactHQReferralEntity extends AbstractBaseEntity<Long> {
 
     private boolean customerCredited;
 
+    private Boolean canBeCredited;
+
     private String creditResponseCode;
 
     private String creditResponseMessage;

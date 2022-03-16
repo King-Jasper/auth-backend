@@ -428,6 +428,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .customerCredited(false)
                 .registrationPlatform(platform)
                 .customerDebited(false)
+                .canBeCredited(true)
                 .build();
         reactHQReferralEntityDao.saveRecord(referralEntity);
     }

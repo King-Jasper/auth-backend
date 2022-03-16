@@ -42,7 +42,7 @@ public class ReactHQReferralEntityDaoImpl extends CrudDaoImpl<ReactHQReferralEnt
     @Override
     public List<ReactHQReferralEntity> getCustomerForFundSupport(int size) {
         Pageable pageable = PageRequest.of(0, size);
-        return repository.getAllByCustomerCreditedAndCustomerDebitedOrderByDateCreatedAsc(false, true, pageable);
+        return repository.getCustomersForCrediting(pageable);
     }
 
     @Override

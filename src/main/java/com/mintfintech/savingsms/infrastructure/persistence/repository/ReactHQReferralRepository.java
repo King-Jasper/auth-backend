@@ -18,10 +18,13 @@ public interface ReactHQReferralRepository extends JpaRepository<ReactHQReferral
             "mb.accountNumber = ?1 and r.customerDebited = false and r.debitTrialCount = 0")
     List<ReactHQReferralEntity> getCustomerForDebit(String accountNumber);
 
-    @Query("select count(r) from ReactHQReferralEntity r where r.customerCredited = false and r.customerDebited = true")
+    @Query("select count(r) from ReactHQReferralEntity r where r.customerCredited = false and r.customerDebited = true and " +
+            "(r.canBeCredited is null or r.canBeCredited = true)")
     long countCustomerAlreadySupported();
 
     Optional<ReactHQReferralEntity> findTopByCustomer(MintAccountEntity mintAccountEntity);
 
-    List<ReactHQReferralEntity> getAllByCustomerCreditedAndCustomerDebitedOrderByDateCreatedAsc(boolean credited, boolean debited, Pageable pageable);
+    @Query("select r from ReactHQReferralEntity r where r.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and " +
+            "r.customerDebited = true and r.customerCredited = false and (r.canBeCredited is null or r.canBeCredited = true)")
+    List<ReactHQReferralEntity> getCustomersForCrediting(Pageable pageable);
 }
