@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,8 +44,8 @@ import lombok.experimental.FieldDefaults;
 /**
  * Created by jnwanya on Sat, 06 Jun, 2020
  */
-//@Secured("ADMIN_PORTAL")
-//@Validated
+@Secured("ADMIN_PORTAL")
+@Validated
 @FieldDefaults(makeFinal = true, level = AccessLevel.PRIVATE)
 @Api(tags = "Savings Goal Report Endpoints (BO)", description = "Back-office: Handles savings goal report management.")
 @RestController
@@ -125,7 +126,7 @@ public class SavingsGoalReportController {
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
-//	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
 	@ApiOperation(value = "Returns paginated list of investment transactions.")
 	@GetMapping(value = "/investment-transaction/statistics", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>>> getCardlessWithdrawals(
