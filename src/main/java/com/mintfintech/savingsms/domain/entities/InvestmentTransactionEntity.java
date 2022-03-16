@@ -16,7 +16,7 @@ import javax.persistence.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "investment_transaction")
-public class InvestmentTransactionEntity extends SavingsTransaction{
+public class InvestmentTransactionEntity extends SavingsTransaction {
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private InvestmentEntity investment;

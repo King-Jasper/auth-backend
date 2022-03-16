@@ -38,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -112,7 +113,11 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         boolean accessBusinessLoan = true;
         if(applicationProperty.isLiveEnvironment()) {
             count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
-            accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
+          //  accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
+           String accounts = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_ACCESS_ACCOUNT_IDS, "");
+           if(StringUtils.isNotEmpty(accounts)) {
+             accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
+           }
         }
 
         String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
