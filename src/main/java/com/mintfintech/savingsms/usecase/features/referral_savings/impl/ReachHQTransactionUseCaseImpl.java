@@ -57,7 +57,8 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
     }
 
     @Override
-    public void processCustomerDebit(String accountNumber, boolean createRecord, boolean canBeCredited) {
+    public boolean processCustomerDebit(String accountNumber, boolean createRecord, boolean canBeCredited) {
+        boolean debitSuccess = false;
         ReactHQReferralEntity reactHQReferral;
         Optional<ReactHQReferralEntity> optional =  reactHQReferralEntityDao.findCustomerForDebit(accountNumber);
         if(!optional.isPresent()) {
@@ -65,13 +66,13 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
                reactHQReferral = createRecord(accountNumber, canBeCredited);
             }else {
                 System.out.println("RECORD NOT FOUND - "+accountNumber);
-                return;
+                return debitSuccess;
             }
         }else {
             reactHQReferral = optional.get();
         }
         if(reactHQReferral.isCustomerDebited()) {
-            return;
+            return debitSuccess;
         }
         BigDecimal amountForDebit = BigDecimal.valueOf(1000.00);
         MintAccountEntity customer = reactHQReferral.getCustomer();
@@ -79,7 +80,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
         if(amountForDebit.compareTo(debitAccount.getAvailableBalance()) > 0) {
             System.out.println("INSUFFICIENT BALANCE - "+accountNumber);
-            return;
+            return debitSuccess;
         }
         reactHQReferral.setDebitTrialCount(1);
         reactHQReferralEntityDao.saveRecord(reactHQReferral);
@@ -93,13 +94,14 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(requestCBS);
         if(!msClientResponse.isSuccess()) {
             systemIssueLogService.logIssue("REACTHQ DEBIT FAILURE", "CUSTOMER DEBIT FAILURE", msClientResponse.toString());
-            return;
+            return debitSuccess;
         }
         FundTransferResponseCBS  responseCBS = msClientResponse.getData();
         reactHQReferral.setDebitResponseCode(responseCBS.getResponseCode());
         reactHQReferral.setDebitResponseMessage(responseCBS.getResponseMessage());
         if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
             reactHQReferral.setCustomerDebited(true);
+            debitSuccess = true;
         }else {
             systemIssueLogService.logIssue("REACTHQ DEBIT FAILURE", "CUSTOMER DEBIT FAILURE",responseCBS.toString());
         }
@@ -112,6 +114,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
             pushNotificationEvent.setUserId(user.getUserId());
             applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
         }
+        return debitSuccess;
     }
 
     private ReactHQReferralEntity createRecord(String accountNumber, boolean canBeCredited) {

@@ -7,6 +7,6 @@ import com.mintfintech.savingsms.usecase.data.events.incoming.AccountCreditEvent
  */
 public interface ReachHQTransactionUseCase {
     void processCustomerDebit(AccountCreditEvent accountCreditEvent);
-    void processCustomerDebit(String accountNumber, boolean createRecord, boolean canBeCredited);
+    boolean processCustomerDebit(String accountNumber, boolean createRecord, boolean canBeCredited);
     void processCustomerCredit();
 }
