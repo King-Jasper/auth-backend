@@ -237,9 +237,8 @@ public class InvestmentAdminController {
 						(transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase())
 								: null)
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
-				.transactionAmount((transactionAmount != null && !StringUtils.isEmpty(transactionAmount))
-						? new BigDecimal(transactionAmount)
-						: BigDecimal.ZERO)
+				.transactionAmount(
+						StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
 		if (fromDate != null && toDate != null) {
 			searchRequest.setFromDate(fromDate.atStartOfDay());

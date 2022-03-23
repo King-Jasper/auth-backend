@@ -101,7 +101,7 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 			whereClause = cb.and(whereClause,
 					cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
 		}
-		if (!StringUtils.isEmpty(searchDTO.getMintAccountNumber())) {
+		if (StringUtils.isNotEmpty(searchDTO.getMintAccountNumber())) {
 			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
 			whereClause = cb.and(whereClause,
 					cb.equal(bankAccountSpec.get("accountNumber"), searchDTO.getMintAccountNumber()));
