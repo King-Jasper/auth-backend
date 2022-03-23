@@ -97,8 +97,7 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 	private Predicate buildSearchQuery(InvestmentTransactionSearchDTO searchDTO, Root<InvestmentTransactionEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
 		Predicate whereClause = cb.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE);
 		if (searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
-			whereClause = cb.and(whereClause,
-					cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
+			whereClause = cb.and(whereClause, cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
 		}
 		if (StringUtils.isNotEmpty(searchDTO.getMintAccountNumber())) {
 			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
@@ -106,19 +105,16 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 					cb.equal(bankAccountSpec.get("accountNumber"), searchDTO.getMintAccountNumber()));
 		}
 		if (searchDTO.getTransactionAmount().compareTo(BigDecimal.ZERO) > 0) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("transactionAmount"), searchDTO.getTransactionAmount()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("transactionAmount"), searchDTO.getTransactionAmount()));
 		}
 		if (searchDTO.getTransactionStatus() != null) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("transactionStatus"), searchDTO.getTransactionStatus()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("transactionStatus"), searchDTO.getTransactionStatus()));
 		}
 		if (searchDTO.getTransactionType() != null) {
 			whereClause = cb.and(whereClause, cb.equal(root.get("transactionType"), searchDTO.getTransactionType()));
 		}
 		if (StringUtils.isNotEmpty(searchDTO.getTransactionReference())) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
 		}
 		return whereClause;
 	}
