@@ -1,6 +1,5 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import javax.validation.Valid;
@@ -9,7 +8,6 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,14 +20,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.backoffice.GetSavingsTransactionUseCase;
-import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentTransactionSearchResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummary;
@@ -123,46 +117,6 @@ public class SavingsGoalReportController {
 				toDate);
 		ApiResponseJSON<SavingsMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>(
 				"Maturity processed successfully.", response);
-		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
-	}
-
-	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
-	@ApiOperation(value = "Returns paginated list of investment transactions.")
-	@GetMapping(value = "/investment-transaction/statistics", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>>> getCardlessWithdrawals(
-			@ApiParam(value = "Sender's account number") @RequestParam(value = "mintAccountNumber", required = false) String mintAccountNumber,
-			@ApiParam(value = "Transaction Reference") @RequestParam(value = "transactionReference", required = false) String transactionReference,
-			@ApiParam(value = "Transaction status: PENDING, FAILED, CANCELLED, SUCCESSFUL, pending,failed,cancelled,successful") @Pattern(regexp = "^SUCCESSFUL|FAILED|PENDING|CANCELLED|successful|failed|pending|cancelled$") @RequestParam(value = "transactionStatus", required = false, defaultValue = "SUCCESSFUL") String transactionStatus,
-			@ApiParam(value = "Transaction Type: CREDIT, DEBIT,credit,debit") @Pattern(regexp = "^CREDIT|DEBIT|credit|debit$") @RequestParam(value = "transactionType", required = false, defaultValue = "CREDIT") String transactionType,
-			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
-			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
-			@ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam(value = "size", defaultValue = "20") int size,
-			@ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam(value = "page", defaultValue = "1") int page,
-			@ApiParam(value = "Transaction amount, Format: 0.00 (Decimal numbers)") @Pattern(regexp = "^\\d*\\.?\\d+$", message = "invalid input for amount") @RequestParam(value = "transactionAmount", required = false, defaultValue = "0.00") String transactionAmount) {
-
-		InvestmentTransactionSearchRequest searchRequest = InvestmentTransactionSearchRequest.builder()
-				.transactionStatus(
-						(transactionStatus != null) ? TransactionStatusConstant.valueOf(transactionStatus.toUpperCase())
-								: null)
-				.transactionType(
-						(transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase())
-								: null)
-				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
-				.transactionAmount((transactionAmount != null && StringUtils.isNotEmpty(transactionAmount))
-						? new BigDecimal(transactionAmount)
-						: null)
-				.build();
-		if (fromDate != null && toDate != null) {
-			searchRequest.setFromDate(fromDate.atStartOfDay());
-			searchRequest.setToDate(toDate.atTime(23, 59, 59));
-		} else {
-			searchRequest.setFromDate(null);
-			searchRequest.setToDate(null);
-		}
-		PagedDataResponse<InvestmentTransactionSearchResponse> response = getSavingsTransactionUseCase
-				.getInvestmentTransactions(searchRequest, page, size);
-		ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>> apiResponseJSON = new ApiResponseJSON<>(
-				"Transactions returned successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 }
