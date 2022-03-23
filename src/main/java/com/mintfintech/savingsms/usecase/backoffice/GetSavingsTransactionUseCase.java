@@ -2,9 +2,6 @@ package com.mintfintech.savingsms.usecase.backoffice;
 
 import java.time.LocalDate;
 
-import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentTransactionSearchResponse;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummary;
 
 /**
@@ -12,5 +9,4 @@ import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummar
  */
 public interface GetSavingsTransactionUseCase {
 	SavingsMaturityStatSummary getSavingsMaturityStatistics(LocalDate fromDate, LocalDate toDate);
-	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(InvestmentTransactionSearchRequest request, int pageIndex, int size);
 }
