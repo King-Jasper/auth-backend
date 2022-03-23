@@ -94,8 +94,7 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		return amount == null ? BigDecimal.ZERO : amount;
 	}
 
-	private Predicate buildSearchQuery(InvestmentTransactionSearchDTO searchDTO, Root<InvestmentTransactionEntity> root,
-			CriteriaQuery<?> query, CriteriaBuilder cb) {
+	private Predicate buildSearchQuery(InvestmentTransactionSearchDTO searchDTO, Root<InvestmentTransactionEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
 		Predicate whereClause = cb.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE);
 		if (searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
 			whereClause = cb.and(whereClause,

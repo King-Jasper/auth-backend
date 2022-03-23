@@ -12,7 +12,5 @@ import com.mintfintech.savingsms.usecase.data.response.SavingsMaturityStatSummar
  */
 public interface GetSavingsTransactionUseCase {
 	SavingsMaturityStatSummary getSavingsMaturityStatistics(LocalDate fromDate, LocalDate toDate);
-
-	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(
-			InvestmentTransactionSearchRequest request, int pageIndex, int size);
+	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(InvestmentTransactionSearchRequest request, int pageIndex, int size);
 }

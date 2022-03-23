@@ -14,13 +14,11 @@ import com.mintfintech.savingsms.domain.models.InvestmentTransactionSearchDTO;
 public interface InvestmentTransactionEntityDao extends CrudDao<InvestmentTransactionEntity, Long> {
 	String generateTransactionReference();
 
-	List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity,
-			TransactionTypeConstant type, TransactionStatusConstant status);
+	List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity, TransactionTypeConstant type, TransactionStatusConstant status);
 
 	List<InvestmentTransactionEntity> getTransactionsByInvestment(InvestmentEntity investmentEntity);
 
-	Page<InvestmentTransactionEntity> searchInvestmentTransactions(
-			InvestmentTransactionSearchDTO investmentTransactionSearchDTO, int pageIndex, int size);
+	Page<InvestmentTransactionEntity> searchInvestmentTransactions(InvestmentTransactionSearchDTO investmentTransactionSearchDTO, int pageIndex, int size);
 
 	BigDecimal sumSearchedInvestmentTransactions(InvestmentTransactionSearchDTO investmentTransactionSearchDTO);
 }

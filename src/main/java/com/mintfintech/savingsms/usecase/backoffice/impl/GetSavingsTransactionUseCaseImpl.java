@@ -113,8 +113,7 @@ public class GetSavingsTransactionUseCaseImpl implements GetSavingsTransactionUs
 				.mintAccountNumber(request.getMintAccountNumber())
 				.transactionReference(request.getTransactionReference()).transactionType(request.getTransactionType())
 				.build();
-		Page<InvestmentTransactionEntity> pagedEntity = investmentTransactionEntityDao
-				.searchInvestmentTransactions(searchDTO, pageIndex, size);
+		Page<InvestmentTransactionEntity> pagedEntity = investmentTransactionEntityDao.searchInvestmentTransactions(searchDTO, pageIndex, size);
 		BigDecimal amount = investmentTransactionEntityDao.sumSearchedInvestmentTransactions(searchDTO);
 		return new PagedDataResponse<>(pagedEntity.getTotalElements(), pagedEntity.getTotalPages(), amount,
 				pagedEntity.getContent().stream().map(this::getResponseFromEntity).collect(Collectors.toList()));
