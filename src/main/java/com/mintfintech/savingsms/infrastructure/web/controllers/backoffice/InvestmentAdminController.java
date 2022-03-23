@@ -30,7 +30,6 @@ import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.FundInvestmentByAdminJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.InvestmentCreationAdminRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.backoffice.GetSavingsTransactionUseCase;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentCreationResponse;
@@ -42,7 +41,6 @@ import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.features.investment.CreateInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.FundInvestmentUseCase;
 import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.master_record.InvestmentPlanUseCase;
 import com.mintfintech.savingsms.usecase.models.InvestmentModel;
 
 import io.swagger.annotations.Api;
@@ -64,9 +62,7 @@ public class InvestmentAdminController {
 
 	private final GetInvestmentUseCase getInvestmentUseCase;
 	private final CreateInvestmentUseCase createInvestmentUseCase;
-	private final InvestmentPlanUseCase investmentPlanUseCase;
 	private final FundInvestmentUseCase fundInvestmentUseCase;
-	private final GetSavingsTransactionUseCase getSavingsTransactionUseCase;
 
 	@Secured("09") // Privilege: VIEW_DASHBOARD_STATISTICS
 	@ApiOperation(value = "Returns investment maturity statistics information.")
@@ -243,7 +239,7 @@ public class InvestmentAdminController {
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
 				.transactionAmount((transactionAmount != null && StringUtils.isNotEmpty(transactionAmount))
 						? new BigDecimal(transactionAmount)
-						: null)
+						: BigDecimal.ZERO)
 				.build();
 		if (fromDate != null && toDate != null) {
 			searchRequest.setFromDate(fromDate.atStartOfDay());
@@ -252,7 +248,7 @@ public class InvestmentAdminController {
 			searchRequest.setFromDate(null);
 			searchRequest.setToDate(null);
 		}
-		PagedDataResponse<InvestmentTransactionSearchResponse> response = getSavingsTransactionUseCase
+		PagedDataResponse<InvestmentTransactionSearchResponse> response = getInvestmentUseCase
 				.getInvestmentTransactions(searchRequest, page, size);
 		ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>> apiResponseJSON = new ApiResponseJSON<>(
 				"Transactions returned successfully.", response);
