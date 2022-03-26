@@ -176,11 +176,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
 
         if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
-            InvestmentCreationResponse response = new InvestmentCreationResponse();
+            throw new BusinessLogicConflictException("Sorry, you have insufficient fund for this transaction.");
+            /*InvestmentCreationResponse response = new InvestmentCreationResponse();
             response.setInvestment(null);
             response.setCreated(false);
             response.setMessage("Insufficient Funds");
-            return response;
+            return response;*/
         }
 
         InvestmentEntity investment = InvestmentEntity.builder()
