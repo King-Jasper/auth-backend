@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase;
 
+import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
@@ -16,4 +17,5 @@ public interface PublishTransactionNotificationUseCase {
     void sendSavingsFundingFailureNotification(SavingsGoalEntity goalEntity, BigDecimal savingsAmount, String failureMessage);
     void sendPendingCorporateInvestmentNotification(MintAccountEntity mintAccount);
     void sendDeclinedCorporateInvestmentNotification(MintAccountEntity mintAccount);
+    void publishAffiliateReferral(InvestmentEntity investment);
 }

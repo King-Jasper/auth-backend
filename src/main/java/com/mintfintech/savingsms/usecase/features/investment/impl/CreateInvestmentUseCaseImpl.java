@@ -5,6 +5,8 @@ import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.AffiliateServiceRestClient;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -28,6 +30,7 @@ import com.mintfintech.savingsms.usecase.models.InvestmentDetailsInfo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +61,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final PublishTransactionNotificationUseCase publishTransactionNotificationUseCase;
     private final GetMintAccountUseCase getMintAccountUseCase;
     private final Gson gson;
+    private final AffiliateServiceRestClient affiliateServiceRestClient;
 
     @Override
     @Transactional
@@ -172,11 +176,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
 
         if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
-            InvestmentCreationResponse response = new InvestmentCreationResponse();
+            throw new BusinessLogicConflictException("Sorry, you have insufficient fund for this transaction.");
+            /*InvestmentCreationResponse response = new InvestmentCreationResponse();
             response.setInvestment(null);
             response.setCreated(false);
             response.setMessage("Insufficient Funds");
-            return response;
+            return response;*/
         }
 
         InvestmentEntity investment = InvestmentEntity.builder()
@@ -205,10 +210,25 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             response.setMessage("Sorry, account debit for investment funding failed.");
             return response;
         }
+        if (!StringUtils.isEmpty(request.getReferralCode())) {
+            String code = request.getReferralCode();
+            MsClientResponse<String> msClientResponse = affiliateServiceRestClient.validateReferralCode(code);
+            if (msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+                log.info("Provided referral code: {}", code);
+                throw new BadRequestException("Referral code does not exist. Please ensure you entered the correct code or proceed without it.");
+            }
+            if (!investmentEntityDao.getByReferralCodeAndAppUser(request.getReferralCode(),  appUser)) {
+                investment.setReferralCode(request.getReferralCode());
+                investmentEntityDao.saveRecord(investment);
+                publishTransactionNotificationUseCase.publishAffiliateReferral(investment);
+            }
+        }
+
         investment.setRecordStatus(RecordStatusConstant.ACTIVE);
         investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
         investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
+
 
         sendInvestmentCreationEmail(investment, appUser);
 

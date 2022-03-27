@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
@@ -71,4 +72,6 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
             " i.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "group by DAY(i.maturityDate), MONTH(i.maturityDate)")
     List<SavingsMaturityStat> getInvestmentMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+
+    boolean existsByReferralCodeAndCreator(String referralCode, AppUserEntity appUser);
 }

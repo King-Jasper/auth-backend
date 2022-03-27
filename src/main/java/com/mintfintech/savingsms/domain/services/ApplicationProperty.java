@@ -129,6 +129,8 @@ public class ApplicationProperty {
         return environmentService.getVariable("amazon.region");
     }
 
+    public String getAffiliateServiceName() {
+        return environmentService.getVariable("microservices.affiliate.service-name", "");
     public String reactHQAccountNumber() {
         return environmentService.getVariable("referral.reacthq.account-number");
     }
