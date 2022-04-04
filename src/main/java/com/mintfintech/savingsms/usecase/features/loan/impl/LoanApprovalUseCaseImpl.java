@@ -218,7 +218,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 mintAccount.setBankOneCustomerId(responseCBS.getCustomerId());
                 mintAccountEntityDao.saveRecord(mintAccount);
             }
-            sendLoanApprovalEmail(loanRequest, appUser);
+            sendLoanApprovalEmail(loanRequest, appUser, bankAccount);
             //TODO implement sending of loan document.
         } else {
             String message = String.format("Loan Id: %s; message: %s", loanRequest.getLoanId(), msClientResponse.getMessage());
@@ -272,9 +272,8 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
     }
 
-    private void sendLoanApprovalEmail(LoanRequestEntity loanRequest, AppUserEntity appUser) {
-        MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(appUser.getPrimaryAccount().getId());
-        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount,BankAccountTypeConstant.CURRENT);
+    private void sendLoanApprovalEmail(LoanRequestEntity loanRequest, AppUserEntity appUser, MintBankAccountEntity bankAccount) {
+        MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
         if(StringUtils.isEmpty(appUser.getResidentialAddress())) {
             updateResidentialAddress(appUser);
         }
