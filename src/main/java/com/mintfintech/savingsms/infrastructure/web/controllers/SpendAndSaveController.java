@@ -92,7 +92,7 @@ public class SpendAndSaveController {
     @Data
     static class SpendAndSaveSetUpRequestJSON {
         @ApiModelProperty(notes = "Transaction percentage to be saved", required = true)
-        private int transactionPercentage;
+        private double transactionPercentage;
 
         @ApiModelProperty(notes = "This checks whether savings is locked", required = true)
         private boolean isSavingsLocked;

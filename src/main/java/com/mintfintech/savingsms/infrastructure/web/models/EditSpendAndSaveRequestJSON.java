@@ -10,7 +10,7 @@ import javax.validation.constraints.NotBlank;
 public class EditSpendAndSaveRequestJSON {
 
     @ApiModelProperty(notes = "Transaction percentage to be saved", required = true)
-    private int transactionPercentage;
+    private double transactionPercentage;
 
     @ApiModelProperty(notes = "This checks whether savings is locked")
     private boolean isSavingsLocked;

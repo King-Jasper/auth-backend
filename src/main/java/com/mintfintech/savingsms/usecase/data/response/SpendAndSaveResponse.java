@@ -26,7 +26,7 @@ public class SpendAndSaveResponse {
 
     private BigDecimal totalAmount;
 
-    private int percentage;
+    private double percentage;
 
     private boolean isSavingsMature;
 }
