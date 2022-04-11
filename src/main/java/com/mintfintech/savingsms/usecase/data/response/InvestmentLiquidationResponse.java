@@ -9,4 +9,6 @@ public class InvestmentLiquidationResponse {
     private String message;
 
     private InvestmentModel investmentModel;
+
+    private String requestId;
 }

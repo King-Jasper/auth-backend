@@ -126,12 +126,14 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(account, appUser)
                     .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
-            if (userRole == CorporateRoleTypeConstant.APPROVER) {
-                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
-            } else {
-                responseMessage = createTransactionRequest(account, investment, request, appUser);
-                response.setMessage(responseMessage);
-                response.setInvestmentModel(null);
+            response = createTransactionRequest(account, investment, request, appUser);
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER || userRole == CorporateRoleTypeConstant.APPROVER) {
+                CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
+                        .requestId(response.getRequestId())
+                        .approved(true)
+                        .build();
+                approveInvestmentWithdrawal(approvalRequest, appUser, account);
+                response.setMessage("Investment created and approved successfully.");
             }
         }
         return response;
@@ -145,7 +147,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
     }
 
-    private String createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
+    private InvestmentLiquidationResponse createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
 
         BigDecimal amountToWithdraw;
         boolean isFullLiquidation = false;
@@ -212,11 +214,20 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
-        sendCorporateEmailNotification(account, investment, transactionRequestEntity);
-        return "Investment liquidation logged for approval";
+        sendCorporateEmailNotification(investment, transactionRequestEntity);
+        Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(account, appUser);
+        CorporateUserEntity corporateUser = opt.get();
+        CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+        if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
+            publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(account);
+        }
+        InvestmentLiquidationResponse response = new InvestmentLiquidationResponse();
+        response.setRequestId(transactionRequestEntity.getRequestId());
+        response.setMessage("Investment liquidation logged for approval.");
+        return response;
     }
 
-    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+    private void sendCorporateEmailNotification(InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
 
         InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
         double interestPenaltyRate = tenorEntity.getPenaltyRate();
@@ -246,7 +257,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         EventModel<CorporateInvestmentLiquidationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_LIQUIDATION, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 
     @Override
