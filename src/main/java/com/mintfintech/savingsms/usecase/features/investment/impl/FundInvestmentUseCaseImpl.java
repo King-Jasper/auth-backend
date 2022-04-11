@@ -123,8 +123,11 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(accountEntity, appUser)
                     .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+            if (userRole == CorporateRoleTypeConstant.APPROVER) {
+                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
+            }
             response = createTransactionRequest(accountEntity, investmentEntity, request, appUser);
-            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER || userRole == CorporateRoleTypeConstant.APPROVER) {
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
                 CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
                         .requestId(response.getRequestId())
                         .approved(true)

@@ -126,8 +126,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(account, appUser)
                     .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+            if (userRole == CorporateRoleTypeConstant.APPROVER) {
+                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
+            }
             response = createTransactionRequest(account, investment, request, appUser);
-            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER || userRole == CorporateRoleTypeConstant.APPROVER) {
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
                 CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
                         .requestId(response.getRequestId())
                         .approved(true)

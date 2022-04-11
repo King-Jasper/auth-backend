@@ -86,8 +86,11 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             }
             CorporateUserEntity corporateUser = opt.get();
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+            if (userRole == CorporateRoleTypeConstant.APPROVER) {
+                throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
+            }
             response = createTransactionRequest(mintAccount, appUser, request);
-            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER || userRole == CorporateRoleTypeConstant.APPROVER) {
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
                 CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
                         .requestId(response.getRequestId())
                         .approved(true)
