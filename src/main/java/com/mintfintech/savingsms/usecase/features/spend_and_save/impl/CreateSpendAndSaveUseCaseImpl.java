@@ -40,11 +40,11 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
             throw new BusinessLogicConflictException("Sorry, this feature is for individual account.");
         }
 
-        int percentage = setUpRequest.getTransactionPercentage();
+        double percentage = setUpRequest.getTransactionPercentage();
         int duration = setUpRequest.getDuration();
         boolean isSavingsLocked = setUpRequest.isSavingsLocked();
-        if (percentage < 1) {
-            throw new BadRequestException("Minimum required percentage is 1");
+        if (percentage <= 0.0) {
+            throw new BadRequestException("Percentage must be greater than 0.");
         }
         if (isSavingsLocked) {
             if (duration < 30) {

@@ -80,9 +80,9 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
 
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
-        int percentage = request.getTransactionPercentage();
-        if (percentage < 1) {
-            throw new BadRequestException("Minimum required percentage is 1");
+        double percentage = request.getTransactionPercentage();
+        if (percentage <= 0.0) {
+            throw new BadRequestException("Percentage must be greater than 0.");
         }
 
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
