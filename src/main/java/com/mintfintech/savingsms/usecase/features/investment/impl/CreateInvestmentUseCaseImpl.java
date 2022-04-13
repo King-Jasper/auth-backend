@@ -88,8 +88,15 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
-            } else {
-                response = createTransactionRequest(mintAccount, appUser, request);
+            }
+            response = createTransactionRequest(mintAccount, appUser, request);
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
+                CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
+                        .requestId(response.getRequestId())
+                        .approved(true)
+                        .build();
+                approveCorporateInvestment(approvalRequest, appUser, mintAccount);
+                response.setMessage("Investment created and approved successfully.");
             }
         }
         return response;
@@ -153,9 +160,16 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
-        sendCorporateEmailNotification(mintAccount, investment, transactionRequestEntity);
+        sendCorporateEmailNotification(investment, transactionRequestEntity);
+        Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);
+        CorporateUserEntity corporateUser = opt.get();
+        CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+        if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
+            publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
+        }
 
         response.setMessage("Your investment has been logged for approval.");
+        response.setRequestId(transactionRequestEntity.getRequestId());
         return response;
     }
 
@@ -413,7 +427,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
     }
 
-    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+    private void sendCorporateEmailNotification(InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
 
         CorporateInvestmentCreationEmailEvent emailEvent = CorporateInvestmentCreationEmailEvent.builder()
                 .recipient(transactionRequestEntity.getInitiator().getEmail())
@@ -425,6 +439,5 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
         EventModel<CorporateInvestmentCreationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 }
