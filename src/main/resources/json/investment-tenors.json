@@ -38,5 +38,13 @@
     "description": "13 - 24 months",
     "interestRate": 18.00,
     "penaltyRate": 55.50
+  },
+  {
+    "durationType": "MONTHS",
+    "minimumDuration": 1,
+    "maximumDuration": 12,
+    "description": "Flex 1 - 12 months",
+    "interestRate": 9.00,
+    "penaltyRate": 0.00
   }
 ]

@@ -507,6 +507,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private void processInterestPayoutPayment(InvestmentWithdrawalEntity withdrawal) {
         String reference = investmentTransactionEntityDao.generateTransactionReference();
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        InvestmentTenorEntity investmentTenor = investment.getInvestmentTenor();
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
         BigDecimal interestAmount = withdrawal.getInterest();
@@ -557,12 +558,14 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
                     withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
                 }
-
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
-                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+                    if(withdrawal.getAmountCharged().compareTo(BigDecimal.ZERO) == 0) {
+                        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
+                    }else {
+                        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+                    }
                 }
                 transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
-
             } else {
                 String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
                 systemIssueLogService.logIssue("Investment Withdrawal Issue", "Interest payout failed", message);
