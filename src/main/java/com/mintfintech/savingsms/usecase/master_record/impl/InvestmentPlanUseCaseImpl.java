@@ -66,8 +66,7 @@ public class InvestmentPlanUseCaseImpl implements InvestmentPlanUseCase {
     }
 
     private void createOrUpdateInvestmentTenor(InvestmentPlanUseCaseImpl.InvestmentTenor tenor) {
-        Optional<InvestmentTenorEntity> planTenorOptional = investmentTenorEntityDao
-                .findInvestmentTenor(tenor.minimumDuration, tenor.maximumDuration);
+        Optional<InvestmentTenorEntity> planTenorOptional = investmentTenorEntityDao.findInvestmentTenor(tenor.minimumDuration, tenor.maximumDuration);
         log.info("min {} max - {} exist - {}", tenor.minimumDuration, tenor.maximumDuration, planTenorOptional.isPresent());
         InvestmentTenorEntity planTenor = planTenorOptional.orElseGet(InvestmentTenorEntity::new);
         planTenor.setMinimumDuration(tenor.minimumDuration);
