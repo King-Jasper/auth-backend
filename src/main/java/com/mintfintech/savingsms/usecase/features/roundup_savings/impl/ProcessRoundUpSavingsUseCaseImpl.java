@@ -155,7 +155,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         processSavingFunding(settingEntity, savingsGoal, transactionPayload, amountToSave);
     }
 
-    private BigDecimal getSaveAmount(int percentage, BigDecimal transactionAmount) {
+    private BigDecimal getSaveAmount(double percentage, BigDecimal transactionAmount) {
         BigDecimal percent = BigDecimal.valueOf(percentage);
         return (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
     }

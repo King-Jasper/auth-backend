@@ -128,10 +128,15 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
-            } else {
-                responseMessage = createTransactionRequest(account, investment, request, appUser);
-                response.setMessage(responseMessage);
-                response.setInvestmentModel(null);
+            }
+            response = createTransactionRequest(account, investment, request, appUser);
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
+                CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
+                        .requestId(response.getRequestId())
+                        .approved(true)
+                        .build();
+                approveInvestmentWithdrawal(approvalRequest, appUser, account);
+                response.setMessage("Investment created and approved successfully.");
             }
         }
         return response;
@@ -145,7 +150,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         }
     }
 
-    private String createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
+    private InvestmentLiquidationResponse createTransactionRequest(MintAccountEntity account, InvestmentEntity investment, InvestmentWithdrawalRequest request, AppUserEntity appUser) {
 
         BigDecimal amountToWithdraw;
         boolean isFullLiquidation = false;
@@ -212,11 +217,20 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
-        sendCorporateEmailNotification(account, investment, transactionRequestEntity);
-        return "Investment liquidation logged for approval";
+        sendCorporateEmailNotification(investment, transactionRequestEntity);
+        Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(account, appUser);
+        CorporateUserEntity corporateUser = opt.get();
+        CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+        if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
+            publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(account);
+        }
+        InvestmentLiquidationResponse response = new InvestmentLiquidationResponse();
+        response.setRequestId(transactionRequestEntity.getRequestId());
+        response.setMessage("Investment liquidation logged for approval.");
+        return response;
     }
 
-    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+    private void sendCorporateEmailNotification(InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
 
         InvestmentTenorEntity tenorEntity = investmentTenorEntityDao.getRecordById(investment.getInvestmentTenor().getId());
         double interestPenaltyRate = tenorEntity.getPenaltyRate();
@@ -246,7 +260,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         EventModel<CorporateInvestmentLiquidationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_LIQUIDATION, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 
     @Override
@@ -494,6 +507,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
     private void processInterestPayoutPayment(InvestmentWithdrawalEntity withdrawal) {
         String reference = investmentTransactionEntityDao.generateTransactionReference();
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
+        InvestmentTenorEntity investmentTenor = investment.getInvestmentTenor();
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
 
         BigDecimal interestAmount = withdrawal.getInterest();
@@ -544,12 +558,14 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.MATURITY_WITHDRAWAL)) {
                     withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
                 }
-
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
-                    withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+                    if(withdrawal.getAmountCharged().compareTo(BigDecimal.ZERO) == 0) {
+                        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT);
+                    }else {
+                        withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE);
+                    }
                 }
                 transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
-
             } else {
                 String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
                 systemIssueLogService.logIssue("Investment Withdrawal Issue", "Interest payout failed", message);
