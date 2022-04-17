@@ -45,6 +45,10 @@ public class InvestmentTenorEntityDaoImpl implements InvestmentTenorEntityDao {
 
     @Override
     public Optional<InvestmentTenorEntity> findInvestmentTenorForDuration(int duration, RecordStatusConstant status) {
-        return repository.findInvestmentTenorForDuration(duration, status);
+        List<InvestmentTenorEntity> tenors = repository.findInvestmentTenorForDuration(duration, status);
+        if(tenors.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(tenors.get(0));
     }
 }

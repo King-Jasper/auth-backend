@@ -14,6 +14,6 @@ public interface InvestmentTenorRepository extends JpaRepository<InvestmentTenor
     Optional<InvestmentTenorEntity> findFirstByMinimumDurationAndMaximumDurationAndRecordStatus(int minDuration, int maxDuration, RecordStatusConstant statusConstant);
     List<InvestmentTenorEntity> getAllByRecordStatus(RecordStatusConstant statusConstant);
 
-    @Query("select i from InvestmentTenorEntity i where i.recordStatus = ?2 and i.maximumDuration >= ?1 and i.minimumDuration <= ?1")
-    Optional<InvestmentTenorEntity> findInvestmentTenorForDuration(int duration, RecordStatusConstant status);
+    @Query("select i from InvestmentTenorEntity i where i.recordStatus = ?2 and i.maximumDuration >= ?1 and i.minimumDuration <= ?1 order by i.dateCreated asc")
+    List<InvestmentTenorEntity> findInvestmentTenorForDuration(int duration, RecordStatusConstant status);
 }

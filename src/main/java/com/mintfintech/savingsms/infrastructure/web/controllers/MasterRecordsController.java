@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by jnwanya on
@@ -77,6 +78,16 @@ public class MasterRecordsController {
     @ApiOperation(value = "Returns a list of investment tenors.")
     @GetMapping(value = "/v1/common/investment-tenors", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<List<InvestmentTenorModel>>> getInvestmentTenorList() {
+        List<InvestmentTenorModel> responseList = investmentPlanUseCase.investmentTenorList();
+        // removes flex investment.
+        responseList = responseList.stream().filter(data -> (data.getMinimumDuration() != 1 && data.getMinimumDuration() != 12)).collect(Collectors.toList());
+        ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Investment tenors processed successfully.", responseList);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Returns a list of investment tenors.")
+    @GetMapping(value = "/v2/common/investment-tenors", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<InvestmentTenorModel>>> getInvestmentTenorListV2() {
         List<InvestmentTenorModel> responseList = investmentPlanUseCase.investmentTenorList();
         ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Investment tenors processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
