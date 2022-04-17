@@ -175,9 +175,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     private InvestmentCreationResponse processInvestment(AppUserEntity appUser, MintAccountEntity mintAccount, InvestmentCreationRequest request) {
 
-
-        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
-                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+        InvestmentTenorEntity investmentTenor;
+        if(request.getDurationId() > 0) {
+            investmentTenor = investmentTenorEntityDao.findById(request.getDurationId()).orElseThrow(() -> new BadRequestException("Invalid selected duration"));
+        }else {
+            investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE).orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+        }
 
         MintBankAccountEntity debitAccount = getMintAccountUseCase.getMintBankAccount(mintAccount, request.getDebitAccountId());
 
