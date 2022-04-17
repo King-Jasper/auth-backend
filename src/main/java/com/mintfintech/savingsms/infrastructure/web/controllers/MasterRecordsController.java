@@ -80,7 +80,7 @@ public class MasterRecordsController {
     public ResponseEntity<ApiResponseJSON<List<InvestmentTenorModel>>> getInvestmentTenorList() {
         List<InvestmentTenorModel> responseList = investmentPlanUseCase.investmentTenorList();
         // removes flex investment.
-        responseList = responseList.stream().filter(data -> (data.getMinimumDuration() == 1 && data.getMaximumDuration() == 12)).collect(Collectors.toList());
+        responseList = responseList.stream().filter(data -> !(data.getMinimumDuration() == 1 && data.getMaximumDuration() == 12)).collect(Collectors.toList());
         ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Investment tenors processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
