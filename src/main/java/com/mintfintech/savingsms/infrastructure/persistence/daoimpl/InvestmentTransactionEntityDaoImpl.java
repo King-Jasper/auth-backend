@@ -12,6 +12,8 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -119,4 +121,9 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		return whereClause;
 	}
 
+
+	@Override
+	public ReportStatisticModel getInvestmentTransactionStatisticsOnAccount(MintAccountEntity mintAccount) {
+		return repository.getInvestmentTransactionStatistics(mintAccount);
+	}
 }
