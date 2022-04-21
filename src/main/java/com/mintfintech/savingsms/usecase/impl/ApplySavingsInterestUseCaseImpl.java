@@ -63,7 +63,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     private BigDecimal processInterestComputation(List<SavingsGoalEntity> savingsGoalEntityList) {
         BigDecimal totalInterest = BigDecimal.valueOf(0.0);
         for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
-            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.SPEND_AND_SAVE && !savingsGoalEntity.isAutoSave()) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.SPEND_AND_SAVE && !savingsGoalEntity.isLockedSavings()) {
                 continue;
             }
             if(!shouldApplyInterest(savingsGoalEntity)) {
