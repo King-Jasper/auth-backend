@@ -56,7 +56,7 @@ public class IndexController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    /*
+
     @GetMapping(value = "/timeout-test", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> timeoutStressTest(@RequestParam(value = "seconds", defaultValue = "60", required = false) int seconds) {
         long delayMilliSeconds = seconds * 1000;
@@ -66,7 +66,6 @@ public class IndexController {
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("No timeout after "+seconds+" seconds.");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
-    */
 
     @GetMapping(value = "/referral-reward", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
