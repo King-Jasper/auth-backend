@@ -64,7 +64,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final AffiliateServiceRestClient affiliateServiceRestClient;
 
     @Override
-    @Transactional
+    //@Transactional
     public InvestmentCreationResponse createInvestment(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request) {
 
         MintAccountEntity mintAccount = getMintAccountUseCase.getMintAccount(authenticatedUser);
