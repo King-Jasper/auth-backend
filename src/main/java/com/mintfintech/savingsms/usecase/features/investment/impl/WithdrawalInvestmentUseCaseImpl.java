@@ -421,6 +421,12 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         BigDecimal interestCharge = BigDecimal.valueOf(accruedInterest.doubleValue() * (interestPenaltyRate / 100.0));
 
+        InvestmentWithdrawalStageConstant withdrawalStage;
+        if(interestCharge.compareTo(BigDecimal.ZERO) == 0) {
+            withdrawalStage = InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT;
+        }else {
+            withdrawalStage = InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE;
+        }
         InvestmentWithdrawalEntity withdrawalEntity = InvestmentWithdrawalEntity.builder()
                 .amount(amountToWithdraw)
                 .amountCharged(interestCharge)
@@ -431,7 +437,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 .investment(investment)
                 .matured(false)
                 .creditAccount(creditAccount)
-                .withdrawalStage(InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE)
+                .withdrawalStage(withdrawalStage)
                 .withdrawalType(InvestmentWithdrawalTypeConstant.PART_PRE_MATURITY_WITHDRAWAL)
                 .requestedBy(investment.getCreator())
                 .totalAmount(amountToWithdraw)
