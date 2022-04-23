@@ -423,7 +423,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         InvestmentWithdrawalStageConstant withdrawalStage;
         if(interestCharge.compareTo(BigDecimal.ZERO) == 0) {
-            withdrawalStage = InvestmentWithdrawalStageConstant.PENDING_TAX_PAYMENT;
+            withdrawalStage = InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER;
         }else {
             withdrawalStage = InvestmentWithdrawalStageConstant.PENDING_INTEREST_PENALTY_CHARGE;
         }

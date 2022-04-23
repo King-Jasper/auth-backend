@@ -57,9 +57,9 @@ public class SpendAndSaveController {
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SpendAndSaveResponse>> getSpendAndSave(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         SpendAndSaveResponse response = getSpendAndSaveUseCase.getSpendAndSaveDashboard(authenticatedUser);
-        if(authenticatedUser.getUserId().equalsIgnoreCase("700000000097")) {
+        /*if(authenticatedUser.getUserId().equalsIgnoreCase("700000000097")) {
             systemIssueLogService.logIssue("SPEND AND SAVE RESPONSE", "SPEND AND SAVE RESPONSE", gson.toJson(response));
-        }
+        }*/
         ApiResponseJSON<SpendAndSaveResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
