@@ -612,7 +612,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         if (!msClientResponse.isSuccess() || msClientResponse.getStatusCode() != HttpStatus.OK.value() || msClientResponse.getData() == null) {
             String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
-            systemIssueLogService.logIssue("Investment Withdrawal Issue", "Liquidation penalty charge failed", message);
+            systemIssueLogService.logIssue("Liquidation penalty charge failed", message, request.toString());
             withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRE_LIQUIDATION_PENALTY);
             transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
         } else {
@@ -633,7 +633,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
             } else {
                 String message = String.format("Investment Id: %s; transaction Id: %s ; message: %s", investment.getCode(), reference, msClientResponse.getMessage());
-                systemIssueLogService.logIssue("Investment Withdrawal Issue", "Liquidation penalty charge failed", message);
+                systemIssueLogService.logIssue("Liquidation penalty charge failed", message, request.toString());
                 withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.FAILED_PRE_LIQUIDATION_PENALTY);
                 transaction.setTransactionStatus(TransactionStatusConstant.FAILED);
             }

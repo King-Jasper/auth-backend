@@ -26,7 +26,7 @@ public class ApplicationEventServiceImpl implements ApplicationEventService {
     @Override
     public void publishEvent(EventType eventType, EventModel<?> domain) {
         String payload = gson.toJson(domain.getData());
-        log.info("{}: {}", eventType.getTopic(), payload);
+       // log.info("{}: {}", eventType.getTopic(), payload);
         kafkaTemplate.send(eventType.getTopic(), payload);
     }
 }
