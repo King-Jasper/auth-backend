@@ -198,7 +198,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(!maturedGoal) {
            // there is deduction on accrued interest for un-matured goal
             remainingInterest = currentBalance.add(accruedInterest).subtract(withdrawalAmount);
-            dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
+           // dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
         }
         savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
         savingsGoal.setAccruedInterest(remainingInterest);
