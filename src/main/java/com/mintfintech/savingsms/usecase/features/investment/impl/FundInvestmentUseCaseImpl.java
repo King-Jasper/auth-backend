@@ -112,10 +112,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             }
             accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
             response = processInvestmentTopUp(request, investmentEntity, accountEntity);
-        } else if (accountEntity.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+        } else if (accountEntity.getAccountType() != AccountTypeConstant.ENTERPRISE && accountEntity.getAccountType() != AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
-
             if (StringUtils.isEmpty(request.getTransactionPin())) {
                 throw new BadRequestException("Transaction pin is required");
             }

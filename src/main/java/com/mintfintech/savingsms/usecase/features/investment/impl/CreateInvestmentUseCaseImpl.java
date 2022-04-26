@@ -76,7 +76,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             response = processInvestment(appUser, mintAccount, request);
         } else if (mintAccount.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
             response = processInvestment(appUser, mintAccount, request);
-        } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+        } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE && mintAccount.getAccountType() != AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
             Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);

@@ -115,7 +115,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             processLiquidation(request, investment, creditAccount);
             response.setMessage(responseMessage);
             response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));
-        } else if (account.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+        } else if (account.getAccountType() != AccountTypeConstant.ENTERPRISE && account.getAccountType() != AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
             if (StringUtils.isEmpty(request.getTransactionPin())) {
