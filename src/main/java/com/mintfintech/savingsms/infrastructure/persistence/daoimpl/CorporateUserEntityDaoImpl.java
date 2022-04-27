@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.dao.CorporateUserEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CorporateUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CorporateUserRepository;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 
@@ -44,5 +45,10 @@ public class CorporateUserEntityDaoImpl extends CrudDaoImpl<CorporateUserEntity,
     @Override
     public List<CorporateUserEntity> findRecordByAccount(MintAccountEntity mintAccount) {
         return repository.findAllByCorporateAccount(mintAccount);
+    }
+
+    @Override
+    public Optional<CorporateUserEntity> findTopByAppUser(AppUserEntity appUser) {
+        return repository.findTopByAppUserAndRecordStatus(appUser, RecordStatusConstant.ACTIVE);
     }
 }

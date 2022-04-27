@@ -16,6 +16,7 @@ public interface CorporateUserEntityDao extends CrudDao<CorporateUserEntity, Lon
     Optional<CorporateUserEntity> findRecordByAccountIdAndUserId(String accountId, String userId);
     CorporateUserEntity getRecordByAccountIdAndUserId(MintAccountEntity corporateAccount, AppUserEntity user);
     Optional<CorporateUserEntity> findRecordByAccountAndUser(MintAccountEntity corporateAccount, AppUserEntity user);
+    Optional<CorporateUserEntity> findTopByAppUser(AppUserEntity appUser);
 
     List<CorporateUserEntity> findRecordByAccount(MintAccountEntity mintAccount);
 }
