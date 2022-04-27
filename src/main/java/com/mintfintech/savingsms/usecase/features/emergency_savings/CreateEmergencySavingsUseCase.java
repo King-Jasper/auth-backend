@@ -10,4 +10,5 @@ import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
  */
 public interface CreateEmergencySavingsUseCase {
     EmergencySavingModel createSavingsGoal(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest);
+    EmergencySavingModel createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest);
 }

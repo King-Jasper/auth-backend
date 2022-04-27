@@ -12,4 +12,5 @@ public interface FundWithdrawalUseCase {
     void processInterestWithdrawalToSuspenseAccount();
     void processSavingsWithdrawalToSuspenseAccount();
     void processSuspenseFundDisbursementToCustomer();
+    String withdrawalSavingsV2(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest toRequest);
 }

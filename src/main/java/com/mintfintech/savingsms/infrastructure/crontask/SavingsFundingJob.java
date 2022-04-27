@@ -23,4 +23,8 @@ public class SavingsFundingJob {
     public void processSavingFundingForSetInterval() {
         fundSavingsGoalUseCase.processSavingsGoalScheduledSaving();
     }
+
+    @SchedulerLock(name = "SavingsFundingJob_processSavingFundingForSetIntervalV2", lockAtMostForString = "PT30M")
+    @Scheduled(cron = "0 0 0/1 1/1 * ?") // runs every one hour.
+    public void processSavingFundingForSetIntervalV2(){fundSavingsGoalUseCase.processSavingsGoalScheduledSavingV2();}
 }

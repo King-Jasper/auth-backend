@@ -5,7 +5,6 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.ReferralSavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -26,10 +25,8 @@ import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
-import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -115,13 +112,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 log.info("Next saving date does not match:{} - {} - {}", savingsGoalEntity.getGoalId(), adjustedTime.toString(), nextSavingsDate.toString());
                 continue;
             }
-            LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
-            SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();
-            if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY){
-                newNextSavingsDate = nextSavingsDate.plusWeeks(1);
-            }else if(frequencyType == SavingsFrequencyTypeConstant.MONTHLY) {
-                newNextSavingsDate = nextSavingsDate.plusMonths(1);
-            }
+            LocalDateTime newNextSavingsDate = getNewNextSavingsDate(savingsGoalEntity, nextSavingsDate);
             MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
             debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);
             BigDecimal savingsAmount = savingsGoalEntity.getSavingsAmount();
@@ -146,6 +137,60 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
             }
         }
+    }
+
+    @Override
+    public void processSavingsGoalScheduledSavingV2() {
+        LocalDateTime now = LocalDateTime.now();
+        List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getSavingGoalWithAutoSaveTime(now);
+        for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
+            if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE || !savingsGoalEntity.isAutoSave()) {
+                log.info("Savings goal auto funding skipped: {}", savingsGoalEntity.getGoalId());
+                continue;
+            }
+            LocalDateTime adjustedTime = now.withNano(0).withSecond(0).withMinute(0);
+            LocalDateTime nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().withNano(0).withSecond(0).withMinute(0);
+            if(!adjustedTime.equals(nextSavingsDate)) {
+                log.info("Next saving date does not match:{} - {} - {}", savingsGoalEntity.getGoalId(), adjustedTime, nextSavingsDate);
+                continue;
+            }
+
+            LocalDateTime newNextSavingsDate = getNewNextSavingsDate(savingsGoalEntity, nextSavingsDate);
+            MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
+            debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);
+            BigDecimal savingsAmount = savingsGoalEntity.getSavingsAmount();
+
+            if(debitAccount.getAvailableBalance().compareTo(savingsAmount) < 0) {
+                log.info("Insufficient balance for savings auto debit: {}" , savingsGoalEntity.getGoalId());
+                savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+                publishTransactionNotificationUseCase.sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, "Insufficient balance to fund savings goal.");
+                continue;
+            }
+            savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
+            savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+            boolean proceedWithFunding = validateSavingTierRestriction(savingsGoalEntity, savingsAmount);
+            if(!proceedWithFunding) {
+                continue;
+            }
+            SavingsGoalFundingResponse fundingResponse = fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
+            if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
+                publishTransactionNotificationUseCase.sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
+                String message = String.format("Goal Id: %s; message: %s", savingsGoalEntity.getGoalId(),  fundingResponse.getResponseMessage());
+                systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
+            }
+        }
+    }
+
+    private LocalDateTime getNewNextSavingsDate(SavingsGoalEntity savingsGoalEntity, LocalDateTime nextSavingsDate) {
+        LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
+        SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();
+        if (frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
+            newNextSavingsDate = nextSavingsDate.plusWeeks(1);
+        } else if (frequencyType == SavingsFrequencyTypeConstant.MONTHLY) {
+            newNextSavingsDate = nextSavingsDate.plusMonths(1);
+        }
+        return newNextSavingsDate;
     }
 
 

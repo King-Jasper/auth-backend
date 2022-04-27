@@ -35,6 +35,7 @@ public class SavingsGoalTransactionController {
 
     private final String v1BaseUrl = "/api/v1/savings-goals";
     private final String v2BaseUrl = "/api/v2/savings-goals";
+    private final String v3BaseUrl = "/api/v3/savings-goals";
 
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private FundWithdrawalUseCase fundWithdrawalUseCase;
@@ -72,6 +73,15 @@ public class SavingsGoalTransactionController {
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                         @RequestBody @Valid SavingsWithdrawalRequestJSON requestJSON) {
         String message = fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Withdraw savings goal fund.")
+    @PostMapping(value = v3BaseUrl +"/transaction/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                        @RequestBody @Valid SavingsWithdrawalRequestJSONV2 requestJSON) {
+        String message = fundWithdrawalUseCase.withdrawalSavingsV2(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }

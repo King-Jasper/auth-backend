@@ -40,4 +40,6 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     List<SavingsMaturityStat> getInvestmentMaturityStatistics(LocalDateTime fromDate, LocalDateTime toDate);
 
     boolean getByReferralCodeAndAppUser(String referralCode, AppUserEntity appUser);
+
+    long countInvestmentCreationRequestWithinPeriod(BigDecimal investAmount, AppUserEntity appUser, LocalDateTime fromTime);
 }

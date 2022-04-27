@@ -13,11 +13,10 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
-import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
-import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+
 import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
@@ -132,5 +131,93 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 .exist(true)
                 .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity))
                 .build();
+    }
+
+    @Override
+    public EmergencySavingModel createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
+
+        String emergencyCategoryCode = applicationProperty.getEmergencyCategoryCode();
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+        MintBankAccountEntity debitAccount = bankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
+
+        BigDecimal targetAmount = BigDecimal.valueOf(creationRequest.getTargetAmount());
+        BigDecimal fundingAmount = BigDecimal.valueOf(creationRequest.getFundingAmount());
+        String goalName = creationRequest.getName();
+        LocalDateTime nextSavingsDate = null;
+        SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.NONE;
+        SavingsGoalStatusConstant statusConstant = SavingsGoalStatusConstant.ACTIVE;
+
+        if (fundingAmount.compareTo(targetAmount) > 0) {
+            throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
+        }
+        LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
+        if (creationRequest.isAutoDebit()) {
+            if (creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {
+                throw new BadRequestException("Start date and savings frequency are required.");
+            }
+            frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
+            nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
+        } else {
+            if (debitAccount.getAvailableBalance().compareTo(fundingAmount) < 0) {
+                throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
+            }
+        }
+        SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.getCategoryByCode(emergencyCategoryCode);
+        SavingsPlanEntity savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
+
+        SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
+                .mintAccount(mintAccount)
+                .creator(appUser)
+                .goalCategory(savingsGoalCategory)
+                .savingsGoalType(SavingsGoalTypeConstant.EMERGENCY_SAVINGS)
+                .goalStatus(statusConstant)
+                .goalId(savingsGoalEntityDao.generateSavingGoalId())
+                .savingsAmount(fundingAmount)
+                .targetAmount(targetAmount)
+                .accruedInterest(BigDecimal.ZERO)
+                .savingsBalance(BigDecimal.ZERO)
+                .savingsFrequency(frequencyType)
+                .autoSave(creationRequest.isAutoDebit())
+                .savingsPlan(savingsPlan)
+                .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
+                .name(goalName)
+                .lockedSavings(false)
+                .nextAutoSaveDate(nextSavingsDate)
+                .savingsStartDate(creationRequest.getStartDate())
+                .build();
+        savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+
+        if (!creationRequest.isAutoDebit()) {
+            SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
+            if (!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+            }
+        } else {
+            if (startDate.equals(LocalDateTime.now())) {
+                SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
+                savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+                if (!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                    throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
+                }
+            }
+        }
+
+        return EmergencySavingModel.builder()
+                .exist(true)
+                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity))
+                .build();
+    }
+
+    private LocalDateTime getNextSavingsDate(SavingsFrequencyTypeConstant frequencyType, LocalDateTime nextSavingsDate) {
+        nextSavingsDate = nextSavingsDate.withNano(0).withSecond(0).withMinute(0);
+        LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
+        if (frequencyType.equals(SavingsFrequencyTypeConstant.WEEKLY)) {
+            newNextSavingsDate = nextSavingsDate.plusWeeks(1);
+        } else if (frequencyType.equals(SavingsFrequencyTypeConstant.MONTHLY)) {
+            newNextSavingsDate = nextSavingsDate.plusMonths(1);
+        }
+        return newNextSavingsDate;
     }
 }
