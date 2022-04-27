@@ -28,9 +28,9 @@ public class SavingsWithdrawalJob {
     public void processSavingsGoalWithdrawal(){
         try {
             fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
-            Thread.sleep(500);
+            Thread.sleep(5000);
             fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
-            Thread.sleep(500);
+            Thread.sleep(5000);
             fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();
         }catch (Exception ignored) { }
     }
