@@ -64,6 +64,17 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         }
     }
 
+    @Async
+    @Override
+    @SneakyThrows
+    public void createMintUser(UserCreationEvent userCreationEvent) {
+        Thread.sleep(500);
+        if(appUserEntityDao.findAppUserByUserId(userCreationEvent.getUserId()).isPresent()) {
+            return;
+        }
+        createUser(userCreationEvent);
+    }
+
     @Override
     public void createIndividualBankAccount(MintBankAccountCreationEvent accountCreationEvent) {
         Optional<MintAccountEntity> mintAccountEntityOptional = mintAccountEntityDao.findAccountByAccountId(accountCreationEvent.getMintAccountId());
@@ -191,15 +202,18 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
     @SneakyThrows
     @Override
     public void createOrUpdateCorporateUser(CorporateUserDetailEvent corporateUserDetailEvent) {
+        log.info("Corporate user details event - {}", corporateUserDetailEvent.toString());
         String accountId = corporateUserDetailEvent.getAccountId();
         String userId = corporateUserDetailEvent.getUserId();
         Optional<CorporateUserEntity> optional = corporateUserEntityDao.findRecordByAccountIdAndUserId(accountId, userId);
         if(optional.isPresent()) {
+            log.info("1. Corporate user details event - {}", corporateUserDetailEvent);
             CorporateUserEntity corporateUserEntity = optional.get();
             corporateUserEntity.setDirector(corporateUserDetailEvent.isDirector());
             corporateUserEntity.setUserRole(corporateUserDetailEvent.getRoleName());
             corporateUserEntityDao.saveRecord(corporateUserEntity);
         } else {
+            log.info("1. Corporate user details event - {}", corporateUserDetailEvent);
             Optional<MintAccountEntity> accountEntityOpt = mintAccountEntityDao.findAccountByAccountId(accountId);
             Optional<AppUserEntity> appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
             if(!accountEntityOpt.isPresent() || !appUserEntityOpt.isPresent()) {
