@@ -20,6 +20,7 @@ import org.apache.commons.lang3.StringUtils;
 import javax.inject.Named;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Optional;
@@ -137,6 +138,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
     public EmergencySavingModel createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
 
         String emergencyCategoryCode = applicationProperty.getEmergencyCategoryCode();
+        int minimumDurationForInterest = 30;
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         MintBankAccountEntity debitAccount = bankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
@@ -148,6 +150,14 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         SavingsFrequencyTypeConstant frequencyType = SavingsFrequencyTypeConstant.NONE;
         SavingsGoalStatusConstant statusConstant = SavingsGoalStatusConstant.ACTIVE;
 
+        SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.getCategoryByCode(emergencyCategoryCode);
+        SavingsPlanEntity savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
+        SavingsPlanTenorEntity planTenor= savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(minimumDurationForInterest).get();
+
+        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(creationRequest.getName(), savingsPlan, mintAccount);
+        if (savingsGoalOptional.isPresent()) {
+            throw new BusinessLogicConflictException("Savings goal with name "+ creationRequest.getName() + " exists already.");
+        }
         if (fundingAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
         }
@@ -163,8 +173,6 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
             }
         }
-        SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.getCategoryByCode(emergencyCategoryCode);
-        SavingsPlanEntity savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
 
         SavingsGoalEntity savingsGoalEntity = SavingsGoalEntity.builder()
                 .mintAccount(mintAccount)
@@ -180,6 +188,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 .savingsFrequency(frequencyType)
                 .autoSave(creationRequest.isAutoDebit())
                 .savingsPlan(savingsPlan)
+                .savingsPlanTenor(planTenor)
                 .creationSource(SavingsGoalCreationSourceConstant.CUSTOMER)
                 .name(goalName)
                 .lockedSavings(false)
@@ -194,7 +203,8 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
             }
         } else {
-            if (startDate.equals(LocalDateTime.now())) {
+            if (creationRequest.getStartDate().equals(LocalDate.now())) {
+                System.out.println("first savings");
                 SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
                 savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
                 savingsGoalEntityDao.saveRecord(savingsGoalEntity);
