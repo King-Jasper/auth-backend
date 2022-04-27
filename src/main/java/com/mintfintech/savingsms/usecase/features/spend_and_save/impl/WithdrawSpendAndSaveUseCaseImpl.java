@@ -60,6 +60,7 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
 
     private String createWithdrawalRequest(SavingsGoalEntity savingsGoal, AppUserEntity appUser, BigDecimal amount) {
 
+       // 1000, 50 - 1050
 
         LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
@@ -77,6 +78,13 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
             remainingSavings = currentBalance;
         }
 
+        if(amount.compareTo(currentBalance) < 0) {
+            remainingInterest = accruedInterest;
+            remainingSavings = currentBalance.subtract(amount);
+        }else {
+
+        }
+
         savingsGoal.setSavingsBalance(remainingSavings);
         savingsGoal.setAccruedInterest(remainingInterest);
         savingsGoalEntityDao.saveRecord(savingsGoal);
@@ -86,6 +94,10 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         if(interestWithdrawal.compareTo(BigDecimal.ZERO) > 0) {
             requestStatusConstant = WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT;
         }
+
+        //currentBalance.subtract(remainingSavings)
+
+        //withdrawalRequestEntity.getSavingsBalanceWithdrawal()
 
         SavingsWithdrawalRequestEntity withdrawalRequest = SavingsWithdrawalRequestEntity.builder()
                 .amount(amount)
