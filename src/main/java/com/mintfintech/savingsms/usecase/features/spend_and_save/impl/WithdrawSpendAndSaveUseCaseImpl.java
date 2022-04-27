@@ -60,7 +60,8 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
 
     private String createWithdrawalRequest(SavingsGoalEntity savingsGoal, AppUserEntity appUser, BigDecimal amount) {
 
-       // 1000, 50 - 1050
+
+        // 1000, 50 - 1050
 
         LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
@@ -71,18 +72,21 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         if (amount.compareTo(totalAmount) > 0) {
             throw new BusinessLogicConflictException("Sorry, amount is greater than the available amount");
         }
+        /*
         if (amount.compareTo(accruedInterest) > 0 && amount.compareTo(totalAmount) < 0) {
             remainingSavings = totalAmount.subtract(amount);
         } else if (amount.compareTo(accruedInterest) < 0) {
             remainingInterest = accruedInterest.subtract(amount);
             remainingSavings = currentBalance;
-        }
-
-        if(amount.compareTo(currentBalance) < 0) {
-            remainingInterest = accruedInterest;
-            remainingSavings = currentBalance.subtract(amount);
-        }else {
-
+        }*/
+        if(amount.compareTo(totalAmount) != 0) {
+            if(amount.compareTo(currentBalance) < 0) {
+                remainingInterest = accruedInterest;
+                remainingSavings = currentBalance.subtract(amount);
+            }else {
+                remainingSavings = BigDecimal.valueOf(0.00);
+                remainingInterest = totalAmount.subtract(amount);
+            }
         }
 
         savingsGoal.setSavingsBalance(remainingSavings);
@@ -95,7 +99,7 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
             requestStatusConstant = WithdrawalRequestStatusConstant.PENDING_INTEREST_CREDIT;
         }
 
-        //currentBalance.subtract(remainingSavings)
+        //
 
         //withdrawalRequestEntity.getSavingsBalanceWithdrawal()
 
@@ -103,7 +107,7 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
                 .amount(amount)
                 .withdrawalRequestStatus(requestStatusConstant)
                 .interestWithdrawal(interestWithdrawal)
-                .savingsBalanceWithdrawal(amount)
+                .savingsBalanceWithdrawal(currentBalance.subtract(remainingSavings))
                 .balanceBeforeWithdrawal(currentBalance)
                 .maturedGoal(true)
                 .savingsGoal(savingsGoal)
