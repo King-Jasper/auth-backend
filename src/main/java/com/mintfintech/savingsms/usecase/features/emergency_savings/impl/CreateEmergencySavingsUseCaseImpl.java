@@ -204,7 +204,6 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             }
         } else {
             if (creationRequest.getStartDate().equals(LocalDate.now())) {
-                System.out.println("first savings");
                 SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
                 savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
                 savingsGoalEntityDao.saveRecord(savingsGoalEntity);

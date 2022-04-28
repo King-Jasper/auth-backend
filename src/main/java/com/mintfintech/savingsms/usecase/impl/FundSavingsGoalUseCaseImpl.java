@@ -139,49 +139,6 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
         }
     }
 
-    @Override
-    public void processSavingsGoalScheduledSavingV2() {
-        LocalDateTime now = LocalDateTime.now();
-        List<SavingsGoalEntity> savingsGoalEntityList = savingsGoalEntityDao.getSavingGoalWithAutoSaveTime(now);
-        for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
-            if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE || !savingsGoalEntity.isAutoSave()) {
-                log.info("Savings goal auto funding skipped: {}", savingsGoalEntity.getGoalId());
-                continue;
-            }
-            LocalDateTime adjustedTime = now.withNano(0).withSecond(0).withMinute(0);
-            LocalDateTime nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().withNano(0).withSecond(0).withMinute(0);
-            if(!adjustedTime.equals(nextSavingsDate)) {
-                log.info("Next saving date does not match:{} - {} - {}", savingsGoalEntity.getGoalId(), adjustedTime, nextSavingsDate);
-                continue;
-            }
-
-            LocalDateTime newNextSavingsDate = getNewNextSavingsDate(savingsGoalEntity, nextSavingsDate);
-            MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
-            debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);
-            BigDecimal savingsAmount = savingsGoalEntity.getSavingsAmount();
-
-            if(debitAccount.getAvailableBalance().compareTo(savingsAmount) < 0) {
-                log.info("Insufficient balance for savings auto debit: {}" , savingsGoalEntity.getGoalId());
-                savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
-                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
-                publishTransactionNotificationUseCase.sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, "Insufficient balance to fund savings goal.");
-                continue;
-            }
-            savingsGoalEntity.setNextAutoSaveDate(newNextSavingsDate);
-            savingsGoalEntityDao.saveRecord(savingsGoalEntity);
-            boolean proceedWithFunding = validateSavingTierRestriction(savingsGoalEntity, savingsAmount);
-            if(!proceedWithFunding) {
-                continue;
-            }
-            SavingsGoalFundingResponse fundingResponse = fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
-            if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
-                publishTransactionNotificationUseCase.sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
-                String message = String.format("Goal Id: %s; message: %s", savingsGoalEntity.getGoalId(),  fundingResponse.getResponseMessage());
-                systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
-            }
-        }
-    }
-
     private LocalDateTime getNewNextSavingsDate(SavingsGoalEntity savingsGoalEntity, LocalDateTime nextSavingsDate) {
         LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
         SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();

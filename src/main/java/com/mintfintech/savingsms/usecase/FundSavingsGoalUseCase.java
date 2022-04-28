@@ -17,7 +17,6 @@ public interface FundSavingsGoalUseCase {
     SavingsGoalFundingResponse fundSavingGoal(MintBankAccountEntity debitAccount, AppUserEntity appUserEntity, SavingsGoalEntity savingsGoal, BigDecimal amount);
     SavingsGoalFundingResponse fundSavingGoal(AuthenticatedUser authenticatedUser, SavingFundingRequest fundingRequest);
     void processSavingsGoalScheduledSaving();
-    void processSavingsGoalScheduledSavingV2();
    // SavingsGoalTransactionEntity processFundingTransactionResponse(SavingsGoalTransactionEntity transactionEntity, MsClientResponse<FundTransferResponseCBS> msClientResponse);
 
 }
