@@ -2,9 +2,11 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.EmergencySavingsCreationRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSONV2;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
+import com.mintfintech.savingsms.usecase.features.emergency_savings.WithdrawEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -18,31 +20,29 @@ import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
 
-/**
- * Created by jnwanya on
- * Sun, 01 Nov, 2020
- */
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Emergency Savings Management Endpoints",  description = "Handles emergency savings goal management.")
 @RestController
 @RequestMapping(headers = {"x-request-client-key", "Authorization"})
-public class EmergencySavingsController {
+public class EmergencySavingsControllerV2 {
 
     private final String v2BaseUrl = "/api/v2/savings-goals";
+    private final String v3BaseUrl = "/api/v3/savings-goals";
 
     private CreateEmergencySavingsUseCase createEmergencySavingsUseCase;
     private GetEmergencySavingsUseCase getEmergencySavingsUseCase;
-    public EmergencySavingsController(CreateEmergencySavingsUseCase createEmergencySavingsUseCase, GetEmergencySavingsUseCase getEmergencySavingsUseCase) {
+    private WithdrawEmergencySavingsUseCase withdrawEmergencySavingsUseCase;
+    public EmergencySavingsControllerV2(CreateEmergencySavingsUseCase createEmergencySavingsUseCase, GetEmergencySavingsUseCase getEmergencySavingsUseCase, WithdrawEmergencySavingsUseCase withdrawEmergencySavingsUseCase) {
         this.createEmergencySavingsUseCase = createEmergencySavingsUseCase;
         this.getEmergencySavingsUseCase = getEmergencySavingsUseCase;
+        this.withdrawEmergencySavingsUseCase = withdrawEmergencySavingsUseCase;
     }
 
-
     @ApiOperation(value = "Creates a new emergency savings goal.")
-    @PostMapping(value = v2BaseUrl +"/emergency-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                               @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
-        EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoal(authenticatedUser, creationRequestJSON.toRequest());
+    @PostMapping(value = v3BaseUrl +"/emergency-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                              @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
+        EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoalV2(authenticatedUser, creationRequestJSON.toRequest());
         ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -52,6 +52,15 @@ public class EmergencySavingsController {
     public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         EmergencySavingModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
         ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency savings returned successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Withdraw savings goal fund.")
+    @PostMapping(value = v3BaseUrl +"/transaction/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                          @RequestBody @Valid SavingsWithdrawalRequestJSONV2 requestJSON) {
+        String message = withdrawEmergencySavingsUseCase.withdrawalSavingsV2(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 }
