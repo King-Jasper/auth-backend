@@ -37,4 +37,6 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     List<SavingsMaturityStat> savingsMaturityStatisticsList(LocalDateTime startDate, LocalDateTime endDate);
 
     void deleteSavings(SavingsGoalEntity savingsGoalEntity);
+
+    List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant emergencySavings);
 }

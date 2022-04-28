@@ -214,4 +214,9 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
     public void deleteSavings(SavingsGoalEntity savingsGoalEntity) {
         repository.delete(savingsGoalEntity);
     }
+
+    @Override
+    public List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant goalType) {
+        return repository.getAllSavingsByType(accountEntity, goalType);
+    }
 }

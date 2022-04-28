@@ -113,4 +113,8 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     List<SavingsGoalEntity> getSavings();
 
+    @Query("select s from SavingsGoalEntity s where s.mintAccount = ?1 and s.savingsGoalType = ?2 and " +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant goalType);
 }

@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmerge
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.WithdrawEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.experimental.FieldDefaults;
@@ -48,10 +49,10 @@ public class EmergencySavingsControllerV2 {
     }
 
     @ApiOperation(value = "Get account emergency savings.")
-    @GetMapping(value = v2BaseUrl+ "/emergency-savings", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
-        EmergencySavingModel response = getEmergencySavingsUseCase.getAccountEmergencySavings(authenticatedUser);
-        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency savings returned successfully.", response);
+    @GetMapping(value = v3BaseUrl+ "/emergency-savings", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<EmergencySavingModelV2>> getEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
+        EmergencySavingModelV2 response = getEmergencySavingsUseCase.getAccountEmergencySavingsV2(authenticatedUser);
+        ApiResponseJSON<EmergencySavingModelV2> apiResponseJSON = new ApiResponseJSON<>("Emergency savings returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
