@@ -208,8 +208,6 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
                 savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
                 savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                 if (!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
-                    savingsGoalEntity.setSavingsAmount(BigDecimal.ZERO);
-                    savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                     throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
                 }
             }

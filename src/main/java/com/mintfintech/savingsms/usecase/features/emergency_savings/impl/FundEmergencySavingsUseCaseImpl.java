@@ -79,8 +79,6 @@ public class FundEmergencySavingsUseCaseImpl implements FundEmergencySavingsUseC
             }
             SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, null, savingsGoalEntity, savingsAmount);
             if(!"00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
-                savingsGoalEntity.setSavingsAmount(BigDecimal.ZERO);
-                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                 publishTransactionNotificationUseCase.sendSavingsFundingFailureNotification(savingsGoalEntity, savingsAmount, fundingResponse.getResponseMessage());
                 String message = String.format("Goal Id: %s; message: %s", savingsGoalEntity.getGoalId(),  fundingResponse.getResponseMessage());
                 systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
