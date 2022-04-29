@@ -13,6 +13,8 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
+import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -23,6 +25,8 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -85,7 +89,6 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             //statusConstant = DateUtil.sameDay(startDate, LocalDateTime.now()) ? SavingsGoalStatusConstant.ACTIVE: SavingsGoalStatusConstant.INACTIVE;
             statusConstant = SavingsGoalStatusConstant.ACTIVE;
         }else {
-
             if(debitAccount.getAvailableBalance().compareTo(fundingAmount) < 0) {
                 throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
             }
@@ -135,7 +138,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
     }
 
     @Override
-    public EmergencySavingModel createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
+    public EmergencySavingModelV2 createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
 
         String emergencyCategoryCode = applicationProperty.getEmergencyCategoryCode();
         int minimumDurationForInterest = 30;
@@ -152,7 +155,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
 
         SavingsGoalCategoryEntity savingsGoalCategory = savingsGoalCategoryEntityDao.getCategoryByCode(emergencyCategoryCode);
         SavingsPlanEntity savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
-        SavingsPlanTenorEntity planTenor= savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(minimumDurationForInterest).get();
+        SavingsPlanTenorEntity planTenor = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(minimumDurationForInterest).get();
 
         Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(creationRequest.getName(), savingsPlan, mintAccount);
         if (savingsGoalOptional.isPresent()) {
@@ -200,22 +203,29 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         if (!creationRequest.isAutoDebit()) {
             SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
             if (!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                savingsGoalEntity.setRecordStatus(RecordStatusConstant.DELETED);
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                 throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
             }
         } else {
             if (creationRequest.getStartDate().equals(LocalDate.now())) {
                 SavingsGoalFundingResponse fundingResponse = fundSavingsGoalUseCase.fundSavingGoal(debitAccount, appUser, savingsGoalEntity, fundingAmount);
-                savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
-                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                 if (!fundingResponse.getResponseCode().equalsIgnoreCase("00")) {
+                    savingsGoalEntity.setRecordStatus(RecordStatusConstant.DELETED);
+                    savingsGoalEntityDao.saveRecord(savingsGoalEntity);
                     throw new BusinessLogicConflictException("Sorry, temporary unable to fund your saving goal. Please try again later.");
                 }
+                savingsGoalEntity.setNextAutoSaveDate(getNextSavingsDate(frequencyType, nextSavingsDate));
+                savingsGoalEntityDao.saveRecord(savingsGoalEntity);
             }
         }
 
-        return EmergencySavingModel.builder()
+        SavingsGoalModel savingsGoal = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
+        List<SavingsGoalModel> savingsGoalModelList = new ArrayList<>();
+        savingsGoalModelList.add(savingsGoal);
+        return EmergencySavingModelV2.builder()
                 .exist(true)
-                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity))
+                .savingsGoals(savingsGoalModelList)
                 .build();
     }
 

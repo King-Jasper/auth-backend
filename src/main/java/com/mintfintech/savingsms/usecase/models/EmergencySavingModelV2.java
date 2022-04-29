@@ -9,5 +9,5 @@ import java.util.List;
 @Builder
 public class EmergencySavingModelV2 {
     private boolean exist;
-    private List<SavingsGoalModel> savingsGoal;
+    private List<SavingsGoalModel> savingsGoals;
 }

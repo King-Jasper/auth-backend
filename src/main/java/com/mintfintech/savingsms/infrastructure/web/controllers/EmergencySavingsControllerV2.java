@@ -27,7 +27,6 @@ import javax.validation.Valid;
 @RequestMapping(headers = {"x-request-client-key", "Authorization"})
 public class EmergencySavingsControllerV2 {
 
-    private final String v2BaseUrl = "/api/v2/savings-goals";
     private final String v3BaseUrl = "/api/v3/savings-goals";
 
     private CreateEmergencySavingsUseCase createEmergencySavingsUseCase;
@@ -41,10 +40,10 @@ public class EmergencySavingsControllerV2 {
 
     @ApiOperation(value = "Creates a new emergency savings goal.")
     @PostMapping(value = v3BaseUrl +"/emergency-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+    public ResponseEntity<ApiResponseJSON<EmergencySavingModelV2>> createEmergencySavingsGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                               @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
-        EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoalV2(authenticatedUser, creationRequestJSON.toRequest());
-        ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
+        EmergencySavingModelV2 response = createEmergencySavingsUseCase.createSavingsGoalV2(authenticatedUser, creationRequestJSON.toRequest());
+        ApiResponseJSON<EmergencySavingModelV2> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 

@@ -15,7 +15,6 @@ import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 
 import javax.inject.Named;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -58,8 +57,8 @@ public class GetEmergencySavingsUseCaseImpl implements GetEmergencySavingsUseCas
         List<SavingsGoalModel> goalModelList = savingsGoalList.stream().map(getSavingsGoalUseCase::fromSavingsGoalEntityToModel).collect(Collectors.toList());
 
         return EmergencySavingModelV2.builder()
-                .exist(true)
-                .savingsGoal(goalModelList)
+                .exist(!goalModelList.isEmpty())
+                .savingsGoals(goalModelList)
                 .build();
     }
 }
