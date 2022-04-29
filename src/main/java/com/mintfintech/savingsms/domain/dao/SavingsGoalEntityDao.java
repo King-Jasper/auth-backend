@@ -39,4 +39,6 @@ public interface SavingsGoalEntityDao extends CrudDao<SavingsGoalEntity, Long> {
     void deleteSavings(SavingsGoalEntity savingsGoalEntity);
 
     List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant emergencySavings);
+
+    Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccountAndType(String name, SavingsPlanEntity savingsPlan, MintAccountEntity mintAccount, SavingsGoalTypeConstant goalTypeConstant);
 }

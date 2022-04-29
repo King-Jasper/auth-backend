@@ -157,9 +157,10 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         SavingsPlanEntity savingsPlan = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
         SavingsPlanTenorEntity planTenor = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(minimumDurationForInterest).get();
 
-        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findGoalByNameAndPlanAndAccount(creationRequest.getName(), savingsPlan, mintAccount);
+        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findGoalByNameAndPlanAndAccountAndType(creationRequest.getName(),
+                savingsPlan, mintAccount, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
         if (savingsGoalOptional.isPresent()) {
-            throw new BusinessLogicConflictException("Savings goal with name "+ creationRequest.getName() + " exists already.");
+            throw new BusinessLogicConflictException("Emergency savings goal with name "+ creationRequest.getName() + " exists already.");
         }
         if (fundingAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
@@ -173,7 +174,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
         } else {
             if (debitAccount.getAvailableBalance().compareTo(fundingAmount) < 0) {
-                throw new BusinessLogicConflictException("You have insufficient balance for fund your savings goal.");
+                throw new BusinessLogicConflictException("You have insufficient balance to fund your savings goal.");
             }
         }
 
