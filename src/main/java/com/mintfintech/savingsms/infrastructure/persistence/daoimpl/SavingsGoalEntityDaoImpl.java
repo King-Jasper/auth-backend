@@ -222,7 +222,7 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
 
     @Override
     public Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccountAndType(String name, SavingsPlanEntity savingsPlan, MintAccountEntity mintAccount, SavingsGoalTypeConstant goalTypeConstant) {
-        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndRecordStatusAndNameAndSavingsGoalTypeIgnoreCase(mintAccount, savingsPlan,
+        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndRecordStatusAndNameIgnoreCaseAndSavingsGoalType(mintAccount, savingsPlan,
                 SavingsGoalStatusConstant.ACTIVE, RecordStatusConstant.ACTIVE, name, goalTypeConstant);
     }
 }

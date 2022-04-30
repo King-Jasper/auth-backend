@@ -23,7 +23,7 @@ import javax.validation.Valid;
  * Sun, 01 Nov, 2020
  */
 @FieldDefaults(makeFinal = true)
-@Api(tags = "Emergency Savings Management Endpoints V1",  description = "Handles emergency savings goal management.")
+@Api(tags = "Emergency Savings Management Endpoints V1",  description = "Handles emergency savings goal management. v1")
 @RestController
 @RequestMapping(headers = {"x-request-client-key", "Authorization"})
 public class EmergencySavingsController {
