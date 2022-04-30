@@ -11,6 +11,6 @@ import lombok.Data;
 @Builder
 public class SavingsWithdrawalRequest {
     private String goalId;
-    private double amount = 0.0;
+    private double amount;
     private String creditAccountId;
 }

@@ -14,6 +14,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -74,4 +75,6 @@ public interface InvestmentRepository extends JpaRepository<InvestmentEntity, Lo
     List<SavingsMaturityStat> getInvestmentMaturityStatistics(@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
     boolean existsByReferralCodeAndCreator(String referralCode, AppUserEntity appUser);
+
+    long countAllByAmountInvestedAndCreatorAndDateCreatedBetween(BigDecimal investAmount, AppUserEntity appUser, LocalDateTime fromTime, LocalDateTime now);
 }

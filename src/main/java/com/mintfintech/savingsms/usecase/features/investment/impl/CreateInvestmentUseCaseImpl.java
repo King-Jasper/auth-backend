@@ -104,6 +104,10 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     private InvestmentCreationResponse createTransactionRequest(MintAccountEntity mintAccount, AppUserEntity appUser, InvestmentCreationRequest request) {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
+        LocalDateTime twoMinutesAgo = LocalDateTime.now().minusSeconds(120);
+        if (investmentEntityDao.countInvestmentCreationRequestWithinPeriod(investAmount, appUser, twoMinutesAgo) > 0) {
+            throw new BusinessLogicConflictException("Possible duplicate investment creation.");
+        }
 
         InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration."));

@@ -23,4 +23,5 @@ public class SavingsFundingJob {
     public void processSavingFundingForSetInterval() {
         fundSavingsGoalUseCase.processSavingsGoalScheduledSaving();
     }
+
 }

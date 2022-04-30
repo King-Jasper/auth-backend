@@ -139,6 +139,10 @@ public class ApplicationProperty {
         return environmentService.getVariable("referral.business-development.account-number");
     }
 
+    public String getEmergencyCategoryCode() {
+        return environmentService.getVariable("emergency-category-code", "10");
+    }
+
    /* public String getMintBankCode() {
         return environmentService.getVariable("mint.bank-code", "50304");
     }

@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
 import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.OnlineFundingUseCase;
+import com.mintfintech.savingsms.usecase.features.emergency_savings.WithdrawEmergencySavingsUseCase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.experimental.FieldDefaults;
@@ -39,10 +40,12 @@ public class SavingsGoalTransactionController {
     private FundSavingsGoalUseCase fundSavingsGoalUseCase;
     private FundWithdrawalUseCase fundWithdrawalUseCase;
     private OnlineFundingUseCase onlineFundingUseCase;
-    public SavingsGoalTransactionController(FundSavingsGoalUseCase fundSavingsGoalUseCase, FundWithdrawalUseCase fundWithdrawalUseCase, OnlineFundingUseCase onlineFundingUseCase) {
+    private WithdrawEmergencySavingsUseCase withdrawEmergencySavingsUseCase;
+    public SavingsGoalTransactionController(FundSavingsGoalUseCase fundSavingsGoalUseCase, FundWithdrawalUseCase fundWithdrawalUseCase, OnlineFundingUseCase onlineFundingUseCase, WithdrawEmergencySavingsUseCase withdrawEmergencySavingsUseCase) {
         this.fundSavingsGoalUseCase = fundSavingsGoalUseCase;
         this.fundWithdrawalUseCase = fundWithdrawalUseCase;
         this.onlineFundingUseCase = onlineFundingUseCase;
+        this.withdrawEmergencySavingsUseCase = withdrawEmergencySavingsUseCase;
     }
 
     @ApiOperation(value = "Fund a savings goal.", notes = "Please note that the response code in the return object " +

@@ -107,6 +107,11 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     }
 
     @Override
+    public long countInvestmentCreationRequestWithinPeriod(BigDecimal investAmount, AppUserEntity appUser, LocalDateTime fromTime) {
+        return repository.countAllByAmountInvestedAndCreatorAndDateCreatedBetween(investAmount, appUser, fromTime, LocalDateTime.now());
+    }
+
+    @Override
     public BigDecimal sumSearchedInvestments(InvestmentSearchDTO investmentSearchDTO) {
 
         CriteriaBuilder cb = entityManager.getCriteriaBuilder();
