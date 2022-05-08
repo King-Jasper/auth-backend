@@ -165,8 +165,8 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         if (fundingAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
         }
-        LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
         if (creationRequest.isAutoDebit()) {
+            LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
             if (creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {
                 throw new BadRequestException("Start date and savings frequency are required.");
             }
