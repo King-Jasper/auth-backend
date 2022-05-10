@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -64,8 +65,12 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
 
         LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
+        BigDecimal newBalance = currentBalance.subtract(amountRequested);
         BigDecimal remainingSavings = currentBalance.subtract(amountRequested);
-        savingsGoal.setSavingsBalance(currentBalance.subtract(amountRequested));
+        savingsGoal.setSavingsBalance(newBalance);
+        if(newBalance.compareTo(BigDecimal.ZERO) == 0) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+        }
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT);
