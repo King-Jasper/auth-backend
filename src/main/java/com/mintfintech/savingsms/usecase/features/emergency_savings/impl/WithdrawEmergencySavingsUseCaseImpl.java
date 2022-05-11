@@ -68,7 +68,10 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
         BigDecimal newBalance = currentBalance.subtract(amountRequested);
         BigDecimal remainingSavings = currentBalance.subtract(amountRequested);
         savingsGoal.setSavingsBalance(newBalance);
-        if(newBalance.compareTo(BigDecimal.ZERO) == 0) {
+        System.out.println("NEW BALANCE - "+newBalance);
+        if(newBalance.compareTo(BigDecimal.ZERO) > 0) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+        }else {
             savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
         }
         savingsGoalEntityDao.saveRecord(savingsGoal);
