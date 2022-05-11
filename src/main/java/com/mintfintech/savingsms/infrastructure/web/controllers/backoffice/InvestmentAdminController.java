@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Max;
@@ -239,8 +240,8 @@ public class InvestmentAdminController {
 			searchRequest.setFromDate(fromDate.atStartOfDay());
 			searchRequest.setToDate(toDate.atTime(23, 59, 59));
 		} else {
-			searchRequest.setFromDate(null);
-			searchRequest.setToDate(null);
+			searchRequest.setFromDate(LocalDate.now().minusWeeks(1).atStartOfDay());
+			searchRequest.setToDate(LocalDateTime.now());
 		}
 		PagedDataResponse<InvestmentTransactionSearchResponse> response = getInvestmentUseCase.getInvestmentTransactions(searchRequest, page, size);
 		ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>> apiResponseJSON = new ApiResponseJSON<>("Transactions returned successfully.", response);
