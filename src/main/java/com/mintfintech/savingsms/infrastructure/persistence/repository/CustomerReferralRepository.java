@@ -40,4 +40,6 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
     @Query("select new com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat(c.referrerRewarded, count(c)) from CustomerReferralEntity c " +
             "where c.referrer = ?1 group by c.referrerRewarded")
     List<ReferralRewardStat> getReferralStatisticsForAccount(MintAccountEntity referral);
+
+    List<CustomerReferralEntity> getAllByReferrerAndReferrerRewardedAndDateCreatedBetween(MintAccountEntity referrer, boolean isReferrerRewarded, LocalDateTime start, LocalDateTime end);
 }
