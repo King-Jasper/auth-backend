@@ -73,6 +73,6 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
 
     @Override
     public List<CustomerReferralEntity> getProcessedReferralsByReferrer(MintAccountEntity referrer, LocalDateTime start, LocalDateTime end) {
-        return repository.getAllByReferrerAndReferrerRewardedAndDateCreatedBetween(referrer, true, start, end);
+        return repository.getAllByReferrerAndDateCreatedBetween(referrer, start, end);
     }
 }

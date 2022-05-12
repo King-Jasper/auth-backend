@@ -41,5 +41,5 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
             "where c.referrer = ?1 group by c.referrerRewarded")
     List<ReferralRewardStat> getReferralStatisticsForAccount(MintAccountEntity referral);
 
-    List<CustomerReferralEntity> getAllByReferrerAndReferrerRewardedAndDateCreatedBetween(MintAccountEntity referrer, boolean isReferrerRewarded, LocalDateTime start, LocalDateTime end);
+    List<CustomerReferralEntity> getAllByReferrerAndDateCreatedBetween(MintAccountEntity referrer, LocalDateTime start, LocalDateTime end);
 }

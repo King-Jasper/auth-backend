@@ -251,7 +251,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .referralCode(referralEvent.getReferralCodeUsed())
                 .registrationPlatform(referralEvent.getRegistrationPlatform())
                 .referrerRewardAmount(new BigDecimal(applicationProperty.getReferralRewardAmount()))
-                .referredRewardAmount(new BigDecimal(applicationProperty.getReferredRewardAmount()))
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 

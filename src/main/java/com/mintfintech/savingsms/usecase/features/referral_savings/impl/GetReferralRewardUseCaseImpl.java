@@ -36,15 +36,16 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
         int numberOfReferred = referralList.size();
         if (!referralList.isEmpty()) {
             for(CustomerReferralEntity customerReferral : referralList) {
-                totalEarnings = totalEarnings.add(customerReferral.getReferrerRewardAmount());
+                if(customerReferral.getReferrerRewardAmount() != null) {
+                    totalEarnings = totalEarnings.add(customerReferral.getReferrerRewardAmount());
+                }
             }
         }
-
         return ReferralDetailsResponse.builder()
                 .totalEarnings(totalEarnings)
                 .numberOfCustomersReferred(numberOfReferred)
-                .userAirtimeReward(applicationProperty.getReferralRewardAmount())
-                .customerAirtimeReward(applicationProperty.getReferredRewardAmount())
+                .referredAirtimeAmount(applicationProperty.getReferredAirtimeAmount())
+                .referrerAmount(applicationProperty.getReferralRewardAmount())
                 .build();
     }
 }

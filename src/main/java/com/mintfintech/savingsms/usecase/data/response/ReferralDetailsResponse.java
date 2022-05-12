@@ -13,7 +13,7 @@ public class ReferralDetailsResponse {
 
     private int numberOfCustomersReferred;
 
-    private long customerAirtimeReward;
+    private long referrerAmount;
 
-    private long userAirtimeReward;
+    private long referredAirtimeAmount;
 }

@@ -6,6 +6,7 @@ import com.mintfintech.savingsms.usecase.data.response.ReferralDetailsResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.GetReferralRewardUseCase;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -17,13 +18,14 @@ import springfox.documentation.annotations.ApiIgnore;
 
 @Api(tags = "Referral Endpoint(s)", description = "Handles the referrals.")
 @RestController
-@RequestMapping(value = "/api", headers = {"x-request-client-key", "Authorization"})
+@RequestMapping(value = "/api/v1/referral", headers = {"x-request-client-key", "Authorization"})
+@AllArgsConstructor
 public class ReferralController {
 
     private GetReferralRewardUseCase getReferralRewardUseCase;
 
     @ApiOperation(value = "Returns details of a referrer.")
-    @GetMapping(value = "/referral", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(value = "/dashboard", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<ReferralDetailsResponse>> getReferralDetails(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         ReferralDetailsResponse response = getReferralRewardUseCase.getReferralDetails(authenticatedUser);
         ApiResponseJSON<ReferralDetailsResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully.", response);
