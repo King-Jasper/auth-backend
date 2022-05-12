@@ -162,9 +162,10 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         if (savingsGoalOptional.isPresent()) {
             throw new BusinessLogicConflictException("Emergency savings goal with name "+ creationRequest.getName() + " exists already.");
         }
+        /*
         if (fundingAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
-        }
+        }*/
         if (creationRequest.isAutoDebit()) {
             LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
             if (creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {

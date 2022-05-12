@@ -2,12 +2,12 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.EmergencySavingsCreationRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.EmergencySavingsCreationRequestV1JSON;
 import com.mintfintech.savingsms.infrastructure.web.models.SavingsWithdrawalRequestJSONV2;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.WithdrawEmergencySavingsUseCase;
-import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
