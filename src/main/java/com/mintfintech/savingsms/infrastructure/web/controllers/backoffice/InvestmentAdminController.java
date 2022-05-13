@@ -212,7 +212,7 @@ public class InvestmentAdminController {
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
-	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+	@Secured("19") // Privilege: VIEW_TRANSACTION_REPORTS
 	@ApiOperation(value = "Returns paginated list of investment transactions.")
 	@GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>>> getInvestmentTransactions(
@@ -227,12 +227,8 @@ public class InvestmentAdminController {
 			@ApiParam(value = "Transaction amount, Format: 0.00 (Decimal numbers)") @Pattern(regexp = "^\\d*\\.?\\d+$", message = "invalid input for amount") @RequestParam(value = "transactionAmount", required = false, defaultValue = "0.00") String transactionAmount) {
 
 		InvestmentTransactionSearchRequest searchRequest = InvestmentTransactionSearchRequest.builder()
-				.transactionStatus(
-						(transactionStatus != null) ? TransactionStatusConstant.valueOf(transactionStatus.toUpperCase())
-								: null)
-				.transactionType(
-						(transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase())
-								: null)
+				.transactionStatus((transactionStatus != null) ? TransactionStatusConstant.valueOf(transactionStatus.toUpperCase()) : null)
+				.transactionType((transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase()) : null)
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
 				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
