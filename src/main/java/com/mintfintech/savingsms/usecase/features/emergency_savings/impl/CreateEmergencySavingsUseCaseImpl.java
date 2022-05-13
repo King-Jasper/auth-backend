@@ -170,6 +170,9 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
             if (creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {
                 throw new BadRequestException("Start date and savings frequency are required.");
             }
+            if(creationRequest.getStartDate().isBefore(LocalDate.now())) {
+                throw new BadRequestException("Start date cannot be before current date.");
+            }
             frequencyType = SavingsFrequencyTypeConstant.valueOf(creationRequest.getFrequency());
             nextSavingsDate = startDate.plusHours(1).withMinute(0).withSecond(0);
         } else {

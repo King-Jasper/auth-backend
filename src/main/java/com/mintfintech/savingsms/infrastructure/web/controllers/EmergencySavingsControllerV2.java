@@ -43,7 +43,7 @@ public class EmergencySavingsControllerV2 {
     public ResponseEntity<ApiResponseJSON<EmergencySavingModelV2>> createEmergencySavingsGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                               @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
         EmergencySavingModelV2 response = createEmergencySavingsUseCase.createSavingsGoalV2(authenticatedUser, creationRequestJSON.toRequest());
-        ApiResponseJSON<EmergencySavingModelV2> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
+        ApiResponseJSON<EmergencySavingModelV2> apiResponseJSON = new ApiResponseJSON<>("Emergency savings goal created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
