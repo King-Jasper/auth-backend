@@ -49,6 +49,9 @@ public class EmergencySavingsCreationRequestJSON {
                 throw new BadRequestException("Invalid frequency type.");
             }
         }
+        if(startDate != null && startDate.isBefore(LocalDate.now())) {
+            throw new BadRequestException("Start date cannot be before current date.");
+        }
         return EmergencySavingsCreationRequest.builder()
                 .frequency(frequency)
                 .fundingAmount(fundingAmount)
