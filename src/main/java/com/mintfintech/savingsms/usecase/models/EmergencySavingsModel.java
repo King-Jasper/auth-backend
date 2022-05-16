@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class EmergencySavingModelV2 {
+public class EmergencySavingsModel {
     private boolean exist;
     private List<SavingsGoalModel> savingsGoals;
 }
