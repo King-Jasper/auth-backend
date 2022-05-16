@@ -124,4 +124,6 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
                                                                                                                                     RecordStatusConstant active1,
                                                                                                                                     String name,
                                                                                                                                     SavingsGoalTypeConstant goalTypeConstant);
+
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndGoalIdAndSavingsGoalTypeAndRecordStatus(MintAccountEntity accountEntity, String goalId, SavingsGoalTypeConstant emergencySaving, RecordStatusConstant active);
 }
