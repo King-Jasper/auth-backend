@@ -74,6 +74,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     .build();
 
             applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_REMINDER, new EventModel<>(event));
+            event.setRecipient("loanadmin@mintyn.com");
+            applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_REMINDER, new EventModel<>(event));
 
         }
     }

@@ -7,10 +7,12 @@ import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.PushNotificationService;
 import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEvent;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.savings_funding.ReferralGoalFundingUseCase;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +46,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ApplicationProperty applicationProperty;
     private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
+    private final PushNotificationService pushNotificationService;
     private final SystemIssueLogService systemIssueLogService;
     private final SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
@@ -263,10 +266,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             // referralEntity.setReferrerRewarded(true);
             // customerReferralEntityDao.saveRecord(referralEntity);
         }*/
-        /*
+
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
-        if(accountReferred >= 7) {
+        /*if(accountReferred >= 7) {
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
             String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
@@ -277,21 +280,28 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 log.info("referral aborted");
                  return;
             }
-        }
+        }*/
         if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
 
+        AppUserEntity referredUser = appUserEntityDao.findAccountOwner(referredAccount).orElse(null);
 
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
         SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
+            if(referredUser != null) {
+                String message  = "You have been rewarded N"+ MoneyFormatterUtil.priceWithoutDecimal(referralEntity.getReferrerRewardAmount())+" amount. " +
+                        "Your friend "+referredUser.getName()+" just signed up using your code("+referralEntity.getReferralCode()+").";
+                String title = "Referral Bonus Reward";
+                pushNotificationService.sendMessage(userEntity, title, message);
+            }
         }
-        */
+
         /*
         Optional<AppUserEntity> referredUserOpt = appUserEntityDao.findAccountOwner(referredAccount);
         if(!referredUserOpt.isPresent()) {
