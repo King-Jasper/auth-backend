@@ -2,7 +2,7 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings;
 
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
-import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingsModel;
 
 /**
  * Created by jnwanya on
@@ -10,5 +10,6 @@ import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
  */
 public interface GetEmergencySavingsUseCase {
     EmergencySavingModel getAccountEmergencySavings(AuthenticatedUser authenticatedUser);
-    EmergencySavingModelV2 getAccountEmergencySavingsV2(AuthenticatedUser authenticatedUser);
+    EmergencySavingsModel getAccountEmergencySavingsV2(AuthenticatedUser authenticatedUser);
+    EmergencySavingModel getEmergencySaving(AuthenticatedUser authenticatedUser, String goalId);
 }
