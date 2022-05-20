@@ -22,6 +22,7 @@ import org.springframework.data.jpa.domain.Specification;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
@@ -120,6 +121,15 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		if (StringUtils.isNotEmpty(searchDTO.getTransactionReference())) {
 			whereClause = cb.and(whereClause,
 					cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
+		}
+		if (searchDTO.getAccountType() != null) {
+			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
+			whereClause = cb.and(whereClause, cb.equal(bankAccountSpec.get("accountGroup"), searchDTO.getAccountType()));
+		}
+		if (StringUtils.isNotEmpty(searchDTO.getName())) {
+			Join<InvestmentTransactionEntity, InvestmentEntity> investmentSpec = root.join("investment");
+			Join<InvestmentEntity, AppUserEntity> appUserSpec = investmentSpec.join("creator");
+			whereClause = cb.and(whereClause, cb.equal(appUserSpec.get("name"), searchDTO.getName()));
 		}
 		return whereClause;
 	}

@@ -368,6 +368,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 				.transactionAmount(request.getTransactionAmount()).transactionStatus(request.getTransactionStatus())
 				.mintAccountNumber(request.getMintAccountNumber())
 				.transactionReference(request.getTransactionReference()).transactionType(request.getTransactionType())
+				.accountType(request.getAccountType())
+				.name(request.getName())
 				.build();
 		Page<InvestmentTransactionEntity> pagedEntity = investmentTransactionEntityDao
 				.searchInvestmentTransactions(searchDTO, pageIndex, size);
@@ -378,8 +380,10 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 
 	private InvestmentTransactionSearchResponse getResponseFromEntity(InvestmentTransactionEntity entity) {
 		MintBankAccountEntity mintBankAccountEntity = null;
+		//MintAccountEntity mintAccount = null;
 		if (entity.getBankAccount() != null) {
 			mintBankAccountEntity = mintBankAccountEntityDao.getRecordById(entity.getBankAccount().getId());
+			//mintAccount = mintAccountEntityDao.getRecordById(mintBankAccountEntity.getMintAccount().getId());
 		}
 		return InvestmentTransactionSearchResponse.builder()
 				.customerAccountNumber((mintBankAccountEntity != null) ? mintBankAccountEntity.getAccountNumber() : "")
@@ -389,6 +393,8 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 				.transactionDate(entity.getDateCreated().toString())
 				.transactionStatus(entity.getTransactionStatus().name())
 				.transactionType(entity.getTransactionType().name()).transactionAmount(entity.getTransactionAmount())
+				.bankAccountType(mintBankAccountEntity.getAccountType().name())
+				.accountType(mintBankAccountEntity.getAccountGroup().name())
 				.build();
 	}
 }

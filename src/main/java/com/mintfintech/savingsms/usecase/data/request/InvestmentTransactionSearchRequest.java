@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.data.request;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountGroupConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 
@@ -19,4 +20,6 @@ public class InvestmentTransactionSearchRequest {
 	private TransactionTypeConstant transactionType;
 	private TransactionStatusConstant transactionStatus;
 	private String transactionReference;
+	private BankAccountGroupConstant accountType;
+	private String name;
 }
