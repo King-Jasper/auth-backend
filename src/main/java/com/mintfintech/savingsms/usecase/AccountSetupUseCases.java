@@ -10,6 +10,7 @@ public interface AccountSetupUseCases {
     void createMintAccount(MintAccountCreationEvent mintAccountCreationEvent);
     void createIndividualBankAccount(MintBankAccountCreationEvent accountCreationEvent);
   //  void updateAccountTransactionLimit(AccountLimitUpdateEvent accountLimitUpdateEvent);
+    void createMintUser(UserCreationEvent userCreationEvent);
     void updateBankAccountTierLevel(BankAccountTierUpgradeEvent accountTierUpgradeEvent);
     void updateNotificationPreference(NotificationPreferenceUpdateEvent preferenceUpdateEvent);
     void updateUserDeviceNotificationId(String userId, String gcmTokenId);

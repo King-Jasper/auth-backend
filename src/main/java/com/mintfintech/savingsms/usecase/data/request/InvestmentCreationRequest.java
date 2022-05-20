@@ -7,6 +7,8 @@ import lombok.Data;
 @Builder
 public class InvestmentCreationRequest {
 
+    private long durationId;
+
     private int durationInMonths;
 
     private double investmentAmount;

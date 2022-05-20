@@ -39,6 +39,7 @@ mint:
     loan-admin: justin.nwanya@bankwithmint.com
   referral-reward-amount: 1000
   referred-reward-amount: 500
+  referred-airtime-amount: 500
 
 amazon:
   secretKey: qd5COuY5C7qw61d8xl1in+0U6IXK51xGZbEXZK3a
@@ -73,7 +74,7 @@ loan:
     max-percent-amount: 70
     max-tenor-days: 30
   business-loan:
-    interest-rate: 4.0
+    interest-rate: 3.5
 
 investment:
   max-liquidate-rate: 80

@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalCreationSourceConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.InterestCategoryConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
@@ -66,7 +63,10 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
     private BigDecimal processInterestComputation(List<SavingsGoalEntity> savingsGoalEntityList) {
         BigDecimal totalInterest = BigDecimal.valueOf(0.0);
         for(SavingsGoalEntity savingsGoalEntity: savingsGoalEntityList) {
-             if(!shouldApplyInterest(savingsGoalEntity)) {
+            if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.SPEND_AND_SAVE && !savingsGoalEntity.isLockedSavings()) {
+                continue;
+            }
+            if(!shouldApplyInterest(savingsGoalEntity)) {
                  log.info("Interest not applied to goal {}: {}", savingsGoalEntity.getGoalId(), savingsGoalEntity.getName());
                  continue;
              }

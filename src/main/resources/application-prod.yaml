@@ -11,3 +11,7 @@ sentry:
   environment: production
   enable-tracing: false
   traces-sample-rate: 0.3
+logging:
+  level:
+    org.springframework: INFO
+    com.mintfintech.savingsms: INFO

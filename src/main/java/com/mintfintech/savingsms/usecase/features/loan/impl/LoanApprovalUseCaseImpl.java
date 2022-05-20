@@ -8,11 +8,9 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.LoanApplicatio
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanApplicationResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.NewLoanAccountResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
-import com.mintfintech.savingsms.domain.services.ApplicationEventService;
-import com.mintfintech.savingsms.domain.services.ApplicationProperty;
-import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
-import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
+import com.mintfintech.savingsms.domain.services.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.incoming.UserDetailUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
@@ -55,6 +53,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     private final LoanTransactionEntityDao loanTransactionEntityDao;
     private final SystemIssueLogService systemIssueLogService;
     private final LoanReviewLogEntityDao loanReviewLogEntityDao;
+    private final AccountsRestClient accountsRestClient;
 
     @Transactional
     @Override
@@ -219,7 +218,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 mintAccount.setBankOneCustomerId(responseCBS.getCustomerId());
                 mintAccountEntityDao.saveRecord(mintAccount);
             }
-            sendLoanApprovalEmail(loanRequest, appUser);
+            sendLoanApprovalEmail(loanRequest, appUser, bankAccount);
             //TODO implement sending of loan document.
         } else {
             String message = String.format("Loan Id: %s; message: %s", loanRequest.getLoanId(), msClientResponse.getMessage());
@@ -273,14 +272,32 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
     }
 
-    private void sendLoanApprovalEmail(LoanRequestEntity loanRequest, AppUserEntity appUser) {
-
+    private void sendLoanApprovalEmail(LoanRequestEntity loanRequest, AppUserEntity appUser, MintBankAccountEntity bankAccount) {
+        MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
+        if(StringUtils.isEmpty(appUser.getResidentialAddress())) {
+            updateResidentialAddress(appUser);
+        }
         LoanApprovalEmailEvent event = LoanApprovalEmailEvent.builder()
                 .customerName(appUser.getName())
                 .loanDueDate(loanRequest.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE))
                 .loanRepaymentAmount(loanRequest.getRepaymentAmount())
                 .recipient(appUser.getEmail())
+                .loanType(loanRequest.getLoanType().name())
+                .address(StringUtils.defaultString(appUser.getResidentialAddress()))
+                .accountType(mintAccount.getAccountType().name())
+                .accountNumber(bankAccount.getAccountNumber())
+                .currency("NGN")
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
+    }
+
+    private void updateResidentialAddress(AppUserEntity appUserEntity) {
+        MsClientResponse<UserDetailUpdateEvent> msClientResponse = accountsRestClient.getUserDetails(appUserEntity.getUserId());
+        if(msClientResponse.getData() == null) {
+            return;
+        }
+        UserDetailUpdateEvent updateEvent = msClientResponse.getData();
+        appUserEntity.setResidentialAddress(updateEvent.getAddress());
+        appUserEntityDao.saveRecord(appUserEntity);
     }
 }

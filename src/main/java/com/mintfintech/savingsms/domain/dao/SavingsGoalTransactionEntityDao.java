@@ -1,11 +1,12 @@
 package com.mintfintech.savingsms.domain.dao;
 
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import org.springframework.data.domain.Page;
-
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -20,4 +21,5 @@ public interface SavingsGoalTransactionEntityDao extends CrudDao<SavingsGoalTran
     List<SavingsGoalTransactionEntity> getTransactionByTypeAndStatusBeforeTime(TransactionTypeConstant transactionType, TransactionStatusConstant transactionStatus, LocalDateTime beforeTime, int size);
     Page<SavingsGoalTransactionEntity> getTransactions(SavingsGoalEntity goalEntity, int page, int size);
     Optional<SavingsGoalTransactionEntity> findFirstTransactionForSavings(SavingsGoalEntity goalEntity);
+    ReportStatisticModel getSavingsTransactionStatisticsOnAccount(MintAccountEntity mintAccount);
 }

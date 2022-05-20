@@ -7,7 +7,7 @@ import lombok.Data;
 @Builder
 public class SpendAndSaveSetUpRequest {
 
-    private int transactionPercentage;
+    private double transactionPercentage;
 
     private boolean isSavingsLocked;
 

@@ -5,18 +5,19 @@ import com.mintfintech.savingsms.usecase.data.request.EmergencySavingsCreationRe
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
+
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
 import java.time.LocalDate;
 
 /**
  * Created by jnwanya on
- * Sun, 01 Nov, 2020
+ * Thu, 12 May, 2022
  */
 @Data
 public class EmergencySavingsCreationRequestJSON {
+
     @ApiModelProperty(notes = "The amount to be funded. N100 minimum", required = true)
     @Min(value = 100, message = "Minimum of N100")
     private double fundingAmount;
@@ -25,10 +26,6 @@ public class EmergencySavingsCreationRequestJSON {
     @NotNull
     @NotEmpty
     private String name;
-
-    @ApiModelProperty(notes = "The savings target amount. N100 minimum", required = true)
-    @Min(value = 500, message = "Minimum of N500")
-    private double targetAmount;
 
     @ApiModelProperty(notes = "Start Date for the savings.", required = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "dd/MM/yyyy")
@@ -49,15 +46,18 @@ public class EmergencySavingsCreationRequestJSON {
     public EmergencySavingsCreationRequest toRequest() {
         if(autoDebit) {
             if(!(frequency.equalsIgnoreCase("DAILY") || frequency.equalsIgnoreCase("WEEKLY") || frequency.equalsIgnoreCase("MONTHLY"))) {
-               throw new BadRequestException("Invalid frequency type.");
+                throw new BadRequestException("Invalid frequency type.");
             }
+        }
+        if(startDate != null && startDate.isBefore(LocalDate.now())) {
+            throw new BadRequestException("Start date cannot be before current date.");
         }
         return EmergencySavingsCreationRequest.builder()
                 .frequency(frequency)
                 .fundingAmount(fundingAmount)
                 .name(name)
                 .startDate(startDate)
-                .targetAmount(targetAmount)
+                .targetAmount(10000000)
                 .autoDebit(autoDebit)
                 .build();
     }

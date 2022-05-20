@@ -5,7 +5,6 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.ReferralSavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsFundingRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -26,10 +25,8 @@ import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 
 import javax.inject.Named;
-import javax.transaction.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -115,13 +112,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 log.info("Next saving date does not match:{} - {} - {}", savingsGoalEntity.getGoalId(), adjustedTime.toString(), nextSavingsDate.toString());
                 continue;
             }
-            LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
-            SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();
-            if(frequencyType == SavingsFrequencyTypeConstant.WEEKLY){
-                newNextSavingsDate = nextSavingsDate.plusWeeks(1);
-            }else if(frequencyType == SavingsFrequencyTypeConstant.MONTHLY) {
-                newNextSavingsDate = nextSavingsDate.plusMonths(1);
-            }
+            LocalDateTime newNextSavingsDate = getNewNextSavingsDate(savingsGoalEntity, nextSavingsDate);
             MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoalEntity.getMintAccount(), BankAccountTypeConstant.CURRENT);
             debitAccount = updateAccountBalanceUseCase.processBalanceUpdate(debitAccount);
             BigDecimal savingsAmount = savingsGoalEntity.getSavingsAmount();
@@ -146,6 +137,17 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
                 systemIssueLogService.logIssue("Savings Auto-Funding Failed", "Savings funding failure", message);
             }
         }
+    }
+
+    private LocalDateTime getNewNextSavingsDate(SavingsGoalEntity savingsGoalEntity, LocalDateTime nextSavingsDate) {
+        LocalDateTime newNextSavingsDate = nextSavingsDate.plusDays(1);
+        SavingsFrequencyTypeConstant frequencyType = savingsGoalEntity.getSavingsFrequency();
+        if (frequencyType == SavingsFrequencyTypeConstant.WEEKLY) {
+            newNextSavingsDate = nextSavingsDate.plusWeeks(1);
+        } else if (frequencyType == SavingsFrequencyTypeConstant.MONTHLY) {
+            newNextSavingsDate = nextSavingsDate.plusMonths(1);
+        }
+        return newNextSavingsDate;
     }
 
 

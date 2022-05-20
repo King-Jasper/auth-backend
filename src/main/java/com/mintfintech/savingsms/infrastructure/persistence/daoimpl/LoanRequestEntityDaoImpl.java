@@ -168,6 +168,10 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
         if (searchDTO.getLoanType() != null){
             specification = specification.and(withLoanType(searchDTO.getLoanType()));
         }
+        if(searchDTO.getReviewStage() != null) {
+            Specification<LoanRequestEntity> temp =  ((root, criteriaQuery, criteriaBuilder) -> criteriaBuilder.equal(root.get("reviewStage"), searchDTO.getReviewStage()));
+            specification = specification.and(temp);
+        }
         if(StringUtils.isNotEmpty(searchDTO.getCustomerName())) {
             String name = searchDTO.getCustomerName();
             Specification<LoanRequestEntity> temp = (root, query, criteriaBuilder) -> {

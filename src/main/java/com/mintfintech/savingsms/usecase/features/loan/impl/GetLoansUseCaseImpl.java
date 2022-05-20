@@ -35,6 +35,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final LoanTransactionEntityDao loanTransactionEntityDao;
+    private final MintBankAccountEntityDao mintBankAccountEntityDao;
 
     @Override
     public PagedDataResponse<LoanModel> getPagedLoans(LoanSearchRequest searchRequest, int page, int size) {
@@ -47,6 +48,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 .repaymentStatus(!searchRequest.getRepaymentStatus().equals("ALL") ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
                 .approvalStatus(!searchRequest.getApprovalStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
+                .reviewStage(searchRequest.getReviewStage() != null? LoanReviewStageConstant.valueOf(searchRequest.getReviewStage()): null)
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
                 .customerName(searchRequest.getCustomerName())
                 .customerPhone(searchRequest.getCustomerPhone())
@@ -70,6 +72,8 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
 
         List<LoanTransactionEntity> debitTransactions = loanTransactionEntityDao.getDebitLoanTransactions(loanRequestEntity);
 
+        MintBankAccountEntity mintBankAccountEntity = mintBankAccountEntityDao.getRecordById(loanRequestEntity.getBankAccount().getId());
+
         loanModel.setLoanId(loanRequestEntity.getLoanId());
         loanModel.setLoanType(loanRequestEntity.getLoanType().name());
         loanModel.setLoanAmount(loanRequestEntity.getLoanAmount());
@@ -85,7 +89,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         if(loanRequestEntity.getLoanType() == LoanTypeConstant.BUSINESS) {
             loanModel.setOwner(customerLoanProfileUseCase.getLoanProfileForBusinessLoan(loanRequestEntity));
         }else{
-            loanModel.setOwner(customerLoanProfile.map(customerLoanProfileUseCase::toLoanCustomerProfileModel).orElse(null));
+            loanModel.setOwner(customerLoanProfile.map( data -> customerLoanProfileUseCase.toLoanCustomerProfileModel(mintBankAccountEntity.getMintAccount(), data)).orElse(null));
         }
         loanModel.setRejectionReason(StringUtils.defaultString(loanRequestEntity.getRejectionReason()));
         if(loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.DECLINED || loanRequestEntity.getApprovalStatus() == ApprovalStatusConstant.REJECTED) {

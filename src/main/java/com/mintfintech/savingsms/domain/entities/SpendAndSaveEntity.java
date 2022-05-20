@@ -28,7 +28,7 @@ public class SpendAndSaveEntity extends AbstractBaseEntity<Long> {
 
     private boolean activated;
 
-    private int percentage;
+    private double percentage;
 
     private boolean isSavingsLocked;
 

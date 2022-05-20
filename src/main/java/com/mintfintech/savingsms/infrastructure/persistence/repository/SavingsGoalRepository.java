@@ -75,7 +75,8 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
 
     @Query("select s from SavingsGoalEntity s where s.savingsBalance > 0.0 and s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE " +
             "and (s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.CUSTOMER_SAVINGS or " +
-            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS) " +
+            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.ROUND_UP_SAVINGS or " +
+            "s.savingsGoalType = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant.SPEND_AND_SAVE) " +
             " and s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     Page<SavingsGoalEntity> getEligibleInterestSavingsGoal(Pageable pageable);
 
@@ -112,4 +113,17 @@ public interface SavingsGoalRepository extends JpaRepository<SavingsGoalEntity, 
             "s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
     List<SavingsGoalEntity> getSavings();
 
+    @Query("select s from SavingsGoalEntity s where s.mintAccount = ?1 and s.savingsGoalType = ?2 and " +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.goalStatus = com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant.ACTIVE")
+    List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant goalType);
+
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndSavingsPlanAndGoalStatusAndRecordStatusAndNameIgnoreCaseAndSavingsGoalType(MintAccountEntity mintAccount,
+                                                                                                                                    SavingsPlanEntity savingsPlan,
+                                                                                                                                    SavingsGoalStatusConstant active,
+                                                                                                                                    RecordStatusConstant active1,
+                                                                                                                                    String name,
+                                                                                                                                    SavingsGoalTypeConstant goalTypeConstant);
+
+    Optional<SavingsGoalEntity> findFirstByMintAccountAndGoalIdAndSavingsGoalTypeAndRecordStatus(MintAccountEntity accountEntity, String goalId, SavingsGoalTypeConstant emergencySaving, RecordStatusConstant active);
 }

@@ -26,11 +26,9 @@ public interface GetInvestmentUseCase {
 
 	InvestmentStatSummary getPagedInvestmentsByAdmin(InvestmentSearchRequest searchRequest, int page, int size);
 
-	BigDecimal calculateTotalExpectedReturn(BigDecimal amountInvested, BigDecimal currentAccruedInterest,
-			double interestRate, LocalDateTime maturityTime);
+	BigDecimal calculateTotalExpectedReturn(BigDecimal amountInvested, BigDecimal currentAccruedInterest, double interestRate, LocalDateTime maturityTime);
 
 	BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate, LocalDateTime maturityTime);
 
-	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(
-			InvestmentTransactionSearchRequest request, int pageIndex, int size);
+	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(InvestmentTransactionSearchRequest request, int pageIndex, int size);
 }

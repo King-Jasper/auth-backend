@@ -10,6 +10,7 @@ import lombok.Data;
 public class UserCreationEvent {
     private String accountId;
     private String userId;
+    private String username;
     private String firstName;
     private String lastName;
     private String phoneNumber;

@@ -75,8 +75,6 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
 
-
-
         boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
         SavingsGoalModel goalModel = new SavingsGoalModel();
         goalModel.setName(savingsGoalEntity.getName());

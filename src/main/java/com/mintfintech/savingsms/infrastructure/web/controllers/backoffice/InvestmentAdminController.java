@@ -195,13 +195,9 @@ public class InvestmentAdminController {
 	@Secured("20") // Privilege: CAN_CREATE_INVESTMENT
 	@ApiOperation(value = "Creates a new investment.")
 	@PostMapping(value = "/customer", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<ApiResponseJSON<InvestmentCreationResponse>> createInvestment(
-			@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-			@RequestBody @Valid InvestmentCreationAdminRequestJSON requestJSON) {
-		InvestmentCreationResponse response = createInvestmentUseCase.createInvestmentByAdmin(authenticatedUser,
-				requestJSON.toRequest());
-		ApiResponseJSON<InvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>(
-				"Investment created successfully.", response);
+	public ResponseEntity<ApiResponseJSON<InvestmentCreationResponse>> createInvestment(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser, @RequestBody @Valid InvestmentCreationAdminRequestJSON requestJSON) {
+		InvestmentCreationResponse response = createInvestmentUseCase.createInvestmentByAdmin(authenticatedUser, requestJSON.toRequest());
+		ApiResponseJSON<InvestmentCreationResponse> apiResponseJSON = new ApiResponseJSON<>("Investment created successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
@@ -218,8 +214,8 @@ public class InvestmentAdminController {
 
 	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
 	@ApiOperation(value = "Returns paginated list of investment transactions.")
-	@GetMapping(value = "/investment-transaction/statistics", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>>> getCardlessWithdrawals(
+	@GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>>> getInvestmentTransactions(
 			@ApiParam(value = "Sender's account number") @RequestParam(value = "mintAccountNumber", required = false) String mintAccountNumber,
 			@ApiParam(value = "Transaction Reference") @RequestParam(value = "transactionReference", required = false) String transactionReference,
 			@ApiParam(value = "Transaction status: PENDING, FAILED, CANCELLED, SUCCESSFUL, pending,failed,cancelled,successful") @Pattern(regexp = "^SUCCESSFUL|FAILED|PENDING|CANCELLED|successful|failed|pending|cancelled$") @RequestParam(value = "transactionStatus", required = false, defaultValue = "SUCCESSFUL") String transactionStatus,
@@ -240,12 +236,14 @@ public class InvestmentAdminController {
 						(transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase())
 								: null)
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
+
 				.transactionAmount(
 						StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.name(customerName)
 				.accountType(
 						(accountType != null) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase())
 								: null)
+				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
 		if (fromDate != null && toDate != null) {
 			searchRequest.setFromDate(fromDate.atStartOfDay());
@@ -254,10 +252,8 @@ public class InvestmentAdminController {
 			searchRequest.setFromDate(null);
 			searchRequest.setToDate(null);
 		}
-		PagedDataResponse<InvestmentTransactionSearchResponse> response = getInvestmentUseCase
-				.getInvestmentTransactions(searchRequest, page, size);
-		ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>> apiResponseJSON = new ApiResponseJSON<>(
-				"Transactions returned successfully.", response);
+		PagedDataResponse<InvestmentTransactionSearchResponse> response = getInvestmentUseCase.getInvestmentTransactions(searchRequest, page, size);
+		ApiResponseJSON<PagedDataResponse<InvestmentTransactionSearchResponse>> apiResponseJSON = new ApiResponseJSON<>("Transactions returned successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 

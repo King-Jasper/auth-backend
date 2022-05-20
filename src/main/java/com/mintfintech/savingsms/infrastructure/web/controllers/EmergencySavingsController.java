@@ -1,7 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
-import com.mintfintech.savingsms.infrastructure.web.models.EmergencySavingsCreationRequestJSON;
+import com.mintfintech.savingsms.infrastructure.web.models.EmergencySavingsCreationRequestV1JSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
@@ -23,7 +23,7 @@ import javax.validation.Valid;
  * Sun, 01 Nov, 2020
  */
 @FieldDefaults(makeFinal = true)
-@Api(tags = "Emergency Savings Management Endpoints",  description = "Handles emergency savings goal management.")
+@Api(tags = "Emergency Savings Management Endpoints V1",  description = "Handles emergency savings goal management. v1")
 @RestController
 @RequestMapping(headers = {"x-request-client-key", "Authorization"})
 public class EmergencySavingsController {
@@ -41,7 +41,7 @@ public class EmergencySavingsController {
     @ApiOperation(value = "Creates a new emergency savings goal.")
     @PostMapping(value = v2BaseUrl +"/emergency-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<EmergencySavingModel>> createEmergencySavingsGoal(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
-                                                                               @RequestBody @Valid EmergencySavingsCreationRequestJSON creationRequestJSON) {
+                                                                               @RequestBody @Valid EmergencySavingsCreationRequestV1JSON creationRequestJSON) {
         EmergencySavingModel response = createEmergencySavingsUseCase.createSavingsGoal(authenticatedUser, creationRequestJSON.toRequest());
         ApiResponseJSON<EmergencySavingModel> apiResponseJSON = new ApiResponseJSON<>("Emergency saving goals created successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);

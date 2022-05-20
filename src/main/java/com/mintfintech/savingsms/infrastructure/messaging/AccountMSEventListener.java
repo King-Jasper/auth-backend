@@ -42,6 +42,7 @@ public class AccountMSEventListener {
     private final String USER_PROFILE_UPDATE_EVENT = "com.mintfintech.accounts-service.events.user-profile-update";
     private final String EMPLOYMENT_INFORMATION_UPDATE_EVENT = "com.mintfintech.savings-service.events.employment-info-update";
     private final String MINT_CORPORATE_USER_DETAILS = "com.mintfintech.accounts-service.events.corporate-user-detail";
+    private final String MINT_USER_CREATION_EVENT = "com.mintfintech.accounts-service.events.user-creation";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
@@ -58,7 +59,13 @@ public class AccountMSEventListener {
         accountSetupUseCases.createIndividualBankAccount(event);
     }
 
-    @KafkaListener(topics = {MINT_CORPORATE_USER_DETAILS, MINT_CORPORATE_USER_DETAILS+".fund-transaction-service"})
+    @KafkaListener(topics = {MINT_USER_CREATION_EVENT, MINT_USER_CREATION_EVENT+".savings-service"})
+    public void listenForUserCreation(String payload) {
+        UserCreationEvent event = gson.fromJson(payload, UserCreationEvent.class);
+        accountSetupUseCases.createMintUser(event);
+    }
+
+    @KafkaListener(topics = {MINT_CORPORATE_USER_DETAILS, MINT_CORPORATE_USER_DETAILS+".savings-service"})
     public void listenForCorporateUserCreation(String payload) {
         CorporateUserDetailEvent event = gson.fromJson(payload, CorporateUserDetailEvent.class);
         accountSetupUseCases.createOrUpdateCorporateUser(event);

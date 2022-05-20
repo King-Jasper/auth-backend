@@ -1,14 +1,12 @@
 package com.mintfintech.savingsms.usecase.features.loan.business_loan.impl;
 
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SettingsNameTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
@@ -19,9 +17,13 @@ import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.CreateBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
+import com.mintfintech.savingsms.utils.MintStringUtil;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.util.Arrays;
 
 /**
  * Created by jnwanya on
@@ -38,6 +40,7 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final GetBusinessLoanUseCase getBusinessLoanUseCase;
     private final ApplicationEventService applicationEventService;
+    private final SettingsEntityDao settingsEntityDao;
 
     @Override
     public BusinessLoanResponse createRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId) {
@@ -46,6 +49,15 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, accountEntity)
                 .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
+
+        boolean accessBusinessLoan = false;
+        String accounts = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_ACCESS_ACCOUNT_IDS, "");
+        if(StringUtils.isNotEmpty(accounts)) {
+            accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
+        }
+        if(!accessBusinessLoan) {
+            throw new BadRequestException("Sorry, you are not yet qualified for a business loan.");
+        }
 
         if(applicationProperty.isLiveEnvironment()) {
             long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
@@ -59,14 +71,17 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
             }
         }
 
-        BigDecimal loanInterest = loanAmount.multiply(BigDecimal.valueOf(applicationProperty.getBusinessLoanInterestRate() / 100.0));
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
+        BigDecimal loanInterest = loanAmount.multiply(BigDecimal.valueOf(businessRate / 100.0));
 
         loanInterest = BigDecimal.valueOf(loanInterest.doubleValue() * durationInMonths);
 
         LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
                 .bankAccount(creditAccount)
                 .loanId(loanRequestEntityDao.generateLoanId())
-                .interestRate(applicationProperty.getBusinessLoanInterestRate())
+                .interestRate(businessRate)
                 .loanAmount(loanAmount)
                 .repaymentAmount(loanAmount.add(loanInterest))
                 .activeLoan(true)

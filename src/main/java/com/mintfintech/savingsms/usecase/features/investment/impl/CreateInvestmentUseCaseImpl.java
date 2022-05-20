@@ -64,7 +64,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final AffiliateServiceRestClient affiliateServiceRestClient;
 
     @Override
-    @Transactional
+    //@Transactional
     public InvestmentCreationResponse createInvestment(AuthenticatedUser authenticatedUser, InvestmentCreationRequest request) {
 
         MintAccountEntity mintAccount = getMintAccountUseCase.getMintAccount(authenticatedUser);
@@ -76,7 +76,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             response = processInvestment(appUser, mintAccount, request);
         } else if (mintAccount.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
             response = processInvestment(appUser, mintAccount, request);
-        } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+        } else if (mintAccount.getAccountType() != AccountTypeConstant.ENTERPRISE && mintAccount.getAccountType() != AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
             Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);
@@ -88,8 +88,15 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
-            } else {
-                response = createTransactionRequest(mintAccount, appUser, request);
+            }
+            response = createTransactionRequest(mintAccount, appUser, request);
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
+                CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
+                        .requestId(response.getRequestId())
+                        .approved(true)
+                        .build();
+                approveCorporateInvestment(approvalRequest, appUser, mintAccount);
+                response.setMessage("Investment created and approved successfully.");
             }
         }
         return response;
@@ -97,6 +104,10 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
     private InvestmentCreationResponse createTransactionRequest(MintAccountEntity mintAccount, AppUserEntity appUser, InvestmentCreationRequest request) {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
+        LocalDateTime twoMinutesAgo = LocalDateTime.now().minusSeconds(120);
+        if (investmentEntityDao.countInvestmentCreationRequestWithinPeriod(investAmount, appUser, twoMinutesAgo) > 0) {
+            throw new BusinessLogicConflictException("Possible duplicate investment creation.");
+        }
 
         InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
                 .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration."));
@@ -153,17 +164,27 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
-        sendCorporateEmailNotification(mintAccount, investment, transactionRequestEntity);
+        sendCorporateEmailNotification(investment, transactionRequestEntity);
+        Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);
+        CorporateUserEntity corporateUser = opt.get();
+        CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+        if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
+            publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
+        }
 
         response.setMessage("Your investment has been logged for approval.");
+        response.setRequestId(transactionRequestEntity.getRequestId());
         return response;
     }
 
     private InvestmentCreationResponse processInvestment(AppUserEntity appUser, MintAccountEntity mintAccount, InvestmentCreationRequest request) {
 
-
-        InvestmentTenorEntity investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE)
-                .orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+        InvestmentTenorEntity investmentTenor;
+        if(request.getDurationId() > 0) {
+            investmentTenor = investmentTenorEntityDao.findById(request.getDurationId()).orElseThrow(() -> new BadRequestException("Invalid selected duration"));
+        }else {
+            investmentTenor = investmentTenorEntityDao.findInvestmentTenorForDuration(request.getDurationInMonths(), RecordStatusConstant.ACTIVE).orElseThrow(() -> new BadRequestException("Sorry, could not fetch a tenor for this duration"));
+        }
 
         MintBankAccountEntity debitAccount = getMintAccountUseCase.getMintBankAccount(mintAccount, request.getDebitAccountId());
 
@@ -176,11 +197,12 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         BigDecimal investAmount = BigDecimal.valueOf(request.getInvestmentAmount());
 
         if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
-            InvestmentCreationResponse response = new InvestmentCreationResponse();
+            throw new BusinessLogicConflictException("Sorry, you have insufficient fund for this transaction.");
+            /*InvestmentCreationResponse response = new InvestmentCreationResponse();
             response.setInvestment(null);
             response.setCreated(false);
             response.setMessage("Insufficient Funds");
-            return response;
+            return response;*/
         }
 
         InvestmentEntity investment = InvestmentEntity.builder()
@@ -412,7 +434,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
     }
 
-    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+    private void sendCorporateEmailNotification(InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
 
         CorporateInvestmentCreationEmailEvent emailEvent = CorporateInvestmentCreationEmailEvent.builder()
                 .recipient(transactionRequestEntity.getInitiator().getEmail())
@@ -424,6 +446,5 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .build();
         EventModel<CorporateInvestmentCreationEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_CREATION, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 }

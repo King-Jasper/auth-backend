@@ -5,6 +5,7 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import org.springframework.data.domain.Page;
 
@@ -39,4 +40,6 @@ public interface InvestmentEntityDao extends CrudDao<InvestmentEntity, Long> {
     List<SavingsMaturityStat> getInvestmentMaturityStatistics(LocalDateTime fromDate, LocalDateTime toDate);
 
     boolean getByReferralCodeAndAppUser(String referralCode, AppUserEntity appUser);
+
+    long countInvestmentCreationRequestWithinPeriod(BigDecimal investAmount, AppUserEntity appUser, LocalDateTime fromTime);
 }

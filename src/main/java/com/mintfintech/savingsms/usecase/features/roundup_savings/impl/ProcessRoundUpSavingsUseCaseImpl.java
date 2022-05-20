@@ -16,6 +16,7 @@ import com.mintfintech.savingsms.usecase.features.savings_funding.SavingsFunding
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -115,6 +116,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
+        System.out.println("RoundUpTransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
         if (transactionCategory == null || transactionCategory.equals(RoundUpTransactionCategoryType.CARD_PAYMENT)) {
             return;
         }
@@ -153,7 +155,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         processSavingFunding(settingEntity, savingsGoal, transactionPayload, amountToSave);
     }
 
-    private BigDecimal getSaveAmount(int percentage, BigDecimal transactionAmount) {
+    private BigDecimal getSaveAmount(double percentage, BigDecimal transactionAmount) {
         BigDecimal percent = BigDecimal.valueOf(percentage);
         return (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
     }
@@ -226,9 +228,13 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         transactionEntity.setTransactionReference(reference);
         transactionEntity = savingsGoalTransactionEntityDao.saveRecord(transactionEntity);
 
+        LocalDateTime transactionDate = LocalDateTime.now();
+        if(StringUtils.isNotEmpty(transactionPayload.getDateCreated())) {
+            LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
+        }
         SpendAndSaveTransactionEntity spendAndSaveTransaction = SpendAndSaveTransactionEntity.builder()
                 .transactionAccount(debitAccount)
-                .transactionDate(LocalDateTime.parse(transactionPayload.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME))
+                .transactionDate(transactionDate)
                 .transactionAmount(transactionPayload.getTransactionAmount())
                 .transactionType(RoundUpTransactionCategoryType.getByName(transactionPayload.getCategory()))
                 .transactionReference(transactionPayload.getInternalReference())

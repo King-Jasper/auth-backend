@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.domain.entities;
 import lombok.*;
 
 import javax.persistence.*;
+import java.math.BigDecimal;
 
 /**
  * Created by jnwanya on
@@ -29,6 +30,12 @@ public class CustomerReferralEntity extends AbstractBaseEntity<Long>{
     private boolean referrerRewarded = false;
 
     private boolean referredRewarded = false;
+
+    @Builder.Default
+    private BigDecimal referrerRewardAmount = BigDecimal.ZERO;
+
+    @Builder.Default
+    private BigDecimal referredRewardAmount = BigDecimal.ZERO;
 
     private String registrationPlatform;
 }

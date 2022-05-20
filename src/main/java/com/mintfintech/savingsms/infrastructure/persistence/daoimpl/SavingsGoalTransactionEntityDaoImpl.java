@@ -2,12 +2,14 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsGoalTransactionEntityDao;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsGoalTransactionRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
@@ -108,5 +110,10 @@ public class SavingsGoalTransactionEntityDaoImpl extends CrudDaoImpl<SavingsGoal
     @Override
     public Optional<SavingsGoalTransactionEntity> findFirstTransactionForSavings(SavingsGoalEntity goalEntity) {
         return repository.findFirstBySavingsGoalAndTransactionStatusOrderByDateCreatedAsc(goalEntity, TransactionStatusConstant.SUCCESSFUL);
+    }
+
+    @Override
+    public ReportStatisticModel getSavingsTransactionStatisticsOnAccount(MintAccountEntity mintAccount) {
+        return repository.getSavingsTransactionStatistics(mintAccount);
     }
 }

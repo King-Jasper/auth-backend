@@ -30,6 +30,8 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
 
     private String email;
 
+    private String username;
+
     @Builder.Default
     private boolean emailNotificationEnabled = true;
 
@@ -40,6 +42,9 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
     private boolean gcmNotificationEnabled = true;;
 
     private String deviceGcmNotificationToken;
+
+    private String residentialAddress;
+
 
     public String getFirstName() {
         return StringUtils.capitalize(name.split(" ", 2)[0].toLowerCase());

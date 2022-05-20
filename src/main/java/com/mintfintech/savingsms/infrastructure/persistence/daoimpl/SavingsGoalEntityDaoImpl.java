@@ -214,4 +214,20 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
     public void deleteSavings(SavingsGoalEntity savingsGoalEntity) {
         repository.delete(savingsGoalEntity);
     }
+
+    @Override
+    public List<SavingsGoalEntity> getAllSavingsByType(MintAccountEntity accountEntity, SavingsGoalTypeConstant goalType) {
+        return repository.getAllSavingsByType(accountEntity, goalType);
+    }
+
+    @Override
+    public Optional<SavingsGoalEntity> findGoalByNameAndPlanAndAccountAndType(String name, SavingsPlanEntity savingsPlan, MintAccountEntity mintAccount, SavingsGoalTypeConstant goalTypeConstant) {
+        return repository.findFirstByMintAccountAndSavingsPlanAndGoalStatusAndRecordStatusAndNameIgnoreCaseAndSavingsGoalType(mintAccount, savingsPlan,
+                SavingsGoalStatusConstant.ACTIVE, RecordStatusConstant.ACTIVE, name, goalTypeConstant);
+    }
+
+    @Override
+    public Optional<SavingsGoalEntity> findSavingGoalByAccountAndGoalIdAndGoalType(MintAccountEntity accountEntity, String goalId, SavingsGoalTypeConstant emergencySaving) {
+        return repository.findFirstByMintAccountAndGoalIdAndSavingsGoalTypeAndRecordStatus(accountEntity, goalId, emergencySaving, RecordStatusConstant.ACTIVE);
+    }
 }

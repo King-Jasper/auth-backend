@@ -2,7 +2,6 @@ package com.mintfintech.savingsms.usecase.data.events.incoming;
 
 import lombok.Builder;
 import lombok.Data;
-
 import java.math.BigDecimal;
 
 @Builder

@@ -14,6 +14,9 @@ public class InvestmentCreationRequestJSON {
     @ApiModelProperty(notes = "The investment duration in months.", required = true)
     private int durationInMonths;
 
+    @ApiModelProperty(notes = "The investment durationId", required = true)
+    private long durationId;
+
     @ApiModelProperty(notes = "The amount to be invested. N5000 minimum", required = true)
     @Min(value = 5000, message = "Minimum amount for investment is N5000")
     private double investmentAmount;
@@ -30,8 +33,8 @@ public class InvestmentCreationRequestJSON {
     private String referralCode;
 
     public InvestmentCreationRequest toRequest() {
-
         return InvestmentCreationRequest.builder()
+                .durationId(durationId)
                 .debitAccountId(debitAccountId)
                 .investmentAmount(investmentAmount)
                 .durationInMonths(durationInMonths)

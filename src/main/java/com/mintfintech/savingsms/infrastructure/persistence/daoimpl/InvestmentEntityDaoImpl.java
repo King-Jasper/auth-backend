@@ -12,6 +12,7 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.AmountModel;
 import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentRepository;
 import lombok.extern.slf4j.Slf4j;
@@ -103,6 +104,11 @@ public class InvestmentEntityDaoImpl extends CrudDaoImpl<InvestmentEntity, Long>
     @Override
     public boolean getByReferralCodeAndAppUser(String referralCode, AppUserEntity appUser) {
         return repository.existsByReferralCodeAndCreator(referralCode, appUser);
+    }
+
+    @Override
+    public long countInvestmentCreationRequestWithinPeriod(BigDecimal investAmount, AppUserEntity appUser, LocalDateTime fromTime) {
+        return repository.countAllByAmountInvestedAndCreatorAndDateCreatedBetween(investAmount, appUser, fromTime, LocalDateTime.now());
     }
 
     @Override

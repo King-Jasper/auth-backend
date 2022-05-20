@@ -1,5 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
+import com.google.gson.Gson;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.models.EditSpendAndSaveRequestJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -39,6 +41,8 @@ public class SpendAndSaveController {
     private final UpdateSpendAndSaveUseCase updateSpendAndSaveUseCase;
     private final GetSpendAndSaveUseCase getSpendAndSaveUseCase;
     private final WithdrawSpendAndSaveUseCase withdrawSpendAndSaveUseCase;
+    private final SystemIssueLogService systemIssueLogService;
+    private final Gson gson;
 
     @ApiOperation("Handles the set up of spend and save")
     @PostMapping(value = "/set-up", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -53,6 +57,9 @@ public class SpendAndSaveController {
     @GetMapping(value = "", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<SpendAndSaveResponse>> getSpendAndSave(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser) {
         SpendAndSaveResponse response = getSpendAndSaveUseCase.getSpendAndSaveDashboard(authenticatedUser);
+        /*if(authenticatedUser.getUserId().equalsIgnoreCase("700000000097")) {
+            systemIssueLogService.logIssue("SPEND AND SAVE RESPONSE", "SPEND AND SAVE RESPONSE", gson.toJson(response));
+        }*/
         ApiResponseJSON<SpendAndSaveResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
@@ -92,7 +99,7 @@ public class SpendAndSaveController {
     @Data
     static class SpendAndSaveSetUpRequestJSON {
         @ApiModelProperty(notes = "Transaction percentage to be saved", required = true)
-        private int transactionPercentage;
+        private double transactionPercentage;
 
         @ApiModelProperty(notes = "This checks whether savings is locked", required = true)
         private boolean isSavingsLocked;

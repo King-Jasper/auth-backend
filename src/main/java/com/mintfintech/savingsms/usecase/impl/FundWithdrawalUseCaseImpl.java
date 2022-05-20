@@ -5,7 +5,6 @@ import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.corebankingservice.MintFundTransferRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -24,7 +23,6 @@ import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.value_objects.SavingsWithdrawalType;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
-import com.mintfintech.savingsms.utils.DateUtil;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -56,7 +54,6 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private AppUserEntityDao appUserEntityDao;
     private MintAccountEntityDao mintAccountEntityDao;
     private SavingsGoalEntityDao savingsGoalEntityDao;
-    private SavingsPlanEntityDao savingsPlanEntityDao;
     private MintBankAccountEntityDao mintBankAccountEntityDao;
     private SavingsWithdrawalRequestEntityDao savingsWithdrawalRequestEntityDao;
     private SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
@@ -198,7 +195,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
         if(!maturedGoal) {
            // there is deduction on accrued interest for un-matured goal
             remainingInterest = currentBalance.add(accruedInterest).subtract(withdrawalAmount);
-            dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
+           // dateForWithdrawal = DateUtil.addWorkingDays(dateForWithdrawal, 2);
         }
         savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
         savingsGoal.setAccruedInterest(remainingInterest);
@@ -480,7 +477,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 BigDecimal totalAmountWithdrawn = (goalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO : goalEntity.getTotalAmountWithdrawn()).add(amountRequest);
                 goalEntity.setTotalAmountWithdrawn(totalAmountWithdrawn);
                 if(goalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
-                    goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    if(goalEntity.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED) {
+                        goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    }
                 }
                 savingsGoalEntityDao.saveRecord(goalEntity);
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());

@@ -1,12 +1,12 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
-import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRequestCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
+import com.mintfintech.savingsms.usecase.features.referral_savings.ReachHQTransactionUseCase;
 import io.swagger.annotations.ApiParam;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -17,7 +17,6 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 /**
@@ -31,6 +30,7 @@ public class IndexController {
     private CreateReferralRewardUseCase createReferralRewardUseCase;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private CoreBankingServiceClient coreBankingServiceClient;
+    private ReachHQTransactionUseCase reachHQTransactionUseCase;
 
 
     @Autowired
@@ -45,6 +45,10 @@ public class IndexController {
     public void setCoreBankingServiceClient(CoreBankingServiceClient coreBankingServiceClient) {
         this.coreBankingServiceClient = coreBankingServiceClient;
     }
+    @Autowired
+    public void setReachHQTransactionUseCase(ReachHQTransactionUseCase reachHQTransactionUseCase) {
+        this.reachHQTransactionUseCase = reachHQTransactionUseCase;
+    }
 
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> indexPage() {
@@ -52,7 +56,7 @@ public class IndexController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    /*
+
     @GetMapping(value = "/timeout-test", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> timeoutStressTest(@RequestParam(value = "seconds", defaultValue = "60", required = false) int seconds) {
         long delayMilliSeconds = seconds * 1000;
@@ -62,7 +66,6 @@ public class IndexController {
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("No timeout after "+seconds+" seconds.");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
-    */
 
     @GetMapping(value = "/referral-reward", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
@@ -87,6 +90,13 @@ public class IndexController {
     public ResponseEntity<ApiResponseJSON<Object>> interestUpdate() {
         createSavingsGoalUseCase.runInterestUpdate();
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Process initiated successfully.");
+        return new ResponseEntity<>(apiResponse, HttpStatus.OK);
+    }
+
+    @GetMapping(value = "/react-hq-debit", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> reactHQDebit(@RequestParam("accountNumber") String accountNumber, @RequestParam("create") boolean createRecord, @RequestParam("canBeCredited") boolean canBeCredited) {
+        boolean debitSuccess = reachHQTransactionUseCase.processCustomerDebit(accountNumber, createRecord, canBeCredited);
+        ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed - Status : "+debitSuccess);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 

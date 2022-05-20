@@ -7,10 +7,12 @@ import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.FundSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.PushNotificationService;
 import com.mintfintech.savingsms.usecase.data.events.incoming.CustomerReferralEvent;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.savings_funding.ReferralGoalFundingUseCase;
+import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -44,16 +46,19 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private final ApplicationProperty applicationProperty;
     private final ReferralGoalFundingUseCase referralGoalFundingUseCase;
     private final SettingsEntityDao settingsEntityDao;
+    private final PushNotificationService pushNotificationService;
     private final SystemIssueLogService systemIssueLogService;
     private final SavingsGoalTransactionEntityDao savingsGoalTransactionEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final ReactHQReferralEntityDao reactHQReferralEntityDao;
 
     private static final String SIDE_HUSTLE_REFERRAL_CODE = "SIDEHUSTLE";
     private static final String MINT_ANNIVERSARY_REFERRAL_CODE = "MINT365";
     private static final String CERA_PLUG_REFERRAL_CODE = "OUKONU";
     private static final String VALENTINE_REFERRAL_CODE = "JOMOJUWA"; //"VALGIVEAWAY";
+    private static final String REACTHQ_REFERRAL_CODE = "REACTHQ";
 
-    private static final BigDecimal referralAmount = BigDecimal.valueOf(500.00);
+    private static final BigDecimal referralAmount = BigDecimal.valueOf(1000.00);
     private static final BigDecimal minimumFundAmount = BigDecimal.valueOf(250.00);
 
 
@@ -203,15 +208,22 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     @Override
     public void processCustomerReferralReward(CustomerReferralEvent referralEvent) {
 
-        boolean referralRewardEnabled = Boolean.parseBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.REFERRAL_REWARD_ENABLED, "true"));
-        if(!referralRewardEnabled) {
-            log.info("Referral reward not enabled.");
-        }
         try {
             int seconds = new Random().nextInt(500) + 2000;
             Thread.sleep(seconds);
             // this allows for the new customer details published to be created completely.
         }catch (Exception ignored){}
+
+        String referralCode = referralEvent.getReferralCodeUsed();
+        if(REACTHQ_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+            reactHQReferralProcessing(referralEvent);
+            return;
+        }
+
+        boolean referralRewardEnabled = Boolean.parseBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.REFERRAL_REWARD_ENABLED, "true"));
+        if(!referralRewardEnabled) {
+            log.info("Referral reward not enabled.");
+        }
         if(StringUtils.isEmpty(referralEvent.getReferredByUserId())) {
             log.info("Referral userId not found - {}", referralEvent.toString());
             return;
@@ -241,6 +253,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .referrerRewarded(false)
                 .referralCode(referralEvent.getReferralCodeUsed())
                 .registrationPlatform(referralEvent.getRegistrationPlatform())
+                .referrerRewardAmount(new BigDecimal(applicationProperty.getReferralRewardAmount()))
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
 
@@ -253,10 +266,10 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             // referralEntity.setReferrerRewarded(true);
             // customerReferralEntityDao.saveRecord(referralEntity);
         }*/
-        /*
+
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
-        if(accountReferred >= 7) {
+        /*if(accountReferred >= 7) {
             BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
             total = total.add(referralSavingsGoalEntity.getSavingsBalance());
             String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
@@ -267,21 +280,28 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 log.info("referral aborted");
                  return;
             }
-        }
+        }*/
         if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
             savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
         }
 
+        AppUserEntity referredUser = appUserEntityDao.findAccountOwner(referredAccount).orElse(null);
 
         long referralRewardAmount = applicationProperty.getReferralRewardAmount();
         SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, BigDecimal.valueOf(referralRewardAmount));
         if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
             referralEntity.setReferrerRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
+            if(referredUser != null) {
+                String message  = "You have been rewarded N"+ MoneyFormatterUtil.priceWithoutDecimal(referralEntity.getReferrerRewardAmount())+" amount. " +
+                        "Your friend "+referredUser.getName()+" just signed up using your code("+referralEntity.getReferralCode()+").";
+                String title = "Referral Bonus Reward";
+                pushNotificationService.sendMessage(userEntity, title, message);
+            }
         }
-        */
+
         /*
         Optional<AppUserEntity> referredUserOpt = appUserEntityDao.findAccountOwner(referredAccount);
         if(!referredUserOpt.isPresent()) {
@@ -389,7 +409,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     private boolean shouldProceed(MintAccountEntity referral, String referralCode) {
         if(SIDE_HUSTLE_REFERRAL_CODE.equalsIgnoreCase(referralCode) ||
                 CERA_PLUG_REFERRAL_CODE.equalsIgnoreCase(referralCode) ||
-                MINT_ANNIVERSARY_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
+                MINT_ANNIVERSARY_REFERRAL_CODE.equalsIgnoreCase(referralCode) ||
+                REACTHQ_REFERRAL_CODE.equalsIgnoreCase(referralCode)) {
             log.info("Side hustle referral code used {} -- abort ", referralCode);
             return false;
         }
@@ -401,5 +422,25 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         return !valReferralRecordOpt.isPresent();
         */
         return true;
+    }
+
+    private void reactHQReferralProcessing(CustomerReferralEvent referralEvent) {
+        Optional<MintAccountEntity> mintAccountOpt  = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
+        if(!mintAccountOpt.isPresent()) {
+            return;
+        }
+        MintAccountEntity mintAccount = mintAccountOpt.get();
+        if(reactHQReferralEntityDao.findRecordByCustomer(mintAccount).isPresent()) {
+            return;
+        }
+        String platform = referralEvent.getRegistrationPlatform();
+        ReactHQReferralEntity referralEntity = ReactHQReferralEntity.builder()
+                .customer(mintAccount)
+                .customerCredited(false)
+                .registrationPlatform(platform)
+                .customerDebited(false)
+                .canBeCredited(true)
+                .build();
+        reactHQReferralEntityDao.saveRecord(referralEntity);
     }
 }

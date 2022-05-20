@@ -371,8 +371,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 				.accountType(request.getAccountType())
 				.name(request.getName())
 				.build();
-		Page<InvestmentTransactionEntity> pagedEntity = investmentTransactionEntityDao
-				.searchInvestmentTransactions(searchDTO, pageIndex, size);
+		Page<InvestmentTransactionEntity> pagedEntity = investmentTransactionEntityDao.searchInvestmentTransactions(searchDTO, pageIndex, size);
 		BigDecimal amount = investmentTransactionEntityDao.sumSearchedInvestmentTransactions(searchDTO);
 		return new PagedDataResponse<>(pagedEntity.getTotalElements(), pagedEntity.getTotalPages(), amount,
 				pagedEntity.getContent().stream().map(this::getResponseFromEntity).collect(Collectors.toList()));

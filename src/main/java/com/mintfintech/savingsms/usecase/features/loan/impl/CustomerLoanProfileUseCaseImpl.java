@@ -24,6 +24,7 @@ import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.models.CustomerLoanProfileDashboard;
 import com.mintfintech.savingsms.usecase.models.EmploymentInformationModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
+import com.mintfintech.savingsms.utils.MintStringUtil;
 import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -37,6 +38,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -57,6 +59,8 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final ApplicationEventService applicationEventService;
     private final LoanReviewLogEntityDao loanReviewLogEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final SettingsEntityDao settingsEntityDao;
+    private final CorporateUserEntityDao corporateUserEntityDao;
 
     @Override
     @Transactional
@@ -65,6 +69,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         validateEmploymentLetter(request.getEmploymentLetter());
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
         CustomerLoanProfileEntity customerLoanProfileEntity;
 
@@ -99,7 +104,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_CREATION, new EventModel<>(loanEmailEvent));
 
-        return getLoanCustomerProfile(appUser, customerLoanProfileEntity, "PAYDAY");
+        return getLoanCustomerProfile(appUser, accountEntity, customerLoanProfileEntity, "PAYDAY");
     }
 
     @Override
@@ -107,13 +112,23 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         long count = 0;
+        boolean accessBusinessLoan = true;
         if(applicationProperty.isLiveEnvironment()) {
             count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+          //  accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
+           String accounts = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_ACCESS_ACCOUNT_IDS, "");
+           if(StringUtils.isNotEmpty(accounts)) {
+             accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
+           }
         }
+
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
-        response.setBusinessLoanAvailable(true);
-        response.setBusinessLoanMonthlyInterest(applicationProperty.getBusinessLoanInterestRate());
+        response.setBusinessLoanAvailable(accessBusinessLoan);
+        response.setBusinessLoanMonthlyInterest(businessRate);
         response.setPaydayLoanAvailable(true);
         response.setMaximumDaysForReview(5);
         response.setMinimumDaysForReview(2);
@@ -122,6 +137,11 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         durations.add(new LoanDuration(1, "1 Month"));
         durations.add(new LoanDuration(2, "2 Months"));
         durations.add(new LoanDuration(3, "3 Months"));
+        durations.add(new LoanDuration(4, "4 Months"));
+        durations.add(new LoanDuration(5, "5 Months"));
+        durations.add(new LoanDuration(6, "6 Months"));
+        durations.add(new LoanDuration(9, "9 Months"));
+        durations.add(new LoanDuration(12, "12 Months"));
         response.setBusinessLoanDurations(durations);
         return response;
     }
@@ -134,6 +154,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         }
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findCustomerProfileByAppUser(appUser)
                 .orElseThrow(() -> new NotFoundException("No Loan Customer Profile Exists for this User"));
@@ -155,15 +176,15 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
 
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_PROFILE_UPDATE_ADMIN, new EventModel<>(loanEmailEvent));
 
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(mintAccount, customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
 
         return loanCustomerProfileModel;
     }
 
-    private LoanCustomerProfileModel getLoanCustomerProfile(AppUserEntity appUser, CustomerLoanProfileEntity customerLoanProfile, String loanType) {
+    private LoanCustomerProfileModel getLoanCustomerProfile(AppUserEntity appUser, MintAccountEntity accountEntity, CustomerLoanProfileEntity customerLoanProfile, String loanType) {
 
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfile);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(accountEntity, customerLoanProfile);
 
         if (LoanTypeConstant.valueOf(loanType).equals(LoanTypeConstant.PAYDAY)) {
             loanCustomerProfileModel.setMaxLoanPercent(applicationProperty.getPayDayMaxLoanPercentAmount());
@@ -178,6 +199,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     public CustomerLoanProfileDashboard getLoanCustomerProfileDashboard(AuthenticatedUser currentUser, String loanType) {
 
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
+        MintAccountEntity mintAccountEntity = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
 
         CustomerLoanProfileDashboard profileDashboard = new CustomerLoanProfileDashboard();
         profileDashboard.setHasCustomerProfile(true);
@@ -189,7 +211,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
             return profileDashboard;
         }
 
-        LoanCustomerProfileModel loanCustomerProfile = getLoanCustomerProfile(appUser, optionalCustomerLoanProfile.get(), loanType);
+        LoanCustomerProfileModel loanCustomerProfile = getLoanCustomerProfile(appUser, mintAccountEntity, optionalCustomerLoanProfile.get(), loanType);
         profileDashboard.setCustomerProfile(loanCustomerProfile);
 
         return profileDashboard;
@@ -210,18 +232,16 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         Page<CustomerLoanProfileEntity> loanProfileEntityPage = customerLoanProfileEntityDao.searchVerifiedCustomerProfile(searchDTO, page, size);
 
         return new PagedDataResponse<>(loanProfileEntityPage.getTotalElements(), loanProfileEntityPage.getTotalPages(),
-                loanProfileEntityPage.get().map(this::toLoanCustomerProfileModel)
+                loanProfileEntityPage.get().map(data -> toLoanCustomerProfileModel(null, data))
                         .collect(Collectors.toList()));
     }
 
     @Override
     public LoanCustomerProfileModel getCustomerEmployerInfo(long customerLoanProfileId) {
-
         CustomerLoanProfileEntity customerLoanProfileEntity = customerLoanProfileEntityDao.findById(customerLoanProfileId).orElseThrow(
                 () -> new BadRequestException("No Customer Loan Profile exists for this")
         );
-
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(null, customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
@@ -242,8 +262,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         }else if(reviewStage == LoanReviewStageConstant.SECOND_REVIEW) {
             handleVerificationByRiskManager(loanManager, employeeInformationEntity, customerLoanProfileEntity, isVerified, reason);
         }
-
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(null, customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
@@ -360,7 +379,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         String description = String.format("Blacklisted this customer loan profile: %s", oldState.getId());
         auditTrailService.createAuditLog(currentUser, AuditTrailService.AuditType.UPDATE, description, customerLoanProfileEntity, oldState);
 
-        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(customerLoanProfileEntity);
+        LoanCustomerProfileModel loanCustomerProfileModel = toLoanCustomerProfileModel(null, customerLoanProfileEntity);
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;
     }
@@ -461,12 +480,21 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     }
 
     @Override
-    public LoanCustomerProfileModel toLoanCustomerProfileModel(CustomerLoanProfileEntity customerLoanProfileEntity) {
-
+    public LoanCustomerProfileModel toLoanCustomerProfileModel(MintAccountEntity mintAccount, CustomerLoanProfileEntity customerLoanProfileEntity) {
         AppUserEntity appUser = appUserEntityDao.getRecordById(customerLoanProfileEntity.getAppUser().getId());
-
-        MintBankAccountEntity mintAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(appUser.getPrimaryAccount(), BankAccountTypeConstant.CURRENT);
-        TierLevelEntity tierLevelEntity = mintAccount.getAccountTierLevel();
+        if(mintAccount == null && appUser.getPrimaryAccount() != null) {
+            if(appUser.getPrimaryAccount() == null) {
+                Optional<CorporateUserEntity> opt = corporateUserEntityDao.findTopByAppUser(appUser);
+                if(!opt.isPresent()) {
+                    throw new BusinessLogicConflictException("Sorry, this service is not available to your business type.");
+                }
+                mintAccount = opt.get().getCorporateAccount();
+            }else {
+                mintAccount = mintAccountEntityDao.getRecordById(appUser.getPrimaryAccount().getId());
+            }
+        }
+        MintBankAccountEntity mintBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
+        TierLevelEntity tierLevelEntity = mintBankAccount.getAccountTierLevel();
         LoanCustomerProfileModel loanCustomerProfileModel = new LoanCustomerProfileModel();
         loanCustomerProfileModel.setCustomerName(appUser.getName());
         loanCustomerProfileModel.setEmail(appUser.getEmail());
@@ -475,7 +503,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         loanCustomerProfileModel.setId(customerLoanProfileEntity.getId());
         loanCustomerProfileModel.setPhoneNumber(appUser.getPhoneNumber());
         loanCustomerProfileModel.setRating(customerLoanProfileEntity.getRating());
-        loanCustomerProfileModel.setAccountNumber(mintAccount.getAccountNumber());
+        loanCustomerProfileModel.setAccountNumber(mintBankAccount.getAccountNumber());
         loanCustomerProfileModel.setAccountTier(tierLevelEntity.getLevel().name());
         loanCustomerProfileModel.setEmploymentInformation(addEmployeeInformationToCustomerLoanProfile(customerLoanProfileEntity));
         return loanCustomerProfileModel;

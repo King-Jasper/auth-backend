@@ -22,4 +22,5 @@ public interface CustomerReferralEntityDao extends CrudDao<CustomerReferralEntit
     List<CustomerReferralEntity> getUnprocessedRecordByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size);
     List<CustomerReferralEntity> getUnprocessedRecordByReferral(LocalDateTime start, LocalDateTime end, int size, BigDecimal savingsMinimumBalance);
     Optional<CustomerReferralEntity> findRecordByReferralCodeAndReferredAccount(String code, MintAccountEntity referredAccount);
+    List<CustomerReferralEntity> getProcessedReferralsByReferrer(MintAccountEntity mintAccount, LocalDateTime start, LocalDateTime end);
 }

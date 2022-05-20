@@ -14,4 +14,5 @@ public class UserDetailUpdateEvent {
     private String phoneNumber;
     private String email;
     private String gender;
+    private String address;
 }

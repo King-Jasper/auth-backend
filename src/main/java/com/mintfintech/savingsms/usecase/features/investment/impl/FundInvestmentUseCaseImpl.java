@@ -112,10 +112,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             }
             accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
             response = processInvestmentTopUp(request, investmentEntity, accountEntity);
-        } else if (accountEntity.getAccountType() != AccountTypeConstant.ENTERPRISE) {
+        } else if (accountEntity.getAccountType() != AccountTypeConstant.ENTERPRISE && accountEntity.getAccountType() != AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Unrecognised account type.");
         } else {
-
             if (StringUtils.isEmpty(request.getTransactionPin())) {
                 throw new BadRequestException("Transaction pin is required");
             }
@@ -125,8 +124,15 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
-            } else {
-                response = createTransactionRequest(accountEntity, investmentEntity, request, appUser);
+            }
+            response = createTransactionRequest(accountEntity, investmentEntity, request, appUser);
+            if (userRole == CorporateRoleTypeConstant.INITIATOR_AND_APPROVER) {
+                CorporateApprovalRequest approvalRequest = CorporateApprovalRequest.builder()
+                        .requestId(response.getRequestId())
+                        .approved(true)
+                        .build();
+                approveCorporateInvestmentTopUp(approvalRequest, appUser, accountEntity);
+                response.setResponseMessage("Investment top up created and approved successfully.");
             }
         }
         return response;
@@ -169,14 +175,21 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         InvestmentFundingResponse response = new InvestmentFundingResponse();
         EventModel<CorporateInvestmentEvent> eventModel = new EventModel<>(event);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_REQUEST, eventModel);
-        sendCorporateEmailNotification(mintAccount, investmentEntity, transactionRequestEntity);
+        sendCorporateEmailNotification(investmentEntity, transactionRequestEntity);
+        Optional<CorporateUserEntity> opt = corporateUserEntityDao.findRecordByAccountAndUser(mintAccount, appUser);
+        CorporateUserEntity corporateUser = opt.get();
+        CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
+        if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
+            publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
+        }
 
         response.setResponseCode("01");
         response.setResponseMessage("Investment top-Up has been logged for approval");
+        response.setRequestId(transactionRequestEntity.getRequestId());
         return response;
     }
 
-    private void sendCorporateEmailNotification(MintAccountEntity mintAccount, InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
+    private void sendCorporateEmailNotification(InvestmentEntity investment, CorporateTransactionRequestEntity transactionRequestEntity) {
 
         BigDecimal amountInvested = investment.getAmountInvested();
         BigDecimal accruedInterest = investment.getAccruedInterest();
@@ -198,7 +211,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         EventModel<CorporateInvestmentTopUpEmailEvent> emailEventModel = new EventModel<>(emailEvent);
         applicationEventService.publishEvent(ApplicationEventService.EventType.CORPORATE_INVESTMENT_TOP_UP, emailEventModel);
-        publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
     }
 
     private InvestmentFundingResponse processInvestmentTopUp(InvestmentFundingRequest request, InvestmentEntity investmentEntity, MintAccountEntity accountEntity) {

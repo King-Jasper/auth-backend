@@ -12,6 +12,8 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -95,12 +97,10 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		return amount == null ? BigDecimal.ZERO : amount;
 	}
 
-	private Predicate buildSearchQuery(InvestmentTransactionSearchDTO searchDTO, Root<InvestmentTransactionEntity> root,
-			CriteriaQuery<?> query, CriteriaBuilder cb) {
+	private Predicate buildSearchQuery(InvestmentTransactionSearchDTO searchDTO, Root<InvestmentTransactionEntity> root, CriteriaQuery<?> query, CriteriaBuilder cb) {
 		Predicate whereClause = cb.equal(root.get("recordStatus"), RecordStatusConstant.ACTIVE);
 		if (searchDTO.getToDate() != null && searchDTO.getFromDate() != null) {
-			whereClause = cb.and(whereClause,
-					cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
+			whereClause = cb.and(whereClause, cb.between(root.get("dateCreated"), searchDTO.getFromDate(), searchDTO.getToDate()));
 		}
 		if (StringUtils.isNotEmpty(searchDTO.getMintAccountNumber())) {
 			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
@@ -108,19 +108,16 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 					cb.equal(bankAccountSpec.get("accountNumber"), searchDTO.getMintAccountNumber()));
 		}
 		if (searchDTO.getTransactionAmount().compareTo(BigDecimal.ZERO) > 0) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("transactionAmount"), searchDTO.getTransactionAmount()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("transactionAmount"), searchDTO.getTransactionAmount()));
 		}
 		if (searchDTO.getTransactionStatus() != null) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("transactionStatus"), searchDTO.getTransactionStatus()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("transactionStatus"), searchDTO.getTransactionStatus()));
 		}
 		if (searchDTO.getTransactionType() != null) {
 			whereClause = cb.and(whereClause, cb.equal(root.get("transactionType"), searchDTO.getTransactionType()));
 		}
 		if (StringUtils.isNotEmpty(searchDTO.getTransactionReference())) {
-			whereClause = cb.and(whereClause,
-					cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
+			whereClause = cb.and(whereClause, cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
 		}
 		if (searchDTO.getAccountType() != null) {
 			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
@@ -134,4 +131,9 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		return whereClause;
 	}
 
+
+	@Override
+	public ReportStatisticModel getInvestmentTransactionStatisticsOnAccount(MintAccountEntity mintAccount) {
+		return repository.getInvestmentTransactionStatistics(mintAccount);
+	}
 }

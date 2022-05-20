@@ -62,6 +62,9 @@ public class ApplicationProperty {
     public long getReferredRewardAmount() {
         return Long.parseLong(environmentService.getVariable("mint.referred-reward-amount", "200"));
     }
+    public long getReferredAirtimeAmount() {
+        return Long.parseLong(environmentService.getVariable("referred-airtime-amount", "500"));
+    }
 
     public String getSystemAdminEmail() {
         return environmentService.getVariable("mint.email.system-admin");
@@ -108,9 +111,9 @@ public class ApplicationProperty {
         return Long.parseLong(environmentService.getVariable("loan.pay-day.max-tenor-days"));
     }
 
-    public double getBusinessLoanInterestRate() {
+    /*public double getBusinessLoanInterestRate() {
         return Double.parseDouble(environmentService.getVariable("loan.business-loan.interest-rate"));
-    }
+    }*/
 
     public String getAmazonS3AccessKey(){
         return environmentService.getVariable("amazon.accessKey");
@@ -131,6 +134,16 @@ public class ApplicationProperty {
 
     public String getAffiliateServiceName() {
         return environmentService.getVariable("microservices.affiliate.service-name", "");
+    }
+    public String reactHQAccountNumber() {
+        return environmentService.getVariable("referral.reacthq.account-number");
+    }
+    public String getMintBusinessDevelopmentAccountNumber() {
+        return environmentService.getVariable("referral.business-development.account-number");
+    }
+
+    public String getEmergencyCategoryCode() {
+        return environmentService.getVariable("emergency-category-code", "10");
     }
 
    /* public String getMintBankCode() {

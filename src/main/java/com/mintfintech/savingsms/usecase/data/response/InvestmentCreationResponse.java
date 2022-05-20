@@ -11,4 +11,6 @@ public class InvestmentCreationResponse {
     private boolean created;
 
     private String message;
+
+    private String requestId;
 }

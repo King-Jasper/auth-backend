@@ -1,13 +1,10 @@
 package com.mintfintech.savingsms.usecase;
 
-import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
-import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
 import com.mintfintech.savingsms.usecase.data.request.SavingFundingRequest;
-import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
-import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
 
 import java.math.BigDecimal;

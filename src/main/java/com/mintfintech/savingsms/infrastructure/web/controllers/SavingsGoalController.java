@@ -45,6 +45,7 @@ public class SavingsGoalController {
     private UpdateSavingGoalUseCase updateSavingGoalUseCase;
     private GetRoundUpSavingsUseCase getRoundUpSavingsUseCase;
     private GetSpendAndSaveUseCase getSpendAndSaveUseCase;
+
     public SavingsGoalController(CreateSavingsGoalUseCase createSavingsGoalUseCase, GetSavingsGoalUseCase getSavingsGoalUseCase, UpdateSavingGoalUseCase updateSavingGoalUseCase, GetRoundUpSavingsUseCase getRoundUpSavingsUseCase, GetSpendAndSaveUseCase getSpendAndSaveUseCase) {
         this.createSavingsGoalUseCase = createSavingsGoalUseCase;
         this.getSavingsGoalUseCase = getSavingsGoalUseCase;

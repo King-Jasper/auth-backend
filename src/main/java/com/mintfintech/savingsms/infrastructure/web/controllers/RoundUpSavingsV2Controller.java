@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.usecase.data.request.RoundUpTypeUpdateRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.RoundUpSavingResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.CreateRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.GetRoundUpSavingsUseCase;
 import com.mintfintech.savingsms.usecase.features.roundup_savings.UpdateRoundUpSavingsUseCase;
@@ -56,9 +57,11 @@ public class RoundUpSavingsV2Controller {
     @PostMapping(value = v3BaseUrl+ "/roundup-savings", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<RoundUpSavingResponse>> setupRoundUpSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                       @RequestBody @Valid RoundUpSavingsSetup roundUpSavingsSetup) {
-        RoundUpSavingResponse response = createRoundUpSavingsUseCase.setupRoundUpSavings(authenticatedUser, roundUpSavingsSetup.toRequest());
+       /* RoundUpSavingResponse response = createRoundUpSavingsUseCase.setupRoundUpSavings(authenticatedUser, roundUpSavingsSetup.toRequest());
         ApiResponseJSON<RoundUpSavingResponse> apiResponseJSON = new ApiResponseJSON<>("Roundup savings setup successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+        */
+        throw new BusinessLogicConflictException("Sorry, roundup savings feature has been discontinued. Please use Spend and save feature.");
     }
 
     @ApiOperation(value = "Update RoundUp Type of roundup savings.")

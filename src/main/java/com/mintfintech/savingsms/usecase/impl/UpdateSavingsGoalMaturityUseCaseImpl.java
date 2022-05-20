@@ -2,12 +2,14 @@ package com.mintfintech.savingsms.usecase.impl;
 
 import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.usecase.UpdateSavingsGoalMaturityUseCase;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,7 +24,7 @@ import java.util.List;
 @Named
 public class UpdateSavingsGoalMaturityUseCaseImpl implements UpdateSavingsGoalMaturityUseCase {
 
-    private SavingsGoalEntityDao savingsGoalEntityDao;
+    private final SavingsGoalEntityDao savingsGoalEntityDao;
     public UpdateSavingsGoalMaturityUseCaseImpl(SavingsGoalEntityDao savingsGoalEntityDao) {
         this.savingsGoalEntityDao = savingsGoalEntityDao;
     }
@@ -65,6 +67,9 @@ public class UpdateSavingsGoalMaturityUseCaseImpl implements UpdateSavingsGoalMa
                   continue;
              }
              savingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.MATURED);
+             if(savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
+                 savingsGoalEntity.setRecordStatus(RecordStatusConstant.DELETED);
+             }
              savingsGoalEntityDao.saveRecord(savingsGoalEntity);
         }
     }
