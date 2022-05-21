@@ -477,7 +477,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 BigDecimal totalAmountWithdrawn = (goalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO : goalEntity.getTotalAmountWithdrawn()).add(amountRequest);
                 goalEntity.setTotalAmountWithdrawn(totalAmountWithdrawn);
                 if(goalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.CUSTOMER) {
-                    goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    if(goalEntity.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED) {
+                        goalEntity.setGoalStatus(SavingsGoalStatusConstant.WITHDRAWN);
+                    }
                 }
                 savingsGoalEntityDao.saveRecord(goalEntity);
                 AppUserEntity appUserEntity = appUserEntityDao.getRecordById(savingsGoalEntity.getCreator().getId());

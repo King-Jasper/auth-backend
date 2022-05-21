@@ -70,4 +70,9 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     public Optional<CustomerReferralEntity> findRecordByReferralCodeAndReferredAccount(String code, MintAccountEntity referredAccount) {
         return repository.findFirstByReferredAndReferralCodeIgnoreCase(referredAccount, code.toUpperCase());
     }
+
+    @Override
+    public List<CustomerReferralEntity> getProcessedReferralsByReferrer(MintAccountEntity referrer, LocalDateTime start, LocalDateTime end) {
+        return repository.getAllByReferrerAndDateCreatedBetween(referrer, start, end);
+    }
 }

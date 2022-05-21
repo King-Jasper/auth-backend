@@ -13,7 +13,7 @@ import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.CreateEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
-import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingsModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -138,7 +138,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
     }
 
     @Override
-    public EmergencySavingModelV2 createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
+    public EmergencySavingsModel createSavingsGoalV2(AuthenticatedUser currentUser, EmergencySavingsCreationRequest creationRequest) {
 
         String emergencyCategoryCode = applicationProperty.getEmergencyCategoryCode();
         int minimumDurationForInterest = 30;
@@ -162,9 +162,10 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         if (savingsGoalOptional.isPresent()) {
             throw new BusinessLogicConflictException("Emergency savings goal with name "+ creationRequest.getName() + " exists already.");
         }
+        /*
         if (fundingAmount.compareTo(targetAmount) > 0) {
             throw new BadRequestException("Amount to be funded is already greater than target amount. Please increase target amount.");
-        }
+        }*/
         if (creationRequest.isAutoDebit()) {
             LocalDateTime startDate = creationRequest.getStartDate().atTime(LocalTime.now());
             if (creationRequest.getStartDate() == null || StringUtils.isEmpty(creationRequest.getFrequency())) {
@@ -227,7 +228,7 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         SavingsGoalModel savingsGoal = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoalEntity);
         List<SavingsGoalModel> savingsGoalModelList = new ArrayList<>();
         savingsGoalModelList.add(savingsGoal);
-        return EmergencySavingModelV2.builder()
+        return EmergencySavingsModel.builder()
                 .exist(true)
                 .savingsGoals(savingsGoalModelList)
                 .build();

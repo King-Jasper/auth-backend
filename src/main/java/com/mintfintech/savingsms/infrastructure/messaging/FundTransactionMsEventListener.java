@@ -46,7 +46,7 @@ public class FundTransactionMsEventListener {
         processRoundUpSavingsUseCase.processTransactionForSpendAndSave(transactionPayload);
     }
 
-    @KafkaListener(topics = {ACCOUNT_CREDIT})
+   // @KafkaListener(topics = {ACCOUNT_CREDIT})
     public void listenForAccountCredit(String payload) {
 //        log.info("account credit: {}", payload);
         AccountCreditEvent accountCreditEvent = gson.fromJson(payload, AccountCreditEvent.class);

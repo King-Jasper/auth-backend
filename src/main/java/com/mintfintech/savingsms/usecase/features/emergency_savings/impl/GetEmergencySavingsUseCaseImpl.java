@@ -8,11 +8,14 @@ import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.GetEmergencySavingsUseCase;
 import com.mintfintech.savingsms.usecase.models.EmergencySavingModel;
-import com.mintfintech.savingsms.usecase.models.EmergencySavingModelV2;
+import com.mintfintech.savingsms.usecase.models.EmergencySavingsModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.util.List;
@@ -51,14 +54,31 @@ public class GetEmergencySavingsUseCaseImpl implements GetEmergencySavingsUseCas
     }
 
     @Override
-    public EmergencySavingModelV2 getAccountEmergencySavingsV2(AuthenticatedUser authenticatedUser) {
+    public EmergencySavingsModel getAccountEmergencySavingsV2(AuthenticatedUser authenticatedUser) {
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         List<SavingsGoalEntity> savingsGoalList = savingsGoalEntityDao.getAllSavingsByType(accountEntity, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
         List<SavingsGoalModel> goalModelList = savingsGoalList.stream().map(getSavingsGoalUseCase::fromSavingsGoalEntityToModel).collect(Collectors.toList());
 
-        return EmergencySavingModelV2.builder()
+        return EmergencySavingsModel.builder()
                 .exist(!goalModelList.isEmpty())
                 .savingsGoals(goalModelList)
+                .build();
+    }
+
+    @Override
+    public EmergencySavingModel getEmergencySaving(AuthenticatedUser authenticatedUser, String goalId) {
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        if (StringUtils.isEmpty(goalId)) {
+            throw new BadRequestException("Goal id is required.");
+        }
+        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findSavingGoalByAccountAndGoalIdAndGoalType(accountEntity, goalId, SavingsGoalTypeConstant.EMERGENCY_SAVINGS);
+        if (!savingsGoalOptional.isPresent()) {
+            throw new BusinessLogicConflictException("Emergency savings with id " + goalId + " not found.");
+        }
+        SavingsGoalEntity savingsGoal = savingsGoalOptional.get();
+        return EmergencySavingModel.builder()
+                .exist(true)
+                .savingsGoal(getSavingsGoalUseCase.fromSavingsGoalEntityToModel(savingsGoal))
                 .build();
     }
 }

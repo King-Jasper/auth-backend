@@ -30,6 +30,8 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
 
     private String email;
 
+    private String username;
+
     @Builder.Default
     private boolean emailNotificationEnabled = true;
 

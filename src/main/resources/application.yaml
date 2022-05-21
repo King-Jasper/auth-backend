@@ -37,8 +37,9 @@ mint:
   email:
     system-admin: justin.nwanya@bankwithmint.com
     loan-admin: justin.nwanya@bankwithmint.com
-  referral-reward-amount: 1000
+  referral-reward-amount: 500
   referred-reward-amount: 500
+  referred-airtime-amount: 300
 
 amazon:
   secretKey: qd5COuY5C7qw61d8xl1in+0U6IXK51xGZbEXZK3a

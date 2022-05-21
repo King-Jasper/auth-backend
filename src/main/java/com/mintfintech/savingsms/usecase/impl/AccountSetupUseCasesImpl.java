@@ -189,6 +189,7 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
         String name = String.format("%s %s", StringUtils.capitalize(userCreationEvent.getFirstName().toLowerCase()), StringUtils.capitalize(userCreationEvent.getLastName().toLowerCase()));
         LocalDateTime dateCreated = LocalDateTime.parse(userCreationEvent.getDateCreated(), DateTimeFormatter.ISO_DATE_TIME);
         AppUserEntity appUserEntity = AppUserEntity.builder()
+                .username(userCreationEvent.getUsername())
                 .userId(userCreationEvent.getUserId())
                 .email(userCreationEvent.getEmail())
                 .name(name)

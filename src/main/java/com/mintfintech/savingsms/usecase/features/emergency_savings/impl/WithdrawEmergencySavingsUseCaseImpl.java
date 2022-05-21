@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -44,6 +45,12 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, withdrawalRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
 
+        if(savingsGoal.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
+            throw new BadRequestException("Sorry, you have zero savings balance");
+        }
+        if(amountRequested.compareTo(BigDecimal.ZERO) == 0) {
+            throw new BadRequestException("Withdrawal amount cannot be zero balance");
+        }
         if (savingsGoal.getSavingsBalance().compareTo(amountRequested) < 0) {
             throw new BadRequestException("Sorry, your current savings balance is less than the amount requested.");
         }
@@ -64,8 +71,15 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
 
         LocalDate dateForWithdrawal = LocalDate.now();
         BigDecimal currentBalance = savingsGoal.getSavingsBalance();
+        BigDecimal newBalance = currentBalance.subtract(amountRequested);
         BigDecimal remainingSavings = currentBalance.subtract(amountRequested);
-        savingsGoal.setSavingsBalance(currentBalance.subtract(amountRequested));
+        savingsGoal.setSavingsBalance(newBalance);
+        System.out.println("NEW BALANCE - "+newBalance);
+        if(newBalance.compareTo(BigDecimal.ZERO) > 0) {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+        }else {
+            savingsGoal.setGoalStatus(SavingsGoalStatusConstant.COMPLETED);
+        }
         savingsGoalEntityDao.saveRecord(savingsGoal);
 
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(savingsGoal.getMintAccount(), BankAccountTypeConstant.CURRENT);
