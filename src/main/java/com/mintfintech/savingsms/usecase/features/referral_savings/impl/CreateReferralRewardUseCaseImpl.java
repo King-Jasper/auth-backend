@@ -267,20 +267,9 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             // customerReferralEntityDao.saveRecord(referralEntity);
         }*/
 
+        /*
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referralAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referralAccount, userEntity));
-        /*if(accountReferred >= 7) {
-            BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
-            total = total.add(referralSavingsGoalEntity.getSavingsBalance());
-            String message = "AccountId - "+referralAccount.getAccountId()+" Account Name - "+referralAccount.getName()+" code - "+referralEvent.getReferredByUserId()+" " +
-                    "count - "+accountReferred+" amount gotten - "+total.toPlainString();
-            systemIssueLogService.logIssue("Suspicious Referral", "Suspicious Referral", message);
-
-            if(total.doubleValue() >= 10000.0) {
-                log.info("referral aborted");
-                 return;
-            }
-        }*/
         if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
             referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
@@ -300,7 +289,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 String title = "Referral Bonus Reward";
                 pushNotificationService.sendMessage(userEntity, title, message);
             }
-        }
+        }*/
 
         /*
         Optional<AppUserEntity> referredUserOpt = appUserEntityDao.findAccountOwner(referredAccount);
