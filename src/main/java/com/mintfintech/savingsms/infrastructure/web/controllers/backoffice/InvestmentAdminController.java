@@ -241,7 +241,7 @@ public class InvestmentAdminController {
 						StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.name(customerName)
 				.accountType(
-						(accountType != null) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase())
+						StringUtils.isNotEmpty(accountType) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase())
 								: null)
 				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
