@@ -393,6 +393,9 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
                 savingsWithdrawalRequestEntityDao.saveRecord(withdrawalRequestEntity);
                 String message = String.format("Goal Id: %s; withdrawal Id: %s ; message: %s", savingsGoalEntity.getGoalId(), withdrawalRequestEntity.getId(), msClientResponse.getMessage());
                 systemIssueLogService.logIssue("Savings Withdrawal Failed", "Savings To Suspense Withdrawal failed", message);
+                if(msClientResponse.getStatusCode() == HttpStatus.NOT_FOUND.value()) {
+                    publishSavingsGoalRecord(savingsGoalEntity, creditAccount, withdrawalRequestEntity);
+                }
                 continue;
             }
             FundTransferResponseCBS responseCBS = msClientResponse.getData();
