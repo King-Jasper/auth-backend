@@ -12,8 +12,6 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -26,6 +24,7 @@ import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
@@ -33,6 +32,7 @@ import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentTransactionSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.AmountModel;
+import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.InvestmentTransactionRepository;
 
 @Named
@@ -117,6 +117,15 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		}
 		if (StringUtils.isNotEmpty(searchDTO.getTransactionReference())) {
 			whereClause = cb.and(whereClause, cb.equal(root.get("externalReference"), searchDTO.getTransactionReference()));
+		}
+		if (searchDTO.getAccountType() != null) {
+			Join<InvestmentTransactionEntity, MintBankAccountEntity> bankAccountSpec = root.join("bankAccount");
+			whereClause = cb.and(whereClause, cb.equal(bankAccountSpec.get("accountGroup"), searchDTO.getAccountType()));
+		}
+		if (StringUtils.isNotEmpty(searchDTO.getName())) {
+			Join<InvestmentTransactionEntity, InvestmentEntity> investmentSpec = root.join("investment");
+			Join<InvestmentEntity, MintAccountEntity> mintAccountSpec = investmentSpec.join("owner");
+			whereClause = cb.and(whereClause, cb.like(mintAccountSpec.get("name"), searchDTO.getName()));
 		}
 		return whereClause;
 	}

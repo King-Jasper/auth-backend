@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.mintfintech.savingsms.domain.entities.enums.BankAccountGroupConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
@@ -220,6 +221,8 @@ public class InvestmentAdminController {
 			@ApiParam(value = "Transaction Reference") @RequestParam(value = "transactionReference", required = false) String transactionReference,
 			@ApiParam(value = "Transaction status: PENDING, FAILED, CANCELLED, SUCCESSFUL, pending,failed,cancelled,successful") @Pattern(regexp = "^SUCCESSFUL|FAILED|PENDING|CANCELLED|successful|failed|pending|cancelled$") @RequestParam(value = "transactionStatus", required = false, defaultValue = "SUCCESSFUL") String transactionStatus,
 			@ApiParam(value = "Transaction Type: CREDIT, DEBIT,credit,debit") @Pattern(regexp = "^CREDIT|DEBIT|credit|debit$") @RequestParam(value = "transactionType", required = false, defaultValue = "CREDIT") String transactionType,
+			@ApiParam(value = "Transaction Type: INDIVIDUAL, CORPORATE,corporate,individual") @Pattern(regexp = "^INDIVIDUAL|CORPORATE|corporate|individual$") @RequestParam(value = "accountType", required = false) String accountType,
+			@ApiParam(value = "Name of user")  @RequestParam(value = "customerName", required = false) String customerName,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
 			@ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam(value = "size", defaultValue = "20") int size,
@@ -230,6 +233,13 @@ public class InvestmentAdminController {
 				.transactionStatus((transactionStatus != null) ? TransactionStatusConstant.valueOf(transactionStatus.toUpperCase()) : null)
 				.transactionType((transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase()) : null)
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
+
+				.transactionAmount(
+						StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
+				.name(customerName)
+				.accountType(
+						StringUtils.isNotEmpty(accountType) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase())
+								: null)
 				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
 		if (fromDate != null && toDate != null) {

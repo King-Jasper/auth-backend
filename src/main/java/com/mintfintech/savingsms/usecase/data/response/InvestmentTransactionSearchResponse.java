@@ -17,4 +17,6 @@ public class InvestmentTransactionSearchResponse {
 	private String transactionStatus;
 	private String responseCode;
 	private String responseMessage;
+	private String accountType;
+	private String bankAccountType;
 }
