@@ -125,7 +125,7 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 		if (StringUtils.isNotEmpty(searchDTO.getName())) {
 			Join<InvestmentTransactionEntity, InvestmentEntity> investmentSpec = root.join("investment");
 			Join<InvestmentEntity, MintAccountEntity> mintAccountSpec = investmentSpec.join("owner");
-			whereClause = cb.and(whereClause, cb.like(mintAccountSpec.get("name"), searchDTO.getName()));
+			whereClause = cb.and(whereClause, cb.like(cb.lower(mintAccountSpec.get("name")), "%" + searchDTO.getName().toLowerCase() + "%"));
 		}
 		return whereClause;
 	}

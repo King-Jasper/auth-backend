@@ -233,13 +233,9 @@ public class InvestmentAdminController {
 				.transactionStatus((transactionStatus != null) ? TransactionStatusConstant.valueOf(transactionStatus.toUpperCase()) : null)
 				.transactionType((transactionType != null) ? TransactionTypeConstant.valueOf(transactionType.toUpperCase()) : null)
 				.mintAccountNumber(mintAccountNumber).transactionReference(transactionReference)
-
-				.transactionAmount(
-						StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
+				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.name(customerName)
-				.accountType(
-						StringUtils.isNotEmpty(accountType) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase())
-								: null)
+				.accountType(StringUtils.isNotEmpty(accountType) ? BankAccountGroupConstant.valueOf(accountType.toUpperCase()) : null)
 				.transactionAmount(StringUtils.isNotEmpty(transactionAmount) ? new BigDecimal(transactionAmount) : BigDecimal.ZERO)
 				.build();
 		if (fromDate != null && toDate != null) {
