@@ -19,6 +19,7 @@ public interface ApplicationEventService {
         EMAIL_LOAN_REQUEST_DECLINED("com.mintfintech.services.events.notification.email.loan-request-declined"),
         EMAIL_LOAN_REPAYMENT_REMINDER("com.mintfintech.services.events.notification.email.loan-repayment-reminder"),
         EMAIL_LOAN_REPAYMENT_SUCCESS("com.mintfintech.services.events.notification.email.loan-repayment-success"),
+        EMAIL_LOAN_REPAYMENT_DUE("com.mintfintech.services.events.notification.email.loan-repayment-due"),
         EMAIL_LOAN_REPAYMENT_FAILURE("com.mintfintech.services.events.notification.email.loan-repayment-failure"),
         EMAIL_LOAN_PARTIAL_REPAYMENT_SUCCESS("com.mintfintech.services.events.notification.email.loan-partial-repayment-success"),
         EMAIL_LOAN_REQUEST_ADMIN("com.mintfintech.services.events.notification.email.loan-request-admin"),

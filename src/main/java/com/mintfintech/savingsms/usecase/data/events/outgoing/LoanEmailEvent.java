@@ -9,4 +9,5 @@ public class LoanEmailEvent {
 
     private String customerName;
     private String recipient;
+    private String accountNumber;
 }
