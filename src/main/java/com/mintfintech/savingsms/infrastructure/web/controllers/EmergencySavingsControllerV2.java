@@ -55,9 +55,19 @@ public class EmergencySavingsControllerV2 {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Deprecated
     @ApiOperation(value = "Withdraw savings goal fund.")
     @PostMapping(value = v3BaseUrl +"/transaction/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromGoalV2(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                          @RequestBody @Valid SavingsWithdrawalRequestJSONV2 requestJSON) {
+        String message = withdrawEmergencySavingsUseCase.withdrawalSavingsV2(authenticatedUser, requestJSON.toRequest());
+        ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @ApiOperation(value = "Withdraw savings goal fund.")
+    @PostMapping(value = v3BaseUrl +"/emergency-savings/withdraw-fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<Object>> withdrawFundFromEmergencySavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                           @RequestBody @Valid SavingsWithdrawalRequestJSONV2 requestJSON) {
         String message = withdrawEmergencySavingsUseCase.withdrawalSavingsV2(authenticatedUser, requestJSON.toRequest());
         ApiResponseJSON<Object> apiResponseJSON = new ApiResponseJSON<>(message);

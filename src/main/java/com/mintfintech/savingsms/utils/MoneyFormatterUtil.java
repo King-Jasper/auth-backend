@@ -58,6 +58,10 @@ public class MoneyFormatterUtil {
 
     public static void main(String[] args) {
 
+        double value = 65.51999999999999998;
+        BigDecimal formed = new BigDecimal(value).setScale(2, RoundingMode.UP);
+        System.out.println("value - "+formed);
+
         /*
         BigDecimal savingsBalance = BigDecimal.valueOf(429913.18);
         BigDecimal accrualInterest = BigDecimal.valueOf(3773.63);

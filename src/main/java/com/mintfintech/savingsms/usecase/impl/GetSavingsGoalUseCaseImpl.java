@@ -31,6 +31,7 @@ import org.springframework.data.domain.Page;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -75,11 +76,12 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
             nextSavingsDate = savingsGoalEntity.getNextAutoSaveDate().format(DateTimeFormatter.ISO_LOCAL_DATE);
         }
 
+        BigDecimal interest = savingsGoalEntity.getAccruedInterest().setScale(2, RoundingMode.UP);
         boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
         SavingsGoalModel goalModel = new SavingsGoalModel();
         goalModel.setName(savingsGoalEntity.getName());
         goalModel.setGoalId(savingsGoalEntity.getGoalId());
-        goalModel.setAccruedInterest(savingsGoalEntity.getAccruedInterest());
+        goalModel.setAccruedInterest(interest);
         goalModel.setTargetAmount(savingsGoalEntity.getTargetAmount());
         goalModel.setAvailableBalance(computeAvailableAmountUseCase.getAvailableAmount(savingsGoalEntity));
         goalModel.setAutoSaveEnabled(savingsGoalEntity.isAutoSave());
