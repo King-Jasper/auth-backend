@@ -2,11 +2,9 @@ package com.mintfintech.savingsms.usecase.features.emergency_savings.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
-import com.mintfintech.savingsms.domain.entities.enums.BankAccountTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TierLevelTypeConstant;
-import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
@@ -33,6 +31,7 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
     private MintBankAccountEntityDao mintBankAccountEntityDao;
     private SavingsWithdrawalRequestEntityDao savingsWithdrawalRequestEntityDao;
     private TierLevelEntityDao tierLevelEntityDao;
+    private FundWithdrawalUseCase fundWithdrawalUseCase;
 
 
     @Override
@@ -44,6 +43,10 @@ public class WithdrawEmergencySavingsUseCaseImpl implements WithdrawEmergencySav
         BigDecimal amountRequested = BigDecimal.valueOf(withdrawalRequest.getAmount());
         SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByAccountAndGoalId(accountEntity, withdrawalRequest.getGoalId())
                 .orElseThrow(() -> new BadRequestException("Invalid savings goal Id."));
+
+        if(savingsGoal.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
+            return fundWithdrawalUseCase.withdrawalSavings(authenticatedUser, withdrawalRequest);
+        }
 
         if(savingsGoal.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0) {
             throw new BadRequestException("Sorry, you have zero savings balance");
