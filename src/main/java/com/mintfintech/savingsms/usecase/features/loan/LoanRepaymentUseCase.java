@@ -13,4 +13,5 @@ public interface LoanRepaymentUseCase {
 
     void checkDueLoanPendingDebit();
 
+    void loanRepaymentOverDue();
 }

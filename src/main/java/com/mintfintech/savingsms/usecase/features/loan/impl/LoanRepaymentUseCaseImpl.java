@@ -34,7 +34,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.format.DateTimeFormatter;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 
@@ -105,6 +104,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     removeLienFromAccount(loan, transaction);
                 }
             }
+            sendLoanRepaymentEmail(loan);
         });
     }
 
@@ -218,6 +218,28 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 loanRequestEntityDao.saveRecord(loan);
             }
         }
+    }
+
+    @Override
+    public void loanRepaymentOverDue() {
+        List<LoanRequestEntity> repaymentOverDue = loanRequestEntityDao.getOverdueLoanRepayment();
+
+        if (repaymentOverDue.isEmpty()) {
+            return;
+        }
+        repaymentOverDue.forEach(this::sendLoanRepaymentEmail);
+    }
+
+    private void sendLoanRepaymentEmail(LoanRequestEntity loan) {
+        AppUserEntity appUser = appUserEntityDao.getRecordById(loan.getRequestedBy().getId());
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(loan.getBankAccount().getId());
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent
+                .builder()
+                .customerName(appUser.getName())
+                .recipient(appUser.getEmail())
+                .accountNumber(bankAccount.getAccountNumber())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_DUE, new EventModel<>(loanEmailEvent));
     }
 
     private void removeLienFromAccount(LoanRequestEntity loan, LoanTransactionEntity transaction) {
