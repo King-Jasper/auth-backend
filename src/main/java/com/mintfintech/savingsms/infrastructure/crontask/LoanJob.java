@@ -49,7 +49,7 @@ public class LoanJob {
 
     /*
     @SchedulerLock(name = "LoanJob_loanRepaymentOverDue", lockAtMostForString = "PT45M")
-    @Scheduled(cron = "0 13 * * *") // runs every day at 1:00pm.
+    @Scheduled(cron = "0 0 13 * * ?") // runs every day at 1:00pm.
     public void loanRepaymentOverDue() {
         loanRepaymentUseCase.loanRepaymentOverDue();
     }
