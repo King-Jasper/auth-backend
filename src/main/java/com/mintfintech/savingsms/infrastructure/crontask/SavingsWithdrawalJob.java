@@ -38,6 +38,6 @@ public class SavingsWithdrawalJob {
   //  @Scheduled(cron = "0 0/30 9-23 ? * *") // runs by every 30 minutes from 9am to 11pm
    // @SchedulerLock(name = "SavingsWithdrawalJob_processReactHQRefund", lockAtMostForString = "PT30M")
     public void processReactHQRefund(){
-        reachHQTransactionUseCase.processCustomerCredit();
+       // reachHQTransactionUseCase.processCustomerCredit();
     }
 }

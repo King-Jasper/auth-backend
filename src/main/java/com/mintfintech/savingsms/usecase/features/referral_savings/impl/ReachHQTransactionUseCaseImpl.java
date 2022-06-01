@@ -88,7 +88,7 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
                 .transactionReference(savingsGoalTransactionEntityDao.generateTransactionReference())
                 .amount(amountForDebit)
                 .debitAccountNumber(debitAccount.getAccountNumber())
-                .narration("Course fee - ReactHQ")
+                .narration("ReactHQ Certificate fee")
                 .creditAccountNumber(applicationProperty.reactHQAccountNumber())
                 .build();
         MsClientResponse<FundTransferResponseCBS> msClientResponse = coreBankingServiceClient.processMintFundTransfer(requestCBS);
@@ -109,8 +109,8 @@ public class ReachHQTransactionUseCaseImpl implements ReachHQTransactionUseCase 
 
         if("00".equalsIgnoreCase(responseCBS.getResponseCode())) {
             AppUserEntity user = appUserEntityDao.getRecordById(customer.getCreator().getId());
-            String text = "Hi "+user.getFirstName()+", You have been debited N"+ MoneyFormatterUtil.priceWithDecimal(amountForDebit)+" for ReactHQ Course. Thanks for choosing Mintyn.";
-            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("ReactHQ Debit", text, user.getDeviceGcmNotificationToken());
+            String text = "Hi "+user.getFirstName()+", You have been debited N"+ MoneyFormatterUtil.priceWithDecimal(amountForDebit)+" for ReactHQ Certificate fee. Thanks for choosing Mintyn.";
+            PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("ReactHQ Certificate fee", text, user.getDeviceGcmNotificationToken());
             pushNotificationEvent.setUserId(user.getUserId());
             applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
         }
