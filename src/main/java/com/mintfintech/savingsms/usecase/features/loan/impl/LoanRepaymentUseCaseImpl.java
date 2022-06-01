@@ -12,6 +12,7 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.LienAccountRes
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -43,6 +44,7 @@ import java.util.Optional;
 public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
     private static final int NUMBER_OF_DAYS_UPFRONT = 2;
+    private final ApplicationProperty applicationProperty;
     private final LoanRequestEntityDao loanRequestEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
@@ -239,6 +241,8 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                 .recipient(appUser.getEmail())
                 .accountNumber(bankAccount.getAccountNumber())
                 .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_DUE, new EventModel<>(loanEmailEvent));
+        loanEmailEvent.setRecipient(applicationProperty.getLoanAdminEmail());
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REPAYMENT_DUE, new EventModel<>(loanEmailEvent));
     }
 
