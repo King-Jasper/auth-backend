@@ -171,7 +171,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         if (userRole.equals(CorporateRoleTypeConstant.INITIATOR)) {
             publishTransactionNotificationUseCase.sendPendingCorporateInvestmentNotification(mintAccount);
         }
-
         response.setMessage("Your investment has been logged for approval.");
         response.setRequestId(transactionRequestEntity.getRequestId());
         return response;
@@ -198,11 +197,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         if (debitAccount.getAvailableBalance().compareTo(investAmount) < 0) {
             throw new BusinessLogicConflictException("Sorry, you have insufficient fund for this transaction.");
-            /*InvestmentCreationResponse response = new InvestmentCreationResponse();
-            response.setInvestment(null);
-            response.setCreated(false);
-            response.setMessage("Insufficient Funds");
-            return response;*/
+        }
+        String referralCode = StringUtils.strip(StringUtils.defaultString(request.getReferralCode()));
+        if (!StringUtils.isEmpty(referralCode)) {
+            MsClientResponse<String> msClientResponse = affiliateServiceRestClient.validateReferralCode(referralCode);
+            if (msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
+                log.info("Provided referral code: {}", referralCode);
+                throw new BadRequestException("Referral code does not exist. Please ensure you entered the correct code or proceed without it.");
+            }
         }
 
         InvestmentEntity investment = InvestmentEntity.builder()
@@ -218,7 +220,6 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
                 .totalAmountInvested(investAmount)
                 .interestRate(investmentTenor.getInterestRate())
                 .build();
-
         investment = investmentEntityDao.saveRecord(investment);
         InvestmentTransactionEntity transactionEntity = fundInvestmentUseCase.fundInvestment(investment, debitAccount, investAmount);
 
@@ -231,28 +232,20 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
             response.setMessage("Sorry, account debit for investment funding failed.");
             return response;
         }
-        if (!StringUtils.isEmpty(request.getReferralCode())) {
-            String code = request.getReferralCode();
-            MsClientResponse<String> msClientResponse = affiliateServiceRestClient.validateReferralCode(code);
-            if (msClientResponse.getStatusCode() != HttpStatus.OK.value()) {
-                log.info("Provided referral code: {}", code);
-                throw new BadRequestException("Referral code does not exist. Please ensure you entered the correct code or proceed without it.");
-            }
-            if (!investmentEntityDao.getByReferralCodeAndAppUser(request.getReferralCode(),  appUser)) {
-                investment.setReferralCode(request.getReferralCode());
-                investmentEntityDao.saveRecord(investment);
-                publishTransactionNotificationUseCase.publishAffiliateReferral(investment);
-            }
-        }
-
         investment.setRecordStatus(RecordStatusConstant.ACTIVE);
         investment.setInvestmentStatus(InvestmentStatusConstant.ACTIVE);
         investment.setTotalAmountInvested(investAmount);
         investmentEntityDao.saveRecord(investment);
 
+        if (!StringUtils.isEmpty(referralCode)) {
+            if (!investmentEntityDao.getByReferralCodeAndAppUser(referralCode,  appUser)) {
+                investment.setReferralCode(referralCode);
+                investmentEntityDao.saveRecord(investment);
+                publishTransactionNotificationUseCase.publishAffiliateReferral(investment);
+            }
+        }
 
         sendInvestmentCreationEmail(investment, appUser);
-
         response.setInvestment(getInvestmentUseCase.toInvestmentModel(investment));
         response.setCreated(true);
         response.setMessage("Investment Created Successfully");

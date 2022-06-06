@@ -52,6 +52,12 @@ public class EmergencySavingsCreationRequestV1JSON {
                throw new BadRequestException("Invalid frequency type.");
             }
         }
+        if(name.length() < 3) {
+            throw new BadRequestException("Goal name cannot be less than 3 characters.");
+        }
+        if(name.length() > 25) {
+            throw new BadRequestException("Goal name cannot be less than 25 characters.");
+        }
         return EmergencySavingsCreationRequest.builder()
                 .frequency(frequency)
                 .fundingAmount(fundingAmount)

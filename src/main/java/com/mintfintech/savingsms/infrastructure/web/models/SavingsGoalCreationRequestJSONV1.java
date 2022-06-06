@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.infrastructure.web.models;
 
 import com.mintfintech.savingsms.usecase.data.request.SavingsGoalCreationRequest;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
@@ -47,6 +48,12 @@ public class SavingsGoalCreationRequestJSONV1 {
     private long durationId;
 
     public SavingsGoalCreationRequest toRequest() {
+        if(name.length() < 3) {
+            throw new BadRequestException("Goal name cannot be less than 3 characters.");
+        }
+        if(name.length() > 25) {
+            throw new BadRequestException("Goal name cannot be less than 25 characters.");
+        }
         return SavingsGoalCreationRequest.builder()
                 .debitAccountId(debitAccountId)
                 .durationId(durationId)

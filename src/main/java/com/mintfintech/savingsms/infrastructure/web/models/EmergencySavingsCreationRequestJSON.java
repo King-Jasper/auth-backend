@@ -52,6 +52,12 @@ public class EmergencySavingsCreationRequestJSON {
         if(startDate != null && startDate.isBefore(LocalDate.now())) {
             throw new BadRequestException("Start date cannot be before current date.");
         }
+        if(name.length() < 3) {
+            throw new BadRequestException("Goal name cannot be less than 3 characters.");
+        }
+        if(name.length() > 25) {
+            throw new BadRequestException("Goal name cannot be less than 25 characters.");
+        }
         return EmergencySavingsCreationRequest.builder()
                 .frequency(frequency)
                 .fundingAmount(fundingAmount)
