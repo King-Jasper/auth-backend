@@ -225,7 +225,7 @@ public class FundSavingsGoalUseCaseImpl implements FundSavingsGoalUseCase {
             publishTransactionNotificationUseCase.sendSavingsFundingSuccessNotification(transactionEntity);
             fundingResponse.setResponseCode("00");
             fundingResponse.setResponseMessage("Transaction processed successfully.");
-            createReferralRewardUseCase.processReferredCustomerReward(debitAccount.getMintAccount(), savingsGoal);
+           // createReferralRewardUseCase.processReferredCustomerReward(debitAccount.getMintAccount(), savingsGoal);
         }else if(transactionEntity.getTransactionStatus() == TransactionStatusConstant.PENDING) {
             fundingResponse.setResponseCode("01");
             fundingResponse.setResponseMessage("Transaction status pending. Please check your balance before trying again.");

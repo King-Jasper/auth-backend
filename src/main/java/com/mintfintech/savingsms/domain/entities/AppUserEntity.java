@@ -4,6 +4,7 @@ import lombok.*;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 /**
  * Created by jnwanya on
@@ -44,6 +45,8 @@ public class AppUserEntity extends AbstractBaseEntity<Long> {
     private String deviceGcmNotificationToken;
 
     private String residentialAddress;
+
+    private LocalDateTime lastLogin;
 
 
     public String getFirstName() {

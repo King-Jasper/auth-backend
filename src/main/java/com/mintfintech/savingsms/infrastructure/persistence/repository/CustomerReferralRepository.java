@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -29,6 +30,11 @@ public interface CustomerReferralRepository extends JpaRepository<CustomerReferr
                                                                        LocalDateTime start,
                                                                        LocalDateTime end,
                                                                        Pageable pageable);
+
+    long countByRecordStatusAndReferrerAndReferrerRewardedAndDateCreatedAfter(RecordStatusConstant status, MintAccountEntity referrer, boolean rewarded, LocalDateTime fromDate);
+
+    List<CustomerReferralEntity> getAllByRecordStatusAndReferrerAndReferrerRewardedAndDateCreatedAfterOrderByDateCreatedAsc(RecordStatusConstant status, MintAccountEntity referrer, boolean rewarded,
+                                                                                                       LocalDateTime fromDate, Pageable pageable);
 
 
     @Query("select c from CustomerReferralEntity c where c.dateCreated between ?1 and ?2 and c.referrerRewarded = false and " +

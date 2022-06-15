@@ -16,4 +16,6 @@ public class ReferralDetailsResponse {
     private long referrerAmount;
 
     private long referredAirtimeAmount;
+
+    private String referralMessage;
 }

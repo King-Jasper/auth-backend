@@ -1,14 +1,20 @@
 package com.mintfintech.savingsms.usecase.features.referral_savings.impl;
 
+import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerReferralEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
+import com.mintfintech.savingsms.domain.services.AccountsRestClient;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.events.incoming.UserDetailUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.response.ReferralDetailsResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.GetReferralRewardUseCase;
 import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -21,14 +27,17 @@ import java.util.List;
 public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
 
     private MintAccountEntityDao mintAccountEntityDao;
+    private AppUserEntityDao appUserEntityDao;
     private CustomerReferralEntityDao customerReferralEntityDao;
     private ApplicationProperty applicationProperty;
+    private AccountsRestClient accountsRestClient;
 
     @Override
     public ReferralDetailsResponse getReferralDetails(AuthenticatedUser authenticatedUser) {
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
-        LocalDateTime start = LocalDate.of(2022, 5, 14).atStartOfDay();
+        LocalDateTime start = LocalDate.of(2022, 6, 15).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
         BigDecimal totalEarnings = BigDecimal.ZERO;
 
@@ -41,11 +50,24 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 }
             }
         }
+        String username = appUser.getUsername();
+        if(StringUtils.isEmpty(username)) {
+            MsClientResponse<UserDetailUpdateEvent> msClientResponse = accountsRestClient.getUserDetails(appUser.getUserId());
+            if(msClientResponse.isSuccess()) {
+                UserDetailUpdateEvent updateEvent = msClientResponse.getData();
+                username = updateEvent.getUsername();
+                appUser.setUsername(username);
+                appUserEntityDao.saveRecord(appUser);
+            }
+        }
+        String message = "Get 2,000 Naira when your friend opens a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
+                "Your friend will get 300 Naira free airtime top-up, using your code";
         return ReferralDetailsResponse.builder()
                 .totalEarnings(totalEarnings)
                 .numberOfCustomersReferred(numberOfReferred)
-                .referredAirtimeAmount(applicationProperty.getReferredAirtimeAmount())
-                .referrerAmount(applicationProperty.getReferralRewardAmount())
+                .referredAirtimeAmount(300)
+                .referrerAmount(2000)
+                .referralMessage(message)
                 .build();
     }
 }

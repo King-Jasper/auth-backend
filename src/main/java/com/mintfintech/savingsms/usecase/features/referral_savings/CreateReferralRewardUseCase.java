@@ -13,6 +13,6 @@ import java.time.LocalDateTime;
 public interface CreateReferralRewardUseCase {
     void processCustomerReferralReward(CustomerReferralEvent referralEvent);
     void processReferredCustomerReward(MintAccountEntity mintAccountEntity, SavingsGoalEntity fundedSavingsGoal);
-    String processReferralByUser(String userId, String phoneNumber, int size, boolean overrideTime);
+    String processReferralByUser(String userId, String phoneNumber);
     void processReferralBackLog(LocalDateTime start, LocalDateTime end, int size);
 }

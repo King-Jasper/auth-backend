@@ -68,15 +68,14 @@ public class IndexController {
     }
 
     @GetMapping(value = "/referral-reward", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
-                                                                  @RequestParam(value = "userId", defaultValue = "", required = false) String userId,
-                                                                  @RequestParam(value = "phoneNumber", defaultValue = "", required = false) String phoneNumber,
-                                                                  @RequestParam(value = "overridePeriod", defaultValue = "false", required = false) boolean overridePeriod) {
-        String response = createReferralRewardUseCase.processReferralByUser(userId, phoneNumber, size, overridePeriod);
+    public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "userId", defaultValue = "", required = false) String userId,
+                                                                  @RequestParam(value = "phoneNumber", defaultValue = "", required = false) String phoneNumber) {
+        String response = createReferralRewardUseCase.processReferralByUser(userId, phoneNumber);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>(response);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
+    /*
     @GetMapping(value = "/referral-backlog-reward", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "size", defaultValue = "5", required = false) int size,
                                                                   @ApiParam(value="Format: dd/MM/yyyy")  @DateTimeFormat(pattern="dd/MM/yyyy HH:mm") @RequestParam(value = "fromDate", required = false) LocalDateTime fromDate,
@@ -84,7 +83,7 @@ public class IndexController {
         createReferralRewardUseCase.processReferralBackLog(fromDate, toDate, size);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed reward");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
+    }*/
 
     @GetMapping(value = "/interest-update", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> interestUpdate() {

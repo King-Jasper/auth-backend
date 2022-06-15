@@ -89,7 +89,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         }
     }
 
-    public String processReferralByUser(String userId, String phoneNumber,  int size, boolean overrideTime) {
+    public String processReferralByUser(String userId, String phoneNumber) {
 
         LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
@@ -111,6 +111,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         AppUserEntity appUserEntity = appUserEntityOpt.get();
         MintAccountEntity referral = appUserEntity.getPrimaryAccount();
 
+        processNewProgramReferralReward(referral, appUserEntity);
+
+        return "";
+
+
+        /*
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
 
@@ -136,7 +142,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
            }
         }
-
         rewardStats = customerReferralEntityDao.getReferralRewardStatOnAccount(referral);
         totalProcessed = 0; totalUnProcessed = 0;
         for(ReferralRewardStat rewardStat: rewardStats) {
@@ -151,6 +156,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         String afterProcessing = String.format("Total Referrals - %d, Total Processed - %d", totalRecords, totalProcessed);
 
         return String.format("BEFORE UPDATE : %s | AFTER UPDATE : %s", beforeProcessing, afterProcessing);
+        */
     }
 
     private boolean processReferralPayment(CustomerReferralEntity record, SavingsGoalEntity referralSavingsGoalEntity) {
@@ -237,12 +243,12 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         //long accountReferred = customerReferralEntityDao.totalReferralRecordsForAccount(referralAccount);
         Optional<MintAccountEntity> referredOpt = mintAccountEntityDao.findAccountByAccountId(referralEvent.getAccountId());
         if(!referredOpt.isPresent()) {
-            log.info("referred detail not found - {}", referralEvent.toString());
+            log.info("referred detail not found - {}", referralEvent);
             return;
         }
         MintAccountEntity referredAccount = referredOpt.get();
         if(customerReferralEntityDao.recordExistForReferredAccount(referredAccount)) {
-            log.info("referral record is already created. {}", referralEvent.toString());
+            log.info("referral record is already created. {}", referralEvent);
             return;
         }
         CustomerReferralEntity referralEntity = CustomerReferralEntity.builder()
@@ -256,6 +262,8 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
                 .referrerRewardAmount(new BigDecimal(applicationProperty.getReferralRewardAmount()))
                 .build();
         referralEntity = customerReferralEntityDao.saveRecord(referralEntity);
+
+        processNewProgramReferralReward(referralAccount, userEntity);
 
         /*if(accountReferred >= 10) {
            // BigDecimal total = referralSavingsGoalEntity.getTotalAmountWithdrawn() == null ? BigDecimal.ZERO: referralSavingsGoalEntity.getTotalAmountWithdrawn();
@@ -306,6 +314,46 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
             referralEntity.setReferredRewarded(true);
             customerReferralEntityDao.saveRecord(referralEntity);
         }*/
+    }
+
+    private void processNewProgramReferralReward(MintAccountEntity referrer, AppUserEntity user) {
+        // 666 + 667 + 667
+        LocalDateTime newReferralProgramDate = LocalDate.of(2022, 6, 13).atStartOfDay();
+        long referrals =  customerReferralEntityDao.countUnprocessedReferralRecordsForAccount(referrer, newReferralProgramDate);
+        log.info("Total rewarded referral from date - {} is {}", newReferralProgramDate, referrals);
+        if(referrals < 3) {
+            return;
+        }
+        List<CustomerReferralEntity> unrewardedReferredAccount = customerReferralEntityDao.getUnprocessedReferralRecordsForAccount(referrer, newReferralProgramDate, 3);
+        if(unrewardedReferredAccount.size() < 3) {
+            return;
+        }
+        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referrer, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+        SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referrer, user));
+        if(referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+            referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+            referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+            savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
+        }
+        BigDecimal rewardAmount = BigDecimal.valueOf(2000.00);
+        SavingsGoalFundingResponse fundingResponse = referralGoalFundingUseCase.fundReferralSavingsGoal(referralSavingsGoalEntity, rewardAmount);
+        if("00".equalsIgnoreCase(fundingResponse.getResponseCode())) {
+            for(int i = 0; i < 3; i++) {
+                CustomerReferralEntity record = unrewardedReferredAccount.get(i);
+                record.setReferrerRewarded(true);
+                if(i == 0) {
+                    record.setReferrerRewardAmount(BigDecimal.valueOf(666.00));
+                }else{
+                    record.setReferrerRewardAmount(BigDecimal.valueOf(667.00));
+                }
+                customerReferralEntityDao.saveRecord(record);
+            }
+            String code = unrewardedReferredAccount.get(0).getReferralCode();
+            String message  = "You have been rewarded N"+ MoneyFormatterUtil.priceWithoutDecimal(rewardAmount)+" amount. " +
+                    "Your 3 friends have signed up using your code("+code+").";
+            String title = "Referral Bonus Reward";
+            pushNotificationService.sendMessage(user, title, message);
+        }
     }
 
     @Async

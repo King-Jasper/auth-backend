@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 import com.mintfintech.savingsms.domain.dao.CustomerReferralEntityDao;
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.ReferralRewardStat;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.CustomerReferralRepository;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,17 @@ public class CustomerReferralEntityDaoImpl extends CrudDaoImpl<CustomerReferralE
     @Override
     public List<ReferralRewardStat> getReferralRewardStatOnAccount(MintAccountEntity accountEntity) {
         return repository.getReferralStatisticsForAccount(accountEntity);
+    }
+
+    @Override
+    public long countUnprocessedReferralRecordsForAccount(MintAccountEntity referral, LocalDateTime fromDate) {
+        return repository.countByRecordStatusAndReferrerAndReferrerRewardedAndDateCreatedAfter(RecordStatusConstant.ACTIVE, referral, false, fromDate);
+    }
+
+    @Override
+    public List<CustomerReferralEntity> getUnprocessedReferralRecordsForAccount(MintAccountEntity referral, LocalDateTime fromDate, int size) {
+        Pageable pageable = PageRequest.of(0, size);
+        return repository.getAllByRecordStatusAndReferrerAndReferrerRewardedAndDateCreatedAfterOrderByDateCreatedAsc(RecordStatusConstant.ACTIVE, referral, false, fromDate, pageable);
     }
 
     @Override

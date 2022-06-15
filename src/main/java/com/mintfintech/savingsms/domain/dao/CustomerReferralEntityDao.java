@@ -18,6 +18,8 @@ public interface CustomerReferralEntityDao extends CrudDao<CustomerReferralEntit
     boolean recordExistForAccounts(MintAccountEntity referral, MintAccountEntity referred);
     Optional<CustomerReferralEntity> findUnprocessedReferredAccountReward(MintAccountEntity referred);
     long totalReferralRecordsForAccount(MintAccountEntity referral);
+    long countUnprocessedReferralRecordsForAccount(MintAccountEntity referral, LocalDateTime fromDate);
+    List<CustomerReferralEntity> getUnprocessedReferralRecordsForAccount(MintAccountEntity referral, LocalDateTime fromDate, int size);
     List<ReferralRewardStat> getReferralRewardStatOnAccount(MintAccountEntity accountEntity);
     List<CustomerReferralEntity> getUnprocessedRecordByReferral(MintAccountEntity referral, LocalDateTime start, LocalDateTime end, int size);
     List<CustomerReferralEntity> getUnprocessedRecordByReferral(LocalDateTime start, LocalDateTime end, int size, BigDecimal savingsMinimumBalance);
