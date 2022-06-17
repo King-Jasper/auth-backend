@@ -61,7 +61,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
             }
         }
         String message = "Get 2,000 Naira when three(3) of your friends open a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
-                "Your friend will get 300 Naira free airtime top-up, using your code";
+                "Your friend will get 300 Naira free airtime top-up, using your code.";
         return ReferralDetailsResponse.builder()
                 .totalEarnings(totalEarnings)
                 .numberOfCustomersReferred(numberOfReferred)
