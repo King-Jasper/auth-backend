@@ -37,7 +37,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
-        LocalDateTime start = LocalDate.of(2022, 6, 15).atStartOfDay();
+        LocalDateTime start = LocalDate.of(2022, 6, 21).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
         BigDecimal totalEarnings = BigDecimal.ZERO;
 
@@ -60,8 +60,11 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 appUserEntityDao.saveRecord(appUser);
             }
         }
+        /*
         String message = "Get 2,000 Naira when three(3) of your friends open a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
                 "Your friend will get 300 Naira free airtime top-up, using your code.";
+        */
+        String message = "We are coming back big and better.";
         return ReferralDetailsResponse.builder()
                 .totalEarnings(totalEarnings)
                 .numberOfCustomersReferred(numberOfReferred)
