@@ -37,7 +37,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
-        LocalDateTime start = LocalDate.of(2022, 6, 21).atStartOfDay();
+        LocalDateTime start = LocalDate.of(2022, 6, 24).atStartOfDay();
         LocalDateTime end = LocalDateTime.now();
         BigDecimal totalEarnings = BigDecimal.ZERO;
 
