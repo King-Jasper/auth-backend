@@ -14,5 +14,6 @@ public interface CreateReferralRewardUseCase {
     void processCustomerReferralReward(CustomerReferralEvent referralEvent);
     void processReferredCustomerReward(MintAccountEntity mintAccountEntity, SavingsGoalEntity fundedSavingsGoal);
     String processReferralByUser(String userId, String phoneNumber);
+    String processReferralByUserOld(String userId, String phoneNumber,  int size, boolean overrideTime);
     void processReferralBackLog(LocalDateTime start, LocalDateTime end, int size);
 }
