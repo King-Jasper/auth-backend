@@ -22,5 +22,7 @@ public class ReferralDetailsResponse {
 
     private BigDecimal availableBalance;
 
+    private String noWithdrawalErrorMessage;
+
     private SavingsGoalModel referralPurse;
 }

@@ -69,11 +69,13 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
             }
         }
         BigDecimal availableBalance = BigDecimal.ZERO;
+        String withdrawalError = "Sorry, you have zero available balance for withdrawal.";
         SavingsGoalModel referralPurse = null;
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(mintAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         if(goalEntityOpt.isPresent()) {
             referralPurse = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(goalEntityOpt.get());
             availableBalance = referralPurse.getSavingsBalance();
+            withdrawalError = referralPurse.getNoWithdrawalErrorMessage();
         }
         /*
         String message = "Get 2,000 Naira when three(3) of your friends open a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
@@ -88,6 +90,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 .referralMessage(message)
                 .availableBalance(availableBalance)
                 .referralPurse(referralPurse)
+                .noWithdrawalErrorMessage(withdrawalError)
                 .build();
     }
 }
