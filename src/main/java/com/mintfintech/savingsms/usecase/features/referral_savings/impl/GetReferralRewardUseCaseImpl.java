@@ -75,7 +75,9 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
         if(goalEntityOpt.isPresent()) {
             referralPurse = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(goalEntityOpt.get());
             availableBalance = referralPurse.getSavingsBalance();
-            withdrawalError = referralPurse.getNoWithdrawalErrorMessage();
+            if(availableBalance.compareTo(BigDecimal.ZERO) > 0) {
+                withdrawalError = referralPurse.getNoWithdrawalErrorMessage();
+            }
         }
         /*
         String message = "Get 2,000 Naira when three(3) of your friends open a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
