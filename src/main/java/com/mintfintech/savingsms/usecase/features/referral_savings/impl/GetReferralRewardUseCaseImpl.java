@@ -3,16 +3,21 @@ package com.mintfintech.savingsms.usecase.features.referral_savings.impl;
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.CustomerReferralEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.CustomerReferralEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.AccountsRestClient;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.data.events.incoming.UserDetailUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.response.ReferralDetailsResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.GetReferralRewardUseCase;
+import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
@@ -21,6 +26,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Named
 @AllArgsConstructor
@@ -31,6 +37,8 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
     private CustomerReferralEntityDao customerReferralEntityDao;
     private ApplicationProperty applicationProperty;
     private AccountsRestClient accountsRestClient;
+    private final SavingsGoalEntityDao savingsGoalEntityDao;
+    private GetSavingsGoalUseCase getSavingsGoalUseCase;
 
     @Override
     public ReferralDetailsResponse getReferralDetails(AuthenticatedUser authenticatedUser) {
@@ -60,6 +68,17 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 appUserEntityDao.saveRecord(appUser);
             }
         }
+        BigDecimal availableBalance = BigDecimal.ZERO;
+        String withdrawalError = "Sorry, you have zero available balance for withdrawal.";
+        SavingsGoalModel referralPurse = null;
+        Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(mintAccount, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
+        if(goalEntityOpt.isPresent()) {
+            referralPurse = getSavingsGoalUseCase.fromSavingsGoalEntityToModel(goalEntityOpt.get());
+            availableBalance = referralPurse.getSavingsBalance();
+            if(availableBalance.compareTo(BigDecimal.ZERO) > 0) {
+                withdrawalError = referralPurse.getNoWithdrawalErrorMessage();
+            }
+        }
         /*
         String message = "Get 2,000 Naira when three(3) of your friends open a free Mintyn current account using your code - "+username.toUpperCase()+".\n\n" +
                 "Your friend will get 300 Naira free airtime top-up, using your code.";
@@ -71,6 +90,9 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 .referredAirtimeAmount(300)
                 .referrerAmount(2000)
                 .referralMessage(message)
+                .availableBalance(availableBalance)
+                .referralPurse(referralPurse)
+                .noWithdrawalErrorMessage(withdrawalError)
                 .build();
     }
 }

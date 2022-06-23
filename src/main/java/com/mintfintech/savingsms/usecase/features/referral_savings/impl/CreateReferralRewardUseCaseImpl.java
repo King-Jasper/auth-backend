@@ -114,9 +114,30 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         processNewProgramReferralReward(referral, appUserEntity);
 
         return "";
+    }
 
+    public String processReferralByUserOld(String userId, String phoneNumber,  int size, boolean overrideTime) {
 
-        /*
+        LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
+        LocalDateTime end = LocalDateTime.now();
+
+        Optional<AppUserEntity> appUserEntityOpt;
+        if(StringUtils.isNotEmpty(phoneNumber)) {
+            if(!phoneNumber.startsWith("+")) {
+                phoneNumber = PhoneNumberUtils.toInternationalFormat(phoneNumber);
+            }
+            log.info("Phone Number - {}",phoneNumber);
+            appUserEntityOpt = appUserEntityDao.findUserByPhoneNumber(phoneNumber);
+        }else {
+            appUserEntityOpt = appUserEntityDao.findAppUserByUserId(userId);
+        }
+        if(!appUserEntityOpt.isPresent()) {
+            log.info("User Id not found.");
+            return "User not found";
+        }
+        AppUserEntity appUserEntity = appUserEntityOpt.get();
+        MintAccountEntity referral = appUserEntity.getPrimaryAccount();
+
         Optional<SavingsGoalEntity> goalEntityOpt = savingsGoalEntityDao.findFirstSavingsByTypeIgnoreStatus(referral, SavingsGoalTypeConstant.MINT_REFERRAL_EARNINGS);
         SavingsGoalEntity referralSavingsGoalEntity = goalEntityOpt.orElseGet(() -> createSavingsGoal(referral, appUserEntity));
 
@@ -135,13 +156,14 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         List<CustomerReferralEntity> referralList = customerReferralEntityDao.getUnprocessedRecordByReferral(referral, start, end, size);
         log.info("LIST PULLED - {}, start - {}, end - {}", referralList.size(), start, end);
         for(CustomerReferralEntity record : referralList) {
-           boolean processed =  processReferralPayment(record, referralSavingsGoalEntity);
-           if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
-               referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
-               referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
-               savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
-           }
+            boolean processed =  processReferralPayment(record, referralSavingsGoalEntity);
+            if(processed && referralSavingsGoalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+                referralSavingsGoalEntity.setRecordStatus(RecordStatusConstant.ACTIVE);
+                referralSavingsGoalEntity.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+                savingsGoalEntityDao.saveRecord(referralSavingsGoalEntity);
+            }
         }
+
         rewardStats = customerReferralEntityDao.getReferralRewardStatOnAccount(referral);
         totalProcessed = 0; totalUnProcessed = 0;
         for(ReferralRewardStat rewardStat: rewardStats) {
@@ -156,7 +178,6 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
         String afterProcessing = String.format("Total Referrals - %d, Total Processed - %d", totalRecords, totalProcessed);
 
         return String.format("BEFORE UPDATE : %s | AFTER UPDATE : %s", beforeProcessing, afterProcessing);
-        */
     }
 
     private boolean processReferralPayment(CustomerReferralEntity record, SavingsGoalEntity referralSavingsGoalEntity) {
