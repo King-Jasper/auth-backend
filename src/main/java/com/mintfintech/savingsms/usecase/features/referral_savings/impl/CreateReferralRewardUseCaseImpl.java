@@ -119,7 +119,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
     public String processReferralByUserOld(String userId, String phoneNumber,  int size, boolean overrideTime) {
 
         LocalDateTime start = LocalDate.of(2021, 3, 14).atStartOfDay();
-        LocalDateTime end = LocalDateTime.now();
+        LocalDateTime end = LocalDate.of(2022, 6, 24).atStartOfDay();
 
         Optional<AppUserEntity> appUserEntityOpt;
         if(StringUtils.isNotEmpty(phoneNumber)) {
