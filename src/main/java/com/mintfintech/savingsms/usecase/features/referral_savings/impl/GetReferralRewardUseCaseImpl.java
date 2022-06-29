@@ -84,6 +84,10 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 "Your friend will get 300 Naira free airtime top-up, using your code.";
         */
         String message = "We are coming back big and better.";
+        String shareText = "I just got 2,000 Naira reward getting three of my friend to open a Mintyn account with my code -"+username+"-. " +
+                "You will get 300 Naira airtime Instantly when you open account using my referral link (https://app.mintyn.com/sign-up?referral="+username+") " +
+                "and 2,000 when you refer three friends to open free current account.";
+        
         return ReferralDetailsResponse.builder()
                 .totalEarnings(totalEarnings)
                 .numberOfCustomersReferred(numberOfReferred)
@@ -93,6 +97,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
                 .availableBalance(availableBalance)
                 .referralPurse(referralPurse)
                 .noWithdrawalErrorMessage(withdrawalError)
+                .shareText(shareText)
                 .build();
     }
 }
