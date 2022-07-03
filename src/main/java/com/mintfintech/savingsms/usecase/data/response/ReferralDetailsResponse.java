@@ -24,5 +24,7 @@ public class ReferralDetailsResponse {
 
     private String noWithdrawalErrorMessage;
 
+    private String shareText;
+
     private SavingsGoalModel referralPurse;
 }
