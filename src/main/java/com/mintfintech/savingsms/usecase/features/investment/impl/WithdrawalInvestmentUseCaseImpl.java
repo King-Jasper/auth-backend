@@ -652,7 +652,11 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         String reference = investmentTransactionEntityDao.generateTransactionReference();
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
-
+        if (investment.getAmountInvested().compareTo(new BigDecimal(100000)) < 0) {
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+            investmentWithdrawalEntityDao.saveRecord(withdrawal);
+            return;
+        }
         BigDecimal taxAmount = withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1));
 
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
