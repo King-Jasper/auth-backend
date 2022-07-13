@@ -652,11 +652,6 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         String reference = investmentTransactionEntityDao.generateTransactionReference();
         InvestmentEntity investment = investmentEntityDao.getRecordById(withdrawal.getInvestment().getId());
         MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getRecordById(withdrawal.getCreditAccount().getId());
-        if (investment.getAmountInvested().compareTo(new BigDecimal(100000)) < 0) {
-            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
-            investmentWithdrawalEntityDao.saveRecord(withdrawal);
-            return;
-        }
         BigDecimal taxAmount = withdrawal.getInterestBeforeWithdrawal().multiply(BigDecimal.valueOf(0.1));
 
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
@@ -670,6 +665,15 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionDescription("Withholding Tax Charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
+        if (investment.getTotalAmountInvested().compareTo(new BigDecimal(100000)) <= 0) {
+            transaction.setTransactionStatus(TransactionStatusConstant.CANCELLED);
+            investmentTransactionEntityDao.saveRecord(transaction);
+            withdrawal.setWithholdingTaxStatus(WithholdingTaxStatusConstant.NOT_CHARGE);
+            withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
+            withdrawal.setWithholdingTaxCharge(transaction);
+            investmentWithdrawalEntityDao.saveRecord(withdrawal);
+            return;
+        }
         withdrawal.setWithholdingTaxCharge(transaction);
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_TAX_PAYMENT);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);
@@ -706,6 +710,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
                 if (withdrawal.getWithdrawalType().equals(InvestmentWithdrawalTypeConstant.FULL_PRE_MATURITY_WITHDRAWAL)) {
                     withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
                 }
+                withdrawal.setWithholdingTaxStatus(WithholdingTaxStatusConstant.CHARGED);
                 transaction.setTransactionStatus(TransactionStatusConstant.SUCCESSFUL);
 
             } else {

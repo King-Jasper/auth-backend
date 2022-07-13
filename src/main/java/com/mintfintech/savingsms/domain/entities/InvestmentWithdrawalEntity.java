@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.domain.entities;
 
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.InvestmentWithdrawalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.WithholdingTaxStatusConstant;
 import lombok.*;
 
 import javax.persistence.*;
@@ -72,6 +73,10 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
 
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     private MintBankAccountEntity creditAccount;
+
+    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "String default NOT_APPLICABLE", nullable = false)
+    private WithholdingTaxStatusConstant withholdingTaxStatus;
 
 
 }
