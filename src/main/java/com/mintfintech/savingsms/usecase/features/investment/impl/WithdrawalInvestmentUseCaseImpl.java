@@ -674,6 +674,8 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             investmentWithdrawalEntityDao.saveRecord(withdrawal);
             return;
         }
+
+        withdrawal.setWithholdingTaxStatus(WithholdingTaxStatusConstant.CHARGED);
         withdrawal.setWithholdingTaxCharge(transaction);
         withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PROCESSING_TAX_PAYMENT);
         withdrawal = investmentWithdrawalEntityDao.saveRecord(withdrawal);

@@ -74,9 +74,9 @@ public class InvestmentWithdrawalEntity extends AbstractBaseEntity<Long>{
     @ManyToOne(optional = true, fetch = FetchType.LAZY)
     private MintBankAccountEntity creditAccount;
 
+    @Builder.Default
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "String default NOT_APPLICABLE", nullable = false)
-    private WithholdingTaxStatusConstant withholdingTaxStatus;
+    private WithholdingTaxStatusConstant withholdingTaxStatus = WithholdingTaxStatusConstant.NOT_APPLICABLE;
 
 
 }
