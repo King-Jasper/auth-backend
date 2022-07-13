@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.features.loan.business_loan;
 
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.HairFinanceLoanResponse;
 
 import java.math.BigDecimal;
 
@@ -11,4 +12,5 @@ import java.math.BigDecimal;
  */
 public interface CreateBusinessLoanUseCase {
     BusinessLoanResponse createRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId);
+    HairFinanceLoanResponse createHairFinanceLoanRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId);
 }

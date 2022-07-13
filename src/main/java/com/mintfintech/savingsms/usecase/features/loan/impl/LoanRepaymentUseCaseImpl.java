@@ -20,6 +20,7 @@ import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanRepaymentEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanUpdateEvent;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
@@ -208,6 +209,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
 
+            boolean completed = false;
             if (msClientResponse.getStatusCode() == HttpStatus.OK.value() && msClientResponse.isSuccess()) {
                 LoanDetailResponseCBS responseCBS = msClientResponse.getData();
                 System.out.println("paid off - "+ (responseCBS.getTotalOutstandingAmount().compareTo(BigDecimal.ZERO) == 0));
@@ -215,10 +217,20 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
                     loan.setAmountPaid(responseCBS.getTotalAmountPaid());
                     loan.setRepaymentStatus(LoanRepaymentStatusConstant.COMPLETED);
                     loan.setActiveLoan(false);
+                    completed = true;
                 }
                 loan.setAmountCollectedOnBankOne(responseCBS.getTotalAmountPaid());
                 loanRequestEntityDao.saveRecord(loan);
+                if(completed) {
+                    LoanUpdateEvent updateEvent = LoanUpdateEvent.builder()
+                            .loanId(loan.getLoanId())
+                            .loanType(loan.getLoanType().name())
+                            .updateType(LoanUpdateEvent.UpdateType.REPAID.name())
+                            .build();
+                    applicationEventService.publishEvent(ApplicationEventService.EventType.LOAN_UPDATE, new EventModel<>(updateEvent));
+                }
             }
+
         }
     }
 

@@ -14,7 +14,9 @@ import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.HairFinanceLoanResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.CreateBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import com.mintfintech.savingsms.utils.MintStringUtil;
@@ -104,5 +106,45 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
 
         return getBusinessLoanUseCase.fromEntityToResponse(loanRequestEntity);
+    }
+
+    @Override
+    public HairFinanceLoanResponse createHairFinanceLoanRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId) {
+        MintAccountEntity accountEntity = mintAccountEntityDao.findAccountByAccountId(authenticatedUser.getAccountId())
+                .orElseThrow(() -> new BadRequestException("Invalid merchant account Id."));
+        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, accountEntity)
+                .orElseThrow(() -> new BadRequestException("Invalid merchant bank account Id"));
+
+        if(!creditAccount.getMintAccount().getId().equals(accountEntity.getId())) {
+            throw new BadRequestException("Invalid merchant bank account Id");
+        }
+
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.HAIR_FINANCE_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
+        BigDecimal loanInterest = loanAmount.multiply(BigDecimal.valueOf(businessRate / 100.0));
+
+        loanInterest = BigDecimal.valueOf(loanInterest.doubleValue() * durationInMonths);
+
+        LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
+                .bankAccount(creditAccount)
+                .loanId(loanRequestEntityDao.generateLoanId())
+                .interestRate(businessRate)
+                .loanAmount(loanAmount)
+                .repaymentAmount(loanAmount.add(loanInterest))
+                .activeLoan(true)
+                .requestedBy(accountEntity.getCreator())
+                .loanInterest(loanInterest)
+                .loanType(LoanTypeConstant.HAIR_FINANCE)
+                .durationInMonths(durationInMonths)
+                .build();
+        loanRequestEntity = loanRequestEntityDao.saveRecord(loanRequestEntity);
+
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .recipient(applicationProperty.getLoanAdminEmail())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
+
+        return getBusinessLoanUseCase.fromEntityToHairFinanceResponse(loanRequestEntity);
     }
 }
