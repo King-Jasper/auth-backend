@@ -667,6 +667,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
         if (investment.getTotalAmountInvested().compareTo(new BigDecimal(100000)) <= 0) {
             transaction.setTransactionStatus(TransactionStatusConstant.CANCELLED);
+            transaction.setRecordStatus(RecordStatusConstant.INACTIVE);
             investmentTransactionEntityDao.saveRecord(transaction);
             withdrawal.setWithholdingTaxStatus(WithholdingTaxStatusConstant.NOT_CHARGE);
             withdrawal.setWithdrawalStage(InvestmentWithdrawalStageConstant.PENDING_PRINCIPAL_TO_CUSTOMER);
