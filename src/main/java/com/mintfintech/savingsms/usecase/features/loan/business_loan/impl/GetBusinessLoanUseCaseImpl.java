@@ -2,21 +2,22 @@ package com.mintfintech.savingsms.usecase.features.loan.business_loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
 import com.mintfintech.savingsms.domain.dao.SettingsEntityDao;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SettingsNameTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
-import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
-import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
+import com.mintfintech.savingsms.usecase.data.response.*;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.hibernate.Hibernate;
 import org.springframework.data.domain.Page;
 
@@ -34,11 +35,13 @@ import java.util.stream.Collectors;
  * Created by jnwanya on
  * Sat, 26 Feb, 2022
  */
+@Slf4j
 @Named
 @AllArgsConstructor
 public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
 
     private final MintAccountEntityDao mintAccountEntityDao;
+    private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final LoanRequestEntityDao loanRequestEntityDao;
     private final ApplicationProperty applicationProperty;
     private final SettingsEntityDao settingsEntityDao;
@@ -102,5 +105,40 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
             response.setDueDate(null);
         }
         return response;
+    }
+
+    @Override
+    public HairFinanceLoanResponse fromEntityToHairFinanceResponse(LoanRequestEntity loanRequest) {
+        if(!Hibernate.isInitialized(loanRequest)) {
+            loanRequest = loanRequestEntityDao.getRecordById(loanRequest.getId());
+        }
+        HairFinanceLoanResponse response = HairFinanceLoanResponse.builder()
+                .loanAmount(loanRequest.getLoanAmount())
+                .loanId(loanRequest.getLoanId())
+                .dateApplied(loanRequest.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
+                .durationInMonths(loanRequest.getDurationInMonths())
+                .approvalStatus(loanRequest.getApprovalStatus().name())
+                .repaymentStatus(loanRequest.getRepaymentStatus().name())
+                .repaymentAmount(loanRequest.getRepaymentAmount())
+                .amountPaid(loanRequest.getAmountPaid())
+                .interestRate(loanRequest.getInterestRate())
+                .build();
+        if(loanRequest.getApprovalStatus() == ApprovalStatusConstant.APPROVED) {
+            response.setDateDisbursed(loanRequest.getApprovedDate().format(DateTimeFormatter.ISO_DATE_TIME));
+            response.setDueDate(loanRequest.getRepaymentDueDate().format(DateTimeFormatter.ISO_DATE_TIME));
+        }
+        return response;
+    }
+
+    @Override
+    public HairFinanceLoanResponse getHairFinanceLoanDetail(AuthenticatedUser currentUser, String loanId) {
+        LoanRequestEntity loanRequest = loanRequestEntityDao.findByLoanId(loanId).orElseThrow(() ->  new NotFoundException("Invalid Loan Id."));
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getRecordById(loanRequest.getBankAccount().getId());
+        if(!mintAccount.getId().equals(creditAccount.getMintAccount().getId())) {
+            log.info("Loan request does not belong to mint account");
+            throw new NotFoundException("Invalid Loan Id.");
+        }
+        return fromEntityToHairFinanceResponse(loanRequest);
     }
 }

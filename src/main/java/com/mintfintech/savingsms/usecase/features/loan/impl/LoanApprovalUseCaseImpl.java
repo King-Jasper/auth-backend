@@ -13,6 +13,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.incoming.UserDetailUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanApprovalEmailEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEvent;
+import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.response.LoanManager;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
@@ -107,6 +108,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 PushNotificationEvent pushNotificationEvent = new PushNotificationEvent("New Savings", text, debtor.getDeviceGcmNotificationToken());
                 pushNotificationEvent.setUserId(debtor.getUserId());
                 applicationEventService.publishEvent(ApplicationEventService.EventType.PUSH_NOTIFICATION_TOKEN, new EventModel<>(pushNotificationEvent));
+
+                LoanUpdateEvent updateEvent = LoanUpdateEvent.builder()
+                        .loanId(loan.getLoanId())
+                        .loanType(loan.getLoanType().name())
+                        .updateType(LoanUpdateEvent.UpdateType.DISBURSED.name())
+                        .build();
+                applicationEventService.publishEvent(ApplicationEventService.EventType.LOAN_UPDATE, new EventModel<>(updateEvent));
             }
         }
     }
@@ -153,7 +161,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             if(!loanManager.isBusinessManager()) {
                 throw new BusinessLogicConflictException("Request aborted. Only a business manager can approve this request.");
             }
-            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS || loanRequest.getLoanType() == LoanTypeConstant.HAIR_FINANCE) {
                 description = "Loan approved by Business manager";
                 loanRequest.setReviewStage(LoanReviewStageConstant.THIRD_REVIEW);
                 loanRequestEntityDao.saveRecord(loanRequest);
@@ -180,7 +188,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .accountNumber(bankAccount.getAccountNumber())
                 .amount(loanRequest.getLoanAmount().intValue())
                 .build();
-        if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+        if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS || loanRequest.getLoanType() == LoanTypeConstant.HAIR_FINANCE) {
             request.setDurationInMonths(loanRequest.getDurationInMonths());
         }
 
@@ -194,7 +202,7 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             LoanApplicationResponseCBS responseCBS = msClientResponse.getData();
 
             LocalDateTime repaymentDate;
-            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS) {
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS || loanRequest.getLoanType() == LoanTypeConstant.HAIR_FINANCE) {
                 repaymentDate = LocalDateTime.now().plusMonths(loanRequest.getDurationInMonths());
             }else {
                 repaymentDate = LocalDateTime.now().plusDays(applicationProperty.getPayDayLoanMaxTenor());
@@ -253,7 +261,6 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
         reviewLogEntity.setDescription(description);
         loanReviewLogEntityDao.saveRecord(reviewLogEntity);
 
-
         loanRequest.setApprovalStatus(ApprovalStatusConstant.DECLINED);
         loanRequest.setRepaymentStatus(LoanRepaymentStatusConstant.CANCELLED);
         loanRequest.setApproveByName(loanManager.getReviewerName());
@@ -270,6 +277,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .reason(reason)
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_DECLINED, new EventModel<>(event));
+
+        LoanUpdateEvent updateEvent = LoanUpdateEvent.builder()
+                .loanId(loanRequest.getLoanId())
+                .loanType(loanRequest.getLoanType().name())
+                .updateType(LoanUpdateEvent.UpdateType.DECLINED.name())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.LOAN_UPDATE, new EventModel<>(updateEvent));
     }
 
     private void sendLoanApprovalEmail(LoanRequestEntity loanRequest, AppUserEntity appUser, MintBankAccountEntity bankAccount) {
@@ -289,6 +303,13 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .currency("NGN")
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_APPROVED, new EventModel<>(event));
+
+        LoanUpdateEvent updateEvent = LoanUpdateEvent.builder()
+                .loanId(loanRequest.getLoanId())
+                .loanType(loanRequest.getLoanType().name())
+                .updateType(LoanUpdateEvent.UpdateType.APPROVED.name())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.LOAN_UPDATE, new EventModel<>(updateEvent));
     }
 
     private void updateResidentialAddress(AppUserEntity appUserEntity) {

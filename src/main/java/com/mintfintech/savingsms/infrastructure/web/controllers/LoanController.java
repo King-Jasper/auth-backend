@@ -204,6 +204,7 @@ public class LoanController {
         ApiResponseJSON<LoanRequestScheduleResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
     @ApiOperation(value = "Create a business loan.")
     @PostMapping(value = "business/loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<BusinessLoanResponse>> businessLoanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,

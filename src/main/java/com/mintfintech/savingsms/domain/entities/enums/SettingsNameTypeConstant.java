@@ -7,5 +7,6 @@ package com.mintfintech.savingsms.domain.entities.enums;
 public enum SettingsNameTypeConstant {
     REFERRAL_REWARD_ENABLED,
     BUSINESS_LOAN_RATE,
-    BUSINESS_LOAN_ACCESS_ACCOUNT_IDS
+    BUSINESS_LOAN_ACCESS_ACCOUNT_IDS,
+    HAIR_FINANCE_LOAN_RATE,
 }
