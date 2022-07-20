@@ -40,7 +40,7 @@ import java.time.LocalDate;
 @FieldDefaults(makeFinal = true)
 @Api(tags = "Intranet Service Endpoints", description = "Services for intra microservice service consumption")
 @RestController
-@RequestMapping(value = "/api/v1/intranet", headers = {"Authorization", "x-request-client-key"})
+@RequestMapping(value = "/intranet/api/v1", headers = {"Authorization", "x-request-client-key"})
 @AllArgsConstructor
 public class IntranetController {
 
