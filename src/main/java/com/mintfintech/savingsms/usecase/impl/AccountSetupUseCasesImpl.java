@@ -236,4 +236,34 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
             corporateUserEntityDao.saveRecord(corporateUserEntity);
         }
     }
+
+    @Override
+    public void updateNameOnAccount(ProfileNameUpdateEvent updateEvent) {
+        if(StringUtils.isNotEmpty(updateEvent.getUserId()) && StringUtils.isNotEmpty(updateEvent.getFirstName()) && StringUtils.isNotEmpty(updateEvent.getLastName())) {
+            Optional<AppUserEntity> appUserOpt = appUserEntityDao.findAppUserByUserId(updateEvent.getUserId());
+            if(!appUserOpt.isPresent()) {
+                return;
+            }
+            String name = String.format("%s %s", StringUtils.capitalize(updateEvent.getFirstName().toLowerCase()), StringUtils.capitalize(updateEvent.getLastName().toLowerCase()));
+            AppUserEntity appUser = appUserOpt.get();
+            appUser.setName(name);
+            appUserEntityDao.saveRecord(appUser);
+        }
+        if(StringUtils.isNotEmpty(updateEvent.getAccountId())) {
+            Optional<MintAccountEntity> mintAccountOpt = mintAccountEntityDao.findAccountByAccountId(updateEvent.getAccountId());
+            if(!mintAccountOpt.isPresent()) {
+                return;
+            }
+            MintAccountEntity mintAccount = mintAccountOpt.get();
+            MintBankAccountEntity bankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
+            if(StringUtils.isNotEmpty(updateEvent.getAccountName())) {
+                mintAccount.setName(updateEvent.getAccountName());
+                mintAccountEntityDao.saveRecord(mintAccount);
+            }
+            if(StringUtils.isNotEmpty(updateEvent.getBankAccountName())) {
+                bankAccount.setAccountName(updateEvent.getBankAccountName());
+                mintBankAccountEntityDao.saveRecord(bankAccount);
+            }
+        }
+    }
 }

@@ -17,4 +17,5 @@ public interface AccountSetupUseCases {
     void updateBankAccountStatus(BankAccountStatusUpdateEvent accountStatusUpdateEvent);
     void updateUserProfileDetails(UserDetailUpdateEvent updateEvent);
     void createOrUpdateCorporateUser(CorporateUserDetailEvent corporateUserDetailEvent);
+    void updateNameOnAccount(ProfileNameUpdateEvent updateEvent);
 }

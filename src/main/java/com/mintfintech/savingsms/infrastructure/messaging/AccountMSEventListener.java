@@ -43,6 +43,7 @@ public class AccountMSEventListener {
     private final String EMPLOYMENT_INFORMATION_UPDATE_EVENT = "com.mintfintech.savings-service.events.employment-info-update";
     private final String MINT_CORPORATE_USER_DETAILS = "com.mintfintech.accounts-service.events.corporate-user-detail";
     private final String MINT_USER_CREATION_EVENT = "com.mintfintech.accounts-service.events.user-creation";
+    private final String ACCOUNT_NAME_UPDATE_EVENT = "com.mintfintech.accounts-service.events.account-name-update";
 
 
     @KafkaListener(topics = {MINT_ACCOUNT_CREATION_EVENT, MINT_ACCOUNT_CREATION_EVENT+".savings-service"})
@@ -121,6 +122,12 @@ public class AccountMSEventListener {
     public void listenForEmploymentInfoUpdate(String payload) {
         EmploymentInfoUpdateEvent event = gson.fromJson(payload, EmploymentInfoUpdateEvent.class);
         updateEmploymentInfoUseCase.updateCustomerEmploymentInformation(event);
+    }
+
+    @KafkaListener(topics = {ACCOUNT_NAME_UPDATE_EVENT})
+    public void listenForUpdateOnProfileName(String payload) {
+        ProfileNameUpdateEvent event = gson.fromJson(payload, ProfileNameUpdateEvent.class);
+        accountSetupUseCases.updateNameOnAccount(event);
     }
 
 }
