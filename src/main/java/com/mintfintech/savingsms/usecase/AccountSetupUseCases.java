@@ -18,4 +18,5 @@ public interface AccountSetupUseCases {
     void updateUserProfileDetails(UserDetailUpdateEvent updateEvent);
     void createOrUpdateCorporateUser(CorporateUserDetailEvent corporateUserDetailEvent);
     void updateNameOnAccount(ProfileNameUpdateEvent updateEvent);
+    void updateCorporateType(BusinessTypeChangeEvent changeEvent);
 }

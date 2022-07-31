@@ -266,4 +266,16 @@ public class AccountSetupUseCasesImpl implements AccountSetupUseCases {
             }
         }
     }
+
+    @Override
+    public void updateCorporateType(BusinessTypeChangeEvent changeEvent) {
+        Optional<MintAccountEntity> mintAccountOpt = mintAccountEntityDao.findAccountByAccountId(changeEvent.getAccountId());
+        if(!mintAccountOpt.isPresent()) {
+            return;
+        }
+        MintAccountEntity mintAccount = mintAccountOpt.get();
+        AccountTypeConstant accountTypeConstant = AccountTypeConstant.valueOf(changeEvent.getNewBusinessType());
+        mintAccount.setAccountType(accountTypeConstant);
+        mintAccountEntityDao.saveRecord(mintAccount);
+    }
 }
