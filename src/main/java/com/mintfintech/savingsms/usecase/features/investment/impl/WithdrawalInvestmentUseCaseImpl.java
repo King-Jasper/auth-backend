@@ -87,6 +87,9 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         if (!account.getId().equals(investment.getOwner().getId())) {
             throw new BusinessLogicConflictException("Sorry, request cannot be processed.");
         }
+        if (investment.isAffiliateReferred() && investment.getMaturityDate().isBefore(LocalDateTime.now())) {
+            throw new BusinessLogicConflictException("Sorry, you cannot liquidate until investment maturity.");
+        }
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getCreditAccountId(), account)
                 .orElseThrow(() -> new BadRequestException("Invalid bank account Id."));
 

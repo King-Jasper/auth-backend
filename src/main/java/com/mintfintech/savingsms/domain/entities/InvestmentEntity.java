@@ -76,4 +76,7 @@ public class InvestmentEntity extends AbstractBaseEntity<Long>{
 
     private String referralCode;
 
+    @Column(columnDefinition = "boolean default false")
+    private boolean isAffiliateReferred;
+
 }
