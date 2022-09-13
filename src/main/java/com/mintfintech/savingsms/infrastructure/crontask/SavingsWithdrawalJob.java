@@ -27,12 +27,15 @@ public class SavingsWithdrawalJob {
     @SchedulerLock(name = "SavingsWithdrawalJob_processSavingsGoalWithdrawal", lockAtMostForString = "PT4M")
     public void processSavingsGoalWithdrawal(){
         try {
+            System.out.println("-------- SAVINGS GOAL WITHDRAWAL ----------");
             fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
             Thread.sleep(5000);
             fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
             Thread.sleep(5000);
             fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();
-        }catch (Exception ignored) { }
+        }catch (Exception ex) {
+            ex.printStackTrace();
+        }
     }
 
   //  @Scheduled(cron = "0 0/30 9-23 ? * *") // runs by every 30 minutes from 9am to 11pm
