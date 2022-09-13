@@ -128,7 +128,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         MintBankAccountEntity debitAccount = debitAccountOpt.get();
         Optional<SpendAndSaveEntity> settingEntityOptional = spendAndSaveEntityDao.findSpendAndSaveSettingByAccount(debitAccount.getMintAccount());
         if (!settingEntityOptional.isPresent() || !settingEntityOptional.get().isActivated()) {
-            System.out.println("not SpendAndSaveEntity setting or not active.");
+           // System.out.println("not SpendAndSaveEntity setting or not active.");
             return;
         }
 
