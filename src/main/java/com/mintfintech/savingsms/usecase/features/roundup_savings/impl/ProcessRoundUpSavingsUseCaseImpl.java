@@ -116,23 +116,26 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
-        System.out.println("RoundUpTransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
+        System.out.println("TransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
         if (transactionCategory == null || transactionCategory.equals(RoundUpTransactionCategoryType.CARD_PAYMENT)) {
             return;
         }
         Optional<MintBankAccountEntity> debitAccountOpt = mintBankAccountEntityDao.findByAccountId(transactionPayload.getDebitAccountId());
         if (!debitAccountOpt.isPresent()) {
+            System.out.println("Debit account Id not found.");
             return;
         }
         MintBankAccountEntity debitAccount = debitAccountOpt.get();
         Optional<SpendAndSaveEntity> settingEntityOptional = spendAndSaveEntityDao.findSpendAndSaveSettingByAccount(debitAccount.getMintAccount());
         if (!settingEntityOptional.isPresent() || !settingEntityOptional.get().isActivated()) {
+            System.out.println("not SpendAndSaveEntity setting or not active.");
             return;
         }
 
         SpendAndSaveEntity settingEntity = settingEntityOptional.get();
         BigDecimal transactionAmount = transactionPayload.getTransactionAmount();
         BigDecimal amountToSave = getSaveAmount(settingEntity.getPercentage(), transactionAmount);
+        System.out.println("amount to save for account "+amountToSave+" - "+debitAccount.getAccountNumber());
         if (amountToSave.compareTo(BigDecimal.ZERO) <= 0) {
             log.info("Amount to save is {}", amountToSave);
             return;
@@ -210,6 +213,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
 
         Optional<MintBankAccountEntity> debitAccountOpt = mintBankAccountEntityDao.findByAccountId(transactionPayload.getDebitAccountId());
         if (!debitAccountOpt.isPresent()) {
+            System.out.println("debit account Id - "+transactionPayload.getDebitAccountId()+" not found.");
             return;
         }
         MintBankAccountEntity debitAccount = debitAccountOpt.get();
