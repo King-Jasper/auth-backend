@@ -1,5 +1,7 @@
 package com.mintfintech.savingsms.utils;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
 /**
@@ -21,5 +23,13 @@ public class MintStringUtil {
 
     public static boolean enablePayDayLoanFeature(String accountNumber) {
         return Arrays.stream(payDayLoanAccountNumber).anyMatch(data -> data.equalsIgnoreCase(accountNumber));
+    }
+
+    public static void main(String[] args) {
+
+        BigDecimal transactionAmount = BigDecimal.valueOf(200.00);
+        double value = (0.5 / 100.0) * transactionAmount.doubleValue();
+       // BigDecimal value = (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
+        System.out.println(" value - "+BigDecimal.valueOf(value));
     }
 }

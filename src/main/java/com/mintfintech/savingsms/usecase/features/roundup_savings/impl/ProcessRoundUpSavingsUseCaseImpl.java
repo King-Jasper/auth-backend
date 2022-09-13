@@ -159,8 +159,11 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
     }
 
     private BigDecimal getSaveAmount(double percentage, BigDecimal transactionAmount) {
-        BigDecimal percent = BigDecimal.valueOf(percentage);
-        return (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
+        // BigDecimal percent = BigDecimal.valueOf(percentage);
+        // return (percent.divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_EVEN)).multiply(transactionAmount);
+
+        double value = (percentage / 100.0) * transactionAmount.doubleValue();
+        return BigDecimal.valueOf(value);
     }
 
 
