@@ -26,6 +26,16 @@ public class SavingsWithdrawalJob {
     @Scheduled(cron = "0 0/5 9-23 ? * *") // runs by every 5 minutes from 9am to 11pm
     @SchedulerLock(name = "SavingsWithdrawalJob_processSavingsGoalWithdrawal", lockAtMostForString = "PT4M")
     public void processSavingsGoalWithdrawal(){
+        runProcess();
+    }
+
+    @Scheduled(cron = "0 0/5 0-6 ? * *") // runs by every 5 minutes from 9am to 11pm
+    @SchedulerLock(name = "SavingsWithdrawalJob_processSavingsGoalWithdrawalEarlyMorning", lockAtMostForString = "PT4M")
+    public void processSavingsGoalWithdrawalEarlyMorning(){
+        runProcess();
+    }
+
+    private void runProcess() {
         try {
             System.out.println("-------- SAVINGS GOAL WITHDRAWAL ----------");
             fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
