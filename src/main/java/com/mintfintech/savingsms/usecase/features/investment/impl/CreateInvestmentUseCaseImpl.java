@@ -240,6 +240,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         if (!StringUtils.isEmpty(referralCode)) {
             if (!investmentEntityDao.getByReferralCodeAndAppUser(referralCode,  appUser)) {
                 investment.setReferralCode(referralCode);
+                investment.setAffiliateReferred(true);
                 investmentEntityDao.saveRecord(investment);
                 publishTransactionNotificationUseCase.publishAffiliateReferral(investment);
             }

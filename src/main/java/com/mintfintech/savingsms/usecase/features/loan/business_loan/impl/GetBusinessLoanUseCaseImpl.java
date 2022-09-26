@@ -133,12 +133,12 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
     @Override
     public HairFinanceLoanResponse getHairFinanceLoanDetail(AuthenticatedUser currentUser, String loanId) {
         LoanRequestEntity loanRequest = loanRequestEntityDao.findByLoanId(loanId).orElseThrow(() ->  new NotFoundException("Invalid Loan Id."));
-        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+       /* MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
         MintBankAccountEntity creditAccount = mintBankAccountEntityDao.getRecordById(loanRequest.getBankAccount().getId());
         if(!mintAccount.getId().equals(creditAccount.getMintAccount().getId())) {
             log.info("Loan request does not belong to mint account");
             throw new NotFoundException("Invalid Loan Id.");
-        }
+        }*/
         return fromEntityToHairFinanceResponse(loanRequest);
     }
 }

@@ -46,5 +46,7 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
 
     private BigDecimal estimatedProfitAtMaturity;
 
+    private BigDecimal withholdingTax;
+
     private double maxLiquidateRate;
 }
