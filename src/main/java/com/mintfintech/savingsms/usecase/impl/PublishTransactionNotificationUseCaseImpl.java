@@ -36,6 +36,36 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final CorporateUserEntityDao corporateUserEntityDao;
+    private final InvestmentEntityDao investmentEntityDao;
+
+
+    @Async
+    @Override
+    public void createTransactionLog(InvestmentEntity investmentEntity, InvestmentTransactionEntity investmentTransaction, BigDecimal openingBalance) {
+        try {
+            Thread.sleep(3000);
+            // allows for some time for the DB session that created this InvestmentTransactionEntity to be committed
+            // without this, it will throw an session that ID is not found.
+        }catch (Exception ignored){ }
+        investmentEntity = investmentEntityDao.getRecordById(investmentEntity.getId());
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(investmentTransaction.getBankAccount().getId());
+        String description = "Investment funding - "+investmentEntity.getCode();
+        MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
+                .balanceAfterTransaction(openingBalance.subtract(investmentTransaction.getTransactionAmount()))
+                .balanceBeforeTransaction(openingBalance)
+                .transactionAmount(investmentTransaction.getTransactionAmount())
+                .transactionType(TransactionTypeConstant.DEBIT.name())
+                .category("INVESTMENT")
+                .productType("INVESTMENT")
+                .debitAccountId(debitAccount.getAccountId())
+                .description(description)
+                .externalReference(investmentTransaction.getExternalReference())
+                .internalReference(investmentTransaction.getTransactionReference())
+                .spendingTagId(0)
+                .dateCreated(investmentTransaction.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.MINT_TRANSACTION_LOG, new EventModel<>(transactionPayload));
+    }
 
     @Async
     @Override
@@ -58,7 +88,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .transactionAmount(savingsGoalTransactionEntity.getTransactionAmount())
                 .transactionType(TransactionTypeConstant.DEBIT.name())
                 .category("SAVINGS_GOAL")
-                .productType("INVESTMENT")
+                .productType(savingsGoalEntity.getSavingsGoalType().name())
                 .debitAccountId(debitAccount.getAccountId())
                 .description(description)
                 .externalReference(savingsGoalTransactionEntity.getExternalReference())

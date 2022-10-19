@@ -67,6 +67,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         String reference = investmentTransactionEntityDao.generateTransactionReference();
 
+        BigDecimal currentBalance = debitAccount.getAvailableBalance();
+
         InvestmentTransactionEntity transaction = new InvestmentTransactionEntity();
         transaction.setInvestment(investmentEntity);
         transaction.setBankAccount(debitAccount);
@@ -79,8 +81,11 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
         processDebit(transaction, investmentEntity, debitAccount.getAccountNumber());
-
-        return investmentTransactionEntityDao.saveRecord(transaction);
+        transaction =  investmentTransactionEntityDao.saveRecord(transaction);
+        if(transaction.getTransactionStatus() == TransactionStatusConstant.SUCCESSFUL) {
+            publishTransactionNotificationUseCase.createTransactionLog(investmentEntity, transaction, currentBalance);
+        }
+        return transaction;
     }
 
     @Override
@@ -106,6 +111,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         InvestmentFundingResponse response;
         if (accountEntity.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
             response = processInvestmentTopUp(request, investmentEntity, accountEntity);
+
         } else if (accountEntity.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
             if (StringUtils.isEmpty(request.getTransactionPin())) {
                 throw new BadRequestException("Transaction pin is required");
@@ -119,8 +125,10 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 throw new BadRequestException("Transaction pin is required");
             }
             accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+
             CorporateUserEntity corporateUser = corporateUserEntityDao.findRecordByAccountAndUser(accountEntity, appUser)
                     .orElseThrow(() -> new BusinessLogicConflictException("Sorry, user not found for corporate account"));
+
             CorporateRoleTypeConstant userRole = corporateUser.getRoleType();
             if (userRole == CorporateRoleTypeConstant.APPROVER) {
                 throw new BusinessLogicConflictException("Sorry, you can only approve already initiated transaction");
@@ -220,7 +228,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .orElseThrow(() -> new BadRequestException("Invalid debit account."));
 
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
-        if (debitAccount.getAvailableBalance().compareTo(amount) < 0) {
+        BigDecimal currentBalance = debitAccount.getAvailableBalance();
+        if (currentBalance.compareTo(amount) < 0) {
             throw new BusinessLogicConflictException("Sorry, you have insufficient balance to fund your investment.");
         }
         InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, amount);
@@ -393,8 +402,8 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 String message = String.format("Investment Id: %s; transaction ref: %s ; message: %s", investment.getCode(), transaction.getTransactionReference(), msClientResponse.getMessage());
                 systemIssueLogService.logIssue("Investment Funding Issue", "Customer investment funding failed", message);
             }
-
         }
+
     }
 
     private String constructInvestmentNarration(String investmentCode, String reference) {
@@ -416,7 +425,6 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
                 .recipient(appUser.getEmail())
                 .name(appUser.getName())
                 .build();
-
         applicationEventService.publishEvent(ApplicationEventService.EventType.INVESTMENT_FUNDING_SUCCESS, new EventModel<>(event));
     }
 

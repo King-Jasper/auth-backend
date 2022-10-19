@@ -1,9 +1,6 @@
 package com.mintfintech.savingsms.usecase;
 
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalTransactionEntity;
+import com.mintfintech.savingsms.domain.entities.*;
 
 import java.math.BigDecimal;
 
@@ -13,6 +10,7 @@ import java.math.BigDecimal;
  */
 public interface PublishTransactionNotificationUseCase {
     void createTransactionLog(SavingsGoalTransactionEntity savingsGoalTransactionEntity, BigDecimal openingBalance, BigDecimal currentBalance);
+    void createTransactionLog(InvestmentEntity investmentEntity, InvestmentTransactionEntity investmentTransaction, BigDecimal openingBalance);
     void sendSavingsFundingSuccessNotification(SavingsGoalTransactionEntity savingsGoalTransactionEntity);
     void sendSavingsFundingFailureNotification(SavingsGoalEntity goalEntity, BigDecimal savingsAmount, String failureMessage);
     void sendPendingCorporateInvestmentNotification(MintAccountEntity mintAccount);
