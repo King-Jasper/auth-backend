@@ -15,6 +15,7 @@ public class MintTransactionEvent {
     private String debitAccountId;
     private String description;
     private String category;
+    private String productType;
     private long spendingTagId;
     private String transactionType;
     private String internalReference;

@@ -58,6 +58,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
                 .transactionAmount(savingsGoalTransactionEntity.getTransactionAmount())
                 .transactionType(TransactionTypeConstant.DEBIT.name())
                 .category("SAVINGS_GOAL")
+                .productType("INVESTMENT")
                 .debitAccountId(debitAccount.getAccountId())
                 .description(description)
                 .externalReference(savingsGoalTransactionEntity.getExternalReference())
