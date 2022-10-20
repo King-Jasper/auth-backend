@@ -38,7 +38,7 @@ public class AmazonCloudStorageService implements CloudStorageService {
     private void initializeAmazon() {
         AWSCredentials credentials = new BasicAWSCredentials(applicationProperty.getAmazonS3AccessKey(), applicationProperty.getAmazonS3SecretKey());
         s3Client = AmazonS3ClientBuilder.standard()
-                .withCredentials(new AWSStaticCredentialsProvider(credentials))
+               // .withCredentials(new AWSStaticCredentialsProvider(credentials))
                 .withRegion(applicationProperty.getAmazonS3Region())
                 .build();
     }
