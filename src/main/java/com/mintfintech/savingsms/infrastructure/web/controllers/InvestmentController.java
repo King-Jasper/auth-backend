@@ -99,6 +99,15 @@ public class InvestmentController {
         ApiResponseJSON<List<InvestmentTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Investment history returned successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "Returns recent investment transactions of a user.")
+    @GetMapping(value = "/{debitAccountId}/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<InvestmentTransactionModel>>> getUserInvestmentTransactions(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                                           @PathVariable(value = "debitAccountId") String debitAccountId) {
+        List<InvestmentTransactionModel> response = getInvestmentUseCase.getUserInvestmentTransactions(authenticatedUser, debitAccountId);
+        ApiResponseJSON<List<InvestmentTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Investment history returned successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
     
     @ApiOperation(value = "Fund an investment.")
     @PostMapping(value = "/fund", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)

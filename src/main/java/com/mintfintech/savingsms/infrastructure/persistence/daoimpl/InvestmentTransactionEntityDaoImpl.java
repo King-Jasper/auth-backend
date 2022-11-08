@@ -135,4 +135,11 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 	public ReportStatisticModel getInvestmentTransactionStatisticsOnAccount(MintAccountEntity mintAccount) {
 		return repository.getInvestmentTransactionStatistics(mintAccount);
 	}
+
+	@Override
+	public List<InvestmentTransactionEntity> getTransactionsByUserBankAccount(MintBankAccountEntity mintBankAccountEntity) {
+		Pageable pageable = PageRequest.of(0, 10);
+		return repository.getAllByRecordStatusAndBankAccountOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE,
+				mintBankAccountEntity, pageable);
+	}
 }
