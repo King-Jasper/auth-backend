@@ -139,7 +139,7 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 	@Override
 	public List<InvestmentTransactionEntity> getTransactionsByUserBankAccount(MintBankAccountEntity mintBankAccountEntity) {
 		Pageable pageable = PageRequest.of(0, 10);
-		return repository.getAllByRecordStatusAndBankAccountOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE,
-				mintBankAccountEntity, pageable);
+		return repository.getAllByRecordStatusAndBankAccountAndInvestment_RecordStatusOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE,
+				mintBankAccountEntity, RecordStatusConstant.ACTIVE, pageable);
 	}
 }
