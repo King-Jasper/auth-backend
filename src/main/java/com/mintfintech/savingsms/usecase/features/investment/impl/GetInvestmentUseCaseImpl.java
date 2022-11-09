@@ -1,5 +1,30 @@
 package com.mintfintech.savingsms.usecase.features.investment.impl;
 
+import com.mintfintech.savingsms.domain.dao.*;
+import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
+import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
+import com.mintfintech.savingsms.domain.models.InvestmentTransactionSearchDTO;
+import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
+import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
+import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
+import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
+import com.mintfintech.savingsms.usecase.data.response.*;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
+import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
+import com.mintfintech.savingsms.usecase.models.InvestmentModel;
+import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
+import lombok.AllArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.hibernate.Hibernate;
+import org.springframework.data.domain.Page;
+import org.springframework.stereotype.Service;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -11,44 +36,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.apache.commons.lang3.StringUtils;
-import org.hibernate.Hibernate;
-import org.springframework.data.domain.Page;
-import org.springframework.stereotype.Service;
-
-import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentInterestEntityDao;
-import com.mintfintech.savingsms.domain.dao.InvestmentTransactionEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
-import com.mintfintech.savingsms.domain.dao.MintBankAccountEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
-import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
-import com.mintfintech.savingsms.domain.models.InvestmentSearchDTO;
-import com.mintfintech.savingsms.domain.models.InvestmentTransactionSearchDTO;
-import com.mintfintech.savingsms.domain.models.reports.InvestmentStat;
-import com.mintfintech.savingsms.domain.models.reports.SavingsMaturityStat;
-import com.mintfintech.savingsms.domain.services.ApplicationProperty;
-import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
-import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentMaturityStatModel;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentMaturityStatSummary;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentStatSummary;
-import com.mintfintech.savingsms.usecase.data.response.InvestmentTransactionSearchResponse;
-import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
-import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
-import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
-import com.mintfintech.savingsms.usecase.features.investment.GetInvestmentUseCase;
-import com.mintfintech.savingsms.usecase.models.InvestmentModel;
-import com.mintfintech.savingsms.usecase.models.InvestmentTransactionModel;
-
-import lombok.AllArgsConstructor;
 
 @Service
 @AllArgsConstructor
@@ -71,6 +58,10 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 		List<InvestmentTransactionEntity> transactionEntities = investmentTransactionEntityDao
 				.getTransactionsByInvestment(investment);
 		System.out.println("history size - " + transactionEntities.size());
+		return fromInvestmentTransactionEntityToModel(transactionEntities);
+	}
+
+	private List<InvestmentTransactionModel> fromInvestmentTransactionEntityToModel(List<InvestmentTransactionEntity> transactionEntities) {
 		List<InvestmentTransactionModel> transactions = new ArrayList<>();
 
 		transactionEntities.forEach(funding -> {
@@ -93,7 +84,6 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 		});
 
 		transactions.sort(Comparator.comparing(o -> LocalDate.parse(o.getDate())));
-
 		return transactions;
 	}
 
@@ -376,6 +366,18 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 		BigDecimal amount = investmentTransactionEntityDao.sumSearchedInvestmentTransactions(searchDTO);
 		return new PagedDataResponse<>(pagedEntity.getTotalElements(), pagedEntity.getTotalPages(), amount,
 				pagedEntity.getContent().stream().map(this::getResponseFromEntity).collect(Collectors.toList()));
+	}
+
+	@Override
+	public List<InvestmentTransactionModel> getUserInvestmentTransactions(AuthenticatedUser authenticatedUser, String debitAccountId) {
+		Optional<MintBankAccountEntity> mintBankAccountOptional = mintBankAccountEntityDao.findByAccountIdAndMintAccountId(debitAccountId, authenticatedUser.getAccountId());
+		if (!mintBankAccountOptional.isPresent()) {
+			throw new BadRequestException("Debit account Id is invalid.");
+		}
+		MintBankAccountEntity mintBankAccount = mintBankAccountOptional.get();
+		List<InvestmentTransactionEntity> investmentTransactions = investmentTransactionEntityDao.getTransactionsByUserBankAccount(mintBankAccount);
+
+		return fromInvestmentTransactionEntityToModel(investmentTransactions);
 	}
 
 	private InvestmentTransactionSearchResponse getResponseFromEntity(InvestmentTransactionEntity entity) {

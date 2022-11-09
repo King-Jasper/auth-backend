@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
 import org.springframework.data.domain.Page;
 
@@ -25,4 +26,6 @@ public interface InvestmentTransactionEntityDao extends CrudDao<InvestmentTransa
 	BigDecimal sumSearchedInvestmentTransactions(InvestmentTransactionSearchDTO investmentTransactionSearchDTO);
 
 	ReportStatisticModel getInvestmentTransactionStatisticsOnAccount(MintAccountEntity mintAccount);
+
+	List<InvestmentTransactionEntity> getTransactionsByUserBankAccount(MintBankAccountEntity mintBankAccountEntity);
 }

@@ -12,6 +12,7 @@ import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.Page;
@@ -26,10 +27,6 @@ import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
 import com.mintfintech.savingsms.domain.entities.InvestmentTransactionEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.InvestmentTransactionSearchDTO;
 import com.mintfintech.savingsms.domain.models.reports.AmountModel;
 import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
@@ -134,5 +131,12 @@ public class InvestmentTransactionEntityDaoImpl extends CrudDaoImpl<InvestmentTr
 	@Override
 	public ReportStatisticModel getInvestmentTransactionStatisticsOnAccount(MintAccountEntity mintAccount) {
 		return repository.getInvestmentTransactionStatistics(mintAccount);
+	}
+
+	@Override
+	public List<InvestmentTransactionEntity> getTransactionsByUserBankAccount(MintBankAccountEntity mintBankAccountEntity) {
+		Pageable pageable = PageRequest.of(0, 10);
+		return repository.getAllByRecordStatusAndBankAccountAndInvestment_InvestmentStatusOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE,
+				mintBankAccountEntity, InvestmentStatusConstant.ACTIVE, pageable);
 	}
 }

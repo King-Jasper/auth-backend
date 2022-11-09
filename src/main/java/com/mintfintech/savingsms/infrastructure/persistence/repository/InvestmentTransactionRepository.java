@@ -3,7 +3,10 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 import java.util.List;
 
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
+import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.enums.InvestmentStatusConstant;
 import com.mintfintech.savingsms.domain.models.reports.ReportStatisticModel;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
@@ -24,4 +27,6 @@ public interface InvestmentTransactionRepository extends JpaRepository<Investmen
 			"where i.bankAccount.mintAccount = ?1 and i.transactionType = com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant.CREDIT and " +
 			"i.transactionStatus = com.mintfintech.savingsms.domain.entities.enums.TransactionStatusConstant.SUCCESSFUL")
 	ReportStatisticModel getInvestmentTransactionStatistics(MintAccountEntity mintAccount);
+
+    List<InvestmentTransactionEntity> getAllByRecordStatusAndBankAccountAndInvestment_InvestmentStatusOrderByDateCreatedDesc(RecordStatusConstant status, MintBankAccountEntity mintBankAccountEntity, InvestmentStatusConstant active, Pageable pageable);
 }

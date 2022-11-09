@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.mintfintech.savingsms.domain.entities.InvestmentEntity;
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.InvestmentTransactionSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.InvestmentMaturityStatSummary;
@@ -31,4 +32,6 @@ public interface GetInvestmentUseCase {
 	BigDecimal calculateOutstandingInterest(BigDecimal amountInvested, double interestRate, LocalDateTime maturityTime);
 
 	PagedDataResponse<InvestmentTransactionSearchResponse> getInvestmentTransactions(InvestmentTransactionSearchRequest request, int pageIndex, int size);
+
+	List<InvestmentTransactionModel> getUserInvestmentTransactions(AuthenticatedUser authenticatedUser, String debitAccountId);
 }
