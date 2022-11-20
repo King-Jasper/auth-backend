@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
 import com.mintfintech.savingsms.domain.dao.AppUserEntityDao;
 import com.mintfintech.savingsms.domain.dao.MintAccountEntityDao;
+import com.mintfintech.savingsms.domain.dao.SavingsGoalEntityDao;
 import com.mintfintech.savingsms.domain.dao.SpendAndSaveEntityDao;
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
@@ -29,6 +30,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
     private final MintAccountEntityDao mintAccountEntityDao;
     private final AppUserEntityDao appUserEntityDao;
     private final SpendAndSaveEntityDao spendAndSaveEntityDao;
+    private final SavingsGoalEntityDao savingsGoalEntityDao;
     private final GetSpendAndSaveTransactionUseCase getSpendAndSaveTransactionUseCase;
     private final ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
 
@@ -42,6 +44,9 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
         SpendAndSaveEntity spendAndSaveEntity = spendAndSaveOptional.get();
+        if(spendAndSaveEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
+            return SpendAndSaveResponse.builder().exist(false).build();
+        }
         if(spendAndSaveEntity.getSavings() == null) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
@@ -69,6 +74,16 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
         if (spendAndSaveEntity.isSavingsLocked()) {
             boolean isSavingsMature = computeAvailableAmountUseCase.isMaturedSavingsGoal(goalEntity);
             response.setSavingsMature(isSavingsMature);
+            if(isSavingsMature) {
+                spendAndSaveEntity.setSavingsLocked(false);
+                spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
+
+                goalEntity.setLockedSavings(false);
+                goalEntity.setMaturityDate(null);
+                savingsGoalEntityDao.saveRecord(goalEntity);
+
+                response.setSavingsLocked(false);
+            }
         }
         if (goalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) == 0 || goalEntity.getMaturityDate() == null) {
             response.setMaturityDate("");

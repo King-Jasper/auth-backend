@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.usecase.features.spend_and_save.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
+import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
@@ -55,10 +56,10 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
         if (savingsGoal.getSavingsGoalType() != SavingsGoalTypeConstant.SPEND_AND_SAVE) {
             throw new BusinessLogicConflictException("Sorry, your savings type is not Spend and Save");
         }
-        return createWithdrawalRequest(savingsGoal, appUser, amount);
+        return createWithdrawalRequest(spendAndSave, savingsGoal, appUser, amount);
     }
 
-    private String createWithdrawalRequest(SavingsGoalEntity savingsGoal, AppUserEntity appUser, BigDecimal amount) {
+    private String createWithdrawalRequest(SpendAndSaveEntity spendAndSave, SavingsGoalEntity savingsGoal, AppUserEntity appUser, BigDecimal amount) {
 
 
         // 1000, 50 - 1050
@@ -86,6 +87,12 @@ public class WithdrawSpendAndSaveUseCaseImpl implements WithdrawSpendAndSaveUseC
             }else {
                 remainingSavings = BigDecimal.valueOf(0.00);
                 remainingInterest = totalAmount.subtract(amount);
+            }
+        }else {
+            if(!spendAndSave.isActivated()) {
+                savingsGoal.setRecordStatus(RecordStatusConstant.INACTIVE);
+                spendAndSave.setRecordStatus(RecordStatusConstant.INACTIVE);
+                spendAndSaveEntityDao.saveRecord(spendAndSave);
             }
         }
 

@@ -52,18 +52,26 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
             }
         }
 
+        SpendAndSaveEntity spendAndSave = null;
+        SavingsGoalEntity savingsGoal = null;
         Optional<SpendAndSaveEntity> spendAndSaveSettingOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
         if (spendAndSaveSettingOptional.isPresent()) {
-            throw new BusinessLogicConflictException("You already have a spend and save record");
+            spendAndSave = spendAndSaveSettingOptional.get();
+            if(spendAndSave.getRecordStatus() == RecordStatusConstant.ACTIVE) {
+                throw new BusinessLogicConflictException("You already have a spend and save record");
+            }
+            savingsGoal = spendAndSave.getSavings();
         }
 
-
-        Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findFirstSavingsByType(mintAccount, SavingsGoalTypeConstant.SPEND_AND_SAVE);
-        if (savingsGoalOptional.isPresent()) {
-            String desc = "Account - "+mintAccount.getAccountId()+" is denied access to create spend and save. Spend and Save already exist";
-            systemIssueLogService.logIssue("Critical - Recreating Spend and save settings", "Recreating Spend and save settings", desc);
-            throw new BusinessLogicConflictException("Spend and save has already been setup.");
+        if(savingsGoal == null) {
+            Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findFirstSavingsByType(mintAccount, SavingsGoalTypeConstant.SPEND_AND_SAVE);
+            if (savingsGoalOptional.isPresent()) {
+                String desc = "Account - "+mintAccount.getAccountId()+" is denied access to create spend and save. Spend and Save already exist";
+                systemIssueLogService.logIssue("Critical - Recreating Spend and save settings", "Recreating Spend and save settings", desc);
+                throw new BusinessLogicConflictException("Spend and save has already been setup.");
+            }
         }
+
         LocalDateTime maturityDate = null;
         SavingsPlanTenorEntity planTenorEntity = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(30).get();
         double interestRate = 0.0;
@@ -81,6 +89,35 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .orElseThrow(()-> new BusinessLogicConflictException("Savings goal category not found"));
         SavingsPlanEntity savingsPlanEntity = savingsPlanEntityDao.getPlanByType(SavingsPlanTypeConstant.SAVINGS_TIER_ONE);
 
+        if(savingsGoal == null) {
+            savingsGoal = new SavingsGoalEntity();
+            savingsGoal.setGoalId(savingsGoalEntityDao.generateSavingGoalId());
+            savingsGoal.setSavingsAmount(BigDecimal.ZERO);
+            savingsGoal.setTotalAmountWithdrawn(BigDecimal.ZERO);
+        }
+        savingsGoal.setSavingsGoalType(SavingsGoalTypeConstant.SPEND_AND_SAVE);
+        savingsGoal.setSavingsFrequency(SavingsFrequencyTypeConstant.NONE);
+        savingsGoal.setLockedSavings(isSavingsLocked);
+        savingsGoal.setRecordStatus(RecordStatusConstant.ACTIVE);
+        savingsGoal.setGoalStatus(SavingsGoalStatusConstant.ACTIVE);
+        savingsGoal.setSavingsPlan(savingsPlanEntity);
+        savingsGoal.setAutoSave(false);
+        savingsGoal.setCreationSource(SavingsGoalCreationSourceConstant.MINT);
+        savingsGoal.setTargetAmount(BigDecimal.ZERO);
+        savingsGoal.setSavingsBalance(BigDecimal.ZERO);
+        savingsGoal.setAccruedInterest(BigDecimal.ZERO);
+        savingsGoal.setMintAccount(mintAccount);
+        savingsGoal.setName("Spend and save");
+        savingsGoal.setSavingsPlanTenor(planTenorEntity);
+        savingsGoal.setInterestRate(interestRate);
+        savingsGoal.setMaturityDate(maturityDate);
+        savingsGoal.setSelectedDuration(duration);
+        savingsGoal.setCreator(appUser);
+        savingsGoal.setGoalCategory(goalCategoryEntity);
+        savingsGoal.setDateCreated(LocalDateTime.now());
+        savingsGoal = savingsGoalEntityDao.saveRecord(savingsGoal);
+
+        /*
         SavingsGoalEntity savingsGoalEntity  = SavingsGoalEntity.builder()
                 .savingsGoalType(SavingsGoalTypeConstant.SPEND_AND_SAVE)
                 .savingsFrequency(SavingsFrequencyTypeConstant.NONE)
@@ -105,7 +142,19 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .lockedSavings(isSavingsLocked)
                 .build();
         savingsGoalEntity = savingsGoalEntityDao.saveRecord(savingsGoalEntity);
+        */
+        if(spendAndSave == null) {
+            spendAndSave = new SpendAndSaveEntity();
+        }
+        spendAndSave.setCreator(appUser);
+        spendAndSave.setAccount(mintAccount);
+        spendAndSave.setDateActivated(LocalDateTime.now());
+        spendAndSave.setPercentage(percentage);
+        spendAndSave.setActivated(true);
+        spendAndSave.setSavings(savingsGoal);
 
+
+        /*
         SpendAndSaveEntity spendAndSaveEntity = SpendAndSaveEntity.builder()
                 .creator(appUser)
                 .account(mintAccount)
@@ -116,25 +165,26 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
                 .savings(savingsGoalEntity)
                 .build();
         spendAndSaveEntity = spendAndSaveEntityDao.saveRecord(spendAndSaveEntity);
+        */
 
 
-        BigDecimal amountSaved = savingsGoalEntity.getSavingsBalance();
-        BigDecimal accruedInterest = savingsGoalEntity.getAccruedInterest();
+        BigDecimal amountSaved = savingsGoal.getSavingsBalance();
+        BigDecimal accruedInterest = savingsGoal.getAccruedInterest();
 
         SpendAndSaveResponse response = SpendAndSaveResponse.builder()
                 .exist(true)
                 .amountSaved(amountSaved)
-                .status(savingsGoalEntity.getGoalStatus().name())
+                .status(savingsGoal.getGoalStatus().name())
                 .accruedInterest(accruedInterest)
-                .isSavingsLocked(spendAndSaveEntity.isSavingsLocked())
+                .isSavingsLocked(spendAndSave.isSavingsLocked())
                 .totalAmount(amountSaved.add(accruedInterest))
-                .percentage(spendAndSaveEntity.getPercentage())
+                .percentage(spendAndSave.getPercentage())
                 .build();
 
-        if (savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 || savingsGoalEntity.getMaturityDate() == null) {
+        if (savingsGoal.getSavingsBalance().compareTo(BigDecimal.ZERO) <= 0 || savingsGoal.getMaturityDate() == null) {
             response.setMaturityDate("");
         } else {
-            response.setMaturityDate(savingsGoalEntity.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            response.setMaturityDate(savingsGoal.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
         }
         return response;
     }
