@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.impl;
 import com.mintfintech.savingsms.domain.dao.*;
 import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.CorporateRoleTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.TransactionTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
@@ -82,6 +83,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
         String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
+        SavingsGoalTypeConstant savingsGoalType = savingsGoalTransactionEntity.getSavingsGoal().getSavingsGoalType();
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)
                 .balanceBeforeTransaction(openingBalance)

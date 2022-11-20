@@ -16,6 +16,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 
 import javax.inject.Named;
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
@@ -61,8 +62,23 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
         }
         spendAndSaveEntityDao.saveRecord(spendAndSave);
 
+        BigDecimal amount = goalEntity.getSavingsBalance().add(goalEntity.getAccruedInterest());
+        boolean exist = true;
+        if(!statusValue && amount.compareTo(BigDecimal.ZERO) == 0) {
+            goalEntity.setRecordStatus(RecordStatusConstant.INACTIVE);
+            savingsGoalEntityDao.saveRecord(goalEntity);
+            spendAndSave.setRecordStatus(RecordStatusConstant.INACTIVE);
+            spendAndSaveEntityDao.saveRecord(spendAndSave);
+            exist = false;
+        }
+
         String description = String.format("Spend and Save Status update: From %s to  %s on record %d.", oldStatus, newStatus, spendAndSave.getId());
         auditTrailService.createAuditLog(authenticatedUser, AuditTrailService.AuditType.UPDATE, description, spendAndSave, oldState);
+
+        if(!exist) {
+            return SpendAndSaveResponse.builder().exist(false).build();
+        }
+
         return SpendAndSaveResponse.builder()
                 .exist(true)
                 .accruedInterest(goalEntity.getAccruedInterest())

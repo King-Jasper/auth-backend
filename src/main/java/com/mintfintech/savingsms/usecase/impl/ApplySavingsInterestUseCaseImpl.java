@@ -104,10 +104,11 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
             log.info("Saving goal not created by customer.");
             return false;
         }*/
+        /*
         if(savingsGoalEntity.getCreationSource() == SavingsGoalCreationSourceConstant.MINT && savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.valueOf(50000.0)) >= 0){
             log.info("Interest cannot be applied to mint savings goal above 50k.");
             return false;
-        }
+        }*/
         if(savingsGoalEntity.getGoalStatus() != SavingsGoalStatusConstant.ACTIVE) {
             log.info("Saving goal is not longer active.");
             return false;
