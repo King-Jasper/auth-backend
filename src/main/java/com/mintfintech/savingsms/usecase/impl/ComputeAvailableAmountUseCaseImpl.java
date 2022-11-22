@@ -94,6 +94,7 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.SPEND_AND_SAVE) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;
+            /*
             if(!applicationProperty.isLiveEnvironment()) {
                  long daysPassed = savingsGoalEntity.getDateCreated().until(LocalDateTime.now(), ChronoUnit.DAYS);
                  matured = daysPassed > 4 && hasFund;
@@ -106,6 +107,14 @@ public class ComputeAvailableAmountUseCaseImpl implements ComputeAvailableAmount
                 }else {
                     matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
                 }
+            }*/
+            LocalDateTime maturityDate = savingsGoalEntity.getMaturityDate();
+            if(maturityDate == null) {
+                matured = hasFund;
+            }else if(DateUtil.sameDay(LocalDateTime.now(), maturityDate)) {
+                matured = hasFund;
+            }else {
+                matured = maturityDate.isBefore(LocalDateTime.now()) && hasFund;
             }
         }else if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.ROUND_UP_SAVINGS) {
             boolean hasFund = savingsGoalEntity.getSavingsBalance().compareTo(BigDecimal.ZERO) > 0;

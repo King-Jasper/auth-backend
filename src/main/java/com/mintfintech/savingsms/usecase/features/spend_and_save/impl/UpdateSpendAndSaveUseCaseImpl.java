@@ -109,7 +109,7 @@ public class UpdateSpendAndSaveUseCaseImpl implements UpdateSpendAndSaveUseCase 
 
         if (!spendAndSave.isSavingsLocked() && request.isSavingsLocked()) {
             int duration = request.getDuration();
-            if (duration< 30) {
+            if (duration < 30) {
                 throw new BadRequestException("Minimum required duration is 30 days");
             }
             Optional<SavingsPlanTenorEntity> planTenorOpt = savingsPlanTenorEntityDao.findSavingsPlanTenorForDuration(duration);
