@@ -107,6 +107,9 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         InvestmentLiquidationResponse response = new InvestmentLiquidationResponse();
         String responseMessage = "Investment liquidated successfully.";
         if (account.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
+            if(StringUtils.isNotEmpty(request.getTransactionPin())) {
+                accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+            }
             processLiquidation(request, investment, creditAccount);
             response.setMessage(responseMessage);
             response.setInvestmentModel(getInvestmentUseCase.toInvestmentModel(investment));

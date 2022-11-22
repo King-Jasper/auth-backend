@@ -21,5 +21,6 @@ public interface WithdrawalInvestmentUseCase {
     void processWithholdingTaxPayout();
 
     void processPrincipalPayout();
+
     String approveInvestmentWithdrawal(CorporateApprovalRequest request, AppUserEntity user, MintAccountEntity corporateAccount);
 }

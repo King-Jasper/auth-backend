@@ -110,6 +110,9 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
         InvestmentFundingResponse response;
         if (accountEntity.getAccountType().equals(AccountTypeConstant.INDIVIDUAL)) {
+            if(StringUtils.isNotEmpty(request.getTransactionPin())) {
+                accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
+            }
             response = processInvestmentTopUp(request, investmentEntity, accountEntity);
 
         } else if (accountEntity.getAccountType().equals(AccountTypeConstant.SOLE_PROPRIETORSHIP)) {
