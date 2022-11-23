@@ -66,9 +66,10 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         if(savingsGoal == null) {
             Optional<SavingsGoalEntity> savingsGoalOptional = savingsGoalEntityDao.findFirstSavingsByType(mintAccount, SavingsGoalTypeConstant.SPEND_AND_SAVE);
             if (savingsGoalOptional.isPresent()) {
-                String desc = "Account - "+mintAccount.getAccountId()+" is denied access to create spend and save. Spend and Save already exist";
-                systemIssueLogService.logIssue("Critical - Recreating Spend and save settings", "Recreating Spend and save settings", desc);
-                throw new BusinessLogicConflictException("Spend and save has already been setup.");
+                savingsGoal = savingsGoalOptional.get();
+              //  String desc = "Account - "+mintAccount.getAccountId()+" is denied access to create spend and save. Spend and Save already exist";
+              //  systemIssueLogService.logIssue("Critical - Recreating Spend and save settings", "Recreating Spend and save settings", desc);
+              //  throw new BusinessLogicConflictException("Spend and save has already been setup.");
             }
         }
 
