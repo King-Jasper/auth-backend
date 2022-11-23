@@ -83,7 +83,7 @@ public class PublishTransactionNotificationUseCaseImpl implements PublishTransac
         MintBankAccountEntity debitAccount = mintBankAccountEntityDao.getRecordById(savingsGoalTransactionEntity.getBankAccount().getId());
         SavingsGoalEntity savingsGoalEntity = savingsGoalEntityDao.getRecordById(savingsGoalTransactionEntity.getSavingsGoal().getId());
         String description = "Savings Goal funding - "+savingsGoalEntity.getGoalId()+"|"+savingsGoalEntity.getName();
-        SavingsGoalTypeConstant savingsGoalType = savingsGoalTransactionEntity.getSavingsGoal().getSavingsGoalType();
+        
         MintTransactionEvent transactionPayload = MintTransactionEvent.builder()
                 .balanceAfterTransaction(currentBalance)
                 .balanceBeforeTransaction(openingBalance)
