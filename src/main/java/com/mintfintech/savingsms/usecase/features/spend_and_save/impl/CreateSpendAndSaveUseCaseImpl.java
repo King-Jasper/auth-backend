@@ -36,6 +36,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
     public SpendAndSaveResponse setUpSpendAndSave(AuthenticatedUser authenticatedUser, SpendAndSaveSetUpRequest setUpRequest) {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        System.out.println("Account Id - "+mintAccount.getAccountId());
         if (mintAccount.getAccountType() == AccountTypeConstant.ENTERPRISE || mintAccount.getAccountType() == AccountTypeConstant.INCORPORATED_TRUSTEE) {
             throw new BusinessLogicConflictException("Sorry, this feature is not currently supported for your account type.");
         }

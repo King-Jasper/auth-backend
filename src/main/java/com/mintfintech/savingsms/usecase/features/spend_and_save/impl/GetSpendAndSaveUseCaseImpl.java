@@ -39,6 +39,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
     public SpendAndSaveResponse getSpendAndSaveDashboard(AuthenticatedUser authenticatedUser) {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+        System.out.println("Account Id - "+mintAccount.getAccountId());
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
         if (!spendAndSaveOptional.isPresent()) {
             return SpendAndSaveResponse.builder().exist(false).build();
