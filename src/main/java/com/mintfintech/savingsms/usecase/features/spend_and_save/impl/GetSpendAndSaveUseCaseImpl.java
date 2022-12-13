@@ -39,25 +39,30 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
     public SpendAndSaveResponse getSpendAndSaveDashboard(AuthenticatedUser authenticatedUser) {
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
-        System.out.println("Get - Account Id - "+mintAccount.getAccountId()+" type  - "+mintAccount.getAccountType());
+        System.out.println("Get - Account Id - "+mintAccount.getAccountId()+" type  - "+mintAccount.getAccountType() +" userid - "+appUser.getUserId());
         Optional<SpendAndSaveEntity> spendAndSaveOptional = spendAndSaveEntityDao.findSpendAndSaveByAppUserAndMintAccount(appUser, mintAccount);
         if (!spendAndSaveOptional.isPresent()) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
+        System.out.println("here 1");
         SpendAndSaveEntity spendAndSaveEntity = spendAndSaveOptional.get();
         if(spendAndSaveEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
+        System.out.println("here 2");
         if(spendAndSaveEntity.getSavings() == null) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
+        System.out.println("here 3");
         SavingsGoalEntity goalEntity = spendAndSaveEntity.getSavings();
         if(goalEntity.getRecordStatus() != RecordStatusConstant.ACTIVE) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
+        System.out.println("here 4");
         if(goalEntity.getGoalStatus() == SavingsGoalStatusConstant.COMPLETED || goalEntity.getGoalStatus() == SavingsGoalStatusConstant.WITHDRAWN) {
             return SpendAndSaveResponse.builder().exist(false).build();
         }
+        System.out.println("here 5");
 
         BigDecimal amountSaved = goalEntity.getSavingsBalance();
         BigDecimal accruedInterest = goalEntity.getAccruedInterest();
@@ -91,6 +96,7 @@ public class GetSpendAndSaveUseCaseImpl implements GetSpendAndSaveUseCase {
         } else {
             response.setMaturityDate(goalEntity.getMaturityDate().format(DateTimeFormatter.ISO_DATE_TIME));
         }
+        System.out.println("here 5 - "+response);
         return response;
     }
 
