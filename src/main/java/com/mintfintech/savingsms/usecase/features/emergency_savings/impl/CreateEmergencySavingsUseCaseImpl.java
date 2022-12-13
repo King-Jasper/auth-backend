@@ -144,6 +144,11 @@ public class CreateEmergencySavingsUseCaseImpl implements CreateEmergencySavings
         int minimumDurationForInterest = 30;
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(currentUser.getUserId());
         MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(currentUser.getAccountId());
+
+        if (mintAccount.getAccountType() == AccountTypeConstant.ENTERPRISE || mintAccount.getAccountType() == AccountTypeConstant.INCORPORATED_TRUSTEE) {
+            throw new BusinessLogicConflictException("Sorry, this feature is not currently supported for your account type.");
+        }
+
         MintBankAccountEntity debitAccount = bankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
 
         BigDecimal targetAmount = BigDecimal.valueOf(creationRequest.getTargetAmount());

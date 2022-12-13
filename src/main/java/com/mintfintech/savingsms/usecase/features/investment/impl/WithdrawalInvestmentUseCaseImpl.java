@@ -415,7 +415,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
 
        // BigDecimal maximumWithdrawalAmount = amountInvest.subtract(BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal / 100.0)));
 
-        BigDecimal maximumWithdrawalAmount =BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal / 100.0));
+        BigDecimal maximumWithdrawalAmount = BigDecimal.valueOf(amountInvest.doubleValue() * (percentWithdrawal / 100.0));
 
         if (amountToWithdraw.compareTo(maximumWithdrawalAmount) > 0) {
             String errorMessage = String.format("Maximum amount you can withdraw is %s. That is %s percent of investment amount.",
