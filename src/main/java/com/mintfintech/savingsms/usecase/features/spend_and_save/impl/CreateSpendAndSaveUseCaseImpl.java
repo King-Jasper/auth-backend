@@ -148,6 +148,7 @@ public class CreateSpendAndSaveUseCaseImpl implements CreateSpendAndSaveUseCase 
         if(spendAndSave == null) {
             spendAndSave = new SpendAndSaveEntity();
         }
+        spendAndSave.setSavingsLocked(isSavingsLocked);
         spendAndSave.setCreator(appUser);
         spendAndSave.setAccount(mintAccount);
         spendAndSave.setDateActivated(LocalDateTime.now());
