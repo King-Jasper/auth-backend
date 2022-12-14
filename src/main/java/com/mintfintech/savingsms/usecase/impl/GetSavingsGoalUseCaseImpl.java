@@ -309,6 +309,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(transactionEntity.getFundingSource() != null) {
             fundingSource = transactionEntity.getFundingSource();
         }
+        String fundingSourceName = fundingSource == FundingSourceTypeConstant.MINT_ACCOUNT ? "MINTYN ACCOUNT" : fundingSource.name();
         return SavingsTransactionModel.builder()
                 .amount(transactionEntity.getTransactionAmount())
                 .transactionDate(transactionEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
@@ -316,7 +317,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                 .savingsBalance(transactionEntity.getNewBalance())
                 .transactionStatus(transactionEntity.getTransactionStatus().name())
                 .transactionType(transactionEntity.getTransactionType().name())
-                .fundingSource(fundingSource.name())
+                .fundingSource(fundingSourceName)
                 .build();
     }
 }
