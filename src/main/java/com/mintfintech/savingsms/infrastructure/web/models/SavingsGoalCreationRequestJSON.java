@@ -72,7 +72,7 @@ public class SavingsGoalCreationRequestJSON {
             throw new BadRequestException("Goal name cannot be less than 3 characters.");
         }
         if(name.length() > 25) {
-            throw new BadRequestException("Goal name cannot be less than 25 characters.");
+            throw new BadRequestException("Goal name cannot be more than 25 characters.");
         }
 
         return SavingsGoalCreationRequest.builder()
