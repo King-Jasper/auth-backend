@@ -339,7 +339,7 @@ public class CreateReferralRewardUseCaseImpl implements CreateReferralRewardUseC
 
     private void processNewProgramReferralReward(MintAccountEntity referrer, AppUserEntity user) {
         // 666 + 667 + 667
-        LocalDateTime newReferralProgramDate = LocalDate.of(2023, 1, 1).atStartOfDay();
+        LocalDateTime newReferralProgramDate = LocalDate.of(2023, 12, 1).atStartOfDay();
         long referrals =  customerReferralEntityDao.countUnprocessedReferralRecordsForAccount(referrer, newReferralProgramDate);
         log.info("Total rewarded referral from date - {} is {}", newReferralProgramDate, referrals);
         if(referrals < 3) {
