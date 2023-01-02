@@ -72,7 +72,11 @@ public class SavingsInterestEntityDaoImpl implements SavingsInterestEntityDao {
     @Override
     public Optional<SavingsInterestEntity> getSavingsInterestOnDate(SavingsGoalEntity savingsGoal, LocalDate interestDate) {
         String interestDateString = interestDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
-        return repository.getInterestOnDate(savingsGoal, interestDateString);
+        List<SavingsInterestEntity> list = repository.getInterestOnDate(savingsGoal, interestDateString);
+        if(list.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(list.get(0));
     }
 
     @Override

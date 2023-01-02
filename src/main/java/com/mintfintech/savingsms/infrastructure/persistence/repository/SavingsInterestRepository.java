@@ -35,9 +35,9 @@ public interface SavingsInterestRepository extends JpaRepository<SavingsInterest
     List<SavingsInterestEntity> getAllByRecordStatusAndSavingsGoalOrderByDateCreated(RecordStatusConstant status, SavingsGoalEntity savingsGoalEntity);
 
 
-    @Query(value = "select s from SavingsInterestEntity s where s.savingsGoal = ?1 and " +
+    @Query(value = "select s from SavingsInterestEntity s where s.savingsGoal =:goal and " +
             " to_char(s.dateCreated, 'YYYY-MM-DD') =:recordDate and " +
             "s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE")
-    Optional<SavingsInterestEntity> getInterestOnDate(SavingsGoalEntity savingsGoalEntity, @Param("recordDate") String recordDate);
+    List<SavingsInterestEntity> getInterestOnDate(@Param("goal") SavingsGoalEntity savingsGoalEntity, @Param("recordDate") String recordDate);
 
 }
