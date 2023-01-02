@@ -5,7 +5,9 @@ import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -19,4 +21,6 @@ public interface SavingsInterestEntityDao extends CrudDao<SavingsInterestEntity,
     Optional<SavingsInterestEntity> findLastInterestApplied(SavingsGoalEntity savingsGoalEntity);
     Optional<SavingsInterestEntity> findFirstInterestApplied(SavingsGoalEntity savingsGoalEntity);
     Page<SavingsInterestEntity> getAccruedInterestOnGoal(SavingsGoalEntity goalEntity, int page, int size);
+    List<SavingsInterestEntity> getSavingsGoalInterest(SavingsGoalEntity goalEntity);
+    Optional<SavingsInterestEntity> getSavingsInterestOnDate(SavingsGoalEntity savingsGoal, LocalDate interestDate);
 }

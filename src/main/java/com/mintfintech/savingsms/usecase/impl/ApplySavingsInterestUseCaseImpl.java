@@ -13,6 +13,9 @@ import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalBalanceUpdateEvent;
+import com.mintfintech.savingsms.usecase.data.response.InterestUpdateResponse;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
+import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.utils.DateUtil;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -23,7 +26,10 @@ import javax.inject.Named;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Created by jnwanya on
@@ -180,5 +186,78 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                 .savingsBalance(savingsGoalEntity.getSavingsBalance())
                 .build();
         applicationEventService.publishEvent(ApplicationEventService.EventType.SAVING_GOAL_BALANCE_UPDATE, new EventModel<>(updateEvent));
+    }
+
+    @Override
+    public InterestUpdateResponse recalculateInterestOnSavings(String goalId, boolean updateInterest) {
+        SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new NotFoundException("Invalid savings goal."));
+        if(savingsGoal.getSavingsGoalType()  != SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
+            throw new BusinessLogicConflictException("Savings goal not customer savings.");
+        }
+        List<SavingsInterestEntity> interestList = savingsInterestEntityDao.getSavingsGoalInterest(savingsGoal);
+        if(interestList.isEmpty()) {
+            throw new BusinessLogicConflictException("No interest accumulated.");
+        }
+        LocalDate startDate = interestList.get(0).getDateCreated().toLocalDate();
+        long days = startDate.until(LocalDate.now().minusDays(1), ChronoUnit.DAYS);
+        int interestDaysCounter = 0;
+        int missingDays = 0, updatedDays = 0;
+        double missingAmount = 0.0;
+        for(int day = 0; day < days; day++) {
+
+            SavingsInterestEntity interestEntity = interestList.get(interestDaysCounter);
+            LocalDate checkDate = startDate.plusDays(day);
+
+            if(!checkDate.isEqual(interestEntity.getDateCreated().toLocalDate())) {
+                if(updateInterest) {
+                   boolean success = createRecord(savingsGoal, checkDate, interestEntity);
+                   if(success) {
+                       missingDays++;
+                       missingAmount += interestEntity.getInterest().doubleValue();
+                   }else {
+                       updatedDays++;
+                   }
+                }else {
+                    missingDays++;
+                    missingAmount += interestEntity.getInterest().doubleValue();
+                }
+            }else {
+                interestDaysCounter++;
+            }
+        }
+
+        if(updateInterest && missingDays > 0) {
+            savingsGoal.setAccruedInterest(savingsInterestEntityDao.getTotalInterestAmountOnGoal(savingsGoal));
+            if(savingsGoal.getLastInterestApplicationDate() == null || savingsGoal.getLastInterestApplicationDate().isBefore(LocalDateTime.now().minusDays(1))) {
+                savingsGoal.setLastInterestApplicationDate(LocalDateTime.now().minusDays(1));
+            }
+            savingsGoalEntityDao.saveRecord(savingsGoal);
+        }
+        InterestUpdateResponse response = new InterestUpdateResponse();
+        response.setMissedDays(missingDays);
+        response.setMissedAmount(missingAmount);
+        response.setUnappliedDays(updatedDays);
+        return response;
+
+    }
+
+    private boolean createRecord(SavingsGoalEntity savingsGoal, LocalDate checkDate, SavingsInterestEntity lastInterest) {
+        Optional<SavingsInterestEntity> optional = savingsInterestEntityDao.getSavingsInterestOnDate(savingsGoal, checkDate);
+        if(optional.isPresent()) {
+            return false;
+        }
+        BigDecimal interest = lastInterest.getInterest();
+        BigDecimal savingsBalance = lastInterest.getSavingsBalance().add(interest);
+        SavingsInterestEntity interestEntity = SavingsInterestEntity.builder()
+                .savingsGoal(savingsGoal)
+                .build();
+        interestEntity.setInterest(lastInterest.getInterest());
+        interestEntity.setRate(lastInterest.getRate());
+        interestEntity.setSavingsBalance(savingsBalance);
+        interestEntity.setDateCreated(checkDate.atTime(LocalTime.now()));
+        interestEntity.setDateModified(LocalDateTime.now());
+        savingsInterestEntityDao.saveRecord(interestEntity);
+        return true;
     }
 }

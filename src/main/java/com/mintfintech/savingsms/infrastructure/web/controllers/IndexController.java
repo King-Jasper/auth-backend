@@ -4,7 +4,9 @@ import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResp
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
+import com.mintfintech.savingsms.usecase.data.response.InterestUpdateResponse;
 import com.mintfintech.savingsms.usecase.features.referral_savings.CreateReferralRewardUseCase;
 import com.mintfintech.savingsms.usecase.features.referral_savings.ReachHQTransactionUseCase;
 import io.swagger.annotations.ApiParam;
@@ -30,7 +32,7 @@ public class IndexController {
     private CreateReferralRewardUseCase createReferralRewardUseCase;
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private CoreBankingServiceClient coreBankingServiceClient;
-    private ReachHQTransactionUseCase reachHQTransactionUseCase;
+    private ApplySavingsInterestUseCase applySavingsInterestUseCase;
 
 
     @Autowired
@@ -45,9 +47,10 @@ public class IndexController {
     public void setCoreBankingServiceClient(CoreBankingServiceClient coreBankingServiceClient) {
         this.coreBankingServiceClient = coreBankingServiceClient;
     }
+
     @Autowired
-    public void setReachHQTransactionUseCase(ReachHQTransactionUseCase reachHQTransactionUseCase) {
-        this.reachHQTransactionUseCase = reachHQTransactionUseCase;
+    public void setApplySavingsInterestUseCase(ApplySavingsInterestUseCase applySavingsInterestUseCase) {
+        this.applySavingsInterestUseCase = applySavingsInterestUseCase;
     }
 
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -102,10 +105,10 @@ public class IndexController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
-    @GetMapping(value = "/react-hq-debit", produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<ApiResponseJSON<Object>> reactHQDebit(@RequestParam("accountNumber") String accountNumber, @RequestParam("create") boolean createRecord, @RequestParam("canBeCredited") boolean canBeCredited) {
-        boolean debitSuccess = reachHQTransactionUseCase.processCustomerDebit(accountNumber, createRecord, canBeCredited);
-        ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Processed - Status : "+debitSuccess);
+    @GetMapping(value = "/savings-interest-update", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<InterestUpdateResponse>> processSavingsInterestUpdate(@RequestParam("goalId") String goalId, @RequestParam("applyInterest") boolean applyInterest) {
+        InterestUpdateResponse response = applySavingsInterestUseCase.recalculateInterestOnSavings(goalId, applyInterest);
+        ApiResponseJSON<InterestUpdateResponse> apiResponse = new ApiResponseJSON<>("Processed", response);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 

@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.dao.SavingsInterestEntityDao;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsInterestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
+import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsInterestRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -11,7 +12,10 @@ import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -55,6 +59,20 @@ public class SavingsInterestEntityDaoImpl implements SavingsInterestEntityDao {
     public Page<SavingsInterestEntity> getAccruedInterestOnGoal(SavingsGoalEntity goalEntity, int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return repository.getAllByRecordStatusAndSavingsGoalOrderByDateCreatedDesc(RecordStatusConstant.ACTIVE, goalEntity, pageable);
+    }
+
+    @Override
+    public List<SavingsInterestEntity> getSavingsGoalInterest(SavingsGoalEntity goalEntity) {
+
+
+
+        return repository.getAllByRecordStatusAndSavingsGoalOrderByDateCreated(RecordStatusConstant.ACTIVE, goalEntity);
+    }
+
+    @Override
+    public Optional<SavingsInterestEntity> getSavingsInterestOnDate(SavingsGoalEntity savingsGoal, LocalDate interestDate) {
+        String interestDateString = interestDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        return repository.getInterestOnDate(savingsGoal, interestDateString);
     }
 
     @Override
