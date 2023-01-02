@@ -27,7 +27,9 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -204,6 +206,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         int interestDaysCounter = 0;
         int missingDays = 0, updatedDays = 0;
         double missingAmount = 0.0;
+        List<InterestUpdateResponse.MissingDate> missingDayList = new ArrayList<>();
         for(int day = 0; day < days; day++) {
 
             SavingsInterestEntity interestEntity = interestList.get(interestDaysCounter);
@@ -213,14 +216,18 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                 if(updateInterest) {
                    boolean success = createRecord(savingsGoal, checkDate, interestEntity);
                    if(success) {
+                       double interest = interestEntity.getInterest().doubleValue();
                        missingDays++;
-                       missingAmount += interestEntity.getInterest().doubleValue();
+                       missingAmount += interest;
+                       missingDayList.add(new InterestUpdateResponse.MissingDate(checkDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), interest) );
                    }else {
                        updatedDays++;
                    }
                 }else {
+                    double interest =interestEntity.getInterest().doubleValue();
                     missingDays++;
-                    missingAmount += interestEntity.getInterest().doubleValue();
+                    missingAmount += interest;
+                    missingDayList.add(new InterestUpdateResponse.MissingDate(checkDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), interest) );
                 }
             }else {
                 interestDaysCounter++;
@@ -238,6 +245,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
         response.setMissedDays(missingDays);
         response.setMissedAmount(missingAmount);
         response.setUnappliedDays(updatedDays);
+        response.setMissingDays(missingDayList);
         return response;
 
     }
