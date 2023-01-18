@@ -224,7 +224,7 @@ public class ApplySavingsInterestUseCaseImpl implements ApplySavingsInterestUseC
                        updatedDays++;
                    }
                 }else {
-                    double interest =interestEntity.getInterest().doubleValue();
+                    double interest = interestEntity.getInterest().doubleValue();
                     missingDays++;
                     missingAmount += interest;
                     missingDayList.add(new InterestUpdateResponse.MissingDate(checkDate.format(DateTimeFormatter.ofPattern("dd/MM/yyyy")), interest) );

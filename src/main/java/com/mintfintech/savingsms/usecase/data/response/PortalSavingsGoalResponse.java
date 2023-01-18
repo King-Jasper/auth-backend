@@ -1,6 +1,7 @@
 package com.mintfintech.savingsms.usecase.data.response;
 
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
+import lombok.Builder;
 import lombok.Data;
 
 /**
@@ -9,7 +10,10 @@ import lombok.Data;
  */
 @Data
 public class PortalSavingsGoalResponse {
-    private String userId;
-    private String customerName;
-    private String accountId;
+    @Builder.Default
+    private String userId = "";
+    @Builder.Default
+    private String customerName = "";
+    @Builder.Default
+    private String accountId = "";
 }
