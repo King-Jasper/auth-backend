@@ -49,4 +49,10 @@ public class InvestmentModel extends PortalSavingsGoalResponse {
     private BigDecimal withholdingTax;
 
     private double maxLiquidateRate;
+
+    public InvestmentModel() {
+        setUserId("");
+        setCustomerName("");
+        setCustomerName("");
+    }
 }

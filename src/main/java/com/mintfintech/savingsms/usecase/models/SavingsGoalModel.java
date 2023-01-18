@@ -34,5 +34,11 @@ public class SavingsGoalModel extends PortalSavingsGoalResponse {
    private String nextSavingsDate;
    private String categoryCode;
    private boolean lockedSavings;
+
+   public SavingsGoalModel() {
+      setCustomerName("");
+      setUserId("");
+      setAccountId("");
+   }
   // private int chosenSavingsDurationInDays;
 }
