@@ -10,10 +10,7 @@ import lombok.Data;
  */
 @Data
 public class PortalSavingsGoalResponse {
-    @Builder.Default
     private String userId = "";
-    @Builder.Default
     private String customerName = "";
-    @Builder.Default
     private String accountId = "";
 }
