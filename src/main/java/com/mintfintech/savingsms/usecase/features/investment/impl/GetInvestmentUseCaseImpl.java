@@ -211,9 +211,7 @@ public class GetInvestmentUseCaseImpl implements GetInvestmentUseCase {
 		model.setCanLiquidate(canLiquidate);
 		model.setInterestRate(investment.getInterestRate());
 		model.setCode(investment.getCode());
-		model.setDateWithdrawn(investment.getDateWithdrawn() != null
-				? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE)
-				: null);
+		model.setDateWithdrawn(investment.getDateWithdrawn() != null ? investment.getDateWithdrawn().format(DateTimeFormatter.ISO_LOCAL_DATE) : "");
 		model.setMaturityDate(investment.getMaturityDate().format(DateTimeFormatter.ISO_LOCAL_DATE));
 		model.setDurationInMonths(investment.getDurationInMonths());
 		model.setStartDate(investment.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
