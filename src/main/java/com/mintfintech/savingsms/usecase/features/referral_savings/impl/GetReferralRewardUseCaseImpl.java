@@ -87,7 +87,7 @@ public class GetReferralRewardUseCaseImpl implements GetReferralRewardUseCase {
         String text = "Hello \uD83D\uDE07\n" +
                 "\n" +
                 "I use Mintyn bank for my banking needs, join now to own a free current account in less than 3 minutes using my code -"+username.toUpperCase()+"-." +
-                " Download the app using this link (https://app.mintyn.com/sign-up?referral="+username+")";
+                " Download the app using this link ( https://app.mintyn.com/sign-up?referral="+username+" )";
 
 
         /*
