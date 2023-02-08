@@ -1,4 +1,4 @@
-FROM openjdk:8-stretch
+FROM adoptopenjdk/openjdk11:jre-11.0.9_11-alpine
 
 MAINTAINER Nwanya Justin "justin.nwanya@mintfintech.com"
 
