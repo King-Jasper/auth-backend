@@ -8,6 +8,7 @@ import com.mintfintech.savingsms.usecase.data.request.OnlineFundingRequest;
 import com.mintfintech.savingsms.usecase.data.response.OnlineFundingResponse;
 import com.mintfintech.savingsms.usecase.data.response.ReferenceGenerationResponse;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalFundingResponse;
+import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.features.OnlineFundingUseCase;
 import com.mintfintech.savingsms.usecase.features.emergency_savings.WithdrawEmergencySavingsUseCase;
 import io.swagger.annotations.Api;
@@ -84,13 +85,15 @@ public class SavingsGoalTransactionController {
     public ResponseEntity<ApiResponseJSON<ReferenceGenerationResponse>> generateTransactionReference(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
                                                                                                      @PathVariable("goalId") String goalId,
                                                                                                      @RequestBody @Valid OnlineFundingRequestJSON request) {
-        OnlineFundingRequest fundingRequest = OnlineFundingRequest.builder()
+
+        throw new BadRequestException("Sorry, funding with card is temporarily disabled. Please fund from your Mintyn bank account.");
+       /* OnlineFundingRequest fundingRequest = OnlineFundingRequest.builder()
                 .gaolId(goalId).amount(request.getAmount())
                 .paymentGateway(request.getPaymentGateway()).build();
         ReferenceGenerationResponse response = onlineFundingUseCase.createFundingRequest(authenticatedUser, fundingRequest);
         response.setAmount(response.getAmount().multiply(BigDecimal.valueOf(100)).setScale(0, BigDecimal.ROUND_DOWN));
         ApiResponseJSON<ReferenceGenerationResponse> apiResponseJSON = new ApiResponseJSON<>("Funding request processed successfully.", response);
-        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);*/
     }
 
     @ApiOperation(value = "Returns the transaction status of an savings funding request.")
