@@ -28,7 +28,7 @@ public class CorporateUserEntityDaoImpl extends CrudDaoImpl<CorporateUserEntity,
 
     @Override
     public Optional<CorporateUserEntity> findRecordByAccountIdAndUserId(String accountId, String userId) {
-        return repository.findTopByAppUser_UserIdAndCorporateAccount_AccountId(accountId, userId);
+        return repository.findTopByAppUser_UserIdAndCorporateAccount_AccountId(userId, accountId);
     }
 
     @Override
