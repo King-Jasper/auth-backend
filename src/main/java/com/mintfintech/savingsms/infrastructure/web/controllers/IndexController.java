@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.infrastructure.web.controllers;
 import com.mintfintech.savingsms.domain.models.corebankingservice.LoanDetailResponseCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
 import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
+import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.ApplySavingsInterestUseCase;
 import com.mintfintech.savingsms.usecase.CreateSavingsGoalUseCase;
@@ -33,6 +34,7 @@ public class IndexController {
     private CreateSavingsGoalUseCase createSavingsGoalUseCase;
     private CoreBankingServiceClient coreBankingServiceClient;
     private ApplySavingsInterestUseCase applySavingsInterestUseCase;
+    private SystemIssueLogService systemIssueLogService;
 
 
     @Autowired
@@ -66,6 +68,7 @@ public class IndexController {
         try{
             Thread.sleep(delayMilliSeconds);
         }catch (Exception ignored) {}
+        systemIssueLogService.logIssue("TIMEOUT TEST COMPLETED", "TIMEOUT TEST COMPLETED IN "+seconds+" seconds", "");
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("No timeout after "+seconds+" seconds.");
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
