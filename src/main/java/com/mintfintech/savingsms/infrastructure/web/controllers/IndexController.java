@@ -55,6 +55,11 @@ public class IndexController {
         this.applySavingsInterestUseCase = applySavingsInterestUseCase;
     }
 
+    @Autowired
+    public void setSystemIssueLogService(SystemIssueLogService systemIssueLogService) {
+        this.systemIssueLogService = systemIssueLogService;
+    }
+
     @GetMapping(value = {""}, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> indexPage() {
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>("Confirmed, Savings  Service is up and running.");
