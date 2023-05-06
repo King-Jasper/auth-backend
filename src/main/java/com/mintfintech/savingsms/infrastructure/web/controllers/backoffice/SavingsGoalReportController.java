@@ -55,6 +55,8 @@ public class SavingsGoalReportController {
 	@GetMapping(value = "savings-goals", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>>> getSavingsGoal(
 			@RequestParam(value = "accountId", required = false) String accountId,
+			@RequestParam(value = "accountNumber", required = false) String accountNumber,
+			@RequestParam(value = "phoneNumber", required = false) String phoneNumber,
 			@RequestParam(value = "customerName", required = false) String customerName,
 			@RequestParam(value = "goalName", required = false) String goalName,
 			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
@@ -65,9 +67,11 @@ public class SavingsGoalReportController {
 			@RequestParam("size") int size, @RequestParam("page") int page) {
 		SavingsSearchRequest searchRequest = SavingsSearchRequest.builder().customerName(customerName)
 				.savingsStatus(goalStatus).goalName(goalName).accountId(accountId).savingsType(savingsType)
-				.fromDate(fromDate).toDate(toDate).autoSavedStatus(autoSaveStatus).build();
-		PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase
-				.getPagedSavingsGoals(searchRequest, page, size);
+				.fromDate(fromDate).toDate(toDate).autoSavedStatus(autoSaveStatus)
+				.phoneNumber(phoneNumber)
+				.accountNumber(accountNumber)
+				.build();
+		PagedDataResponse<PortalSavingsGoalResponse> response = getSavingsGoalUseCase.getPagedSavingsGoals(searchRequest, page, size);
 		ApiResponseJSON<PagedDataResponse<PortalSavingsGoalResponse>> apiResponseJSON = new ApiResponseJSON<>(
 				"Savings goals processed successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);

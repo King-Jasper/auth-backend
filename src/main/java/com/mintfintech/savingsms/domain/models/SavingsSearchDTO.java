@@ -22,6 +22,7 @@ public class SavingsSearchDTO {
     private String goalId;
     private MintAccountEntity account;
     private SavingsGoalTypeConstant goalType;
+    private String phoneNumber;
     private String customerName;
     private String goalName;
    // private boolean autoSavedEnabled;

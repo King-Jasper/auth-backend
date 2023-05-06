@@ -24,6 +24,7 @@ import com.mintfintech.savingsms.usecase.models.MintSavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
 import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
+import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import org.apache.commons.lang3.StringUtils;
@@ -60,6 +61,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
     private AppUserEntityDao appUserEntityDao;
     private ApplicationProperty applicationProperty;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
+    private MintBankAccountEntityDao mintBankAccountEntityDao;
     private ApplicationEventService applicationEventService;
     private final GetMintAccountUseCase getMintAccountUseCase;
 
@@ -247,6 +249,11 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(!StringUtils.isEmpty(searchRequest.getAccountId())) {
             accountEntity = mintAccountEntityDao.findAccountByAccountId(searchRequest.getAccountId()).orElseThrow(()->new BadRequestException("Invalid account Id"));
         }
+        if(StringUtils.isNotEmpty(searchRequest.getAccountNumber())) {
+            MintBankAccountEntity bankAccountEntity = mintBankAccountEntityDao.findByAccountNumber(searchRequest.getAccountNumber())
+                    .orElseThrow(() -> new NotFoundException("Account number does not exist."));
+            accountEntity = bankAccountEntity.getMintAccount();
+        }
         SavingsGoalTypeConstant goalType = null;
         if(!StringUtils.isEmpty(searchRequest.getSavingsType()) && !searchRequest.getSavingsType().equalsIgnoreCase("ALL")) {
             goalType = SavingsGoalTypeConstant.valueOf(searchRequest.getSavingsType());
@@ -255,11 +262,16 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         if(!"ALL".equalsIgnoreCase(searchRequest.getAutoSavedStatus())) {
             autoSaveStatus = SavingsSearchDTO.AutoSaveStatus.valueOf(searchRequest.getAutoSavedStatus());
         }
+        String phoneNumber = searchRequest.getPhoneNumber();
+        if(StringUtils.isNotEmpty(phoneNumber)) {
+            phoneNumber = PhoneNumberUtils.toInternationalFormat(phoneNumber);
+        }
         SavingsSearchDTO searchDTO = SavingsSearchDTO.builder()
                 .goalId(searchRequest.getGoalId())
                 .account(accountEntity)
                 .autoSaveStatus(autoSaveStatus)
                 .customerName(searchRequest.getCustomerName())
+                .phoneNumber(phoneNumber)
                 .goalName(searchRequest.getGoalName())
                 .goalStatus(SavingsGoalStatusConstant.valueOf(searchRequest.getSavingsStatus()))
                 .goalType(goalType)
