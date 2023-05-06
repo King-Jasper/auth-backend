@@ -21,4 +21,6 @@ public class SavingsSearchRequest {
     private String autoSavedStatus;
     private LocalDate fromDate;
     private LocalDate toDate;
+    private String phoneNumber;
+    private String accountNumber;
 }

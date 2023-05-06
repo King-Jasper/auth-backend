@@ -167,6 +167,8 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
         }
         if(searchDTO.getGoalStatus() != null) {
             whereClause = cb.and(whereClause, cb.equal(root.get("goalStatus"), searchDTO.getGoalStatus()));
+        }else {
+            whereClause = cb.and(whereClause, cb.notEqual(root.get("goalStatus"), SavingsGoalStatusConstant.WITHDRAWN));
         }
         if(searchDTO.getGoalType() != null) {
             whereClause = cb.and(whereClause, cb.equal(root.get("savingsGoalType"), searchDTO.getGoalType()));
@@ -184,6 +186,10 @@ public class SavingsGoalEntityDaoImpl extends CrudDaoImpl<SavingsGoalEntity, Lon
             String name = searchDTO.getCustomerName().toLowerCase();
             Join<SavingsGoalEntity, AppUserEntity> owner = root.join("creator");
             whereClause = cb.and(whereClause, cb.like(cb.lower(owner.get("name")), "%"+name+"%"));
+        }
+        if(StringUtils.isNotEmpty(searchDTO.getPhoneNumber())) {
+            Join<SavingsGoalEntity, AppUserEntity> owner = root.join("creator");
+            whereClause = cb.and(whereClause, cb.equal(owner.get("phoneNumber"), searchDTO.getPhoneNumber()));
         }
         return whereClause;
     }
