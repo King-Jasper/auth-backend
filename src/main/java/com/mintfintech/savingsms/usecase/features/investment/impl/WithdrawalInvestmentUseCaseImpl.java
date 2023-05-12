@@ -674,6 +674,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
         transaction.setTransactionDescription("Withholding Tax Charge.");
         transaction = investmentTransactionEntityDao.saveRecord(transaction);
 
+        /* THIS SECTION DOES NOT CHARGE AMOUNT BELOW 100K
         if (investment.getTotalAmountInvested().compareTo(new BigDecimal(100000)) <= 0) {
             transaction.setTransactionStatus(TransactionStatusConstant.CANCELLED);
             transaction.setRecordStatus(RecordStatusConstant.INACTIVE);
@@ -683,7 +684,7 @@ public class WithdrawalInvestmentUseCaseImpl implements WithdrawalInvestmentUseC
             withdrawal.setWithholdingTaxCharge(transaction);
             investmentWithdrawalEntityDao.saveRecord(withdrawal);
             return;
-        }
+        }*/
 
         withdrawal.setWithholdingTaxStatus(WithholdingTaxStatusConstant.CHARGED);
         withdrawal.setWithholdingTaxCharge(transaction);
