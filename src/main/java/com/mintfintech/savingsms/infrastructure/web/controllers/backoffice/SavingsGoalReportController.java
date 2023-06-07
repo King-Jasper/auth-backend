@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import javax.validation.Valid;
@@ -8,17 +9,18 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.Pattern;
 
+import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
+import com.mintfintech.savingsms.usecase.models.LoanModel;
+import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.usecase.GetSavingsGoalUseCase;
@@ -34,6 +36,7 @@ import io.swagger.annotations.ApiParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import springfox.documentation.annotations.ApiIgnore;
 
 /**
  * Created by jnwanya on Sat, 06 Jun, 2020
@@ -49,6 +52,7 @@ public class SavingsGoalReportController {
 
 	GetSavingsGoalUseCase getSavingsGoalUseCase;
 	GetSavingsTransactionUseCase getSavingsTransactionUseCase;
+	FundWithdrawalUseCase fundWithdrawalUseCase;
 
 	@Secured("39") // Privilege: CAN_VIEW_SAVINGS_TRANSACTION
 	@ApiOperation(value = "Returns paginated list of savings goal.")
@@ -102,12 +106,10 @@ public class SavingsGoalReportController {
 	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
 	@ApiOperation(value = "Returns savings goal details by goal id.")
 	@GetMapping(value = "savings-goals/{goalId}", produces = MediaType.APPLICATION_JSON_VALUE)
-	public ResponseEntity<ApiResponseJSON<PortalSavingsGoalResponse>> getSavingsGoal(
-			@PathVariable("goalId") String goalId) {
+	public ResponseEntity<ApiResponseJSON<PortalSavingsGoalResponse>> getSavingsGoal(@PathVariable("goalId") String goalId) {
 
 		PortalSavingsGoalResponse response = getSavingsGoalUseCase.getPortalSavingsGoalResponseByGoalId(goalId);
-		ApiResponseJSON<PortalSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>(
-				"Request processed successfully.", response);
+		ApiResponseJSON<PortalSavingsGoalResponse> apiResponseJSON = new ApiResponseJSON<>("Request processed successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
@@ -117,10 +119,23 @@ public class SavingsGoalReportController {
 	public ResponseEntity<ApiResponseJSON<SavingsMaturityStatSummary>> getSavingsMaturityStatistics(
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate") LocalDate fromDate,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate") LocalDate toDate) {
-		SavingsMaturityStatSummary response = getSavingsTransactionUseCase.getSavingsMaturityStatistics(fromDate,
-				toDate);
-		ApiResponseJSON<SavingsMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>(
-				"Maturity processed successfully.", response);
+		SavingsMaturityStatSummary response = getSavingsTransactionUseCase.getSavingsMaturityStatistics(fromDate, toDate);
+		ApiResponseJSON<SavingsMaturityStatSummary> apiResponseJSON = new ApiResponseJSON<>("Maturity processed successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+	}
+
+	@Secured("08") // Privilege: VIEW_TRANSACTION_REPORTS
+	@ApiOperation(value = "Unlock locked savings goal.")
+	@PostMapping(value = "/savings-goal/unlock", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+	public ResponseEntity<ApiResponseJSON<BigDecimal>> unlockSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser, @RequestBody @Valid UnlockSavingsJSON request) {
+		BigDecimal response = fundWithdrawalUseCase.unlockSavings(authenticatedUser, request.getGoalId(), request.getPhoneNumber());
+		ApiResponseJSON<BigDecimal> apiResponseJSON = new ApiResponseJSON<>("Processed - Interest lost.", response);
+		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+	}
+
+	@Data
+	static class UnlockSavingsJSON {
+		private String phoneNumber;
+		private String goalId;
 	}
 }

@@ -7,10 +7,7 @@ import com.mintfintech.savingsms.domain.models.EventModel;
 import com.mintfintech.savingsms.domain.models.corebankingservice.FundTransferResponseCBS;
 import com.mintfintech.savingsms.domain.models.corebankingservice.SavingsWithdrawalRequestCBS;
 import com.mintfintech.savingsms.domain.models.restclient.MsClientResponse;
-import com.mintfintech.savingsms.domain.services.ApplicationEventService;
-import com.mintfintech.savingsms.domain.services.ApplicationProperty;
-import com.mintfintech.savingsms.domain.services.CoreBankingServiceClient;
-import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
+import com.mintfintech.savingsms.domain.services.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
@@ -24,6 +21,7 @@ import com.mintfintech.savingsms.usecase.data.value_objects.SavingsWithdrawalTyp
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
+import com.mintfintech.savingsms.utils.PhoneNumberUtils;
 import lombok.AllArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
@@ -65,10 +63,39 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private TierLevelEntityDao tierLevelEntityDao;
     private ComputeAvailableAmountUseCase computeAvailableAmountUseCase;
     private RoundUpSavingsSettingEntityDao roundUpSavingsSettingEntityDao;
+    private AuditTrailService auditTrailService;
+    private SettingsEntityDao settingsEntityDao;
 
 
     @Override
+    public BigDecimal unlockSavings(AuthenticatedUser authenticatedUser, String goalId, String phoneNumber) {
+        SavingsGoalEntity savingsGoal = savingsGoalEntityDao.findSavingGoalByGoalId(goalId)
+                .orElseThrow(() -> new BadRequestException("Invalid goal Id."));
+        AppUserEntity appUser = appUserEntityDao.getRecordById(savingsGoal.getCreator().getId());
+        phoneNumber = PhoneNumberUtils.toInternationalFormat(phoneNumber);
+
+        if(!appUser.getPhoneNumber().equalsIgnoreCase(phoneNumber)) {
+            throw new BadRequestException("Goal Id and phone number does not match.");
+        }
+        if(!savingsGoal.isLockedSavings()) {
+            throw new BadRequestException("Savings goal is not locked.");
+        }
+        BigDecimal interest = savingsGoal.getAccruedInterest();
+        savingsGoal.setAccruedInterest(BigDecimal.valueOf(0.00));
+        savingsGoal.setLockedSavings(false);
+        savingsGoalEntityDao.saveRecord(savingsGoal);
+
+        auditTrailService.createAuditLog(authenticatedUser, AuditTrailService.AuditType.UPDATE, "Unlocked a locked savings goal(interest lost)", savingsGoal);
+        return interest;
+    }
+
+    @Override
     public String withdrawalSavings(AuthenticatedUser authenticatedUser, SavingsWithdrawalRequest withdrawalRequest) {
+
+        boolean enabled = Boolean.parseBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.SAVINGS_WITHDRAWAL_ENABLED, "true"));
+        if(!enabled) {
+            throw new BusinessLogicConflictException("Sorry, savings withdrawal is temporarily disabled. Try again in few minutes");
+        }
         MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         AppUserEntity appUserEntity = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
 
