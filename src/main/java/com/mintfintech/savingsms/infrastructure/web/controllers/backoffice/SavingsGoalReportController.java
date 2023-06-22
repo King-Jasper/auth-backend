@@ -4,10 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.*;
 
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
@@ -128,14 +125,20 @@ public class SavingsGoalReportController {
 	@ApiOperation(value = "Unlock locked savings goal.")
 	@PostMapping(value = "/savings-goal/unlock", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<BigDecimal>> unlockSavings(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser, @RequestBody @Valid UnlockSavingsJSON request) {
-		BigDecimal response = fundWithdrawalUseCase.unlockSavings(authenticatedUser, request.getGoalId(), request.getPhoneNumber());
+		BigDecimal response = fundWithdrawalUseCase.unlockSavings(authenticatedUser, request.goalId, request.phoneNumber);
 		ApiResponseJSON<BigDecimal> apiResponseJSON = new ApiResponseJSON<>("Processed - Interest lost.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
+
+
 	@Data
 	static class UnlockSavingsJSON {
+		@NotEmpty(message = "Phone number is required.")
+		@NotNull
 		private String phoneNumber;
+		@NotEmpty(message = "GoalId is required.")
+		@NotNull
 		private String goalId;
 	}
 }
