@@ -208,8 +208,7 @@ public class InvestmentAdminController {
 	public ResponseEntity<ApiResponseJSON<InvestmentFundingResponse>> fundInvestment(
 			@RequestBody @Valid FundInvestmentByAdminJSON requestJSON) {
 		InvestmentFundingResponse response = fundInvestmentUseCase.fundInvestmentByAdmin(requestJSON.toRequest());
-		ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>(
-				"Investment funded successfully.", response);
+		ApiResponseJSON<InvestmentFundingResponse> apiResponseJSON = new ApiResponseJSON<>("Investment funded successfully.", response);
 		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
 	}
 
