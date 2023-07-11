@@ -41,7 +41,7 @@ public class FundTransactionMsEventListener {
         //MintTransactionPayload transactionPayload = gson.fromJson(payload, MintTransactionPayload.class);
         //processRoundUpSavingsUseCase.processTransactionForRoundUpSavings(transactionPayload);
 
-        log.info("mint transaction log: {}", payload);
+       // log.info("mint transaction log: {}", payload);
         MintTransactionPayload transactionPayload = gson.fromJson(payload, MintTransactionPayload.class);
         processRoundUpSavingsUseCase.processTransactionForSpendAndSave(transactionPayload);
     }
