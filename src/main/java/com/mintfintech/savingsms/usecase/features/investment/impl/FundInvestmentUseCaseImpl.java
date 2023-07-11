@@ -258,18 +258,20 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
 
     @Override
     public InvestmentFundingResponse fundInvestmentByAdmin(InvestmentFundingRequest request) {
-        InvestmentEntity investmentEntity = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
-        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(request.getAccountId());
 
-        if (!investmentEntity.getOwner().getId().equals(accountEntity.getId())) {
+        InvestmentEntity investmentEntity = investmentEntityDao.findByCode(request.getInvestmentCode()).orElseThrow(() -> new BadRequestException("Invalid investment code."));
+        MintAccountEntity accountEntity = investmentEntity.getOwner();
+        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountId(request.getDebitAccountId())
+                .orElseThrow(() -> new BadRequestException("Invalid debit account."));
+
+        if (!debitAccount.getMintAccount().getId().equals(accountEntity.getId())) {
             throw new BusinessLogicConflictException("Sorry, request cannot be processed.");
         }
         BigDecimal amount = request.getAmount();
         if (amount.compareTo(BigDecimal.ZERO) == 0) {
             throw new BadRequestException("Invalid amount.");
         }
-        MintBankAccountEntity debitAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(request.getDebitAccountId(), accountEntity)
-                .orElseThrow(() -> new BadRequestException("Invalid debit account."));
+
         debitAccount = updateBankAccountBalanceUseCase.processBalanceUpdate(debitAccount);
 
         if (debitAccount.getAvailableBalance().compareTo(amount) < 0) {
@@ -282,8 +284,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         if (LocalDateTime.now().compareTo(maturityDate) >= 0) {
             throw new BusinessLogicConflictException("Sorry, your investment has already matured.");
         }
-
-
+        
         InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, amount);
         InvestmentFundingResponse response = new InvestmentFundingResponse();
         String responseCode = "00";

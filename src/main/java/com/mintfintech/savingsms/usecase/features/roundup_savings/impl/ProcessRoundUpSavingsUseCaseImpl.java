@@ -116,7 +116,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
             return;
         }
         RoundUpTransactionCategoryType transactionCategory = RoundUpTransactionCategoryType.getByName(category);
-        System.out.println("TransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
+      //  System.out.println("TransactionCategoryType - "+transactionCategory+" "+transactionPayload.getDebitAccountId());
         if (transactionCategory == null || transactionCategory.equals(RoundUpTransactionCategoryType.CARD_PAYMENT)) {
             return;
         }
@@ -135,7 +135,7 @@ public class ProcessRoundUpSavingsUseCaseImpl implements ProcessRoundUpSavingsUs
         SpendAndSaveEntity settingEntity = settingEntityOptional.get();
         BigDecimal transactionAmount = transactionPayload.getTransactionAmount();
         BigDecimal amountToSave = getSaveAmount(settingEntity.getPercentage(), transactionAmount);
-        System.out.println("amount to save for account "+amountToSave+" - "+debitAccount.getAccountNumber());
+       // System.out.println("amount to save for account "+amountToSave+" - "+debitAccount.getAccountNumber());
         if (amountToSave.compareTo(BigDecimal.ZERO) <= 0) {
             log.info("Amount to save is {}", amountToSave);
             return;
