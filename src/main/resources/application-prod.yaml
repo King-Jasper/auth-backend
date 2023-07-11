@@ -2,15 +2,15 @@ savings-goal:
   minimum-days-for-withdrawal: 10
 mint:
   email:
-    system-admin: devops@bankwithmint.com
+    system-admin: devops@mintyn.com
     loan-admin: loanadmin@bankwithmint.com
 sentry:
-  dsn: https://970446a3125a46c5a6f8afdacc007764@o555418.ingest.sentry.io/5693117
+  dsn: https://c34a27b7626447a4aecd414748ea6aa9@o4505053961060352.ingest.sentry.io/4505511462043648
   attach-server-name: true
   server-name: savings-service
   environment: production
   enable-tracing: false
-  traces-sample-rate: 0.3
+  traces-sample-rate: 0.1
 logging:
   level:
     org.springframework: INFO
