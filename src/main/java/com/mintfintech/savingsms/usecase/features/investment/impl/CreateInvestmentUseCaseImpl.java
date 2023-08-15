@@ -75,8 +75,10 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
 
         boolean enabled = Boolean.getBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.INVESTMENT_CREATION_ENABLED, "true"));
-        if(!enabled && !isPremiumCustomer) {
-            throw new BusinessLogicConflictException("Sorry, investment cannot be processed at the moment.");
+        if(!enabled) {
+            if(!isPremiumCustomer) {
+                throw new BusinessLogicConflictException("Sorry, investment cannot be processed at the moment.");
+            }
         }
 
         accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
