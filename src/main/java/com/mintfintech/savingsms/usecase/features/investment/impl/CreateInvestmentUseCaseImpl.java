@@ -74,7 +74,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
         boolean isPremiumCustomer = appUser.getPhoneNumber().equalsIgnoreCase("+2348030663850");
 
 
-        boolean enabled = Boolean.getBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.INVESTMENT_CREATION_ENABLED, "true"));
+        boolean enabled = Boolean.parseBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.INVESTMENT_CREATION_ENABLED, "true"));
         if(!enabled) {
             if(!isPremiumCustomer) {
                 throw new BusinessLogicConflictException("Sorry, investment cannot be processed at the moment.");
