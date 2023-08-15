@@ -47,6 +47,7 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
     private final AppUserEntityDao appUserEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final MintAccountEntityDao mintAccountEntityDao;
+    private final SettingsEntityDao settingsEntityDao;
     private final UpdateBankAccountBalanceUseCase updateBankAccountBalanceUseCase;
     private final InvestmentTenorEntityDao investmentTenorEntityDao;
     private final InvestmentEntityDao investmentEntityDao;
@@ -69,6 +70,14 @@ public class CreateInvestmentUseCaseImpl implements CreateInvestmentUseCase {
 
         MintAccountEntity mintAccount = getMintAccountUseCase.getMintAccount(authenticatedUser);
         AppUserEntity appUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+
+        boolean isPremiumCustomer = appUser.getPhoneNumber().equalsIgnoreCase("+2348030663850");
+
+
+        boolean enabled = Boolean.getBoolean(settingsEntityDao.getSettings(SettingsNameTypeConstant.INVESTMENT_CREATION_ENABLED, "true"));
+        if(!enabled && !isPremiumCustomer) {
+            throw new BusinessLogicConflictException("Sorry, investment cannot be processed at the moment.");
+        }
 
         accountAuthorisationUseCase.validationTransactionPin(request.getTransactionPin());
         InvestmentCreationResponse response;

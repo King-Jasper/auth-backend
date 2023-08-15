@@ -284,7 +284,7 @@ public class FundInvestmentUseCaseImpl implements FundInvestmentUseCase {
         if (LocalDateTime.now().compareTo(maturityDate) >= 0) {
             throw new BusinessLogicConflictException("Sorry, your investment has already matured.");
         }
-        
+
         InvestmentTransactionEntity transactionEntity = fundInvestment(investmentEntity, debitAccount, amount);
         InvestmentFundingResponse response = new InvestmentFundingResponse();
         String responseCode = "00";
