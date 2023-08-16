@@ -67,15 +67,18 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
         double totalRepaymentAmount = amount.doubleValue() + totalInterest;
 
         BigDecimal monthlyPrincipal = amount.divide(BigDecimal.valueOf(duration), 2, RoundingMode.HALF_EVEN);
-
+        BigDecimal totalPrincipal = BigDecimal.valueOf(amount.doubleValue());
        // BigDecimal monthlyPayment = amount.add(BigDecimal.valueOf(monthlyInterest));
         List<RepaymentSchedule> schedules = new ArrayList<>();
         LocalDate date = LocalDate.now();
-
         for(int i = 0; i < duration; i++) {
             date = date.plusDays(30);
-            schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE),
-                    monthlyPrincipal.add(BigDecimal.valueOf(monthlyInterest))));
+            //schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE), monthlyPrincipal.add(BigDecimal.valueOf(monthlyInterest))));
+            if(i + 1 == duration) {
+                schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE), totalPrincipal.add(BigDecimal.valueOf(monthlyInterest))));
+            }else {
+                schedules.add(new RepaymentSchedule(date.format(DateTimeFormatter.ISO_DATE), BigDecimal.valueOf(monthlyInterest)));
+            }
         }
         return LoanRequestScheduleResponse.builder()
                 .loanAmount(amount)
