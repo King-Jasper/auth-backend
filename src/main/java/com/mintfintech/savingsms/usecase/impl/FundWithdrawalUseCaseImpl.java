@@ -11,6 +11,7 @@ import com.mintfintech.savingsms.domain.services.*;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
+import com.mintfintech.savingsms.usecase.PushNotificationService;
 import com.mintfintech.savingsms.usecase.UpdateBankAccountBalanceUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.SavingsGoalCreationEvent;
@@ -65,6 +66,7 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
     private RoundUpSavingsSettingEntityDao roundUpSavingsSettingEntityDao;
     private AuditTrailService auditTrailService;
     private SettingsEntityDao settingsEntityDao;
+    private PushNotificationService pushNotificationService;
 
 
     @Override
@@ -203,10 +205,30 @@ public class FundWithdrawalUseCaseImpl implements FundWithdrawalUseCase {
             }
         }
         createWithdrawalRequest(savingsGoal, isMatured, currentUser);
+        /*
         if(isMatured) {
-            return "Request queued successfully. Your account will be funded shortly.";
+            if(isWithdrawnAtNonProcessingTime()) {
+                return "Request queued successfully. Your withdrawal will be processed by 9am.";
+            }else {
+                return "Request queued successfully. Your account will be funded shortly.";
+            }
         }
         return "Request queued successfully. Your account will be funded within the next 2 business days.";
+        */
+        if(isWithdrawnAtNonProcessingTime()) {
+            pushNotificationService.sendMessage(currentUser, "Savings Withdrawal Update",
+                    "Hi "+currentUser.getFirstName()+", your account will be credited by 9am. Kindly exercise patient as we process your withdrawal.");
+            return "Request queued successfully. Your withdrawal will be processed by 9am.";
+        }else {
+            return "Request queued successfully. Your account will be funded shortly.";
+        }
+    }
+
+    private boolean isWithdrawnAtNonProcessingTime() {
+         LocalDateTime currentTime = LocalDateTime.now();
+         LocalDateTime startTime = LocalDate.now().atTime(LocalTime.of(6, 0));
+         LocalDateTime endTime = LocalDate.now().atTime(LocalTime.of(9, 0));
+         return currentTime.isAfter(startTime) && currentTime.isBefore(endTime);
     }
 
     private synchronized void createWithdrawalRequest(SavingsGoalEntity savingsGoal, boolean maturedGoal, AppUserEntity currentUser) {
