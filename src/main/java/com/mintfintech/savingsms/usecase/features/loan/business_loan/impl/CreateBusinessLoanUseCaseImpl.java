@@ -1,27 +1,31 @@
 package com.mintfintech.savingsms.usecase.features.loan.business_loan.impl;
 
 import com.mintfintech.savingsms.domain.dao.*;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SettingsNameTypeConstant;
 import com.mintfintech.savingsms.domain.models.EventModel;
+import com.mintfintech.savingsms.domain.models.cloudstorageservice.FileStorageRequest;
+import com.mintfintech.savingsms.domain.models.cloudstorageservice.FileStorageResponse;
 import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.domain.services.ApplicationProperty;
+import com.mintfintech.savingsms.domain.services.CloudStorageService;
 import com.mintfintech.savingsms.domain.services.SystemIssueLogService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanEmailEvent;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
 import com.mintfintech.savingsms.usecase.data.response.HairFinanceLoanResponse;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
+import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.CreateBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import com.mintfintech.savingsms.utils.MintStringUtil;
 import lombok.AllArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.inject.Named;
 import java.math.BigDecimal;
@@ -43,6 +47,9 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
     private final GetBusinessLoanUseCase getBusinessLoanUseCase;
     private final ApplicationEventService applicationEventService;
     private final SettingsEntityDao settingsEntityDao;
+    private final HNILoanCustomerEntityDao hniLoanCustomerEntityDao;
+    private final LoanRepaymentScheduleEntityDao loanRepaymentScheduleEntityDao;
+    private final CloudStorageService cloudStorageService;
 
     @Override
     public BusinessLoanResponse createRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId) {
@@ -91,6 +98,99 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
                 .loanInterest(loanInterest)
                 .loanType(LoanTypeConstant.BUSINESS)
                 .durationInMonths(durationInMonths)
+                .build();
+        loanRequestEntity = loanRequestEntityDao.saveRecord(loanRequestEntity);
+
+        LoanEmailEvent loanEmailEvent = LoanEmailEvent.builder()
+                .customerName(currentUser.getName())
+                .recipient(currentUser.getEmail())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_SUCCESS, new EventModel<>(loanEmailEvent));
+
+        loanEmailEvent = LoanEmailEvent.builder()
+                .recipient(applicationProperty.getLoanAdminEmail())
+                .build();
+        applicationEventService.publishEvent(ApplicationEventService.EventType.EMAIL_LOAN_REQUEST_ADMIN, new EventModel<>(loanEmailEvent));
+
+        return getBusinessLoanUseCase.fromEntityToResponse(loanRequestEntity);
+    }
+
+    @Override
+    @Transactional
+    public BusinessLoanResponse createRequest(AuthenticatedUser authenticatedUser, BigDecimal loanAmount, int durationInMonths, String creditAccountId, MultipartFile chequeFile) {
+
+        AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+
+        MintAccountEntity accountEntity = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
+
+        MintBankAccountEntity creditAccount = mintBankAccountEntityDao.findByAccountIdAndMintAccount(creditAccountId, accountEntity)
+                .orElseThrow(() -> new BadRequestException("Invalid credit account Id"));
+
+        if(loanAmount.doubleValue() < 10000){
+            throw new BusinessLogicConflictException("Minimum loan amount is 10,000");
+        }
+
+        if(durationInMonths < 1) {
+            throw new BadRequestException("Minimum duration is 1 month");
+        }
+
+        HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerEntityDao.findRecord(accountEntity)
+                .orElseThrow(() -> new BusinessLogicConflictException("Sorry, you have not been granted access to business loan."));
+
+        if(hniLoanCustomer.isChequeRequired() && chequeFile == null) {
+            throw new BadRequestException("Sorry, a post dated cheque is required for your application.");
+        }
+
+        if(applicationProperty.isLiveEnvironment()) {
+            long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
+            if(pendingLoanCount > 0) {
+                throw new BadRequestException("Sorry, you have a loan request pending review and approval.");
+            }
+
+            long activeLoanCount = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+            if(activeLoanCount > 0) {
+                throw new BadRequestException("Sorry, you already have an active loan running.");
+            }
+        }
+
+        String postDateChequeUrl = "";
+        if(chequeFile != null) {
+            byte[] fileData = null;
+            try {
+                fileData = chequeFile.getBytes();
+            }catch (Exception ignored){}
+
+            String fileName = chequeFile.getOriginalFilename();
+            FileStorageRequest storageRequest = FileStorageRequest.builder()
+                    .fileName(fileName)
+                    .fileData(fileData)
+                    .folderName("business_loan")
+                    .privateFile(false)
+                    .build();
+            FileStorageResponse storageResponse = cloudStorageService.uploadResourceFile(storageRequest);
+            if(!storageResponse.isSuccess()) {
+                throw new BusinessLogicConflictException("Sorry, unable to upload file. Please try again later.");
+            }
+            postDateChequeUrl = storageResponse.getUrl();
+        }
+
+        LoanRequestScheduleResponse scheduleResponse = getBusinessLoanUseCase.getRepaymentSchedule(hniLoanCustomer, loanAmount, durationInMonths);
+        BigDecimal repaymentAmount = scheduleResponse.getRepaymentAmount();
+
+        LoanRequestEntity loanRequestEntity = LoanRequestEntity.builder()
+                .bankAccount(creditAccount)
+                .loanId(loanRequestEntityDao.generateLoanId())
+                .interestRate(hniLoanCustomer.getInterestRate())
+                .loanAmount(loanAmount)
+                .repaymentAmount(repaymentAmount)
+                .activeLoan(true)
+                .requestedBy(currentUser)
+                .loanInterest(repaymentAmount.subtract(loanAmount))
+                .loanType(LoanTypeConstant.BUSINESS)
+                .durationInMonths(durationInMonths)
+                .hniLoanCustomer(hniLoanCustomer)
+                .repaymentPlanType(hniLoanCustomer.getRepaymentPlanType())
+                .postDatedChequeUrl(postDateChequeUrl)
                 .build();
         loanRequestEntity = loanRequestEntityDao.saveRecord(loanRequestEntity);
 

@@ -2,6 +2,8 @@ package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
+import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
@@ -105,13 +107,21 @@ public class LoanAdminController {
         ApiResponseJSON<List<LoanTransactionModel>> apiResponseJSON = new ApiResponseJSON<>("Loan transactions processed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+    @Secured("28") // CAN_VIEW_LOAN_RECORDS
+    @ApiOperation(value = "Returns list of loan repayment schedule.")
+    @GetMapping(value = "{loanId}/repayment-schedule", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<List<RepaymentSchedule>>> getLoanRepaymentSchedules(@PathVariable(value = "loanId") String loanId) {
+        List<RepaymentSchedule> response = getLoansUseCase.getLoanRepaymentSchedules(loanId);
+        ApiResponseJSON<List<RepaymentSchedule>> apiResponseJSON = new ApiResponseJSON<>("Loan transactions processed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
 
     @Secured("28") // CAN_VIEW_LOAN_RECORDS
     @ApiOperation(value = "Returns paginated loan list.")
     @GetMapping(value = "loans", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<LoanModel>>> getAllLoans(@ApiParam(value = "Repayment Status: ALL, PAID, PARTIALLY_PAID, PENDING, FAILED, CANCELLED") @Valid @Pattern(regexp = "(ALL|PAID|PARTIALLY_PAID|PENDING|FAILED|CANCELLED)") @RequestParam(value = "repaymentStatus", defaultValue = "ALL") String repaymentStatus,
                                                                                      @ApiParam(value = "Approval Status: ALL, APPROVED, DECLINED, PENDING, CANCELLED, DISBURSED") @Valid @Pattern(regexp = "(ALL|APPROVED|DECLINED|PENDING|CANCELLED|DISBURSED)") @RequestParam(value = "approvalStatus", defaultValue = "ALL") String approvalStatus,
-                                                                                     @ApiParam(value = "Review Stage: FIRST_REVIEW, SECOND_REVIEW") @Valid @Pattern(regexp = "(FIRST_REVIEW|SECOND_REVIEW|THIRD_REVIEW)") @RequestParam(value = "reviewStage", defaultValue = "FIRST_REVIEW") String reviewStage,
+                                                                                     @ApiParam(value = "Review Stage: ALL, FIRST_REVIEW, SECOND_REVIEW") @Valid @Pattern(regexp = "(ALL|FIRST_REVIEW|SECOND_REVIEW|THIRD_REVIEW)") @RequestParam(value = "reviewStage", defaultValue = "FIRST_REVIEW") String reviewStage,
                                                                                      @RequestParam(value = "customerName", defaultValue = "", required = false) String customerName,
                                                                                      @RequestParam(value = "customerPhone", defaultValue = "", required = false) String customerPhone,
                                                                                      @ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
@@ -128,7 +138,7 @@ public class LoanAdminController {
                 .fromDate(fromDate)
                 .toDate(toDate)
                 .approvalStatus(approvalStatus)
-                .reviewStage(reviewStage)
+                .reviewStage(reviewStage.equalsIgnoreCase("ALL") ? "" : reviewStage)
                 .customerName(customerName)
                 .customerPhone(customerPhone)
                 .build();

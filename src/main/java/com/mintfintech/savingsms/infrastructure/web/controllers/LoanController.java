@@ -205,6 +205,7 @@ public class LoanController {
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
+    @Deprecated
     @ApiOperation(value = "Create a business loan.")
     @PostMapping(value = "business/loan-request", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<BusinessLoanResponse>> businessLoanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
@@ -215,6 +216,20 @@ public class LoanController {
         ApiResponseJSON<BusinessLoanResponse> apiResponseJSON = new ApiResponseJSON<>(message, response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "Create a business loan.")
+    @PostMapping(value = "hni-business/loan-request", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<BusinessLoanResponse>> hniBusinessLoanRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                                        @RequestParam(value = "cheque", required = false) MultipartFile chequeFile,
+                                                                                        @RequestParam("creditAccountId") String  creditAccountId,
+                                                                                         @RequestParam("amount") double amount, @RequestParam("duration") int durationInMonths) {
+
+        BusinessLoanResponse response = createBusinessLoanUseCase.createRequest(authenticatedUser, BigDecimal.valueOf(amount), durationInMonths, creditAccountId, chequeFile);
+        String message = "Dear customer, your loan application is received and will be reviewed shortly. This will take between 2 - 3 days.";
+        ApiResponseJSON<BusinessLoanResponse> apiResponseJSON = new ApiResponseJSON<>(message, response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
     @ApiOperation(value = "Returns list of business loan request.")
     @GetMapping(value = "business/loan-request", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<PagedDataResponse<BusinessLoanResponse>>> getBusinessRequest(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,

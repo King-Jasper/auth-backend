@@ -61,6 +61,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final SettingsEntityDao settingsEntityDao;
     private final CorporateUserEntityDao corporateUserEntityDao;
+    private final HNILoanCustomerEntityDao hniLoanCustomerEntityDao;
 
     @Override
     @Transactional
@@ -111,8 +112,14 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     public LoanDashboardResponse getLoanDashboardInformation(AuthenticatedUser authenticatedUser) {
 
         AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         long count = 0;
-        boolean accessBusinessLoan = true;
+        boolean accessBusinessLoan = false;
+        boolean chequeRequired = false;
+
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
         if(applicationProperty.isLiveEnvironment()) {
             count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
           //  accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
@@ -120,13 +127,20 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
            if(StringUtils.isNotEmpty(accounts)) {
              accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
            }
-        }
+           if(!accessBusinessLoan) {
+               Optional<HNILoanCustomerEntity> hniLoanCustomerOpt = hniLoanCustomerEntityDao.findRecord(mintAccount);
+               if(hniLoanCustomerOpt.isPresent()) {
+                   HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerOpt.get();
+                   chequeRequired = hniLoanCustomer.isChequeRequired();
+                   businessRate = hniLoanCustomer.getInterestRate();
+               }
+           }
 
-        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
-        double businessRate = Double.parseDouble(rateString);
+        }
 
         LoanDashboardResponse response = new LoanDashboardResponse();
         response.setCanRequestBusinessLoan(count == 0);
+        response.setChequeUploadRequired(chequeRequired);
         response.setBusinessLoanAvailable(accessBusinessLoan);
         response.setBusinessLoanMonthlyInterest(businessRate);
         response.setPaydayLoanAvailable(true);

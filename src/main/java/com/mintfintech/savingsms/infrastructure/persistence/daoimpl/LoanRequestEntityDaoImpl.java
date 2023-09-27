@@ -2,10 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.LoanRequestEntityDao;
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
-import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
-import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
-import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
+import com.mintfintech.savingsms.domain.entities.*;
 import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
@@ -94,6 +91,10 @@ public class LoanRequestEntityDaoImpl implements LoanRequestEntityDao {
     @Override
     public long countActiveLoan(AppUserEntity appUserEntity, LoanTypeConstant loanTypeConstant) {
         return repository.countActiveCustomerLoan(appUserEntity, loanTypeConstant);
+    }
+    @Override
+    public long countActiveLoan(MintAccountEntity mintAccount, LoanTypeConstant loanTypeConstant) {
+        return repository.countActiveCustomerLoan(mintAccount, loanTypeConstant);
     }
 
     @Override

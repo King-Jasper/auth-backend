@@ -10,4 +10,5 @@ public class LoanApplicationRequestCBS {
     private int amount;
     private String loanType;
     private int durationInMonths;
+    private String repaymentPlanType;
 }

@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConsta
 import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
+import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
@@ -36,6 +37,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
     private final CustomerLoanProfileEntityDao customerLoanProfileEntityDao;
     private final LoanTransactionEntityDao loanTransactionEntityDao;
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
+    private final LoanRepaymentScheduleEntityDao loanRepaymentScheduleEntityDao;
 
     @Override
     public PagedDataResponse<LoanModel> getPagedLoans(LoanSearchRequest searchRequest, int page, int size) {
@@ -48,7 +50,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
                 .repaymentStatus(!searchRequest.getRepaymentStatus().equals("ALL") ? LoanRepaymentStatusConstant.valueOf(searchRequest.getRepaymentStatus()) : null)
                 .approvalStatus(!searchRequest.getApprovalStatus().equals("ALL") ? ApprovalStatusConstant.valueOf(searchRequest.getApprovalStatus()) : null)
                 .account(mintAccount.orElse(null))
-                .reviewStage(searchRequest.getReviewStage() != null? LoanReviewStageConstant.valueOf(searchRequest.getReviewStage()): null)
+                .reviewStage(StringUtils.isNotEmpty(searchRequest.getReviewStage())? LoanReviewStageConstant.valueOf(searchRequest.getReviewStage()): null)
                 .loanType(searchRequest.getLoanType() != null ? LoanTypeConstant.valueOf(searchRequest.getLoanType()) : null)
                 .customerName(searchRequest.getCustomerName())
                 .customerPhone(searchRequest.getCustomerPhone())
@@ -82,6 +84,8 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         loanModel.setInterestRate(loanRequestEntity.getInterestRate());
         loanModel.setRepaymentAmount(loanRequestEntity.getRepaymentAmount());
         loanModel.setRepaymentStatus(repaymentStatus.name());
+        loanModel.setRepaymentPlanType(loanRequestEntity.getRepaymentPlanType() != null ? loanRequestEntity.getRepaymentPlanType().getType(): "");
+        loanModel.setPostDatedChequeUrl(StringUtils.defaultString(loanRequestEntity.getPostDatedChequeUrl()));
         loanModel.setRepaymentDueDate(loanRequestEntity.getRepaymentDueDate() != null ? loanRequestEntity.getRepaymentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
         loanModel.setCreatedDate(loanRequestEntity.getDateCreated().format(DateTimeFormatter.ISO_LOCAL_DATE));
         loanModel.setApprovedDate(loanRequestEntity.getApprovedDate() != null ? loanRequestEntity.getApprovedDate().format(DateTimeFormatter.ISO_LOCAL_DATE) : null);
@@ -119,6 +123,7 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         }
         loanModel.setClientLoanStatus(loanStatus);
         loanModel.setReviewStage(loanRequestEntity.getReviewStage() != null ?  loanRequestEntity.getReviewStage().name() : "");
+        loanModel.setHniLoan(loanRequestEntity.getHniLoanCustomer() != null);
         return loanModel;
     }
 
@@ -147,5 +152,14 @@ public class GetLoansUseCaseImpl implements GetLoansUseCase {
         }
 
         return transactionModels;
+    }
+
+    @Override
+    public List<RepaymentSchedule> getLoanRepaymentSchedules(String loanId) {
+        LoanRequestEntity loanRequestEntity = loanRequestEntityDao.findByLoanId(loanId)
+                .orElseThrow(() -> new BadRequestException("Loan request for this loanId " + loanId + " does not exist"));
+        return loanRepaymentScheduleEntityDao.getRecords(loanRequestEntity)
+                .stream().map(data -> new RepaymentSchedule(data.getRepaymentDueDate(), data.getPrincipalAmount(), data.getInterestAmount())
+                ).collect(Collectors.toList());
     }
 }

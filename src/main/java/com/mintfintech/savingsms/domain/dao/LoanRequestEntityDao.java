@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.domain.dao;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.models.LoanSearchDTO;
@@ -13,6 +14,8 @@ import java.util.Optional;
 public interface LoanRequestEntityDao extends CrudDao<LoanRequestEntity, Long> {
 
     long countActiveLoan(AppUserEntity appUserEntity, LoanTypeConstant loanType);
+
+    long countActiveLoan(MintAccountEntity mintAccount, LoanTypeConstant loanTypeConstant);
 
     long countPendingLoanRequest(AppUserEntity appUserEntity, LoanTypeConstant loanType);
 

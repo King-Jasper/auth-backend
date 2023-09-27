@@ -16,11 +16,14 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanDeclineEmailEv
 import com.mintfintech.savingsms.usecase.data.events.outgoing.LoanUpdateEvent;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.PushNotificationEvent;
 import com.mintfintech.savingsms.usecase.data.response.LoanManager;
+import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
+import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.BusinessLogicConflictException;
 import com.mintfintech.savingsms.usecase.exceptions.NotFoundException;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.business_loan.GetBusinessLoanUseCase;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.utils.MoneyFormatterUtil;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.Temporal;
@@ -55,6 +59,8 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
     private final SystemIssueLogService systemIssueLogService;
     private final LoanReviewLogEntityDao loanReviewLogEntityDao;
     private final AccountsRestClient accountsRestClient;
+    private final GetBusinessLoanUseCase getBusinessLoanUseCase;
+    private final LoanRepaymentScheduleEntityDao loanRepaymentScheduleEntityDao;
 
     @Transactional
     @Override
@@ -190,6 +196,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
                 .build();
         if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS || loanRequest.getLoanType() == LoanTypeConstant.HAIR_FINANCE) {
             request.setDurationInMonths(loanRequest.getDurationInMonths());
+            if(loanRequest.getRepaymentPlanType() != null) {
+                request.setRepaymentPlanType(loanRequest.getRepaymentPlanType().name());
+            }
         }
 
         MsClientResponse<LoanApplicationResponseCBS> msClientResponse = coreBankingServiceClient.createLoanApplication(request);
@@ -220,6 +229,27 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             loanRequest.setTrackingReference(responseCBS.getTrackingReference());
             loanRequest.setRepaymentDueDate(repaymentDate);
             loanRequestEntityDao.saveRecord(loanRequest);
+
+            if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS && loanRequest.getHniLoanCustomer() != null) {
+                LoanRequestScheduleResponse scheduleResponse = getBusinessLoanUseCase.getRepaymentSchedule(loanRequest.getHniLoanCustomer(), loanRequest.getLoanAmount(), loanRequest.getDurationInMonths());
+                for(RepaymentSchedule schedule: scheduleResponse.getSchedules()) {
+                    LocalDate paymentDate = schedule.getDate();
+                    DayOfWeek dayOfWeekTemp = paymentDate.getDayOfWeek();
+                    if(dayOfWeekTemp == DayOfWeek.SATURDAY) {
+                        paymentDate = paymentDate.plusDays(3);
+                    }else if(dayOfWeekTemp == DayOfWeek.SUNDAY) {
+                        paymentDate = paymentDate.plusDays(2);
+                    }
+                    LoanRepaymentScheduleEntity repaymentSchedule = LoanRepaymentScheduleEntity.builder()
+                            .repaymentDueDate(paymentDate)
+                            .interestAmount(schedule.getInterest())
+                            .principalAmount(schedule.getPrincipal())
+                            .totalAmount(schedule.getRepaymentAmount())
+                            .loanRequest(loanRequest)
+                            .build();
+                    loanRepaymentScheduleEntityDao.saveRecord(repaymentSchedule);
+                }
+            }
 
             MintAccountEntity mintAccount = mintAccountEntityDao.getRecordById(bankAccount.getMintAccount().getId());
             if (StringUtils.isEmpty(mintAccount.getBankOneCustomerId())) {
