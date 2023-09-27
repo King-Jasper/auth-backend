@@ -1,15 +1,20 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers.backoffice;
 
+import com.mintfintech.savingsms.domain.models.PagedResponse;
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
+import com.mintfintech.savingsms.usecase.data.request.HNICustomerCreationRequest;
+import com.mintfintech.savingsms.usecase.data.request.HNICustomerSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.LoanRequestScheduleResponse;
 import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.features.loan.CustomerLoanProfileUseCase;
 import com.mintfintech.savingsms.usecase.features.loan.GetLoansUseCase;
+import com.mintfintech.savingsms.usecase.features.loan.HNILoanUseCases;
 import com.mintfintech.savingsms.usecase.features.loan.LoanApprovalUseCase;
 import com.mintfintech.savingsms.usecase.data.request.CustomerProfileSearchRequest;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.models.HNILoanCustomerModel;
 import com.mintfintech.savingsms.usecase.models.LoanCustomerProfileModel;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
@@ -41,10 +46,7 @@ import org.springframework.web.bind.annotation.RestController;
 import springfox.documentation.annotations.ApiIgnore;
 
 import javax.validation.Valid;
-import javax.validation.constraints.Max;
-import javax.validation.constraints.Min;
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.Pattern;
+import javax.validation.constraints.*;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -60,7 +62,8 @@ public class LoanAdminController {
     private final CustomerLoanProfileUseCase customerLoanProfileUseCase;
     private final GetLoansUseCase getLoansUseCase;
     private final LoanApprovalUseCase loanApprovalUseCase;
-//
+    private final HNILoanUseCases hniLoanUseCases;
+
 
     @Secured({"29", "30"}) // LOAN_PRODUCT_OFFICER | LOAN_RISK_OFFICER
     @ApiOperation(value = "Verify Loan Customer Employment Information.")
@@ -95,6 +98,34 @@ public class LoanAdminController {
 
         LoanModel response = loanApprovalUseCase.approveLoanRequest(authenticatedUser, loanId, request.getReason(), Boolean.parseBoolean(request.getApproved()));
         ApiResponseJSON<LoanModel> apiResponseJSON = new ApiResponseJSON<>("Request completed successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+    @Secured("28") // CAN_VIEW_LOAN_RECORDS
+    @ApiOperation(value = "Returns list of hni customers.")
+    @GetMapping(value = "hni-customers", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<PagedResponse<HNILoanCustomerModel>>> getHNICustomers(@ApiParam(value = "Repayment Plan: ALL, PRORATED_PRINCIPAL_INTEREST, END_OF_TENURE, INTEREST_ONLY") @Valid @Pattern(regexp = "(ALL|PRORATED_PRINCIPAL_INTEREST|END_OF_TENURE|INTEREST_ONLY)")
+                                                                                           @RequestParam(value = "repaymentPlanType", defaultValue = "ALL") String repaymentPlanType,
+                                                                                                @RequestParam(value = "customerNameOrAccountNumber", defaultValue = "", required = false) String customerNameOrAccountNumber,
+                                                                                                @ApiParam(value = "No. of records per page. Min:1, Max:20") @Valid @Min(value = 1) @Max(value = 500) @RequestParam("size") int size,
+                                                                                                @ApiParam(value = "The index of the page to return. Min: 0") @Valid @Min(value = 0) @RequestParam("page") int page) {
+
+        HNICustomerSearchRequest searchRequest = HNICustomerSearchRequest.builder()
+                .customerNameOrAccountNumber(customerNameOrAccountNumber)
+                .repaymentType(repaymentPlanType)
+                .build();
+        PagedResponse<HNILoanCustomerModel> response = hniLoanUseCases.getHNICustomers(searchRequest, page, size);
+        ApiResponseJSON<PagedResponse<HNILoanCustomerModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+    @Secured({"31", "32"}) // LOAN_FINANCE_OFFICER | LOAN_BUSINESS_MANAGER
+    @ApiOperation(value = "Create HNI Loan Customer.")
+    @PutMapping(value = "hni-customers", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<HNILoanCustomerModel>> createHNILoanCustomer(@ApiIgnore @AuthenticationPrincipal AuthenticatedUser authenticatedUser,
+                                                                  @RequestBody @Valid HNICustomerCreationRequestJSON request) {
+
+        HNILoanCustomerModel response = hniLoanUseCases.createHNICustomer(authenticatedUser, request.toRequest());
+        ApiResponseJSON<HNILoanCustomerModel> apiResponseJSON = new ApiResponseJSON<>("Request completed successfully.", response);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
 
@@ -223,6 +254,30 @@ public class LoanAdminController {
         @Pattern(regexp = "(true|True|false|False|TRUE|FALSE)")
         private String blacklist;
 
+    }
+
+    @Data
+    static class HNICustomerCreationRequestJSON {
+        @Positive(message = "Interest rate must be a positive number")
+        private double interestRate;
+
+        private boolean chequeRequired;
+        @ApiModelProperty(notes = " PRORATED_PRINCIPAL_INTEREST | END_OF_TENURE | INTEREST_ONLY", required = true)
+        @NotEmpty
+        @Pattern(regexp = "(PRORATED_PRINCIPAL_INTEREST|END_OF_TENURE|INTEREST_ONLY)")
+        private String repaymentPlan;
+        @NotEmpty
+        @NotNull
+        private String accountNumber;
+
+        public HNICustomerCreationRequest toRequest() {
+            return HNICustomerCreationRequest.builder()
+                    .chequeRequired(chequeRequired)
+                    .accountNumber(accountNumber)
+                    .interestRate(interestRate)
+                    .repaymentPlan(repaymentPlan)
+                    .build();
+        }
     }
 
 }
