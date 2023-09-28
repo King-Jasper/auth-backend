@@ -111,7 +111,7 @@ public class LoanAdminController {
 
         HNICustomerSearchRequest searchRequest = HNICustomerSearchRequest.builder()
                 .customerNameOrAccountNumber(customerNameOrAccountNumber)
-                .repaymentType(repaymentPlanType)
+                .repaymentType(repaymentPlanType.equalsIgnoreCase("ALL") ? "" : repaymentPlanType)
                 .build();
         PagedResponse<HNILoanCustomerModel> response = hniLoanUseCases.getHNICustomers(searchRequest, page, size);
         ApiResponseJSON<PagedResponse<HNILoanCustomerModel>> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);

@@ -141,6 +141,7 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
             throw new BadRequestException("Sorry, a post dated cheque is required for your application.");
         }
 
+        /*
         if(applicationProperty.isLiveEnvironment()) {
             long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
             if(pendingLoanCount > 0) {
@@ -151,6 +152,16 @@ public class CreateBusinessLoanUseCaseImpl implements CreateBusinessLoanUseCase 
             if(activeLoanCount > 0) {
                 throw new BadRequestException("Sorry, you already have an active loan running.");
             }
+        }*/
+
+        long pendingLoanCount = loanRequestEntityDao.countPendingLoanRequest(currentUser, LoanTypeConstant.BUSINESS);
+        if(pendingLoanCount > 0) {
+            throw new BadRequestException("Sorry, you have a loan request pending review and approval.");
+        }
+
+        long activeLoanCount = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
+        if(activeLoanCount > 0) {
+            throw new BadRequestException("Sorry, you already have an active loan running.");
         }
 
         String postDateChequeUrl = "";
