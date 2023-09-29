@@ -499,13 +499,16 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         if(mintAccount == null && appUser.getPrimaryAccount() != null) {
             if(appUser.getPrimaryAccount() == null) {
                 Optional<CorporateUserEntity> opt = corporateUserEntityDao.findTopByAppUser(appUser);
-                if(!opt.isPresent()) {
+                if(opt.isEmpty()) {
                     throw new BusinessLogicConflictException("Sorry, this service is not available to your business type.");
                 }
                 mintAccount = opt.get().getCorporateAccount();
             }else {
                 mintAccount = mintAccountEntityDao.getRecordById(appUser.getPrimaryAccount().getId());
             }
+        }
+        if(mintAccount == null) {
+            throw new BusinessLogicConflictException("Sorry, this service is not available to your business type.");
         }
         MintBankAccountEntity mintBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
         TierLevelEntity tierLevelEntity = mintBankAccount.getAccountTierLevel();
