@@ -127,15 +127,15 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
            if(StringUtils.isNotEmpty(accounts)) {
              accessBusinessLoan = Arrays.stream(accounts.split(":")).anyMatch(data -> data.equalsIgnoreCase(authenticatedUser.getAccountId()));
            }
-           if(!accessBusinessLoan) {
-               Optional<HNILoanCustomerEntity> hniLoanCustomerOpt = hniLoanCustomerEntityDao.findRecord(mintAccount);
-               if(hniLoanCustomerOpt.isPresent()) {
-                   HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerOpt.get();
-                   chequeRequired = hniLoanCustomer.isChequeRequired();
-                   businessRate = hniLoanCustomer.getInterestRate();
-               }
-           }
+        }
 
+        if(!accessBusinessLoan) {
+            Optional<HNILoanCustomerEntity> hniLoanCustomerOpt = hniLoanCustomerEntityDao.findRecord(mintAccount);
+            if(hniLoanCustomerOpt.isPresent()) {
+                HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerOpt.get();
+                chequeRequired = hniLoanCustomer.isChequeRequired();
+                businessRate = hniLoanCustomer.getInterestRate();
+            }
         }
 
         LoanDashboardResponse response = new LoanDashboardResponse();
