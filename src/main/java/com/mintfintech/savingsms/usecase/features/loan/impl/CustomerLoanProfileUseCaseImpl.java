@@ -139,7 +139,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         }
 
         LoanDashboardResponse response = new LoanDashboardResponse();
-        response.setCanRequestBusinessLoan(count == 0);
+        response.setCanRequestBusinessLoan(accessBusinessLoan && count == 0);
         response.setChequeUploadRequired(chequeRequired);
         response.setBusinessLoanAvailable(accessBusinessLoan);
         response.setBusinessLoanMonthlyInterest(businessRate);
