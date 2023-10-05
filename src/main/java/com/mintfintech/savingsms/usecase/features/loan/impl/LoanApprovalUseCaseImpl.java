@@ -218,9 +218,9 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
             }
             DayOfWeek dayOfWeek = repaymentDate.getDayOfWeek();
             if(dayOfWeek == DayOfWeek.SATURDAY) {
-                repaymentDate = repaymentDate.plusDays(3);
-            }else if(dayOfWeek == DayOfWeek.SUNDAY) {
                 repaymentDate = repaymentDate.plusDays(2);
+            }else if(dayOfWeek == DayOfWeek.SUNDAY) {
+                repaymentDate = repaymentDate.plusDays(1);
             }
             loanRequest.setApprovalStatus(ApprovalStatusConstant.APPROVED);
             loanRequest.setApprovedDate(LocalDateTime.now());
@@ -232,13 +232,19 @@ public class LoanApprovalUseCaseImpl implements LoanApprovalUseCase {
 
             if(loanRequest.getLoanType() == LoanTypeConstant.BUSINESS && loanRequest.getHniLoanCustomer() != null) {
                 LoanRequestScheduleResponse scheduleResponse = getBusinessLoanUseCase.getRepaymentSchedule(loanRequest.getHniLoanCustomer(), loanRequest.getLoanAmount(), loanRequest.getDurationInMonths());
-                for(RepaymentSchedule schedule: scheduleResponse.getSchedules()) {
+                List<RepaymentSchedule> schedules = scheduleResponse.getSchedules();
+                for(int i = 0; i < schedules.size(); i++) {
+                    RepaymentSchedule schedule = schedules.get(i);
                     LocalDate paymentDate = schedule.getDate();
-                    DayOfWeek dayOfWeekTemp = paymentDate.getDayOfWeek();
-                    if(dayOfWeekTemp == DayOfWeek.SATURDAY) {
-                        paymentDate = paymentDate.plusDays(3);
-                    }else if(dayOfWeekTemp == DayOfWeek.SUNDAY) {
-                        paymentDate = paymentDate.plusDays(2);
+                    if(i + 1 == schedules.size()) {
+                        paymentDate = repaymentDate.toLocalDate();
+                    }else {
+                        DayOfWeek dayOfWeekTemp = paymentDate.getDayOfWeek();
+                        if(dayOfWeekTemp == DayOfWeek.SATURDAY) {
+                            paymentDate = paymentDate.plusDays(2);
+                        }else if(dayOfWeekTemp == DayOfWeek.SUNDAY) {
+                            paymentDate = paymentDate.plusDays(1);
+                        }
                     }
                     LoanRepaymentScheduleEntity repaymentSchedule = LoanRepaymentScheduleEntity.builder()
                             .repaymentDueDate(paymentDate)

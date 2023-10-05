@@ -141,6 +141,7 @@ public class GetBusinessLoanUseCaseImpl implements GetBusinessLoanUseCase {
                 .interestRate(businessRate)
                 .repaymentAmount(BigDecimal.valueOf(totalRepaymentAmount))
                 .schedules(schedules)
+                .repaymentDueDate(schedules.get(schedules.size() - 1).getRepaymentDate())
                 .build();
     }
 
