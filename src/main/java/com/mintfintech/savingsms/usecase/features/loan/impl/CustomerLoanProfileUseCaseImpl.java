@@ -135,6 +135,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
                 HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerOpt.get();
                 chequeRequired = hniLoanCustomer.isChequeRequired();
                 businessRate = hniLoanCustomer.getInterestRate();
+                accessBusinessLoan = true;
             }
         }
 
