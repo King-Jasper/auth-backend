@@ -27,6 +27,7 @@ public class SavingsGoalModel extends PortalSavingsGoalResponse {
    private BigDecimal savingsAmount;
    private BigDecimal targetAmount;
    private BigDecimal accruedInterest;
+   private BigDecimal withholdingTax;
    private String savingFrequency;
    private String noWithdrawalErrorMessage;
    private String maturityDate;

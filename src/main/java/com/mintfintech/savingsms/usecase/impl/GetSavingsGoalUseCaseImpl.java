@@ -84,6 +84,7 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
         goalModel.setName(savingsGoalEntity.getName());
         goalModel.setGoalId(savingsGoalEntity.getGoalId());
         goalModel.setAccruedInterest(interest);
+        goalModel.setWithholdingTax(BigDecimal.ZERO);
         goalModel.setTargetAmount(savingsGoalEntity.getTargetAmount());
         goalModel.setAvailableBalance(computeAvailableAmountUseCase.getAvailableAmount(savingsGoalEntity));
         goalModel.setAutoSaveEnabled(savingsGoalEntity.isAutoSave());
