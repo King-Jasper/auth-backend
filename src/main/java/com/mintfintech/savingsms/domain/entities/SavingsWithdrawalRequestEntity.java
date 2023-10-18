@@ -43,6 +43,9 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
     private BigDecimal interestWithdrawal = BigDecimal.ZERO;
 
     @Builder.Default
+    private BigDecimal withholdingTax = BigDecimal.ZERO;
+
+    @Builder.Default
     private BigDecimal balanceBeforeWithdrawal = BigDecimal.ZERO;
 
     private String interestCreditResponseCode;
@@ -52,6 +55,10 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
     private String savingsCreditResponseCode;
 
     private String savingsCreditReference;
+
+    private String whtDebitResponseCode;
+
+    private String whtDebitReference;
 
     @OneToOne(optional = true, fetch = FetchType.LAZY)
     private SavingsGoalTransactionEntity fundDisbursementTransaction;

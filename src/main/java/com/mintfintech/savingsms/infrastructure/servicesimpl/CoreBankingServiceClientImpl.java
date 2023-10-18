@@ -198,9 +198,12 @@ public class CoreBankingServiceClientImpl implements CoreBankingServiceClient {
     }
 
     @Override
-    public MsClientResponse<FundTransferResponseCBS> processSavingsWithdrawal(SavingsWithdrawalRequestCBS requestCBS) {
+    public MsClientResponse<FundTransferResponseCBS> processSavingsWithdrawal(SavingsWithdrawalRequestCBS requestCBS, boolean useV2Endpoint) {
         String baseUrl = getServiceBaseUrl();
         String serviceUrl = String.format("%s/api/v1/savings-transaction/fund-withdrawal", baseUrl);
+        if(useV2Endpoint) {
+            serviceUrl = String.format("%s/api/v2/savings-transaction/fund-withdrawal", baseUrl);
+        }
         String requestBody = gson.toJson(requestCBS);
         return processTransferRequest(serviceUrl, requestBody);
     }

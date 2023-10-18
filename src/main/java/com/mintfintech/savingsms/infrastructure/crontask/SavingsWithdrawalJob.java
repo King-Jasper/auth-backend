@@ -40,6 +40,8 @@ public class SavingsWithdrawalJob {
             System.out.println("-------- SAVINGS GOAL WITHDRAWAL ----------");
             fundWithdrawalUseCase.processInterestWithdrawalToSuspenseAccount();
             Thread.sleep(5000);
+            fundWithdrawalUseCase.processWithHoldingTaxCharge();
+            Thread.sleep(5000);
             fundWithdrawalUseCase.processSavingsWithdrawalToSuspenseAccount();
             Thread.sleep(5000);
             fundWithdrawalUseCase.processSuspenseFundDisbursementToCustomer();

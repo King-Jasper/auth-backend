@@ -78,6 +78,7 @@ public class IndexController {
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
     }
 
+    /*
     @GetMapping(value = "/referral-reward", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<ApiResponseJSON<Object>> referralReward(@RequestParam(value = "userId", defaultValue = "", required = false) String userId,
                                                                   @RequestParam(value = "phoneNumber", defaultValue = "", required = false) String phoneNumber) {
@@ -94,7 +95,7 @@ public class IndexController {
         String response = createReferralRewardUseCase.processReferralByUserOld(userId, phoneNumber, size, overridePeriod);
         ApiResponseJSON<Object> apiResponse = new ApiResponseJSON<>(response);
         return new ResponseEntity<>(apiResponse, HttpStatus.OK);
-    }
+    }*/
 
     /*
     @GetMapping(value = "/referral-backlog-reward", produces = MediaType.APPLICATION_JSON_VALUE)

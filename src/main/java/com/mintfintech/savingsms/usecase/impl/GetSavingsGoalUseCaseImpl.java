@@ -80,7 +80,8 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
 
         BigDecimal interest = savingsGoalEntity.getAccruedInterest().setScale(2, RoundingMode.UP);
         BigDecimal withHoldingTax = BigDecimal.ZERO;
-        if(savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
+        LocalDateTime whtChargeStartDate = LocalDateTime.of(2023, 10, 21, 0, 0, 0);
+        if(savingsGoalEntity.getDateCreated().isAfter(whtChargeStartDate) && savingsGoalEntity.getSavingsGoalType() == SavingsGoalTypeConstant.CUSTOMER_SAVINGS) {
             withHoldingTax = interest.multiply(BigDecimal.valueOf(0.1));
         }
         boolean isMatured = computeAvailableAmountUseCase.isMaturedSavingsGoal(savingsGoalEntity);
