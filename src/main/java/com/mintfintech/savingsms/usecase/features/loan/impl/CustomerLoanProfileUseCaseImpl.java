@@ -61,6 +61,7 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     private final MintBankAccountEntityDao mintBankAccountEntityDao;
     private final SettingsEntityDao settingsEntityDao;
     private final CorporateUserEntityDao corporateUserEntityDao;
+    private final HNILoanCustomerEntityDao hniLoanCustomerEntityDao;
 
     @Override
     @Transactional
@@ -111,8 +112,14 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
     public LoanDashboardResponse getLoanDashboardInformation(AuthenticatedUser authenticatedUser) {
 
         AppUserEntity currentUser = appUserEntityDao.getAppUserByUserId(authenticatedUser.getUserId());
+        MintAccountEntity mintAccount = mintAccountEntityDao.getAccountByAccountId(authenticatedUser.getAccountId());
         long count = 0;
-        boolean accessBusinessLoan = true;
+        boolean accessBusinessLoan = false;
+        boolean chequeRequired = false;
+
+        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
+        double businessRate = Double.parseDouble(rateString);
+
         if(applicationProperty.isLiveEnvironment()) {
             count = loanRequestEntityDao.countActiveLoan(currentUser, LoanTypeConstant.BUSINESS);
           //  accessBusinessLoan = MintStringUtil.enableBusinessLoanFeature(authenticatedUser.getAccountId());
@@ -122,11 +129,19 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
            }
         }
 
-        String rateString = settingsEntityDao.getSettings(SettingsNameTypeConstant.BUSINESS_LOAN_RATE, "4.0");
-        double businessRate = Double.parseDouble(rateString);
+        if(!accessBusinessLoan) {
+            Optional<HNILoanCustomerEntity> hniLoanCustomerOpt = hniLoanCustomerEntityDao.findRecord(mintAccount);
+            if(hniLoanCustomerOpt.isPresent()) {
+                HNILoanCustomerEntity hniLoanCustomer = hniLoanCustomerOpt.get();
+                chequeRequired = hniLoanCustomer.isChequeRequired();
+                businessRate = hniLoanCustomer.getInterestRate();
+                accessBusinessLoan = true;
+            }
+        }
 
         LoanDashboardResponse response = new LoanDashboardResponse();
-        response.setCanRequestBusinessLoan(count == 0);
+        response.setCanRequestBusinessLoan(accessBusinessLoan && count == 0);
+        response.setChequeUploadRequired(chequeRequired);
         response.setBusinessLoanAvailable(accessBusinessLoan);
         response.setBusinessLoanMonthlyInterest(businessRate);
         response.setPaydayLoanAvailable(true);
@@ -485,13 +500,16 @@ public class CustomerLoanProfileUseCaseImpl implements CustomerLoanProfileUseCas
         if(mintAccount == null && appUser.getPrimaryAccount() != null) {
             if(appUser.getPrimaryAccount() == null) {
                 Optional<CorporateUserEntity> opt = corporateUserEntityDao.findTopByAppUser(appUser);
-                if(!opt.isPresent()) {
+                if(opt.isEmpty()) {
                     throw new BusinessLogicConflictException("Sorry, this service is not available to your business type.");
                 }
                 mintAccount = opt.get().getCorporateAccount();
             }else {
                 mintAccount = mintAccountEntityDao.getRecordById(appUser.getPrimaryAccount().getId());
             }
+        }
+        if(mintAccount == null) {
+            throw new BusinessLogicConflictException("Sorry, this service is not available to your business type.");
         }
         MintBankAccountEntity mintBankAccount = mintBankAccountEntityDao.getAccountByMintAccountAndAccountType(mintAccount, BankAccountTypeConstant.CURRENT);
         TierLevelEntity tierLevelEntity = mintBankAccount.getAccountTierLevel();

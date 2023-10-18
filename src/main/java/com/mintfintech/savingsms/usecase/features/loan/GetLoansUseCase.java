@@ -3,6 +3,7 @@ package com.mintfintech.savingsms.usecase.features.loan;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.usecase.data.request.LoanSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
+import com.mintfintech.savingsms.usecase.data.response.RepaymentSchedule;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import com.mintfintech.savingsms.usecase.models.LoanTransactionModel;
 
@@ -15,5 +16,7 @@ public interface GetLoansUseCase {
     LoanModel toLoanModel(LoanRequestEntity loanRequestEntity);
 
     List<LoanTransactionModel> getLoanTransactions(String loanId);
+
+    List<RepaymentSchedule> getLoanRepaymentSchedules(String loanId);
 
 }

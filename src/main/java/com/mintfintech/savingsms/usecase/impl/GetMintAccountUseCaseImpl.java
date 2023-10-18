@@ -9,6 +9,7 @@ import com.mintfintech.savingsms.domain.services.ApplicationEventService;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.GetMintAccountUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintAccountRecordRequestEvent;
+import com.mintfintech.savingsms.usecase.data.response.MintBankAccountResponse;
 import com.mintfintech.savingsms.usecase.exceptions.BadRequestException;
 import com.mintfintech.savingsms.usecase.exceptions.UnauthorisedException;
 import lombok.AllArgsConstructor;
@@ -55,5 +56,16 @@ public class GetMintAccountUseCaseImpl implements GetMintAccountUseCase {
            throw new BadRequestException("Invalid debit account Id");
        }
        return opt.get();
+    }
+
+    @Override
+    public MintBankAccountResponse getMintBankAccountResponse(String accountNumber) {
+        MintBankAccountEntity bankAccount = mintBankAccountEntityDao.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new BadRequestException("Invalid Mintyn account number."));
+        return MintBankAccountResponse.builder()
+                .accountName(bankAccount.getAccountName())
+                .accountId(bankAccount.getAccountId())
+                .accountNumber(bankAccount.getAccountNumber())
+                .build();
     }
 }

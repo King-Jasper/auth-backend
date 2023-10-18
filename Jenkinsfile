@@ -54,7 +54,7 @@ pipeline {
                         // delete image to free up space
                         sh "docker rmi ${dockerImageName}:staging-${imageTag}"
 
-                    } else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox") || "${env.BRANCH_NAME}".equalsIgnoreCase("business-loan")) {
+                    } else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox") || "${env.BRANCH_NAME}".equalsIgnoreCase("loan-update")) {
                         sh "docker tag ${dockerImageName}:${imageTag} ${dockerImageName}:sandbox-${imageTag}"
                         sh "docker push ${dockerImageName}:sandbox-${imageTag}"
                         // delete image to free up space
@@ -103,7 +103,7 @@ pipeline {
                         catch (error) {
                             throw error
                         }
-                    }else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox") || "${env.BRANCH_NAME}".equalsIgnoreCase("business-loan")) {
+                    }else if ("${env.BRANCH_NAME}".equalsIgnoreCase("sandbox") || "${env.BRANCH_NAME}".equalsIgnoreCase("loan-update")) {
                         try {
                             sh "aws eks update-kubeconfig --name mint-k8-cluster"
                             //change image tag in the deployment file

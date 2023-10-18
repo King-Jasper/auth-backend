@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
 import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
+import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.MintBankAccountEntity;
 import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
@@ -46,6 +47,11 @@ public interface LoanRequestRepository extends JpaRepository<LoanRequestEntity, 
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
             " s.loanType = ?2 and s.activeLoan = true")
     long countActiveCustomerLoan(AppUserEntity requestedBy, LoanTypeConstant loanType);
+
+    @Query("select count(s) from LoanRequestEntity s where s.bankAccount.mintAccount = ?1 and" +
+            " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +
+            " s.loanType = ?2 and s.activeLoan = true")
+    long countActiveCustomerLoan(MintAccountEntity account, LoanTypeConstant loanType);
 
     @Query("select count(s) from LoanRequestEntity s where s.requestedBy = ?1 and" +
             " s.recordStatus = com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant.ACTIVE and" +

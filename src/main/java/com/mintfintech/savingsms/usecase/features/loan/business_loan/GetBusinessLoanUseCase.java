@@ -1,5 +1,6 @@
 package com.mintfintech.savingsms.usecase.features.loan.business_loan;
 
+import com.mintfintech.savingsms.domain.entities.HNILoanCustomerEntity;
 import com.mintfintech.savingsms.domain.entities.LoanRequestEntity;
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.data.response.BusinessLoanResponse;
@@ -19,4 +20,5 @@ public interface GetBusinessLoanUseCase {
     HairFinanceLoanResponse fromEntityToHairFinanceResponse(LoanRequestEntity loanRequest);
     HairFinanceLoanResponse getHairFinanceLoanDetail(AuthenticatedUser currentUser, String loanId);
     LoanRequestScheduleResponse getRepaymentSchedule(AuthenticatedUser authenticatedUser, BigDecimal amount, int duration);
+    LoanRequestScheduleResponse getRepaymentSchedule(HNILoanCustomerEntity hniLoanCustomer, BigDecimal amount, int duration);
 }

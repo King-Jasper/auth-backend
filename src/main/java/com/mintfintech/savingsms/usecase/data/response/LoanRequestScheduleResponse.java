@@ -15,6 +15,7 @@ import java.util.List;
 public class LoanRequestScheduleResponse {
     private BigDecimal loanAmount;
     private BigDecimal repaymentAmount;
+    private String repaymentDueDate;
     private double interestRate;
     private List<RepaymentSchedule> schedules;
 }

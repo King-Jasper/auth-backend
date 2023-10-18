@@ -1,9 +1,6 @@
 package com.mintfintech.savingsms.domain.entities;
 
-import com.mintfintech.savingsms.domain.entities.enums.ApprovalStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanRepaymentStatusConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanReviewStageConstant;
-import com.mintfintech.savingsms.domain.entities.enums.LoanTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -84,6 +81,9 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     private LoanReviewStageConstant reviewStage = LoanReviewStageConstant.FIRST_REVIEW;
 
     @Enumerated(EnumType.STRING)
+    private LoanRepaymentPlanTypeConstant repaymentPlanType;
+
+    @Enumerated(EnumType.STRING)
     private LoanTypeConstant loanType;
 
     private String trackingReference;
@@ -91,5 +91,10 @@ public class LoanRequestEntity extends AbstractBaseEntity<Long> {
     private String bankOneAccountNumber;
 
     private Integer durationInMonths;
+
+    private String postDatedChequeUrl;
+
+    @ManyToOne(optional = true, fetch = FetchType.LAZY)
+    private HNILoanCustomerEntity hniLoanCustomer;
 
 }

@@ -1,6 +1,8 @@
 package com.mintfintech.savingsms.infrastructure.web.controllers;
 
 import com.mintfintech.savingsms.infrastructure.web.models.ApiResponseJSON;
+import com.mintfintech.savingsms.usecase.GetMintAccountUseCase;
+import com.mintfintech.savingsms.usecase.data.response.MintBankAccountResponse;
 import com.mintfintech.savingsms.usecase.master_record.InvestmentPlanUseCase;
 import com.mintfintech.savingsms.usecase.master_record.SavingsGoalCategoryUseCase;
 import com.mintfintech.savingsms.usecase.master_record.SavingsPlanUseCases;
@@ -16,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -33,13 +36,15 @@ public class MasterRecordsController {
     private final SavingsPlanUseCases savingsPlanUseCases;
     private final SavingsGoalCategoryUseCase savingsGoalCategoryUseCase;
     private final InvestmentPlanUseCase investmentPlanUseCase;
+    private final GetMintAccountUseCase getMintAccountUseCase;
 
     public MasterRecordsController(SavingsPlanUseCases savingsPlanUseCases,
                                    SavingsGoalCategoryUseCase savingsGoalCategoryUseCase,
-                                   InvestmentPlanUseCase investmentPlanUseCase) {
+                                   InvestmentPlanUseCase investmentPlanUseCase, GetMintAccountUseCase getMintAccountUseCase) {
         this.savingsPlanUseCases = savingsPlanUseCases;
         this.savingsGoalCategoryUseCase = savingsGoalCategoryUseCase;
         this.investmentPlanUseCase = investmentPlanUseCase;
+        this.getMintAccountUseCase = getMintAccountUseCase;
     }
 
     @Deprecated
@@ -92,4 +97,14 @@ public class MasterRecordsController {
         ApiResponseJSON<List<InvestmentTenorModel>> apiResponseJSON = new ApiResponseJSON<>("Investment tenors processed successfully.", responseList);
         return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
     }
+
+    @ApiOperation(value = "Returns a list of investment tenors.")
+    @GetMapping(value = "/v1/common/mint-bank-account", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<ApiResponseJSON<MintBankAccountResponse>> getMintBankAccount(@RequestParam String accountNumber) {
+        MintBankAccountResponse response = getMintAccountUseCase.getMintBankAccountResponse(accountNumber);
+        ApiResponseJSON<MintBankAccountResponse> apiResponseJSON = new ApiResponseJSON<>("Retrieved successfully.", response);
+        return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+    }
+
+
 }

@@ -207,7 +207,7 @@ public class LoanRepaymentUseCaseImpl implements LoanRepaymentUseCase {
 
             MsClientResponse<LoanDetailResponseCBS> msClientResponse = coreBankingServiceClient.getLoanDetails(mintAccount.getBankOneCustomerId(), loan.getBankOneAccountNumber());
 
-            log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
+           // log.info("loan id - {} - {}", loan.getLoanId(), msClientResponse.getData().toString());
 
             boolean completed = false;
             if (msClientResponse.getStatusCode() == HttpStatus.OK.value() && msClientResponse.isSuccess()) {

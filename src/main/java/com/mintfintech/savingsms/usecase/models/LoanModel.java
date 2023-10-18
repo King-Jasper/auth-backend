@@ -37,8 +37,14 @@ public class LoanModel {
 
     private String clientLoanStatus;
 
+    private String repaymentPlanType;
+
+    private String postDatedChequeUrl;
+
     private LoanCustomerProfileModel owner;
 
     private String reviewStage;
+
+    private boolean hniLoan;
 
 }
