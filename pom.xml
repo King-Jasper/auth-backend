@@ -17,7 +17,7 @@
     <properties>
         <java.version>11</java.version>
         <spring-boot-admin.version>2.2.1</spring-boot-admin.version>
-        <spring-cloud.version>2021.0.3</spring-cloud.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
         <apache-common-lang.version>3.8.1</apache-common-lang.version>
         <swagger-version>2.9.2</swagger-version>
         <jwt.version>0.9.1</jwt.version>

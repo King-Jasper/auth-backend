@@ -8,6 +8,7 @@ import javax.validation.constraints.*;
 
 import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
+import com.mintfintech.savingsms.usecase.data.response.SavingsGoalWithdrawalResponse;
 import com.mintfintech.savingsms.usecase.models.LoanModel;
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -50,6 +51,21 @@ public class SavingsGoalReportController {
 	GetSavingsGoalUseCase getSavingsGoalUseCase;
 	GetSavingsTransactionUseCase getSavingsTransactionUseCase;
 	FundWithdrawalUseCase fundWithdrawalUseCase;
+	@GetMapping("/savings-goal-withdrawal-report")
+	public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsGoalWithdrawalResponse>>> getSavingsGoalWithdrawal(
+			@RequestParam(required = false) String withdrawalStatus,
+			@RequestParam(required = false) String customerName,
+			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
+			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
+			@RequestParam("size") int size, @RequestParam("page") int page) {
+
+		PagedDataResponse<SavingsGoalWithdrawalResponse> response = getSavingsGoalUseCase.getSavingsGoalsWithdrawal(withdrawalStatus,customerName,fromDate,toDate, page, size);
+		ApiResponseJSON<PagedDataResponse<SavingsGoalWithdrawalResponse>> apiResponseJSON = new ApiResponseJSON<>(
+				"Savings goals processed successfully.", response);
+		return new ResponseEntity<>(apiResponseJSON, HttpStatus.OK);
+	}
+
+
 
 	@Secured("39") // Privilege: CAN_VIEW_SAVINGS_TRANSACTION
 	@ApiOperation(value = "Returns paginated list of savings goal.")

@@ -2,6 +2,7 @@ package com.mintfintech.savingsms.infrastructure.persistence.daoimpl;
 
 import com.mintfintech.savingsms.domain.dao.AppSequenceEntityDao;
 import com.mintfintech.savingsms.domain.dao.SavingsWithdrawalRequestEntityDao;
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsWithdrawalRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
@@ -9,6 +10,9 @@ import com.mintfintech.savingsms.domain.entities.enums.SequenceType;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import com.mintfintech.savingsms.infrastructure.persistence.repository.SavingsWithdrawalRequestRepository;
 import org.apache.commons.lang3.RandomStringUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 
 import javax.inject.Named;
 import java.time.LocalDate;
@@ -44,6 +48,12 @@ public class SavingsWithdrawalRequestEntityDaoImpl implements SavingsWithdrawalR
     public List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant) {
         LocalDate now = LocalDate.now();
         return repository.getSavingsWithdrawalRequest(RecordStatusConstant.ACTIVE, withdrawalRequestStatusConstant, now);
+    }
+
+    @Override
+    public Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(AppUserEntity appUserEntity, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, int pageNumber, int pageSize) {
+        Pageable pageable = PageRequest.of(pageNumber, pageSize);
+        return repository.getSavingsWithdrawal(withdrawalRequestStatusConstant, fromDate, toDate, appUserEntity, pageable);
     }
 
     @Override

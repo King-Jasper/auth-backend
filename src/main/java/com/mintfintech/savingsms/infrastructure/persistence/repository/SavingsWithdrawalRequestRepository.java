@@ -1,9 +1,12 @@
 package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsWithdrawalRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -19,7 +22,23 @@ public interface SavingsWithdrawalRequestRepository extends JpaRepository<Saving
     long countAllBySavingsGoalAndDateCreatedBetween(SavingsGoalEntity savingsGoalEntity, LocalDateTime fromTime, LocalDateTime toTime);
     @Query("select sw from SavingsWithdrawalRequestEntity sw where sw.recordStatus =?1 and sw.withdrawalRequestStatus = ?2 and (sw.dateForWithdrawal is null " +
             "or sw.dateForWithdrawal <= ?3) order by sw.dateModified desc")
-    List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant statusConstant, WithdrawalRequestStatusConstant requestStatusConstant,
-                                                                                                              LocalDate dateForWithdrawal);
+    List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant statusConstant, WithdrawalRequestStatusConstant requestStatusConstant, LocalDate dateForWithdrawal);
+
+
+    @Query("select sw from SavingsWithdrawalRequestEntity sw where sw.withdrawalRequestStatus = ?1 and " +
+            "((sw.dateForWithdrawal is null or sw.dateForWithdrawal between ?2 and ?3) " +
+            "or (sw.dateModified between ?2 and ?3)) " +
+            "and (sw.requestedBy = ?4 or ?4 is null) " +
+            "order by sw.dateModified desc")
+    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(
+            WithdrawalRequestStatusConstant requestStatusConstant,
+            LocalDate fromDate,
+            LocalDate toDate,
+            AppUserEntity appUserEntity,
+            Pageable pageable
+    );
+
+
+
 
 }

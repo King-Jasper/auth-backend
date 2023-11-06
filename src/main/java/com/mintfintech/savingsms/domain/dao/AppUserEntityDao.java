@@ -14,4 +14,5 @@ public interface AppUserEntityDao extends CrudDao<AppUserEntity, Long> {
     Optional<AppUserEntity> findUserByPhoneNumber(String phoneNumber);
     AppUserEntity getAppUserByUserId(String userId);
     Optional<AppUserEntity> findAccountOwner(MintAccountEntity mintAccountEntity);
+    Optional<AppUserEntity> findAppUserByName(String customer);
 }

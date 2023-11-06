@@ -8,9 +8,11 @@ import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
+import com.mintfintech.savingsms.usecase.data.response.SavingsGoalWithdrawalResponse;
 import com.mintfintech.savingsms.usecase.models.SavingsGoalModel;
 import com.mintfintech.savingsms.usecase.models.SavingsTransactionModel;
 
+import java.time.LocalDate;
 import java.util.List;
 
 /**
@@ -28,4 +30,5 @@ public interface GetSavingsGoalUseCase {
     PortalSavingsGoalResponse getPortalSavingsGoalResponseByGoalId(String goalId);
     PagedDataResponse<SavingsTransactionModel> getSavingsTransactions(String goalId, int page, int size);
     PagedDataResponse<SavingsInterestModel> getSavingsInterest(String goalId, int page, int size);
+    PagedDataResponse<SavingsGoalWithdrawalResponse> getSavingsGoalsWithdrawal(String withdrawalStatus, String customerName, LocalDate fromDate, LocalDate toDate, int page, int size);
 }

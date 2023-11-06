@@ -1,9 +1,12 @@
 package com.mintfintech.savingsms.domain.dao;
 
+import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsWithdrawalRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
+import org.springframework.data.domain.Page;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -16,4 +19,5 @@ public interface SavingsWithdrawalRequestEntityDao extends CrudDao<SavingsWithdr
     String generateTransactionReference();
     long countWithdrawalRequestWithinPeriod(SavingsGoalEntity savingsGoal, LocalDateTime fromTime, LocalDateTime toTime);
     List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant);
+    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(AppUserEntity appUserEntity, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, int pageNumber, int pageSize);
 }

@@ -38,6 +38,11 @@ public class AppUserEntityDaoImpl extends CrudDaoImpl<AppUserEntity, Long> imple
     }
 
     @Override
+    public Optional<AppUserEntity> findAppUserByName(String customer) {
+        return Optional.empty();
+    }
+
+    @Override
     public Optional<AppUserEntity> findUserByPhoneNumber(String phoneNumber) {
         return repository.findTopByPhoneNumberAndRecordStatus(phoneNumber, RecordStatusConstant.ACTIVE);
     }
