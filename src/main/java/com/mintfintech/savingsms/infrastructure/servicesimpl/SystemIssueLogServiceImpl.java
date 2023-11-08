@@ -8,6 +8,8 @@ import com.mintfintech.savingsms.usecase.data.events.outgoing.SystemIssueEmailEv
 import com.mintfintech.savingsms.usecase.data.value_objects.EmailNotificationType;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+
+
 import org.springframework.beans.factory.annotation.Value;
 
 import javax.inject.Named;

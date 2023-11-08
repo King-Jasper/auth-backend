@@ -12,6 +12,7 @@ import com.mintfintech.savingsms.usecase.ComputeAvailableAmountUseCase;
 import com.mintfintech.savingsms.usecase.GetMintAccountUseCase;
 import com.mintfintech.savingsms.usecase.data.events.outgoing.MintAccountRecordRequestEvent;
 import com.mintfintech.savingsms.usecase.data.request.SavingsSearchRequest;
+import com.mintfintech.savingsms.usecase.data.request.SavingsWithdrawalRequest;
 import com.mintfintech.savingsms.usecase.data.response.AccountSavingsGoalResponse;
 import com.mintfintech.savingsms.usecase.data.response.PagedDataResponse;
 import com.mintfintech.savingsms.usecase.data.response.PortalSavingsGoalResponse;
@@ -323,34 +324,6 @@ public class GetSavingsGoalUseCaseImpl implements GetSavingsGoalUseCase {
                         .interestDate(interestEntity.getDateCreated().format(DateTimeFormatter.ISO_DATE_TIME))
                         .build())
                 .collect(Collectors.toList()));
-    }
-
-    @Override
-    public PagedDataResponse<SavingsGoalWithdrawalResponse> getSavingsGoalsWithdrawal(String withdrawalStatus, String customerName, LocalDate fromDate, LocalDate toDate, int pageNumber, int pageSize) {
-        AppUserEntity appUserEntity = appUserEntityDao.findAppUserByName(customerName)
-                .orElseThrow(() -> new NotFoundException("Customer not found."));
-        WithdrawalRequestStatusConstant withdrawalRequestStatusConstant = WithdrawalRequestStatusConstant.valueOf(withdrawalStatus);
-        Page<SavingsWithdrawalRequestEntity> savingsWithdrawal = savingsWithdrawalRequestEntityDao.getSavingsWithdrawal(appUserEntity, withdrawalRequestStatusConstant, fromDate, toDate,pageNumber,pageSize);
-        List<SavingsGoalWithdrawalResponse> savingsGoalWithdrawalResponse = savingsWithdrawal.stream()
-                .map(value -> SavingsGoalWithdrawalResponse.builder()
-                        .amountWithdrawal(value.getBalanceBeforeWithdrawal())
-                        .savingsAmount(value.getSavingsGoal().getSavingsAmount())
-                        .savingsType(value.getSavingsGoal().getSavingsGoalType().name())
-                        .withdrawalDate(value.getDateModified())
-                        .customerName(value.getRequestedBy().getName())
-                        .startDate(value.getDateCreated())
-                        .interestAmount(value.getInterestWithdrawal())
-                        .duration(value.getSavingsGoal().getSelectedDuration())
-                        .goalId(value.getSavingsGoal().getGoalId())
-                        .accountNumber(value.getSavingsGoal().getMintAccount())
-                        .savingsName(value.getSavingsGoal().getName())
-                        .interestRate(value.getSavingsGoal().getInterestRate())
-                        .maturityDate(value.getSavingsGoal().getMaturityDate())
-                        .withholdingTax(value.getWithholdingTax())
-                        .withdrawalStatus(value.getSavingsGoal().getGoalStatus().name())
-                        .build())
-                .collect(Collectors.toList());
-        return new PagedDataResponse<>(savingsWithdrawal.getTotalElements(), savingsWithdrawal.getTotalPages(), savingsGoalWithdrawalResponse);
     }
 
     private SavingsTransactionModel fromSavingTransactionToModel(SavingsGoalTransactionEntity transactionEntity) {

@@ -50,7 +50,7 @@ public class AuditTrailServiceImpl implements AuditTrailService {
         gsonBuilder.registerTypeAdapterFactory(HibernateProxyTypeAdapter.FACTORY);
         gsonBuilder.setExclusionStrategies(new ExcludeProxiedFields()).create();
         gson = gsonBuilder.create();
-        log.info("Initialized audit service");
+       // log.info("Initialized audit service");
     }
 
     @Async

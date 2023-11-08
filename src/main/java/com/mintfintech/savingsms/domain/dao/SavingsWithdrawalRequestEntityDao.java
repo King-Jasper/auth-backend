@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.entities.AppUserEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsWithdrawalRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
+import com.mintfintech.savingsms.domain.models.SavingsSearchDTO;
 import org.springframework.data.domain.Page;
 
 import java.time.LocalDate;
@@ -15,6 +16,8 @@ import java.util.List;
  * Tue, 07 Apr, 2020
  */
 public interface SavingsWithdrawalRequestEntityDao extends CrudDao<SavingsWithdrawalRequestEntity, Long> {
+    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawalReport(SavingsSearchDTO searchDTO, int pageIndex, int recordSize);
+
     SavingsWithdrawalRequestEntity saveAndFlush(SavingsWithdrawalRequestEntity savingsWithdrawalRequestEntity);
     String generateTransactionReference();
     long countWithdrawalRequestWithinPeriod(SavingsGoalEntity savingsGoal, LocalDateTime fromTime, LocalDateTime toTime);

@@ -20,4 +20,5 @@ public interface MintBankAccountEntityDao extends CrudDao<MintBankAccountEntity,
     MintBankAccountEntity getAccountByMintAccountAndAccountType(MintAccountEntity mintAccountEntity, BankAccountTypeConstant accountTypeConstant);
     List<MintBankAccountEntity> getAccountsByMintAccount(MintAccountEntity mintAccountEntity);
 
+    Optional<MintBankAccountEntity> findByAccountName(String accountName);
 }

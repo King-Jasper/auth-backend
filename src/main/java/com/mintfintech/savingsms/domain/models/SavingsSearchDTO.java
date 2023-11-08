@@ -4,6 +4,7 @@ import com.mintfintech.savingsms.domain.entities.MintAccountEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsPlanEntity;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.SavingsGoalTypeConstant;
+import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import lombok.Builder;
 import lombok.Data;
 import java.time.LocalDateTime;
@@ -27,4 +28,7 @@ public class SavingsSearchDTO {
     private String goalName;
    // private boolean autoSavedEnabled;
     private AutoSaveStatus autoSaveStatus;
+
+    // added this
+    private WithdrawalRequestStatusConstant withdrawalStatus;
 }

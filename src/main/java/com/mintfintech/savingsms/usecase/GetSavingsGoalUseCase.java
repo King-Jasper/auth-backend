@@ -30,5 +30,4 @@ public interface GetSavingsGoalUseCase {
     PortalSavingsGoalResponse getPortalSavingsGoalResponseByGoalId(String goalId);
     PagedDataResponse<SavingsTransactionModel> getSavingsTransactions(String goalId, int page, int size);
     PagedDataResponse<SavingsInterestModel> getSavingsInterest(String goalId, int page, int size);
-    PagedDataResponse<SavingsGoalWithdrawalResponse> getSavingsGoalsWithdrawal(String withdrawalStatus, String customerName, LocalDate fromDate, LocalDate toDate, int page, int size);
 }

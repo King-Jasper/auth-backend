@@ -7,6 +7,7 @@ import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
 import com.mintfintech.savingsms.domain.entities.enums.WithdrawalRequestStatusConstant;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
@@ -39,6 +40,6 @@ public interface SavingsWithdrawalRequestRepository extends JpaRepository<Saving
     );
 
 
-
-
+    // implemented this
+    Page<SavingsWithdrawalRequestEntity> findAll(Specification<SavingsWithdrawalRequestEntity> specification, Pageable pageable);
 }

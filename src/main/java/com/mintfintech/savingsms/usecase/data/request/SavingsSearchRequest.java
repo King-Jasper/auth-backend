@@ -23,4 +23,6 @@ public class SavingsSearchRequest {
     private LocalDate toDate;
     private String phoneNumber;
     private String accountNumber;
+    // added the withdrawal status to the saving search request
+    private String withdrawalStatus;
 }
