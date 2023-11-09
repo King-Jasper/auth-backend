@@ -22,5 +22,5 @@ public interface SavingsWithdrawalRequestEntityDao extends CrudDao<SavingsWithdr
     String generateTransactionReference();
     long countWithdrawalRequestWithinPeriod(SavingsGoalEntity savingsGoal, LocalDateTime fromTime, LocalDateTime toTime);
     List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalByStatus(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant);
-    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(AppUserEntity appUserEntity, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, int pageNumber, int pageSize);
+
 }

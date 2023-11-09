@@ -54,14 +54,7 @@ public class SavingsWithdrawalRequestEntityDaoImpl implements SavingsWithdrawalR
         LocalDate now = LocalDate.now();
         return repository.getSavingsWithdrawalRequest(RecordStatusConstant.ACTIVE, withdrawalRequestStatusConstant, now);
     }
-
-    @Override
-    public Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(AppUserEntity appUserEntity, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, int pageNumber, int pageSize) {
-        Pageable pageable = PageRequest.of(pageNumber, pageSize);
-        return repository.getSavingsWithdrawal(withdrawalRequestStatusConstant, fromDate, toDate, appUserEntity, pageable);
-    }
-
-    // implemented this
+  // implemented this
     @Override
     public Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawalReport(SavingsSearchDTO searchDTO, int pageIndex, int recordSize) {
         Pageable pageable = PageRequest.of(pageIndex, recordSize, Sort.by("dateCreated").descending());
