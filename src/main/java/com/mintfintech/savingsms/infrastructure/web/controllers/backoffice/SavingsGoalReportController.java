@@ -59,6 +59,8 @@ public class SavingsGoalReportController {
 	@GetMapping(value = "savings-goal-withdrawal-report", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsGoalWithdrawalResponse>>> getSavingsGoalWithdrawal(
 			@RequestParam(required = false) String withdrawalStatus,
+			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "withdrawalStatus", defaultValue = "ACTIVE") String withdrawalStatusUpdate,
+			@NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
 			@RequestParam(required = false) String customerName,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,

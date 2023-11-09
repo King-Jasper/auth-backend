@@ -21,25 +21,11 @@ import java.util.List;
  */
 public interface SavingsWithdrawalRequestRepository extends JpaRepository<SavingsWithdrawalRequestEntity, Long> {
     long countAllBySavingsGoalAndDateCreatedBetween(SavingsGoalEntity savingsGoalEntity, LocalDateTime fromTime, LocalDateTime toTime);
-    @Query("select sw from SavingsWithdrawalRequestEntity sw where sw.recordStatus =?1 and sw.withdrawalRequestStatus = ?2 and (sw.dateForWithdrawal is null " +
-            "or sw.dateForWithdrawal <= ?3) order by sw.dateModified desc")
-    List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant statusConstant, WithdrawalRequestStatusConstant requestStatusConstant, LocalDate dateForWithdrawal);
-
-
-    @Query("select sw from SavingsWithdrawalRequestEntity sw where sw.withdrawalRequestStatus = ?1 and " +
-            "((sw.dateForWithdrawal is null or sw.dateForWithdrawal between ?2 and ?3) " +
-            "or (sw.dateModified between ?2 and ?3)) " +
-            "and (sw.requestedBy = ?4 or ?4 is null) " +
-            "order by sw.dateModified desc")
-    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(
-            WithdrawalRequestStatusConstant requestStatusConstant,
-            LocalDate fromDate,
-            LocalDate toDate,
-            AppUserEntity appUserEntity,
-            Pageable pageable
-    );
-
 
     // implemented this
     Page<SavingsWithdrawalRequestEntity> findAll(Specification<SavingsWithdrawalRequestEntity> specification, Pageable pageable);
+
+    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, AppUserEntity appUserEntity, Pageable pageable);
+
+    List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant recordStatusConstant, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate now);
 }
