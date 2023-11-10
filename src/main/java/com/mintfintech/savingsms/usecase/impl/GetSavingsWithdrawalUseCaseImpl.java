@@ -27,20 +27,11 @@ public class GetSavingsWithdrawalUseCaseImpl implements GetSavingsWithdrawalUseC
     private MintBankAccountEntityDao mintBankAccountEntityDao;
     @Override
     public PagedDataResponse<SavingsGoalWithdrawalResponse> getSavingsGoalWithdrawalReport(SavingsSearchRequest searchRequest, int page, int size) {
-        MintBankAccountEntity accountEntity;
-        if(!StringUtils.isEmpty(searchRequest.getCustomerName())) {
-            accountEntity = mintBankAccountEntityDao.findByAccountName(searchRequest.getCustomerName()).orElseThrow(()->new BadRequestException("Invalid customer name"));
-        } else {
-            accountEntity = null;
-        }
-        WithdrawalRequestStatusConstant withdrawalRequestStatusConstant = null;
-        if(!StringUtils.isEmpty(searchRequest.getWithdrawalStatus())){
-            withdrawalRequestStatusConstant = WithdrawalRequestStatusConstant.valueOf(searchRequest.getWithdrawalStatus());
-        }
+        MintBankAccountEntity accountEntity= mintBankAccountEntityDao.findByAccountName(searchRequest.getCustomerName()).orElseThrow(()->new BadRequestException("Invalid customer name"));
 
         SavingsSearchDTO searchDTO = SavingsSearchDTO.builder()
                 .customerName(searchRequest.getCustomerName())
-                .withdrawalStatus(withdrawalRequestStatusConstant)
+                .withdrawalStatus(WithdrawalRequestStatusConstant.valueOf(searchRequest.getWithdrawalStatus()))
                 .fromDate(searchRequest.getFromDate() != null ? searchRequest.getFromDate().atStartOfDay() : null)
                 .toDate(searchRequest.getToDate() != null ? searchRequest.getToDate().atTime(23, 59): null)
                 .build();

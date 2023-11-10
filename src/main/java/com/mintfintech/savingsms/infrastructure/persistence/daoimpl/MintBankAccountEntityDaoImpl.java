@@ -53,7 +53,6 @@ public class MintBankAccountEntityDaoImpl implements MintBankAccountEntityDao {
         return repository.getAllByMintAccount(mintAccountEntity);
     }
 
-    // implemented this
     @Override
     public Optional<MintBankAccountEntity> findByAccountName(String accountName) {
         return repository.findFirstByAccountName(accountName);

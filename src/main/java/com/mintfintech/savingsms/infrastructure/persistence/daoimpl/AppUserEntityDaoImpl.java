@@ -37,10 +37,7 @@ public class AppUserEntityDaoImpl extends CrudDaoImpl<AppUserEntity, Long> imple
         return repository.findFirstByPrimaryAccount(mintAccountEntity);
     }
 
-    @Override
-    public Optional<AppUserEntity> findAppUserByName(String customer) {
-        return Optional.empty();
-    }
+
 
     @Override
     public Optional<AppUserEntity> findUserByPhoneNumber(String phoneNumber) {

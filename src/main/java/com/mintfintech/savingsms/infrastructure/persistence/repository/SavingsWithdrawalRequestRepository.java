@@ -25,7 +25,6 @@ public interface SavingsWithdrawalRequestRepository extends JpaRepository<Saving
     // implemented this
     Page<SavingsWithdrawalRequestEntity> findAll(Specification<SavingsWithdrawalRequestEntity> specification, Pageable pageable);
 
-    Page<SavingsWithdrawalRequestEntity> getSavingsWithdrawal(WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate fromDate, LocalDate toDate, AppUserEntity appUserEntity, Pageable pageable);
 
     List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant recordStatusConstant, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate now);
 }

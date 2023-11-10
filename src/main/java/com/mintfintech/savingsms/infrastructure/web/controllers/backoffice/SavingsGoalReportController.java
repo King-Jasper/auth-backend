@@ -58,8 +58,8 @@ public class SavingsGoalReportController {
 	@ApiOperation(value = "Returns paginated list of savings goal withdrawal")
 	@GetMapping(value = "savings-goal-withdrawal-report", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsGoalWithdrawalResponse>>> getSavingsGoalWithdrawal(
-			@RequestParam(required = false) String withdrawalStatus,
-			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "withdrawalStatus", defaultValue = "ACTIVE") String withdrawalStatusUpdate,
+			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)")
+			@RequestParam(value = "withdrawalStatus", defaultValue = "ACTIVE") String withdrawalStatus,
 			@NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
 			@RequestParam(required = false) String customerName,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
@@ -90,7 +90,8 @@ public class SavingsGoalReportController {
 			@RequestParam(value = "goalName", required = false) String goalName,
 			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)") @RequestParam(value = "goalStatus", defaultValue = "ACTIVE") String goalStatus,
 			@NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
-			@Pattern(regexp = "(ALL|ROUND_UP_SAVINGS|CUSTOMER_SAVINGS|EMERGENCY_SAVINGS|MINT_REFERRAL_EARNINGS|SPEND_AND_SAVE)") @RequestParam(value = "savingsType", required = false, defaultValue = "ALL") String savingsType,
+			@Pattern(regexp = "(ALL|ROUND_UP_SAVINGS|CUSTOMER_SAVINGS|EMERGENCY_SAVINGS|MINT_REFERRAL_EARNINGS|SPEND_AND_SAVE)")
+			@RequestParam(value = "savingsType", required = false, defaultValue = "ALL") String savingsType,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,
 			@RequestParam("size") int size, @RequestParam("page") int page) {
