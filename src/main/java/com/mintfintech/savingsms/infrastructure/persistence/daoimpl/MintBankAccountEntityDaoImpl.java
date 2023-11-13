@@ -55,7 +55,7 @@ public class MintBankAccountEntityDaoImpl implements MintBankAccountEntityDao {
 
     @Override
     public Optional<MintBankAccountEntity> findByAccountName(String accountName) {
-        return repository.findFirstByAccountName(accountName);
+        return repository.findByAccountName(accountName);
     }
 
     @Override

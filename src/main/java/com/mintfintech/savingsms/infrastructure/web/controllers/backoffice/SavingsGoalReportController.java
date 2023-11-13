@@ -10,7 +10,7 @@ import com.mintfintech.savingsms.infrastructure.web.security.AuthenticatedUser;
 import com.mintfintech.savingsms.usecase.FundWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.GetSavingsWithdrawalUseCase;
 import com.mintfintech.savingsms.usecase.data.response.SavingsGoalWithdrawalResponse;
-import com.mintfintech.savingsms.usecase.models.LoanModel;
+
 import lombok.Data;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -58,9 +58,8 @@ public class SavingsGoalReportController {
 	@ApiOperation(value = "Returns paginated list of savings goal withdrawal")
 	@GetMapping(value = "savings-goal-withdrawal-report", produces = MediaType.APPLICATION_JSON_VALUE)
 	public ResponseEntity<ApiResponseJSON<PagedDataResponse<SavingsGoalWithdrawalResponse>>> getSavingsGoalWithdrawal(
-			@NotBlank @Pattern(regexp = "(ACTIVE|MATURED|COMPLETED)")
-			@RequestParam(value = "withdrawalStatus", defaultValue = "ACTIVE") String withdrawalStatus,
-			@NotBlank @Pattern(regexp = "(ALL|ENABLED|DISABLED)") @RequestParam(value = "autoSaveStatus", defaultValue = "ALL") String autoSaveStatus,
+			@NotBlank @Pattern(regexp = "(PENDING_FUND_DISBURSEMENT| PROCESSING_FUND_DISBURSEMENT|FUND_DISBURSEMENT_FAILED|PROCESSED)")
+			@RequestParam(value = "withdrawalStatus", defaultValue = "PENDING_FUND_DISBURSEMENT") String withdrawalStatus,
 			@RequestParam(required = false) String customerName,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "fromDate", required = false) LocalDate fromDate,
 			@ApiParam(value = "Format: dd/MM/yyyy") @DateTimeFormat(pattern = "dd/MM/yyyy") @RequestParam(value = "toDate", required = false) LocalDate toDate,

@@ -1,6 +1,6 @@
 package com.mintfintech.savingsms.infrastructure.persistence.repository;
 
-import com.mintfintech.savingsms.domain.entities.AppUserEntity;
+
 import com.mintfintech.savingsms.domain.entities.SavingsGoalEntity;
 import com.mintfintech.savingsms.domain.entities.SavingsWithdrawalRequestEntity;
 import com.mintfintech.savingsms.domain.entities.enums.RecordStatusConstant;
@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
+
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -26,5 +26,5 @@ public interface SavingsWithdrawalRequestRepository extends JpaRepository<Saving
     Page<SavingsWithdrawalRequestEntity> findAll(Specification<SavingsWithdrawalRequestEntity> specification, Pageable pageable);
 
 
-    List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant recordStatusConstant, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate now);
+   List<SavingsWithdrawalRequestEntity> getSavingsWithdrawalRequest(RecordStatusConstant recordStatusConstant, WithdrawalRequestStatusConstant withdrawalRequestStatusConstant, LocalDate now);
 }

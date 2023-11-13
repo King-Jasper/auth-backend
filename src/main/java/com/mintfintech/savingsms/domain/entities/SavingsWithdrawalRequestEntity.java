@@ -23,7 +23,7 @@ public class SavingsWithdrawalRequestEntity extends AbstractBaseEntity<Long> {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     private AppUserEntity requestedBy;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @ManyToOne(optional = false, fetch = FetchType.EAGER)
     private SavingsGoalEntity savingsGoal;
 
     @Column(nullable = false)

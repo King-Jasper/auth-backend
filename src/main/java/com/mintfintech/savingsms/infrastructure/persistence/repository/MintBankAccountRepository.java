@@ -20,6 +20,6 @@ public interface MintBankAccountRepository extends JpaRepository<MintBankAccount
     Optional<MintBankAccountEntity> findFirstByAccountNumber(String accountNumber);
 
     // implemented this
-    Optional<MintBankAccountEntity> findFirstByAccountName(String accountName);
+    Optional<MintBankAccountEntity> findByAccountName(String accountName);
 
 }
